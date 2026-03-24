@@ -1,0 +1,139 @@
+<view class="page">
+  <image class="bg" src="https://www.awalon.top/mp-assets/home-bg-optimized.jpg" mode="aspectFill" />
+  <view class="mask"></view>
+
+  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px; height: {{navBarHeight}}px;">
+    <view class="custom-nav-inner">
+      <view class="nav-back-btn" bindtap="onBackHome"><text class="nav-back-txt">返回</text></view>
+      <text class="custom-nav-title">游戏规则</text>
+      <view class="nav-back-placeholder"></view>
+    </view>
+  </view>
+
+  <scroll-view scroll-y="true" class="content" style="padding-top: {{navTotalHeight + 16}}px;">
+    <view class="panel">
+      <text class="section-title">界面式上手流程</text>
+      <view class="journey-card" wx:for="{{uiJourney}}" wx:key="step">
+        <view class="journey-head">
+          <text class="journey-step">{{item.step}}</text>
+          <view class="journey-meta">
+            <text class="journey-title">{{item.title}}</text>
+            <text class="journey-scene">{{item.scene}}</text>
+          </view>
+        </view>
+        <view class="journey-point" wx:for="{{item.points}}" wx:key="*this">{{item}}</view>
+      </view>
+    </view>
+
+    <view class="panel">
+      <text class="section-title">界面示意</text>
+
+      <view class="mock-card">
+        <text class="mock-title">首页入口示意</text>
+        <view class="mock-action-grid">
+          <view class="mock-action {{item.accent}}" wx:for="{{mockActions}}" wx:key="label">
+            <text class="mock-action-label">{{item.label}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="mock-card">
+        <text class="mock-title">圆桌与座位示意</text>
+        <view class="mock-table-wrap">
+          <view class="mock-table-core">
+            <text class="mock-table-room">房间 684291</text>
+            <text class="mock-table-stage">发言阶段</text>
+          </view>
+          <view class="mock-seat tone-{{item.tone}}" wx:for="{{mockSeats}}" wx:key="name">
+            <text class="mock-seat-name">{{item.name}}</text>
+            <text class="mock-seat-state">{{item.state}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="mock-card">
+        <text class="mock-title">投票与任务轨道示意</text>
+        <view class="mock-vote-list">
+          <view class="mock-vote-row" wx:for="{{mockVotes}}" wx:key="name">
+            <text class="mock-vote-name">{{item.name}}</text>
+            <text class="mock-vote-pill tone-{{item.tone}}">{{item.result}}</text>
+          </view>
+        </view>
+        <view class="mock-track">
+          <view class="mock-track-node tone-{{item.tone}}" wx:for="{{mockMissionTrack}}" wx:key="round">
+            <text class="mock-track-round">{{item.round}}</text>
+            <text class="mock-track-result">{{item.result}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="mock-card">
+        <text class="mock-title">结算页示意</text>
+        <view class="mock-result-head">
+          <text class="mock-result-badge">好人胜利</text>
+          <text class="mock-result-sub">刺客未命中梅林，公开身份并发放勋章</text>
+        </view>
+        <view class="mock-medal-row">
+          <view class="mock-medal"></view>
+          <view class="mock-medal"></view>
+          <view class="mock-medal"></view>
+          <view class="mock-medal"></view>
+        </view>
+      </view>
+    </view>
+
+    <view class="panel">
+      <text class="section-title">基础配置</text>
+      <view class="bullet" wx:for="{{configTips}}" wx:key="*this">{{item}}</view>
+    </view>
+
+    <view class="panel">
+      <text class="section-title">玩法流程</text>
+      <view class="bullet" wx:for="{{flowTips}}" wx:key="*this">{{item}}</view>
+      <view class="phase-grid">
+        <view class="phase-card" wx:for="{{phaseCards}}" wx:key="tag">
+          <text class="phase-tag">{{item.tag}}</text>
+          <text class="phase-name">{{item.name}}</text>
+          <text class="phase-desc">{{item.desc}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="panel">
+      <text class="section-title">主界面怎么看</text>
+      <view class="bullet" wx:for="{{interfaceTips}}" wx:key="*this">{{item}}</view>
+    </view>
+
+    <view class="panel">
+      <text class="section-title">胜利 / 失败条件</text>
+      <view class="bullet" wx:for="{{winTips}}" wx:key="*this">{{item}}</view>
+    </view>
+
+    <view class="panel">
+      <text class="section-title">好人阵营角色</text>
+      <view class="role-item" wx:for="{{goodRoles}}" wx:key="role">
+        <view class="role-head">
+          <image class="role-avatar" wx:if="{{item.roleImage}}" src="{{item.roleImage}}" mode="aspectFill" />
+          <text class="role-name good">{{item.role}}</text>
+        </view>
+        <text class="role-desc">{{item.desc}}</text>
+      </view>
+    </view>
+
+    <view class="panel">
+      <text class="section-title">坏人阵营角色</text>
+      <view class="role-item" wx:for="{{evilRoles}}" wx:key="role">
+        <view class="role-head">
+          <image class="role-avatar" wx:if="{{item.roleImage}}" src="{{item.roleImage}}" mode="aspectFill" />
+          <text class="role-name evil">{{item.role}}</text>
+        </view>
+        <text class="role-desc">{{item.desc}}</text>
+      </view>
+    </view>
+
+    <view class="panel tip-panel">
+      <text class="tip-title">新手建议</text>
+      <text class="tip-text">第一局先用 7 人标准局练习：梅林、派西维尔、2 忠臣、刺客、莫甘娜、爪牙。先熟悉发言和投票节奏，再加入莫德雷德/奥伯伦等高复杂角色。</text>
+    </view>
+  </scroll-view>
+</view>

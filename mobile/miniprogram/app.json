@@ -1,0 +1,21 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/avatarcrop/index",
+    "pages/rules/index/index",
+    "pages/history/index/index",
+    "pages/history-detail/index/index",
+    "pages/role-stats/index/index"
+  ],
+  "window": {
+    "navigationBarTitleText": "Awalon",
+    "navigationBarBackgroundColor": "#0f1115",
+    "navigationBarTextStyle": "white",
+    "navigationStyle": "custom",
+    "backgroundColor": "#0f1115",
+    "backgroundTextStyle": "light"
+  },
+  "lazyCodeLoading": "requiredComponents",
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

@@ -1,0 +1,9 @@
+{
+  "desc": "Awalon mini program sitemap",
+  "rules": [
+    {
+      "action": "allow",
+      "page": "*"
+    }
+  ]
+}

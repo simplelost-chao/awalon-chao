@@ -1,0 +1,14 @@
+:root {
+  --aw-bg: #0f1115;
+  --aw-panel: rgba(19, 23, 31, 0.82);
+  --aw-border: rgba(255, 255, 255, 0.1);
+  --aw-text: #eef1f7;
+  --aw-subtext: #aeb6c7;
+  --aw-accent: #d9b36b;
+}
+
+page {
+  background: var(--aw-bg);
+  color: var(--aw-text);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+}

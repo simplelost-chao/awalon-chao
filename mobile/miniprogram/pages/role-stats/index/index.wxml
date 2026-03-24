@@ -1,0 +1,81 @@
+<view class="page">
+  <image class="bg" src="https://www.awalon.top/mp-assets/home-bg-optimized.jpg" mode="aspectFill" />
+  <view class="mask"></view>
+
+  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px; height: {{navBarHeight}}px;">
+    <view class="custom-nav-inner">
+      <view class="nav-back-btn" bindtap="onBackHome"><text class="nav-back-txt">返回</text></view>
+      <text class="custom-nav-title">角色统计</text>
+      <view class="nav-back-placeholder"></view>
+    </view>
+  </view>
+
+  <view class="content" style="padding-top: {{navTotalHeight + 16}}px;">
+    <view class="panel" wx:if="{{loading}}">
+      <text class="meta">加载中...</text>
+    </view>
+
+    <view class="panel" wx:if="{{!loading && roleStats}}">
+      <view class="section-title">总览</view>
+      <view class="summary-row">
+        <view class="summary-box">
+          <text class="summary-value summary-blue">{{roleStats.totalGames}}</text>
+          <text class="summary-label">总对局</text>
+        </view>
+        <view class="summary-box">
+          <text class="summary-value summary-green">{{roleStats.overallWinRate}}%</text>
+          <text class="summary-label">总胜率</text>
+        </view>
+      </view>
+      <view class="faction-row">
+        <view class="faction-box faction-good">
+          <text class="faction-title">好人阵营</text>
+          <text class="faction-meta">对局 {{goodSummary.total}} · 胜场 {{goodSummary.wins}} · 胜率 {{goodSummary.winRate}}%</text>
+        </view>
+        <view class="faction-box faction-evil">
+          <text class="faction-title">坏人阵营</text>
+          <text class="faction-meta">对局 {{evilSummary.total}} · 胜场 {{evilSummary.wins}} · 胜率 {{evilSummary.winRate}}%</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="panel" wx:if="{{!loading && roleStats}}">
+      <view class="section-title">按角色统计</view>
+      <view class="stats-grid">
+        <view class="stats-card" wx:for="{{statsList}}" wx:key="role">
+          <image class="role-avatar" wx:if="{{item.roleImage}}" src="{{item.roleImage}}" mode="aspectFill" />
+          <text class="role-name {{item.roleNameClass}}">{{item.role}}</text>
+          <text class="role-meta">对局 {{item.total}}</text>
+          <text class="role-meta">胜场 {{item.wins}}</text>
+          <text class="role-meta">胜率 <text class="{{item.winRateClass}}">{{item.winRate}}%</text></text>
+        </view>
+      </view>
+    </view>
+
+    <view class="panel" wx:if="{{!loading && roleStats}}">
+      <view class="section-title">勋章统计（总计 {{medalTotal}}）</view>
+      <view class="medal-section">
+        <text class="medal-title medal-title-good">好人勋章</text>
+        <view class="medal-grid">
+          <view class="medal-card" wx:for="{{goodMedals}}" wx:key="code" catchtap="onTapMedal" data-name="{{item.name}}" data-description="{{item.description}}">
+            <image class="medal-image" wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFit" />
+            <text class="medal-icon" wx:else>🏅</text>
+            <text class="medal-name">{{item.name}}</text>
+            <text class="medal-count">{{item.total}} 次</text>
+          </view>
+        </view>
+      </view>
+      <view class="medal-section">
+        <text class="medal-title medal-title-evil">坏人勋章</text>
+        <view class="medal-grid">
+          <view class="medal-card" wx:for="{{evilMedals}}" wx:key="code" catchtap="onTapMedal" data-name="{{item.name}}" data-description="{{item.description}}">
+            <image class="medal-image" wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFit" />
+            <text class="medal-icon" wx:else>🏅</text>
+            <text class="medal-name">{{item.name}}</text>
+            <text class="medal-count">{{item.total}} 次</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

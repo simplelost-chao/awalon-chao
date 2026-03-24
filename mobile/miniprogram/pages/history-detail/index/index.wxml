@@ -1,0 +1,88 @@
+<view class="page">
+  <image class="bg" src="https://www.awalon.top/mp-assets/in-game-bg-optimized.jpg" mode="aspectFill" />
+  <view class="mask"></view>
+
+  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px; height: {{navBarHeight}}px;">
+    <view class="custom-nav-inner">
+      <view class="nav-back-btn" bindtap="onBackHome"><text class="nav-back-txt">返回</text></view>
+      <text class="custom-nav-title">对战详情</text>
+      <view class="nav-back-placeholder"></view>
+    </view>
+  </view>
+
+  <view class="content" style="padding-top: {{navTotalHeight + 8}}px;">
+    <view class="panel" wx:if="{{loading}}">
+      <text class="meta">加载中...</text>
+    </view>
+
+    <block wx:if="{{!loading && historyDetail}}">
+      <view class="panel">
+        <view class="section-title">对局 #{{historyDetail.gameId}}</view>
+        <view class="my-role-row">
+          <image class="my-role-img" wx:if="{{myRoleImage}}" src="{{myRoleImage}}" mode="aspectFill" />
+          <text class="meta">我的身份：{{historyDetail.myRole}} ｜ 结果：{{historyDetail.myResult==='win'?'胜利':'失败'}} ｜ 座位：{{historyDetail.mySeat}}</text>
+        </view>
+        <text class="meta">房间：{{historyDetail.detail.roomCode}} ｜ 人数：{{historyDetail.detail.maxPlayers}}</text>
+        <text class="meta">胜方：{{historyDetail.detail.winner}}</text>
+        <view class="medal-row" wx:if="{{historyDetail.medals && historyDetail.medals.length}}">
+          <view class="medal-chip" wx:for="{{historyDetail.medals}}" wx:key="code" catchtap="onTapMedal" data-name="{{item.name}}" data-description="{{item.description}}">
+            <image class="medal-chip-image" wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFit" />
+            <text class="medal-chip-icon" wx:else>🏅</text>
+            <text class="medal-chip-name">{{item.name}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="panel" wx:if="{{assassinationText}}">
+        <text class="section-title">刺杀结算</text>
+        <view class="assassination-banner {{assassinationResultClass}}">
+          <text class="assassination-main">{{assassinationText}}</text>
+          <text class="assassination-sub">{{assassinationTargetText}}</text>
+        </view>
+      </view>
+
+      <view class="panel">
+        <text class="section-title">圆桌回放</text>
+        <view class="table-wrap">
+          <view class="table-ring"></view>
+          <view class="center-result {{winnerClass}}">
+            <text class="center-title">{{winnerText}}</text>
+            <text class="center-sub" wx:if="{{assassinationText}}">{{assassinationText}}</text>
+          </view>
+          <view class="seat-round {{item.isAssassinated ? 'seat-assassinated' : ''}}" wx:for="{{roundSeats}}" wx:key="seat" style="{{item.leftStyle}}">
+            <text class="seat-no">{{item.seat}}</text>
+            <text class="seat-name">{{item.nickname}}</text>
+            <view class="seat-role-pill {{item.roleClass}}" wx:if="{{item.role}}">
+              <image class="seat-role-img" wx:if="{{item.roleImage}}" src="{{item.roleImage}}" mode="aspectFill" />
+              <text class="seat-role">{{item.role}}</text>
+            </view>
+            <text class="seat-mark-assassin" wx:if="{{item.isAssassin}}">🗡</text>
+            <text class="seat-mark-killed" wx:if="{{item.isAssassinated}}">☠</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="panel">
+        <text class="section-title">任务详情</text>
+        <view class="table-head">
+          <text class="col col-round">轮次</text>
+          <text class="col col-leader">队长</text>
+          <text class="col col-team">队伍</text>
+          <text class="col col-vote">同意/反对</text>
+          <text class="col col-res">结果</text>
+        </view>
+        <view class="table-row" wx:for="{{missionRows}}" wx:key="key">
+          <text class="col col-round">{{item.round}}</text>
+          <text class="col col-leader">{{item.leader}}</text>
+          <text class="col col-team">{{item.team}}</text>
+          <view class="col col-vote vote-combo">
+            <text class="vote-part">{{item.approve}}</text>
+            <text class="vote-sep"> / </text>
+            <text class="vote-part col-reject">{{item.reject}}</text>
+          </view>
+          <text class="col col-res {{item.resClass}}">{{item.result}}</text>
+        </view>
+      </view>
+    </block>
+  </view>
+</view>

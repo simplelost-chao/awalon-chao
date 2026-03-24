@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "Avalon Online",
+    "slug": "avalon-online",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "assetBundlePatterns": ["**/*"],
+    "jsEngine": "jsc",
+    "android": {
+      "newArchEnabled": false
+    },
+    "ios": {
+      "newArchEnabled": false
+    }
+  }
+}

@@ -1,0 +1,22 @@
+<view class="page">
+  <view class="custom-nav">
+    <view class="nav-inner">
+      <button class="nav-back" bindtap="onBack">返回</button>
+      <text class="nav-title">裁剪头像</text>
+      <button class="nav-confirm" bindtap="onConfirm">确定</button>
+    </view>
+  </view>
+
+  <view class="content">
+    <text class="status-text">{{statusText}}</text>
+    <text class="tip">拖拽调整位置，双指缩放，所见即所得</text>
+    <text class="tip" wx:if="{{!imagePath}}">未读取到图片，请返回重试</text>
+    <view class="crop-frame" style="{{frameStyle}}" bindtouchstart="onTouchStart" bindtouchmove="onTouchMove" bindtouchend="onTouchEnd" bindtouchcancel="onTouchEnd">
+      <canvas canvas-id="avatarCropPreview" class="crop-canvas" style="{{frameStyle}}"></canvas>
+      <view class="crop-mask"></view>
+      <view class="crop-border"></view>
+    </view>
+  </view>
+
+  <canvas canvas-id="avatarCropOutput" class="hidden-canvas"></canvas>
+</view>

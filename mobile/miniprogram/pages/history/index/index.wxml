@@ -1,0 +1,50 @@
+<view class="page">
+  <image class="bg" src="https://www.awalon.top/mp-assets/home-bg-optimized.jpg" mode="aspectFill" />
+  <view class="mask"></view>
+
+  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px; height: {{navBarHeight}}px;">
+    <view class="custom-nav-inner">
+      <view class="nav-back-btn" bindtap="onBackHome"><text class="nav-back-txt">返回</text></view>
+      <text class="custom-nav-title">历史对战</text>
+      <view class="nav-back-placeholder"></view>
+    </view>
+  </view>
+
+  <view class="content" style="padding-top: {{navTotalHeight + 8}}px;">
+    <view class="panel">
+      <view class="section-title">第 {{page}} 页</view>
+      <view wx:if="{{loading}}" class="meta">加载中...</view>
+      <view wx:if="{{!loading && !list.length}}" class="meta">暂无历史记录</view>
+
+      <view class="record-list" wx:if="{{list.length}}">
+        <view class="record-item" wx:for="{{list}}" wx:key="gameId" bindtap="onOpenDetail" data-gameid="{{item.gameId}}">
+          <view class="record-grid">
+            <view class="avatar-col">
+              <image class="role-avatar" wx:if="{{item.roleImage}}" src="{{item.roleImage}}" mode="aspectFill" />
+            </view>
+            <view class="record-main">
+              <view class="record-head-main">
+                <text class="line strong">对局 #{{item.gameId}} · {{item.role}}</text>
+                <text class="result-pill {{item.result==='win'?'result-win':'result-lose'}}">{{item.result==='win'?'胜利':'失败'}}</text>
+              </view>
+              <text class="line">房间 {{item.roomCode}} · {{item.maxPlayers}} 人 · 座位 {{item.seat}}</text>
+              <text class="line">结束时间：{{item.playedAt || item.endedAt || '-'}}</text>
+              <view class="medal-row" wx:if="{{item.medals && item.medals.length}}">
+                <view class="medal-chip" wx:for="{{item.medals}}" wx:key="code" catchtap="onTapMedal" data-name="{{item.name}}" data-description="{{item.description}}">
+                  <image class="medal-chip-image" wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFit" />
+                  <text class="medal-chip-icon" wx:else>🏅</text>
+                  <text class="medal-chip-name">{{item.name}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="btn-row">
+        <button class="btn ghost half" bindtap="onPrev" disabled="{{page<=1 || loading}}">上一页</button>
+        <button class="btn ghost half" bindtap="onNext" disabled="{{!hasMore || loading}}">下一页</button>
+      </view>
+    </view>
+  </view>
+</view>
