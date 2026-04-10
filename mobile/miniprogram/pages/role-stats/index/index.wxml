@@ -37,6 +37,13 @@
           <text class="faction-meta">对局 {{evilSummary.total}} · 胜场 {{evilSummary.wins}} · 胜率 {{evilSummary.winRate}}%</text>
         </view>
       </view>
+      <view class="vote-tag-row" wx:if="{{receivedVoteTags.length}}">
+        <view class="vote-tag" wx:for="{{receivedVoteTags}}" wx:key="key">
+          <image class="vote-tag-icon" src="{{item.icon}}" mode="aspectFit" />
+          <text class="vote-tag-label">{{item.label}}</text>
+          <text class="vote-tag-count">{{item.count}}</text>
+        </view>
+      </view>
     </view>
 
     <view class="panel" wx:if="{{!loading && roleStats}}">
@@ -45,8 +52,7 @@
         <view class="stats-card" wx:for="{{statsList}}" wx:key="role">
           <image class="role-avatar" wx:if="{{item.roleImage}}" src="{{item.roleImage}}" mode="aspectFill" />
           <text class="role-name {{item.roleNameClass}}">{{item.role}}</text>
-          <text class="role-meta">对局 {{item.total}}</text>
-          <text class="role-meta">胜场 {{item.wins}}</text>
+          <text class="role-meta role-meta-inline">对局 {{item.total}} / 胜场 {{item.wins}}</text>
           <text class="role-meta">胜率 <text class="{{item.winRateClass}}">{{item.winRate}}%</text></text>
         </view>
       </view>

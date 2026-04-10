@@ -1,5 +1,6 @@
 <view class="page">
-  <canvas canvas-id="avatarCropCanvas" class="avatar-crop-canvas"></canvas>
+  <canvas id="avatarCropCanvas" type="2d" canvas-id="avatarCropCanvas" class="avatar-crop-canvas"></canvas>
+  <canvas id="shareInviteCanvas" type="2d" canvas-id="shareInviteCanvas" class="share-invite-canvas"></canvas>
   <image class="bg" src="{{room && !atHome ? 'https://www.awalon.top/mp-assets/in-game-bg-optimized.jpg' : 'https://www.awalon.top/mp-assets/home-bg-optimized.jpg'}}" mode="aspectFill" />
   <view class="mask"></view>
 
@@ -32,6 +33,7 @@
           </view>
           <view class="user-title-touch" bindtap="onChangeNickname">
             <text class="user-title">你好：{{nickname || '未设置昵称'}}</text>
+            <text class="profile-tip">点击头像或用户名即可修改</text>
           </view>
         </view>
       </view>
@@ -90,6 +92,71 @@
       </view>
       <text class="meta">{{maxPlayersIndex >= 3 ? '8人及以上可开启湖中仙女' : '湖中仙女仅支持8人及以上对局'}}</text>
 
+      <view class="role-mode-row">
+        <view
+          class="role-mode-chip {{speakingSeconds===item ? 'role-mode-on' : ''}}"
+          wx:for="{{speakingSecondsOptions}}"
+          wx:key="*this"
+          data-seconds="{{item}}"
+          bindtap="onPickSpeakingSeconds"
+        >
+          {{item}}s
+        </view>
+      </view>
+      <text class="meta">发言时间默认 120s，可按房间节奏调整。</text>
+
+      <view class="role-mode-row">
+        <view
+          class="role-mode-chip {{forceRoundMode===item.value ? 'role-mode-on' : ''}}"
+          wx:for="{{forceRoundOptions}}"
+          wx:key="value"
+          data-mode="{{item.value}}"
+          bindtap="onPickForceRoundMode"
+        >
+          {{item.label}}
+        </view>
+      </view>
+      <text class="meta">到强制组队次数后仍未发车，好人直接判负。</text>
+
+      <view class="role-mode-row">
+        <view class="role-mode-chip {{!evilRoleVisibleEnabled ? 'role-mode-on' : ''}}" data-enabled="0" bindtap="onPickEvilRoleVisible">仅看队友座位</view>
+        <view class="role-mode-chip {{evilRoleVisibleEnabled ? 'role-mode-on' : ''}}" data-enabled="1" bindtap="onPickEvilRoleVisible">显示具体身份</view>
+      </view>
+      <text class="meta">坏人互认时，可选择只看队友座位，或直接看到具体坏人身份。</text>
+
+      <view class="advanced-toggle" bindtap="onToggleAdvancedSettings">
+        <text class="advanced-toggle-title">高级设置</text>
+        <text class="advanced-toggle-value">{{showAdvancedSettings ? '收起' : '展开'}}</text>
+      </view>
+      <view class="advanced-panel" wx:if="{{showAdvancedSettings}}">
+        <text class="meta">当前配置：{{advancedRoleSummary || '未设置'}}</text>
+        <text class="meta">{{advancedQuotaText}}</text>
+        <view class="advanced-selected-grid">
+          <view
+            class="advanced-selected-chip"
+            wx:for="{{selectedRoles}}"
+            wx:key="index"
+            data-idx="{{index}}"
+            bindtap="onRemoveAdvancedRole"
+          >
+            {{item}}
+          </view>
+        </view>
+        <view class="host-role-grid advanced-role-grid">
+          <view
+            class="host-role-item"
+            wx:for="{{allRoleOptions}}"
+            wx:key="role"
+            data-role="{{item.role}}"
+            bindtap="onAddAdvancedRole"
+          >
+            <image class="host-role-icon" src="{{item.image}}" mode="aspectFill" />
+            <text class="host-role-text">{{item.role}}</text>
+          </view>
+        </view>
+        <button class="btn ghost" bindtap="onResetAdvancedRoles">恢复默认配置</button>
+      </view>
+
       <view class="btn-row">
         <button class="btn primary half" bindtap="onCreateRoom">创建房间</button>
         <button class="btn ghost half" bindtap="onJoinRoomPrompt">加入房间</button>
@@ -131,6 +198,7 @@
             <view class="role-visible-meta">
               <text class="role-visible-seat-no">{{item.seat}}号位</text>
               <text class="role-visible-name">{{item.nickname}}</text>
+              <text class="role-visible-role" wx:if="{{item.role}}">{{item.role}}</text>
             </view>
             <text class="role-visible-tag role-visible-tag-evil" wx:if="{{item.evilVisible}}">坏人</text>
           </view>
@@ -143,6 +211,25 @@
           <view class="config-item" wx:for="{{roomConfigLines}}" wx:key="label">
             <text class="config-label">{{item.label}}</text>
             <text class="config-value">{{item.value}}</text>
+          </view>
+        </view>
+        <text class="section-title section-title-small section-chip" wx:if="{{roomRoleCards.length}}">当前角色</text>
+        <view class="room-role-grid" wx:if="{{roomRoleCards.length}}">
+          <view
+            class="room-role-card {{item.roleClass}}"
+            wx:for="{{roomRoleCards}}"
+            wx:key="role"
+            data-role="{{item.role}}"
+            data-description="{{item.description}}"
+            bindtap="onTapRoomRoleCard"
+          >
+            <image class="room-role-card-img" wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFill" />
+            <view class="room-role-card-fallback" wx:else>{{item.role.slice(0, 1)}}</view>
+            <view class="room-role-card-body">
+              <text class="room-role-card-name">{{item.role}}</text>
+              <text class="room-role-card-desc">点击查看角色说明</text>
+            </view>
+            <text class="room-role-card-count" wx:if="{{item.count > 1}}">x{{item.count}}</text>
           </view>
         </view>
         <view class="btn-row">
@@ -176,6 +263,7 @@
               <image class="role-pill-img" wx:if="{{item.roleImage}}" src="{{item.roleImage}}" mode="aspectFill" />
               <text class="role-pill-text">{{item.role}}</text>
             </view>
+            <text class="player-vote-summary" wx:if="{{phase==='end' && item.endVoteSummaryText}}">{{item.endVoteSummaryText}}</text>
           </view>
         </view>
       </view>
@@ -191,11 +279,26 @@
           style="{{item.leftStyle}}"
         >
           <text class="seat-crown" wx:if="{{item.isLeader}}">👑</text>
-          <text class="seat-lady" wx:if="{{item.isLadyHolder}}">🧝</text>
-          <view class="seat-avatar {{!item.playerId ? 'seat-avatar-empty' : ''}}">
-            <image class="seat-avatar-img" wx:if="{{item.avatarImage}}" src="{{item.avatarImage}}" mode="aspectFill" />
-            <text class="seat-avatar-text" wx:elif="{{item.avatarText}}">{{item.avatarText}}</text>
-            <text class="seat-avatar-empty-text" wx:else>空</text>
+          <view class="seat-avatar-wrap">
+            <view class="seat-avatar {{!item.playerId ? 'seat-avatar-empty' : ''}} {{item.isLadyHolder ? 'seat-avatar-lady' : ''}}">
+              <image class="seat-avatar-img" wx:if="{{item.avatarImage}}" src="{{item.avatarImage}}" mode="aspectFill" />
+              <text class="seat-avatar-text" wx:elif="{{item.avatarText}}">{{item.avatarText}}</text>
+              <text class="seat-avatar-empty-text" wx:else>空</text>
+            </view>
+            <view class="seat-lady-ring" wx:if="{{item.isLadyHolder}}">
+              <view class="seat-lady-ring-base"></view>
+              <view class="seat-lady-flower seat-lady-flower-top"></view>
+              <view class="seat-lady-flower seat-lady-flower-top-left"></view>
+              <view class="seat-lady-flower seat-lady-flower-top-right"></view>
+              <view class="seat-lady-flower seat-lady-flower-left"></view>
+              <view class="seat-lady-flower seat-lady-flower-right"></view>
+              <view class="seat-lady-flower seat-lady-flower-bottom-left"></view>
+              <view class="seat-lady-flower seat-lady-flower-bottom-right"></view>
+              <view class="seat-lady-leaf seat-lady-leaf-top-left"></view>
+              <view class="seat-lady-leaf seat-lady-leaf-top-right"></view>
+              <view class="seat-lady-leaf seat-lady-leaf-left"></view>
+              <view class="seat-lady-leaf seat-lady-leaf-right"></view>
+            </view>
           </view>
           <text class="seat-name">{{item.name}}</text>
           <view class="seat-role-pill {{item.roleClass}}" wx:if="{{item.roleLabel}}">
@@ -229,7 +332,7 @@
           <text class="mission-anim-title">{{missionAnimText}}</text>
         </view>
         <view class="center-leader-panel" wx:if="{{isLeader && (phase==='team' || phase==='speaking') && !showCenterResult}}">
-          <button class="btn primary center-leader-btn" bindtap="onLeaderTeamAction" disabled="{{leaderActionDisabled}}">
+          <button class="btn primary center-leader-btn {{leaderActionClass}}" bindtap="onLeaderTeamAction" disabled="{{leaderActionDisabled}}">
             {{leaderActionText}}
           </button>
         </view>
@@ -245,6 +348,21 @@
         <button class="btn ghost" bindtap="onStartMissionPhase" wx:if="{{isLeader && phase==='speaking'}}">下一阶段（任务流程）</button>
       </view>
 
+      <view class="control-wrap" wx:if="{{phase==='end' && endVoteResultGroups.length}}">
+        <text class="section-title section-title-small section-chip">互评结果</text>
+        <view class="end-vote-result-list">
+          <view class="end-vote-result-item" wx:for="{{endVoteResultGroups}}" wx:key="key">
+            <view class="end-vote-result-head">
+              <image class="end-vote-result-icon" src="{{item.icon}}" mode="aspectFit" />
+              <text class="end-vote-result-name">{{item.label}}</text>
+            </view>
+            <view class="end-vote-result-tags">
+              <text class="end-vote-result-tag" wx:for="{{item.entries}}" wx:key="id">{{item.text}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
       <view class="control-wrap" wx:if="{{room.game}}">
         <text class="section-title section-title-small section-chip">任务进度</text>
         <view class="mission-pill-row">
@@ -254,9 +372,15 @@
           class="mission-pill {{item.cls}}"
         >
             <text class="mission-pill-size">{{item.size}}</text>
+            <text class="mission-pill-strong" wx:if="{{item.isForcedRound}}">强</text>
             <text class="mission-pill-sub" wx:if="{{item.failReq===2}}">x2</text>
           </view>
         </view>
+      </view>
+
+      <view class="force-round-banner force-round-banner-block" wx:if="{{isCurrentForcedAttempt && !showCenterResult}}">
+        <text class="force-round-banner-main">强制组队轮</text>
+        <text class="force-round-banner-sub">本次未发车则好人直接判负</text>
       </view>
 
       <view class="control-wrap" wx:if="{{room.game && phase==='lady'}}">
@@ -284,7 +408,9 @@
           <text class="col col-res">结果</text>
         </view>
         <view class="table-row" wx:for="{{missionRows}}" wx:key="key">
-          <text class="col col-round">{{item.round}}</text>
+          <view class="col col-round round-cell">
+            <text>{{item.round}}</text>
+          </view>
           <text class="col col-leader">{{item.leader}}</text>
           <text class="col col-team">{{item.team}}</text>
           <view class="col col-vote vote-combo">
@@ -329,7 +455,7 @@
         </view>
       </view>
 
-      <view class="bottom-spacer" wx:if="{{phase==='speaking' || (phase==='voting' && !myVoted) || (phase==='mission' && inTeam && !myMissionDone)}}"></view>
+      <view class="bottom-spacer" wx:if="{{phase==='speaking' || (phase==='voting' && !myVoted) || (phase==='mission' && inTeam && !myMissionDone) || (phase==='end' && !(room.game && room.game.endVotes && room.game.endVotes[clientId]))}}"></view>
 
     </view>
 
@@ -408,6 +534,24 @@
           <button class="btn ghost half vote-action-btn" wx:if="{{!isLeader}}" bindtap="onEndSpeak">结束发言</button>
         </view>
       </block>
+    </view>
+  </view>
+
+  <view class="vote-bottom-wrap" wx:if="{{room && !atHome && phase==='end' && !(room.game && room.game.endVotes && room.game.endVotes[clientId])}}">
+    <view class="vote-bottom-card">
+      <text class="vote-bottom-title">进入互评环节，选择后点击玩家，只能送出一个评价</text>
+      <view class="end-vote-tag-row">
+        <view
+          class="end-vote-tag {{selectedEndVoteType===item.value ? 'end-vote-tag-on' : ''}}"
+          wx:for="{{endVoteOptions}}"
+          wx:key="value"
+          data-type="{{item.value}}"
+          bindtap="onPickEndVoteType"
+        >
+          <image class="end-vote-tag-icon" src="{{item.icon}}" mode="aspectFit" />
+          <text class="end-vote-tag-text">{{item.label}}</text>
+        </view>
+      </view>
     </view>
   </view>
 </view>

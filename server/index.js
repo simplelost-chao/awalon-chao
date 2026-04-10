@@ -6,6 +6,7 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const Database = require('better-sqlite3');
+const { defaultRolesForCount } = require('./default-role-config');
 
 const app = express();
 app.use(cors());
@@ -178,6 +179,8 @@ app.post('/api/wx/phone-login', async (req, res) => {
 // In-memory state
 const rooms = new Map();
 const MAX_ROUNDS = 5;
+const FORCE_ROUND_MODE_FIXED_5 = 'fixed5';
+const FORCE_ROUND_MODE_EVIL_PLUS_ONE = 'evil_plus_one';
 const sessions = new Map();
 const parsedReconnectGraceMs = Number(process.env.RECONNECT_GRACE_MS || '');
 const RECONNECT_GRACE_MS =
@@ -231,6 +234,19 @@ userDb.exec(`
   );
   CREATE INDEX IF NOT EXISTS idx_participant_medals_phone ON participant_medals(phone);
   CREATE INDEX IF NOT EXISTS idx_participant_medals_game_id ON participant_medals(game_id);
+  CREATE TABLE IF NOT EXISTS participant_peer_votes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    game_id INTEGER NOT NULL,
+    voter_phone TEXT,
+    voter_client_id TEXT NOT NULL,
+    target_phone TEXT,
+    target_client_id TEXT NOT NULL,
+    vote_type TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    UNIQUE(game_id, voter_client_id)
+  );
+  CREATE INDEX IF NOT EXISTS idx_participant_peer_votes_target_phone ON participant_peer_votes(target_phone);
+  CREATE INDEX IF NOT EXISTS idx_participant_peer_votes_game_id ON participant_peer_votes(game_id);
   CREATE TABLE IF NOT EXISTS active_rooms (
     room_code TEXT PRIMARY KEY,
     snapshot TEXT NOT NULL,
@@ -260,6 +276,9 @@ const getActiveRoomPlayerByPhoneStmt = userDb.prepare(
 );
 const getActiveRoomSnapshotStmt = userDb.prepare(
   'SELECT room_code AS roomCode, snapshot FROM active_rooms WHERE room_code = ?'
+);
+const getAllActiveRoomSnapshotsStmt = userDb.prepare(
+  'SELECT room_code AS roomCode, snapshot FROM active_rooms ORDER BY updated_at DESC'
 );
 const upsertActiveRoomPlayerStmt = userDb.prepare(`
   INSERT INTO active_room_players(phone, room_code, player_id, updated_at)
@@ -309,6 +328,43 @@ const ROLE_FACTIONS = {
   奥伯伦: 'evil',
   爪牙: 'evil',
 };
+
+const EVIL_COUNT_BY_PLAYERS = {
+  5: 2,
+  6: 2,
+  7: 3,
+  8: 3,
+  9: 4,
+  10: 4,
+};
+
+function expectedEvilCount(maxPlayers) {
+  return EVIL_COUNT_BY_PLAYERS[Number(maxPlayers)] || 3;
+}
+
+function countEvilRoles(roles) {
+  return (Array.isArray(roles) ? roles : []).filter((role) => ROLE_FACTIONS[role] === 'evil').length;
+}
+
+function normalizeForceRoundMode(mode) {
+  return mode === FORCE_ROUND_MODE_EVIL_PLUS_ONE ? FORCE_ROUND_MODE_EVIL_PLUS_ONE : FORCE_ROUND_MODE_FIXED_5;
+}
+
+function deriveForcedRound(maxPlayers, roles, mode) {
+  const normalized = normalizeForceRoundMode(mode);
+  if (normalized === FORCE_ROUND_MODE_EVIL_PLUS_ONE) {
+    return Math.max(1, Math.min(MAX_ROUNDS, expectedEvilCount(maxPlayers) + 1));
+  }
+  return MAX_ROUNDS;
+}
+
+function isValidRoleConfig(maxPlayers, roles) {
+  const count = Number(maxPlayers) || 0;
+  if (!Array.isArray(roles) || roles.length !== count) return false;
+  if (!roles.every((role) => typeof role === 'string' && ROLE_FACTIONS[role])) return false;
+  if (!roles.includes('梅林') || !roles.includes('刺客')) return false;
+  return countEvilRoles(roles) === expectedEvilCount(count);
+}
 
 const MEDAL_DEFS = {
   good_blocker: { code: 'good_blocker', name: '挡刀侠', faction: 'good' },
@@ -489,15 +545,22 @@ function createRoom(hostClient, payload) {
     while (rooms.has(roomCode)) roomCode = makeId(5);
   }
 
+  const maxPlayers = Number(payload.maxPlayers || 7);
+  const roles = Array.isArray(payload.roles) && payload.roles.length ? payload.roles : defaultRoles(maxPlayers);
+  if (!isValidRoleConfig(maxPlayers, roles)) return error(hostClient, 'INVALID_ROLE_CONFIG');
+  const forceRoundMode = normalizeForceRoundMode(payload.forceRoundMode);
   const room = {
     code: roomCode,
     hostId: hostClient.id,
     createdAt: now(),
-    maxPlayers: payload.maxPlayers || 7,
-    speakingSeconds: payload.speakingSeconds || 180,
-    roles: payload.roles || defaultRoles(payload.maxPlayers || 7),
+    maxPlayers,
+    speakingSeconds: Number(payload.speakingSeconds) >= 10 ? Number(payload.speakingSeconds) : 120,
+    roles,
     hostRole: payload.hostRole || null,
-    ladyOfLakeEnabled: !!payload.ladyOfLakeEnabled && (payload.maxPlayers || 7) >= 8,
+    ladyOfLakeEnabled: !!payload.ladyOfLakeEnabled && maxPlayers >= 8,
+    evilRoleVisibleEnabled: !!payload.evilRoleVisibleEnabled,
+    forceRoundMode,
+    forceRound: deriveForcedRound(maxPlayers, roles, forceRoundMode),
     seats: [],
     players: new Map(),
     started: false,
@@ -531,6 +594,9 @@ function buildActiveRoomSnapshot(room) {
     roles: room.roles,
     hostRole: room.hostRole || null,
     ladyOfLakeEnabled: !!room.ladyOfLakeEnabled,
+    evilRoleVisibleEnabled: !!room.evilRoleVisibleEnabled,
+    forceRoundMode: room.forceRoundMode || FORCE_ROUND_MODE_FIXED_5,
+    forceRound: room.forceRound || MAX_ROUNDS,
     seats: room.seats,
     started: room.started,
     phase: room.phase,
@@ -589,6 +655,44 @@ function persistActiveRoom(room) {
   persistActiveRoomTx(room.code, JSON.stringify(buildActiveRoomSnapshot(room)), humanPlayers, now());
 }
 
+function hydrateRoomFromSnapshot(snapshot, options = {}) {
+  if (!snapshot || !snapshot.code) return null;
+  const forceHumansOffline = options.forceHumansOffline !== false;
+  const players = (Array.isArray(snapshot.players) ? snapshot.players : []).map((player) => {
+    const next = { ...player };
+    if (!next.isAI && next.phone && forceHumansOffline) {
+      next.offline = true;
+    }
+    return next;
+  });
+  return {
+    code: snapshot.code,
+    hostId: snapshot.hostId || null,
+    createdAt: snapshot.createdAt || now(),
+    maxPlayers: snapshot.maxPlayers || 7,
+    speakingSeconds: snapshot.speakingSeconds || 120,
+    roles: Array.isArray(snapshot.roles) ? snapshot.roles : defaultRoles(snapshot.maxPlayers || 7),
+    hostRole: snapshot.hostRole || null,
+    ladyOfLakeEnabled: !!snapshot.ladyOfLakeEnabled && (snapshot.maxPlayers || 7) >= 8,
+    evilRoleVisibleEnabled: !!snapshot.evilRoleVisibleEnabled,
+    forceRoundMode: normalizeForceRoundMode(snapshot.forceRoundMode),
+    forceRound: deriveForcedRound(
+      snapshot.maxPlayers || 7,
+      Array.isArray(snapshot.roles) ? snapshot.roles : defaultRoles(snapshot.maxPlayers || 7),
+      snapshot.forceRoundMode
+    ),
+    seats: Array.isArray(snapshot.seats) ? snapshot.seats : [],
+    players: new Map(players.map((player) => [player.id, player])),
+    started: !!snapshot.started,
+    phase: snapshot.phase || 'lobby',
+    messages: Array.isArray(snapshot.messages) ? snapshot.messages : [],
+    game: snapshot.game || null,
+    speaking: snapshot.speaking || null,
+    aiNameRegistry: new Set(Array.isArray(snapshot.aiNameRegistry) ? snapshot.aiNameRegistry : []),
+    speakingTimeout: null,
+  };
+}
+
 function resumeActiveRoom(room) {
   if (!room) return;
   if (room.speakingTimeout) {
@@ -645,46 +749,53 @@ function restoreActiveRoomForPhone(phone) {
     return null;
   }
 
-  const room = {
-    code: snapshot.code,
-    hostId: snapshot.hostId || null,
-    createdAt: snapshot.createdAt || now(),
-    maxPlayers: snapshot.maxPlayers || 7,
-    speakingSeconds: snapshot.speakingSeconds || 180,
-    roles: Array.isArray(snapshot.roles) ? snapshot.roles : defaultRoles(snapshot.maxPlayers || 7),
-    hostRole: snapshot.hostRole || null,
-    ladyOfLakeEnabled: !!snapshot.ladyOfLakeEnabled && (snapshot.maxPlayers || 7) >= 8,
-    seats: Array.isArray(snapshot.seats) ? snapshot.seats : [],
-    players: new Map((Array.isArray(snapshot.players) ? snapshot.players : []).map((player) => [player.id, player])),
-    started: !!snapshot.started,
-    phase: snapshot.phase || 'lobby',
-    messages: Array.isArray(snapshot.messages) ? snapshot.messages : [],
-    game: snapshot.game || null,
-    speaking: snapshot.speaking || null,
-    aiNameRegistry: new Set(Array.isArray(snapshot.aiNameRegistry) ? snapshot.aiNameRegistry : []),
-    speakingTimeout: null,
-  };
+  const room = hydrateRoomFromSnapshot(snapshot, { forceHumansOffline: true });
+  if (!room) {
+    deleteActiveRoom(ref.roomCode);
+    return null;
+  }
   rooms.set(room.code, room);
   syncClientSeqWithRoom(room);
   resumeActiveRoom(room);
   return room;
 }
 
+function loadPersistedActiveRooms() {
+  const rows = getAllActiveRoomSnapshotsStmt.all();
+  for (const row of rows) {
+    if (!row || !row.snapshot) continue;
+    let snapshot = null;
+    try {
+      snapshot = JSON.parse(row.snapshot);
+    } catch (e) {
+      if (row.roomCode) deleteActiveRoom(row.roomCode);
+      continue;
+    }
+    const room = hydrateRoomFromSnapshot(snapshot, { forceHumansOffline: true });
+    if (!room || !room.code || rooms.has(room.code)) continue;
+    rooms.set(room.code, room);
+    syncClientSeqWithRoom(room);
+    resumeActiveRoom(room);
+  }
+}
+
 function defaultRoles(count) {
-  // user-defined defaults
-  if (count === 6) return ['梅林', '派西维尔', '莫甘娜', '刺客', '忠臣', '忠臣'];
-  if (count === 7) return ['梅林', '派西维尔', '莫甘娜', '刺客', '忠臣', '忠臣', '奥伯伦'];
-  if (count === 8) return ['梅林', '派西维尔', '莫甘娜', '刺客', '爪牙', '忠臣', '忠臣', '忠臣'];
-  if (count === 9) return padRoles(['梅林', '派西维尔', '莫甘娜', '莫德雷德', '奥伯伦', '忠臣', '忠臣', '忠臣'], count);
-  if (count === 10) return padRoles(['梅林', '派西维尔', '莫甘娜', '莫德雷德', '刺客', '奥伯伦', '忠臣', '忠臣', '忠臣'], count);
-  // fallback
-  return Array.from({ length: count }, () => '忠臣');
+  return defaultRolesForCount(count);
 }
 
 function padRoles(roles, count) {
   const out = roles.slice();
   while (out.length < count) out.push('忠臣');
   return out;
+}
+
+function isSpectatorPlayer(player) {
+  return !!(player && player.spectator);
+}
+
+function countSeatedPlayers(room) {
+  if (!room || !Array.isArray(room.seats)) return 0;
+  return room.seats.filter((id) => !!id).length;
 }
 
 function joinRoom(client, payload) {
@@ -701,10 +812,10 @@ function joinRoom(client, payload) {
     takeOverRoomPlayer(client, room, existingPlayer);
     return ok(client, { roomCode: room.code, recovered: true });
   }
-  if (room.players.size >= room.maxPlayers) return error(client, 'ROOM_FULL');
+  const forceSpectator = !!room.started || countSeatedPlayers(room) >= room.maxPlayers || payload.avatar === '👀';
   const user = getOrCreateUser(client.userPhone);
   const nickname = (payload.nickname || user.nickname || '玩家').slice(0, 12);
-  const avatar = payload.avatar || user.avatar || '🐺';
+  const avatar = forceSpectator ? '👀' : (payload.avatar || user.avatar || '🐺');
 
   room.players.set(client.id, {
     id: client.id,
@@ -714,11 +825,12 @@ function joinRoom(client, payload) {
     seat: null,
     joinedAt: now(),
     isAI: false,
+    spectator: forceSpectator,
     offline: false,
   });
   client.roomCode = room.code;
   broadcastRoom(room);
-  return ok(client, { roomCode: room.code });
+  return ok(client, { roomCode: room.code, spectator: forceSpectator });
 }
 
 function leaveRoom(client) {
@@ -756,7 +868,7 @@ function removePlayerById(room, playerId) {
   broadcastRoom(room);
 }
 
-function scheduleReconnectRemoval(roomCode, playerId, phone) {
+function scheduleReconnectOfflineMark(roomCode, playerId, phone) {
   clearReconnectEntry(phone);
   const expiresAt = now() + RECONNECT_GRACE_MS;
   const timer = setTimeout(() => {
@@ -767,8 +879,10 @@ function scheduleReconnectRemoval(roomCode, playerId, phone) {
     const room = rooms.get(roomCode);
     if (!room) return;
     const player = room.players.get(playerId);
-    if (!player || !player.offline) return;
-    removePlayerById(room, playerId);
+    if (!player || player.offline) return;
+    player.offline = true;
+    persistActiveRoom(room);
+    broadcastRoom(room);
   }, RECONNECT_GRACE_MS);
   reconnectEntries.set(phone, { roomCode, playerId, expiresAt, timer });
 }
@@ -858,10 +972,10 @@ function handleSocketClose(client) {
     return;
   }
 
-  player.offline = true;
+  player.offline = false;
   player.lastDisconnectedAt = now();
-  scheduleReconnectRemoval(room.code, player.id, player.phone);
-  broadcastRoom(room);
+  persistActiveRoom(room);
+  scheduleReconnectOfflineMark(room.code, player.id, player.phone);
 }
 
 function setProfile(client, payload) {
@@ -929,7 +1043,18 @@ function buildGameHistoryPayload(room) {
     recaps: room.game.recaps || [],
     evilIntel: room.game.evilIntel || [],
     ladyOfLake: room.game.ladyOfLake || null,
+    endVotes: room.game.endVotes || {},
   };
+}
+
+function buildSeatSnapshot(room) {
+  const out = {};
+  const seats = Array.isArray(room && room.seats) ? room.seats : [];
+  seats.forEach((id, idx) => {
+    if (!id) return;
+    out[id] = idx + 1;
+  });
+  return out;
 }
 
 function toSeatNoMap(payload) {
@@ -1224,6 +1349,39 @@ function persistGameHistory(room) {
   }
 }
 
+function savePeerVoteForHistory(room, voterId, targetId, voteType) {
+  if (!room || !room.game || !room.game.historyId) return;
+  const voter = room.players.get(voterId);
+  const target = room.players.get(targetId);
+  if (!voter || !target) return;
+  try {
+    userDb
+      .prepare(
+        `INSERT OR REPLACE INTO participant_peer_votes(
+           game_id, voter_phone, voter_client_id, target_phone, target_client_id, vote_type, created_at
+         ) VALUES(?,?,?,?,?,?,?)`
+      )
+      .run(
+        room.game.historyId,
+        voter.phone || null,
+        voter.id,
+        target.phone || null,
+        target.id,
+        voteType,
+        now()
+      );
+  } catch (e) {}
+}
+
+function summarizePeerVotes(rows) {
+  const summary = { c_le: 0, blame: 0, effort: 0 };
+  for (const row of rows || []) {
+    const key = String(row.voteType || row.vote_type || '');
+    if (summary[key] !== undefined) summary[key] += 1;
+  }
+  return summary;
+}
+
 function getHistoryListForPhone(phone, limit = 30, offset = 0) {
   const stmt = userDb.prepare(
     `SELECT
@@ -1244,7 +1402,12 @@ function getHistoryListForPhone(phone, limit = 30, offset = 0) {
          SELECT GROUP_CONCAT(pm.medal_name, '|')
          FROM participant_medals pm
          WHERE pm.game_id = gp.game_id AND pm.phone = gp.phone
-       ) AS medalNames
+       ) AS medalNames,
+       (
+         SELECT GROUP_CONCAT(ppv.vote_type, '|')
+         FROM participant_peer_votes ppv
+         WHERE ppv.game_id = gp.game_id AND ppv.target_phone = gp.phone
+       ) AS peerVoteTypes
      FROM game_participants gp
      JOIN game_records gr ON gr.id = gp.game_id
      WHERE gp.phone = ?
@@ -1259,6 +1422,11 @@ function getHistoryListForPhone(phone, limit = 30, offset = 0) {
           name: (row.medalNames ? row.medalNames.split('|')[idx] : '') || (MEDAL_DEFS[code] && MEDAL_DEFS[code].name) || code,
         }))
       : [],
+    peerVotes: summarizePeerVotes(
+      row.peerVoteTypes
+        ? row.peerVoteTypes.split('|').filter(Boolean).map((voteType) => ({ voteType }))
+        : []
+    ),
   }));
 }
 
@@ -1292,12 +1460,30 @@ function getHistoryDetailForPhone(phone, gameId) {
        ORDER BY id ASC`
     )
     .all(gameId, phone);
+  const peerVoteRows = userDb
+    .prepare(
+      `SELECT target_client_id AS targetId, vote_type AS voteType
+       FROM participant_peer_votes
+       WHERE game_id = ?
+       ORDER BY id ASC`
+    )
+    .all(gameId);
+  const myVote = userDb
+    .prepare(
+      `SELECT target_client_id AS targetId, vote_type AS voteType
+       FROM participant_peer_votes
+       WHERE game_id = ? AND voter_phone = ?
+       LIMIT 1`
+    )
+    .get(gameId, phone) || null;
   return {
     gameId,
     myRole: row.myRole,
     myResult: row.myResult,
     mySeat: row.mySeat,
     medals,
+    peerVotes: peerVoteRows,
+    myVote,
     detail: payload,
   };
 }
@@ -1315,11 +1501,29 @@ function getRoleStatsForPhone(phone) {
        ORDER BY total DESC, role ASC`
     )
     .all(phone);
+  const receivedVoteByRoleRows = userDb
+    .prepare(
+      `SELECT gp.role AS role, ppv.vote_type AS voteType, COUNT(1) AS total
+       FROM participant_peer_votes ppv
+       JOIN game_participants gp
+         ON gp.game_id = ppv.game_id
+        AND gp.client_id = ppv.target_client_id
+       WHERE gp.phone = ?
+       GROUP BY gp.role, ppv.vote_type`
+    )
+    .all(phone);
+  const receivedVoteByRole = new Map();
+  for (const row of receivedVoteByRoleRows) {
+    const role = row.role || '';
+    if (!receivedVoteByRole.has(role)) receivedVoteByRole.set(role, { c_le: 0, blame: 0, effort: 0 });
+    const target = receivedVoteByRole.get(role);
+    if (target[row.voteType] !== undefined) target[row.voteType] = Number(row.total || 0);
+  }
   const byRole = rows.map((r) => {
     const total = Number(r.total || 0);
     const wins = Number(r.wins || 0);
     const winRate = total > 0 ? Number(((wins / total) * 100).toFixed(1)) : 0;
-    return { role: r.role, total, wins, winRate };
+    return { role: r.role, total, wins, winRate, receivedVotes: receivedVoteByRole.get(r.role) || { c_le: 0, blame: 0, effort: 0 } };
   });
   const totalGames = byRole.reduce((s, r) => s + r.total, 0);
   const totalWins = byRole.reduce((s, r) => s + r.wins, 0);
@@ -1343,7 +1547,18 @@ function getRoleStatsForPhone(phone) {
     };
   });
   const totalMedals = medals.reduce((s, m) => s + m.total, 0);
-  return { totalGames, totalWins, overallWinRate, byRole, medals, totalMedals };
+  const receivedVoteRows = userDb
+    .prepare(
+      `SELECT vote_type AS voteType, COUNT(1) AS total
+       FROM participant_peer_votes
+       WHERE target_phone = ?
+       GROUP BY vote_type
+       ORDER BY total DESC, vote_type ASC`
+    )
+    .all(phone);
+  const receivedVotes = summarizePeerVotes(receivedVoteRows);
+  const receivedVoteTotal = Object.values(receivedVotes).reduce((sum, value) => sum + Number(value || 0), 0);
+  return { totalGames, totalWins, overallWinRate, byRole, medals, totalMedals, receivedVotes, receivedVoteTotal };
 }
 
 function fetchHistoryList(client, payload) {
@@ -1425,7 +1640,7 @@ function updateSettings(client, payload) {
   if (room.hostId !== client.id) return error(client, 'HOST_ONLY');
   if (room.started) return error(client, 'ALREADY_STARTED');
 
-  if (payload.maxPlayers && payload.maxPlayers >= room.players.size && payload.maxPlayers <= 10) {
+  if (payload.maxPlayers && payload.maxPlayers >= countSeatedPlayers(room) && payload.maxPlayers <= 10) {
     room.maxPlayers = payload.maxPlayers;
     while (room.seats.length > room.maxPlayers) room.seats.pop();
     if (room.maxPlayers < 8) room.ladyOfLakeEnabled = false;
@@ -1433,7 +1648,8 @@ function updateSettings(client, payload) {
   if (payload.speakingSeconds && payload.speakingSeconds >= 10 && payload.speakingSeconds <= 300) {
     room.speakingSeconds = payload.speakingSeconds;
   }
-  if (Array.isArray(payload.roles) && payload.roles.length === room.maxPlayers) {
+  if (payload.roles !== undefined) {
+    if (!isValidRoleConfig(room.maxPlayers, payload.roles)) return error(client, 'INVALID_ROLE_CONFIG');
     room.roles = payload.roles;
   }
   if (payload.hostRole !== undefined) {
@@ -1447,6 +1663,16 @@ function updateSettings(client, payload) {
   if (payload.ladyOfLakeEnabled !== undefined) {
     room.ladyOfLakeEnabled = !!payload.ladyOfLakeEnabled && room.maxPlayers >= 8;
   }
+  if (payload.evilRoleVisibleEnabled !== undefined) {
+    room.evilRoleVisibleEnabled = !!payload.evilRoleVisibleEnabled;
+  }
+  if (payload.forceRoundMode !== undefined) {
+    room.forceRoundMode = normalizeForceRoundMode(payload.forceRoundMode);
+  }
+  room.forceRound = deriveForcedRound(room.maxPlayers, room.roles, room.forceRoundMode);
+  if (room.hostRole && !room.roles.includes(room.hostRole)) {
+    room.hostRole = null;
+  }
   broadcastRoom(room);
 }
 
@@ -1458,7 +1684,7 @@ function startGame(client) {
   // auto-seat humans, then fill AI for empty seats
   autoSeatHumans(room);
   fillAiPlayers(room);
-  if (room.players.size < 5) return error(client, 'NOT_ENOUGH_PLAYERS');
+  if (countSeatedPlayers(room) < 5) return error(client, 'NOT_ENOUGH_PLAYERS');
   if (!room.seats.every((id) => id)) return error(client, 'SEATS_NOT_FULL');
 
   room.started = true;
@@ -1470,6 +1696,7 @@ function startGame(client) {
     const holder = room.players.get(room.game.ladyOfLake.holderId);
     room.messages.push({ ts: now(), from: '系统', text: `本局开启湖中仙女，初始持有者为 ${holder ? holder.nickname : '未知玩家'}` });
   }
+  room.messages.push({ ts: now(), from: '系统', text: `本局强制轮为第${room.forceRound || MAX_ROUNDS}次组队` });
   broadcastRoom(room);
   sendPrivateRoles(room);
   const leader = room.players.get(room.game.leaderId);
@@ -1500,7 +1727,7 @@ function redealIdentities(client) {
   if (!room) return;
   if (room.hostId !== client.id) return error(client, 'HOST_ONLY');
   if (!room.started) return error(client, 'NOT_STARTED');
-  if (!room.seats.every((id) => id) || room.players.size < 5) return error(client, 'SEATS_NOT_FULL');
+  if (!room.seats.every((id) => id) || countSeatedPlayers(room) < 5) return error(client, 'SEATS_NOT_FULL');
 
   if (room.speakingTimeout) clearTimeout(room.speakingTimeout);
   room.speakingTimeout = null;
@@ -1678,6 +1905,26 @@ function executeMission(client, payload) {
   broadcastRoom(room);
 }
 
+function endPlayerVote(client, payload) {
+  if (!requireAuth(client)) return error(client, 'NEED_LOGIN');
+  const room = rooms.get(client.roomCode);
+  if (!room || !room.game) return error(client, 'ROOM_NOT_FOUND');
+  if (room.phase !== 'end') return error(client, 'NOT_END_PHASE');
+  const targetId = String((payload && payload.targetId) || '');
+  const voteType = String((payload && payload.voteType) || '');
+  if (!targetId || !room.players.has(targetId) || targetId === client.id) return error(client, 'INVALID_TARGET');
+  if (!['c_le', 'blame', 'effort'].includes(voteType)) return error(client, 'INVALID_VOTE_TYPE');
+  if (!room.game.endVotes) room.game.endVotes = {};
+  if (room.game.endVotes[client.id]) return error(client, 'END_VOTE_ALREADY_CAST');
+  room.game.endVotes[client.id] = {
+    targetId,
+    voteType,
+    createdAt: now(),
+  };
+  savePeerVoteForHistory(room, client.id, targetId, voteType);
+  broadcastRoom(room);
+}
+
 function broadcastRoom(room) {
   persistActiveRoom(room);
   const payload = {
@@ -1701,6 +1948,9 @@ function publicRoom(room) {
     roles: room.roles,
     hostRole: room.hostRole || null,
     ladyOfLakeEnabled: !!room.ladyOfLakeEnabled,
+    evilRoleVisibleEnabled: !!room.evilRoleVisibleEnabled,
+    forceRoundMode: room.forceRoundMode || FORCE_ROUND_MODE_FIXED_5,
+    forceRound: room.forceRound || MAX_ROUNDS,
     started: room.started,
     phase: room.phase,
     speaking: room.speaking || null,
@@ -1744,9 +1994,11 @@ function publicGame(room) {
     assassination: room.game.assassination || null,
     recap: room.game.recap || [],
     evilIntel: room.game.evilIntel || [],
+    endVotes: room.game.endVotes || {},
     ladyOfLake,
     trust: room.game.trust || {},
     latestEarnedMedals: room.game.latestEarnedMedals || {},
+    endVotes: room.game.endVotes || {},
   };
 }
 
@@ -1774,7 +2026,7 @@ function viewRole(client) {
   const room = rooms.get(client.roomCode);
   if (!room || !room.game) return;
   const myRole = room.game.assignments[client.id];
-  const info = { role: myRole, seats: [] };
+  const info = { role: myRole, seats: [], roleDetails: {} };
   if (myRole === '派西维尔') {
     // Merlin + Morgana seats (two thumbs)
     const seats = [];
@@ -1801,7 +2053,12 @@ function viewRole(client) {
     for (const id of Object.keys(room.game.assignments)) {
       const r = room.game.assignments[id];
       // evil do not see Oberon, and Oberon does not see them
-      if (ROLE_FACTIONS[r] === 'evil' && r !== '奥伯伦' && id !== client.id) seats.push(seatNumber(room, id));
+      if (ROLE_FACTIONS[r] === 'evil' && r !== '奥伯伦' && id !== client.id) {
+        seats.push(seatNumber(room, id));
+        if (room.evilRoleVisibleEnabled) {
+          info.roleDetails[id] = r;
+        }
+      }
     }
     info.seats = seats.filter(Boolean);
   }
@@ -1851,6 +2108,7 @@ function startGameState(room) {
     assassination: null,
     revealedEvil: null,
     winner: null,
+    endVotes: {},
     ladyOfLake:
       room.ladyOfLakeEnabled && room.maxPlayers >= 8
         ? {
@@ -2038,12 +2296,14 @@ function resolveVote(room) {
   const approves = allIds.filter((id) => votes[id]).length;
   const rejects = allIds.length - approves;
   const approved = approves > rejects;
+  const seatSnapshot = buildSeatSnapshot(room);
   room.game.voteHistory.push({
     round: room.game.round,
     attempt: room.game.attempt,
     leaderId: room.game.leaderId,
     team: room.game.team,
     votes: { ...votes },
+    seatSnapshot,
     approves,
     rejects,
     approved,
@@ -2056,14 +2316,19 @@ function resolveVote(room) {
   } else {
     room.game.rejectsInRow += 1;
     room.messages.push({ ts: now(), from: '系统', text: `队伍被否决（${approves}赞成 / ${rejects}反对）` });
-    if (room.game.rejectsInRow >= 5) {
+    const forceRound = room.forceRound || MAX_ROUNDS;
+    if (Number(room.game.attempt || 0) >= forceRound) {
       room.phase = 'end';
       revealAll(room);
       room.game.winner = 'evil';
       recordGameSummary(room, 'evil');
       generateRecaps(room);
       persistGameHistory(room);
-      room.messages.push({ ts: now(), from: '系统', text: '连续5次否决，坏人阵营胜利（已亮明身份）' });
+      room.messages.push({
+        ts: now(),
+        from: '系统',
+        text: `强制组队第${forceRound}次未能发车，坏人阵营胜利（已亮明身份）`,
+      });
     } else {
       nextLeader(room);
       room.game.attempt += 1;
@@ -2103,12 +2368,14 @@ function resolveMission(room) {
   const fails = teamIds.filter((id) => votes[id]).length;
   const needFail = getFailRequirement(room);
   const success = fails < needFail;
+  const seatSnapshot = buildSeatSnapshot(room);
   room.game.missionHistory.push({
     round: room.game.round,
     team: teamIds,
     fails,
     needFail,
     missionVotes: { ...votes },
+    seatSnapshot,
     success,
   });
   room.messages.push({
@@ -2134,6 +2401,17 @@ function resolveMission(room) {
     room.messages.push({ ts: now(), from: '系统', text: '坏人阵营胜利（已亮明身份）' });
   } else {
     const completedRound = room.game.round;
+    if (completedRound >= MAX_ROUNDS) {
+      room.phase = 'end';
+      revealAll(room);
+      room.game.winner = 'evil';
+      recordGameSummary(room, 'evil');
+      generateRecaps(room);
+      persistGameHistory(room);
+      room.messages.push({ ts: now(), from: '系统', text: '任务轮次已耗尽，坏人阵营胜利（已亮明身份）' });
+      broadcastRoom(room);
+      return;
+    }
     room.game.round += 1;
     room.game.attempt = 1;
     room.game.rejectsInRow = 0;
@@ -2178,7 +2456,7 @@ function setSpeakingStart(room) {
 
 function fillAiPlayers(room) {
   const existingCount = room.players.size;
-  const toAdd = room.maxPlayers - existingCount;
+  const toAdd = room.maxPlayers - countSeatedPlayers(room);
   if (toAdd <= 0) return;
   const usedNames = new Set(Array.from(room.players.values()).map((p) => p.nickname));
   if (room.aiNameRegistry) {
@@ -2219,7 +2497,7 @@ function fillAiPlayers(room) {
 function autoSeatHumans(room) {
   while (room.seats.length < room.maxPlayers) room.seats.push(null);
   const seated = new Set(room.seats.filter((id) => id));
-  const humans = Array.from(room.players.values()).filter((p) => !p.isAI);
+  const humans = Array.from(room.players.values()).filter((p) => !p.isAI && !isSpectatorPlayer(p));
   for (const p of humans) {
     if (p.seat !== null && p.seat !== undefined) continue;
     if (seated.has(p.id)) continue;
@@ -3407,6 +3685,9 @@ wss.on('connection', (ws) => {
       case 'ASSASSINATE':
         assassinate(client, payload || {});
         break;
+      case 'END_PLAYER_VOTE':
+        endPlayerVote(client, payload || {});
+        break;
       case 'SPEAK':
         speak(client, payload || {});
         break;
@@ -3436,6 +3717,8 @@ wss.on('connection', (ws) => {
     }
   });
 });
+
+loadPersistedActiveRooms();
 
 server.listen(PORT, () => {
   console.log(`Avalon server running on :${PORT}`);

@@ -1,5 +1,6 @@
 const socket = require("../../utils/socket");
 const { decorateMedals } = require("../../utils/medals");
+const { defaultRolesForCount } = require("../../utils/default-role-config");
 
 const ROLE_IMAGE_MAP = {
   梅林: "https://www.awalon.top/mp-assets/role-split/merlin.png",
@@ -16,7 +17,30 @@ const ROLE_IMAGE_MAP = {
 };
 
 const EVIL_ROLES = new Set(["刺客", "莫甘娜", "莫德雷德", "奥伯伦", "爪牙", "兰斯洛特（邪恶）"]);
-const ROLE_ORDER = ["梅林", "派西维尔", "忠臣", "兰斯洛特（正义）", "刺客", "莫甘娜", "莫德雷德", "奥伯伦", "爪牙", "兰斯洛特（邪恶）"];
+const ROLE_ORDER = ["梅林", "派西维尔", "忠臣", "刺客", "莫甘娜", "莫德雷德", "奥伯伦", "爪牙"];
+const FORCE_ROUND_OPTIONS = [
+  { value: "fixed5", label: "第5次组队判负" },
+  { value: "evil_plus_one", label: "第(匪徒数+1)次组队判负" }
+];
+const SPEAKING_SECONDS_OPTIONS = [60, 90, 120, 180];
+const END_VOTE_OPTIONS = [
+  { value: "c_le", label: "C麻了", icon: "/assets/comments/c.png" },
+  { value: "blame", label: "背锅侠", icon: "/assets/comments/guo.png" },
+  { value: "effort", label: "尽力位", icon: "/assets/comments/try.png" }
+];
+const ROLE_DESCRIPTION_MAP = {
+  梅林: "知道大部分坏人身份，但必须隐藏自己，避免在终局被刺客识破。",
+  派西维尔: "能看到梅林与莫甘娜，但无法区分谁是真梅林，职责是保护关键好人位。",
+  忠臣: "没有额外信息，依靠发言、投票和任务结果帮助好人阵营推进。",
+  "亚瑟的忠臣": "没有额外信息，依靠发言、投票和任务结果帮助好人阵营推进。",
+  "兰斯洛特（正义）": "特殊规则角色，可能带来阵营扰动，需要结合局势判断信息真伪。",
+  刺客: "坏人核心角色。若好人先完成三次任务成功，刺客仍可通过刺杀梅林翻盘。",
+  莫甘娜: "会被派西维尔误认为可能的梅林，适合伪装和带偏判断。",
+  莫德雷德: "通常不会被梅林看到，隐蔽性强，适合潜伏带队或控场。",
+  奥伯伦: "属于坏人阵营，但通常不与其他坏人互通信息，容易形成信息断层。",
+  爪牙: "标准坏人位，没有额外能力，主要负责配合队友制造失败任务和混淆视角。",
+  "兰斯洛特（邪恶）": "特殊规则角色，阵营关系更复杂，需要结合对局规则和信息变化判断。"
+};
 
 Page({
   data: {
@@ -33,7 +57,10 @@ Page({
     avatar: "🐺",
     avatarImage: "",
     avatarText: "🐺",
+    shareImagePath: "",
+    shareImageKey: "",
     roomCodeInput: "",
+    pendingShareRoomCode: "",
     atHome: true,
     maxPlayersOptions: ["5人", "6人", "7人", "8人", "9人", "10人"],
     maxPlayersIndex: 2,
@@ -42,6 +69,13 @@ Page({
     hostRole: "随机",
     hostRoleOptions: [],
     ladyOfLakeEnabled: false,
+    speakingSeconds: 120,
+    speakingSecondsOptions: SPEAKING_SECONDS_OPTIONS,
+    evilRoleVisibleEnabled: false,
+    forceRoundMode: "fixed5",
+    forceRoundOptions: FORCE_ROUND_OPTIONS,
+    endVoteOptions: END_VOTE_OPTIONS,
+    showAdvancedSettings: false,
     room: null,
     teamPhaseKey: "",
     seatSlots: [],
@@ -57,9 +91,12 @@ Page({
     teamConfirmed: false,
     leaderActionText: "提交队伍",
     leaderActionDisabled: true,
+    leaderActionClass: "",
     teamCandidates: [],
     currentVoteTeam: [],
     selectedAssassinate: "",
+    selectedEndVoteType: "",
+    endVoteResultGroups: [],
     speakText: "",
     speakingSeat: 0,
     speakingRemainingSec: 0,
@@ -90,6 +127,9 @@ Page({
     ladyHistory: [],
     ladyTargets: [],
     roomConfigLines: [],
+    roomRoleCards: [],
+    advancedRoleSummary: "",
+    advancedQuotaText: "",
     playerCards: [],
     historyPage: 1,
     historyList: [],
@@ -108,12 +148,13 @@ Page({
     showCenterResult: false,
     centerResultText: "",
     centerResultSub: "",
+    isCurrentForcedAttempt: false,
     endMedals: [],
     loginTip: "请先登录，再做后续房间功能迁移。",
     roomTip: "登录后可创建或加入房间。"
   },
 
-  onLoad() {
+  onLoad(options) {
     const app = getApp();
     const wsUrl = app.globalData.wsUrl;
     const nav = app.globalData.nav || {};
@@ -121,6 +162,7 @@ Page({
     const nickname = wx.getStorageSync("awalonNickname") || "";
     const avatar = wx.getStorageSync("awalonAvatar") || "🐺";
     const avatarMeta = this.avatarMeta(avatar);
+    const sharedRoomCode = this.normalizeRoomCode(options && options.roomCode);
     this.setData({
       wsUrl,
       authToken: token,
@@ -131,13 +173,21 @@ Page({
       statusBarHeight: nav.statusBarHeight || 20,
       navBarHeight: nav.navBarHeight || 44,
       navTotalHeight: nav.navTotalHeight || 64,
+      roomCodeInput: sharedRoomCode || "",
+      pendingShareRoomCode: sharedRoomCode || "",
       allRoleOptions: ROLE_ORDER.map((role) => ({
         role,
         image: this.roleImageFor(role)
       })),
       selectedRoles: this.defaultRolesForCount(7),
-      hostRoleOptions: this.withRoleImages(this.uniqueRoles(this.defaultRolesForCount(7)))
+      hostRoleOptions: this.withRoleImages(this.uniqueRoles(this.defaultRolesForCount(7))),
+      advancedRoleSummary: this.formatAdvancedRoleSummary(this.defaultRolesForCount(7)),
+      advancedQuotaText: this.formatAdvancedQuotaText(7)
     });
+    if (sharedRoomCode) {
+      this.setData({ roomTip: `已识别分享房间 ${sharedRoomCode}，登录后将自动加入。` });
+    }
+    this.ensureShareInviteImage(null);
     this.connect(wsUrl);
     this._speakTicker = setInterval(() => {
       if (this.data.room && this.data.phase === "speaking") {
@@ -167,6 +217,432 @@ Page({
     if (this._cheatReqTimer) {
       clearTimeout(this._cheatReqTimer);
       this._cheatReqTimer = null;
+    }
+  },
+
+  normalizeRoomCode(roomCode) {
+    const code = String(roomCode || "").trim();
+    return /^\d{5}$/.test(code) ? code : "";
+  },
+
+  getSeatNo(room, playerId, snapshot) {
+    if (!playerId) return null;
+    const snapSeat = Number(snapshot && snapshot[playerId]);
+    if (Number.isFinite(snapSeat) && snapSeat > 0) return snapSeat;
+    const players = Array.isArray(room && room.players) ? room.players : [];
+    const player = players.find((item) => item && item.id === playerId);
+    if (player && Number.isFinite(player.seat)) return player.seat + 1;
+    const seats = Array.isArray(room && room.seats) ? room.seats : [];
+    const seatIndex = seats.findIndex((id) => id === playerId);
+    return seatIndex >= 0 ? seatIndex + 1 : null;
+  },
+
+  formatSeatList(room, ids, snapshot) {
+    const seats = (Array.isArray(ids) ? ids : [])
+      .map((id) => this.getSeatNo(room, id, snapshot))
+      .filter((seat) => Number.isFinite(seat) && seat > 0)
+      .sort((a, b) => a - b);
+    return seats.length ? seats.join(",") : "?";
+  },
+
+  isSpectatorInRoom(room, playerId) {
+    if (!room || !playerId || !Array.isArray(room.players)) return false;
+    const player = room.players.find((item) => item && item.id === playerId);
+    if (!player) return false;
+    if (player.spectator) return true;
+    const seat = Number.isFinite(player.seat) ? player.seat + 1 : this.getSeatNo(room, playerId, null);
+    return !seat || seat <= 0 || player.avatar === "👀";
+  },
+
+  getEndVoteOption(voteType) {
+    return END_VOTE_OPTIONS.find((item) => item.value === voteType) || null;
+  },
+
+  tryJoinPendingSharedRoom() {
+    const roomCode = this.normalizeRoomCode(this.data.pendingShareRoomCode);
+    if (!roomCode || !this.data.loggedIn || this.data.room) return false;
+    this.send("JOIN_ROOM", { roomCode, avatar: this.data.avatar || "🐺" });
+    this.setData({
+      pendingShareRoomCode: "",
+      roomCodeInput: roomCode,
+      atHome: false,
+      roomTip: `加入房间 ${roomCode} 请求已发送...`
+    });
+    return true;
+  },
+
+  buildSharePayload() {
+    const room = this.data.room || null;
+    const roomCode = this.normalizeRoomCode(room && room.code);
+    const modeText = room && room.ladyOfLakeEnabled ? "湖中仙女" : "标准局";
+    const playerText = room && room.maxPlayers ? `${room.maxPlayers}人局` : "";
+    const title = roomCode
+      ? `${playerText} · ${modeText}｜房间 ${roomCode}，点击直接加入`
+      : "来 Awalon 一起开一局";
+    const path = roomCode ? `/pages/index/index?roomCode=${roomCode}` : "/pages/index/index";
+    return {
+      title,
+      path,
+      query: roomCode ? `roomCode=${roomCode}` : "",
+      imageUrl: this.data.shareImagePath || ""
+    };
+  },
+
+  async resolveShareAvatarPath() {
+    const avatarUrl = this.data.avatarImage || "";
+    if (!avatarUrl) return "";
+    try {
+      const info = await new Promise((resolve, reject) => {
+        wx.getImageInfo({
+          src: avatarUrl,
+          success: resolve,
+          fail: reject
+        });
+      });
+      return (info && info.path) || "";
+    } catch (err) {
+      return "";
+    }
+  },
+
+  drawRoundRect(ctx, x, y, width, height, radius) {
+    const r = Math.min(radius, width / 2, height / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + width, y, x + width, y + height, r);
+    ctx.arcTo(x + width, y + height, x, y + height, r);
+    ctx.arcTo(x, y + height, x, y, r);
+    ctx.arcTo(x, y, x + width, y, r);
+    ctx.closePath();
+  },
+
+  getCanvas2DNode(selector, width, height) {
+    return new Promise((resolve, reject) => {
+      const query = wx.createSelectorQuery().in(this);
+      query.select(selector).fields({ node: true, size: true }).exec((res) => {
+        const item = res && res[0];
+        const canvas = item && item.node;
+        if (!canvas) {
+          reject(new Error(`CANVAS_NOT_FOUND:${selector}`));
+          return;
+        }
+        const dpr = (wx.getWindowInfo && wx.getWindowInfo().pixelRatio) || wx.getSystemInfoSync().pixelRatio || 1;
+        canvas.width = Math.round(width * dpr);
+        canvas.height = Math.round(height * dpr);
+        const ctx = canvas.getContext("2d");
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, width, height);
+        resolve({ canvas, ctx, dpr });
+      });
+    });
+  },
+
+  loadCanvasImage(canvas, src) {
+    return new Promise((resolve, reject) => {
+      const image = canvas.createImage();
+      image.onload = () => resolve(image);
+      image.onerror = reject;
+      image.src = src;
+    });
+  },
+
+  exportCanvasTempFile(canvas, width, height, quality) {
+    return new Promise((resolve, reject) => {
+      wx.canvasToTempFilePath({
+        canvas,
+        x: 0,
+        y: 0,
+        width,
+        height,
+        destWidth: width,
+        destHeight: height,
+        fileType: "jpg",
+        quality,
+        success: (res) => resolve(res.tempFilePath),
+        fail: reject
+      });
+    });
+  },
+
+  async drawShareInviteCard(room, options) {
+    const { canvas, ctx } = await this.getCanvas2DNode("#shareInviteCanvas", options.width, options.height);
+    const avatarPath = options.avatarPath || "";
+
+    const bg = ctx.createLinearGradient(0, 0, options.width, options.height);
+    options.backgroundStops.forEach(([offset, color]) => bg.addColorStop(offset, color));
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, options.width, options.height);
+
+    if (options.glow) {
+      const glow = ctx.createRadialGradient(
+        options.glow.innerX,
+        options.glow.innerY,
+        options.glow.innerRadius,
+        options.glow.outerX,
+        options.glow.outerY,
+        options.glow.outerRadius
+      );
+      options.glow.stops.forEach(([offset, color]) => glow.addColorStop(offset, color));
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, options.width, options.height);
+    }
+
+    ctx.fillStyle = options.cardFill;
+    this.drawRoundRect(ctx, options.cardRect.x, options.cardRect.y, options.cardRect.width, options.cardRect.height, options.cardRect.radius);
+    ctx.fill();
+
+    ctx.strokeStyle = options.cardStroke;
+    ctx.lineWidth = options.cardStrokeWidth;
+    this.drawRoundRect(ctx, options.cardRect.x, options.cardRect.y, options.cardRect.width, options.cardRect.height, options.cardRect.radius);
+    ctx.stroke();
+
+    if (options.innerStrokeRect) {
+      ctx.strokeStyle = options.innerStrokeColor;
+      ctx.lineWidth = options.innerStrokeWidth;
+      this.drawRoundRect(
+        ctx,
+        options.innerStrokeRect.x,
+        options.innerStrokeRect.y,
+        options.innerStrokeRect.width,
+        options.innerStrokeRect.height,
+        options.innerStrokeRect.radius
+      );
+      ctx.stroke();
+    }
+
+    if (options.titleBadgeRect) {
+      ctx.fillStyle = options.titleBadgeFill;
+      this.drawRoundRect(
+        ctx,
+        options.titleBadgeRect.x,
+        options.titleBadgeRect.y,
+        options.titleBadgeRect.width,
+        options.titleBadgeRect.height,
+        options.titleBadgeRect.radius
+      );
+      ctx.fill();
+    }
+
+    ctx.fillStyle = options.titleColor;
+    ctx.font = options.titleFont;
+    ctx.fillText(options.titleText, options.titleX, options.titleY);
+
+    if (options.decorations && options.decorations.length) {
+      options.decorations.forEach((draw) => draw(ctx, room, options));
+    }
+
+    ctx.fillStyle = options.avatarFrameFill;
+    this.drawRoundRect(
+      ctx,
+      options.avatarFrameRect.x,
+      options.avatarFrameRect.y,
+      options.avatarFrameRect.width,
+      options.avatarFrameRect.height,
+      options.avatarFrameRect.radius
+    );
+    ctx.fill();
+
+    ctx.save();
+    this.drawRoundRect(
+      ctx,
+      options.avatarClipRect.x,
+      options.avatarClipRect.y,
+      options.avatarClipRect.width,
+      options.avatarClipRect.height,
+      options.avatarClipRect.radius
+    );
+    ctx.clip();
+    if (avatarPath) {
+      const avatarImage = await this.loadCanvasImage(canvas, avatarPath);
+      ctx.drawImage(avatarImage, options.avatarClipRect.x, options.avatarClipRect.y, options.avatarClipRect.width, options.avatarClipRect.height);
+    } else {
+      ctx.fillStyle = options.avatarFallbackFill;
+      ctx.fillRect(options.avatarClipRect.x, options.avatarClipRect.y, options.avatarClipRect.width, options.avatarClipRect.height);
+      ctx.fillStyle = options.avatarFallbackTextColor;
+      ctx.font = options.avatarFallbackFont;
+      ctx.fillText(this.data.avatarText || "🙂", options.avatarFallbackTextX, options.avatarFallbackTextY);
+    }
+    ctx.restore();
+
+    options.textBlocks.forEach((block) => {
+      ctx.fillStyle = block.color;
+      ctx.font = block.font;
+      ctx.fillText(block.text, block.x, block.y);
+    });
+
+    return this.exportCanvasTempFile(canvas, options.width, options.height, options.quality || 0.92);
+  },
+
+  async renderFallbackShareInviteImage(room, imageKey, taskId) {
+    const roomCode = this.normalizeRoomCode(room && room.code);
+    const width = 500;
+    const height = 400;
+    const modeText = room && room.ladyOfLakeEnabled ? "湖中仙女" : "标准局";
+    const playerText = room && room.maxPlayers ? `${room.maxPlayers}人局` : "多人联机局";
+    const avatarPath = await this.resolveShareAvatarPath();
+    const tempFilePath = await this.drawShareInviteCard(room, {
+      width,
+      height,
+      avatarPath,
+      quality: 0.92,
+      backgroundStops: [
+        [0, "#1a2231"],
+        [1, "#0d1118"]
+      ],
+      cardFill: "rgba(18,22,30,0.96)",
+      cardRect: { x: 28, y: 28, width: 444, height: 344, radius: 30 },
+      cardStroke: "rgba(228,194,129,0.5)",
+      cardStrokeWidth: 2,
+      titleText: "AWALON INVITE",
+      titleColor: "#f0d8a3",
+      titleFont: "24px sans-serif",
+      titleX: 156,
+      titleY: 84,
+      avatarFrameFill: "rgba(228,194,129,0.12)",
+      avatarFrameRect: { x: 58, y: 94, width: 78, height: 78, radius: 39 },
+      avatarClipRect: { x: 62, y: 98, width: 70, height: 70, radius: 35 },
+      avatarFallbackFill: "#243041",
+      avatarFallbackTextColor: "#f6e7c7",
+      avatarFallbackFont: "28px sans-serif",
+      avatarFallbackTextX: 79,
+      avatarFallbackTextY: 144,
+      textBlocks: [
+        { text: `${this.data.nickname || "Awalon 玩家"} 邀请你加入`, x: 156, y: 128, color: "rgba(238,241,247,0.82)", font: "24px sans-serif" },
+        { text: `${playerText} · ${modeText}`, x: 156, y: 160, color: "rgba(238,241,247,0.82)", font: "20px sans-serif" },
+        { text: roomCode ? "房间号" : "立即开局", x: 60, y: 250, color: "#d7b06a", font: "22px sans-serif" },
+        { text: roomCode || "AWALON", x: 60, y: 325, color: "#ffffff", font: "72px sans-serif" },
+        {
+          text: roomCode ? "点击卡片后可直接加入该房间" : "点击卡片后可直接进入 Awalon",
+          x: 60,
+          y: 360,
+          color: "rgba(238,241,247,0.72)",
+          font: "20px sans-serif"
+        }
+      ]
+    });
+    if (this._shareImageTaskId !== taskId) return;
+    this.setData({ shareImagePath: tempFilePath, shareImageKey: imageKey });
+  },
+
+  async ensureShareInviteImage(roomArg) {
+    const room = roomArg || this.data.room;
+    const roomCode = this.normalizeRoomCode(room && room.code);
+    const imageKey = [
+      roomCode || "default",
+      (room && room.maxPlayers) || "",
+      room && room.ladyOfLakeEnabled ? "lady" : "std",
+      this.data.avatarImage || "",
+      this.data.avatarText || ""
+    ].join("|");
+    if (this.data.shareImageKey === imageKey) return;
+    const taskId = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    this._shareImageTaskId = taskId;
+    try {
+      const avatarPath = await this.resolveShareAvatarPath();
+      const width = 500;
+      const height = 400;
+      const modeText = room && room.ladyOfLakeEnabled ? "湖中仙女" : "标准局";
+      const playerText = room && room.maxPlayers ? `${room.maxPlayers}人局` : "多人联机局";
+      const inviterText = `${this.data.nickname || "Awalon 玩家"} 邀请你加入`;
+      const tempFilePath = await this.drawShareInviteCard(room, {
+        width,
+        height,
+        avatarPath,
+        quality: 0.92,
+        backgroundStops: [
+          [0, "#161d2b"],
+          [0.55, "#0f1520"],
+          [1, "#090d14"]
+        ],
+        glow: {
+          innerX: 360,
+          innerY: 90,
+          innerRadius: 10,
+          outerX: 360,
+          outerY: 90,
+          outerRadius: 220,
+          stops: [
+            [0, "rgba(217,179,107,0.22)"],
+            [1, "rgba(217,179,107,0)"]
+          ]
+        },
+        cardFill: (() => {
+          const card = { x1: 34, y1: 34, x2: 466, y2: 366, stops: [[0, "rgba(27,34,47,0.98)"], [1, "rgba(14,18,26,0.98)"]] };
+          return card;
+        })(),
+        cardRect: { x: 24, y: 24, width: 452, height: 352, radius: 30 },
+        cardStroke: "rgba(228,194,129,0.7)",
+        cardStrokeWidth: 2,
+        innerStrokeRect: { x: 34, y: 34, width: 432, height: 332, radius: 24 },
+        innerStrokeColor: "rgba(228,194,129,0.22)",
+        innerStrokeWidth: 1,
+        titleBadgeRect: { x: 52, y: 52, width: 190, height: 42, radius: 21 },
+        titleBadgeFill: "rgba(228,194,129,0.16)",
+        titleText: "AWALON INVITE",
+        titleColor: "#f0d8a3",
+        titleFont: "22px sans-serif",
+        titleX: 72,
+        titleY: 79,
+        avatarFrameFill: "rgba(228,194,129,0.14)",
+        avatarFrameRect: { x: 54, y: 116, width: 96, height: 96, radius: 48 },
+        avatarClipRect: { x: 56, y: 120, width: 88, height: 88, radius: 44 },
+        avatarFallbackFill: "#243041",
+        avatarFallbackTextColor: "#f6e7c7",
+        avatarFallbackFont: "34px sans-serif",
+        avatarFallbackTextX: 81,
+        avatarFallbackTextY: 175,
+        decorations: [
+          (ctxRef, currentRoom) => {
+            ctxRef.fillStyle = "rgba(255,255,255,0.06)";
+            ctxRef.beginPath();
+            ctxRef.arc(352, 230, 92, 0, Math.PI * 2);
+            ctxRef.fill();
+            ctxRef.strokeStyle = "rgba(228,194,129,0.18)";
+            ctxRef.lineWidth = 3;
+            ctxRef.beginPath();
+            ctxRef.arc(352, 230, 92, 0, Math.PI * 2);
+            ctxRef.stroke();
+            ctxRef.strokeStyle = "rgba(228,194,129,0.1)";
+            ctxRef.lineWidth = 1;
+            ctxRef.beginPath();
+            ctxRef.arc(352, 230, 68, 0, Math.PI * 2);
+            ctxRef.stroke();
+            const seatDots = [
+              [352, 126], [417, 155], [444, 222], [418, 288], [352, 318], [286, 288], [260, 222], [287, 155]
+            ];
+            seatDots.slice(0, Math.max(5, Math.min(seatDots.length, Number(currentRoom.maxPlayers) || 7))).forEach(([x, y]) => {
+              ctxRef.fillStyle = "rgba(228,194,129,0.24)";
+              ctxRef.beginPath();
+              ctxRef.arc(x, y, 12, 0, Math.PI * 2);
+              ctxRef.fill();
+            });
+          }
+        ],
+        textBlocks: [
+          { text: inviterText, x: 168, y: 150, color: "#f7ead0", font: "26px sans-serif" },
+          { text: `${playerText} · ${modeText}`, x: 168, y: 182, color: "rgba(238,241,247,0.72)", font: "20px sans-serif" },
+          { text: "圆桌已就位", x: 310, y: 228, color: "#d7b06a", font: "18px sans-serif" },
+          { text: "点击卡片后直接进入房间", x: 278, y: 254, color: "rgba(238,241,247,0.78)", font: "16px sans-serif" },
+          { text: roomCode ? "房间号" : "立即开局", x: 56, y: 264, color: "#d7b06a", font: "22px sans-serif" },
+          { text: roomCode || "AWALON", x: 56, y: 330, color: "#ffffff", font: "68px sans-serif" },
+          {
+            text: roomCode ? "微信打开后可直接加入该房间" : "微信打开后可直接进入 Awalon",
+            x: 56,
+            y: 362,
+            color: "rgba(238,241,247,0.72)",
+            font: "20px sans-serif"
+          }
+        ]
+      });
+      if (this._shareImageTaskId !== taskId) return;
+      this.setData({ shareImagePath: tempFilePath, shareImageKey: imageKey });
+    } catch (err) {
+      try {
+        await this.renderFallbackShareInviteImage(room, imageKey, taskId);
+      } catch (fallbackErr) {
+        if (this._shareImageTaskId !== taskId) return;
+        this.setData({ shareImagePath: "", shareImageKey: imageKey });
+      }
     }
   },
 
@@ -224,6 +700,9 @@ Page({
           if (isManualLogin) {
             wx.showToast({ title: "登录成功", icon: "success" });
           }
+          if (this.tryJoinPendingSharedRoom()) {
+            return;
+          }
           if (!recovered) {
             this.requestRoomRecovery();
           }
@@ -261,7 +740,16 @@ Page({
             currentPhase === "assassination" && !(room.game && room.game.assassination)
               ? this.keepValidTarget(room, this.data.selectedAssassinate)
               : "";
+          const endVotes = (room && room.game && room.game.endVotes) || {};
+          const selectedEndVoteType =
+            currentPhase === "end" && !endVotes[this.data.clientId]
+              ? this.data.selectedEndVoteType || END_VOTE_OPTIONS[0].value
+              : "";
+          const isCurrentForcedAttempt = this.isCurrentForcedAttempt(room);
           const seatSlots = this.buildSeatSlots(room, selectedTeam, selectedAssassinate);
+          const isSpectator = this.isSpectatorInRoom(room, this.data.clientId);
+          const playerCards = this.buildPlayerCards(room);
+          const endVoteResultGroups = this.buildEndVoteResultGroups(playerCards, endVotes);
           this.setData({
             room,
             ladyOfLakeEnabled: !!room.ladyOfLakeEnabled,
@@ -270,12 +758,17 @@ Page({
             teamConfirmed,
             ...leaderAction,
             selectedAssassinate,
+            selectedEndVoteType,
+            isCurrentForcedAttempt,
             seatSlots,
             roundSeats: this.buildRoundSeats(seatSlots, room.maxPlayers || 7),
             teamCandidates: this.buildTeamCandidates(room, selectedTeam),
-            playerCards: this.buildPlayerCards(room),
+            playerCards,
+            endVoteResultGroups,
             ...this.buildSpeakViewState(room, this.data.speakRoundView),
-            roomTip: `已进入房间 ${room.code}`
+            roomTip: isSpectator ? `正在观战房间 ${room.code}` : `已进入房间 ${room.code}`
+          }, () => {
+            this.ensureShareInviteImage(room);
           });
           this.refreshGameState(room);
           this.maybeShowMissionResultAnim(room);
@@ -442,24 +935,28 @@ Page({
     if (selectedCount !== teamSize) {
       return {
         leaderActionText: `选择队员 ${selectedCount}/${teamSize}`,
-        leaderActionDisabled: true
+        leaderActionDisabled: true,
+        leaderActionClass: ""
       };
     }
     if (phase === "team") {
       return {
         leaderActionText: "提交队伍",
-        leaderActionDisabled: false
+        leaderActionDisabled: false,
+        leaderActionClass: ""
       };
     }
     if (phase === "speaking") {
       return {
         leaderActionText: teamConfirmed ? "发起队伍投票" : "提交队伍",
-        leaderActionDisabled: false
+        leaderActionDisabled: false,
+        leaderActionClass: teamConfirmed ? "center-leader-btn-vote" : ""
       };
     }
     return {
       leaderActionText: `选择队员 ${selectedCount}/${teamSize}`,
-      leaderActionDisabled: true
+      leaderActionDisabled: true,
+      leaderActionClass: ""
     };
   },
 
@@ -490,7 +987,7 @@ Page({
     const speakingSeat = room && room.speaking ? Number(room.speaking.index || 0) + 1 : 0;
     const speakingPlayerId = room && room.speaking && Array.isArray(room.seats) ? room.seats[room.speaking.index] : "";
     const isMyTurn = !!(phase === "speaking" && speakingPlayerId && speakingPlayerId === clientId);
-    const speakingTotalSec = Number(room && room.speakingSeconds ? room.speakingSeconds : 180) || 180;
+    const speakingTotalSec = Number(room && room.speakingSeconds ? room.speakingSeconds : 120) || 120;
     let speakingRemainingSec = 0;
     if (phase === "speaking" && room && room.speaking && room.speaking.endAt) {
       speakingRemainingSec = Math.max(0, Math.floor((Number(room.speaking.endAt) - Date.now()) / 1000));
@@ -532,6 +1029,7 @@ Page({
       teamCandidates: this.buildTeamCandidates(room, selectedTeam),
       currentVoteTeam: this.buildCurrentVoteTeam(room),
       roomConfigLines: this.buildRoomConfig(room, leaderSeat),
+      roomRoleCards: this.buildRoomRoleCards(room),
       playerCards: this.buildPlayerCards(room),
       ...speakView
     });
@@ -548,7 +1046,7 @@ Page({
       this.setData({ speakingRemainingSec: 0, speakingProgress: 0 });
       return;
     }
-    const total = Number(room.speakingSeconds || this.data.speakingTotalSec || 180) || 180;
+    const total = Number(room.speakingSeconds || this.data.speakingTotalSec || 120) || 120;
     const remaining = Math.max(0, Math.floor((Number(room.speaking.endAt) - Date.now()) / 1000));
     const progress = Math.max(0, Math.min(100, Math.floor((remaining / Math.max(1, total)) * 100)));
     this.setData({
@@ -632,6 +1130,19 @@ Page({
     return { sizes, fails };
   },
 
+  forcedRoundForRoom(room) {
+    if (!room) return 5;
+    const forcedRound = Number(room.forceRound || 0);
+    return forcedRound >= 1 ? forcedRound : 5;
+  },
+
+  isCurrentForcedAttempt(room) {
+    if (!room || !room.game) return false;
+    const phase = String(room.phase || "");
+    if (!["team", "speaking", "voting"].includes(phase)) return false;
+    return Number(room.game.attempt || 0) === this.forcedRoundForRoom(room);
+  },
+
   buildMissionPills(room) {
     if (!room || !room.game) return [];
     const maxPlayers = Number(room.maxPlayers || 7);
@@ -654,6 +1165,7 @@ Page({
         failReq: meta.fails[i],
         success,
         isCurrent,
+        isForcedRound: false,
         cls
       };
     });
@@ -683,25 +1195,23 @@ Page({
     const game = room.game || null;
     return voteHistory.map((v, idx) => {
       const mission = v && v.approved ? missionByRound[Number(v.round || 0)] || null : null;
-      const leader = byId[v.leaderId] || null;
-      const leaderSeat = leader && Number.isFinite(leader.seat) ? leader.seat + 1 : "?";
-      const teamSeats = (v.team || [])
-        .map((id) => {
-          const p = byId[id];
-          return p && Number.isFinite(p.seat) ? p.seat + 1 : "?";
-        })
-        .sort((a, b) => Number(a) - Number(b))
-        .join(",");
-      const approves = Object.entries(v.votes || {})
-        .filter(([, val]) => !!val)
-        .map(([id]) => (byId[id] && Number.isFinite(byId[id].seat) ? byId[id].seat + 1 : "?"))
-        .sort((a, b) => Number(a) - Number(b))
-        .join(",");
-      const rejects = Object.entries(v.votes || {})
-        .filter(([, val]) => !val)
-        .map(([id]) => (byId[id] && Number.isFinite(byId[id].seat) ? byId[id].seat + 1 : "?"))
-        .sort((a, b) => Number(a) - Number(b))
-        .join(",");
+      const snapshot = (v && v.seatSnapshot) || (mission && mission.seatSnapshot) || null;
+      const leaderSeat = this.getSeatNo(room, v && v.leaderId, snapshot) || "?";
+      const teamSeats = this.formatSeatList(room, v && v.team, snapshot);
+      const approves = this.formatSeatList(
+        room,
+        Object.entries(v && v.votes ? v.votes : {})
+          .filter(([, val]) => !!val)
+          .map(([id]) => id),
+        snapshot
+      );
+      const rejects = this.formatSeatList(
+        room,
+        Object.entries(v && v.votes ? v.votes : {})
+          .filter(([, val]) => !val)
+          .map(([id]) => id),
+        snapshot
+      );
       let resultText = "-";
       let resClass = "";
       if (mission) {
@@ -714,9 +1224,12 @@ Page({
         resultText = "出征中";
         resClass = "res-pending";
       }
+      const roundNum = Number(v.round || 0);
+      const attemptNum = Number(v.attempt || 0);
       return {
         key: `${v.round || 0}-${v.attempt || idx + 1}`,
         round: `${v.round || 0}-${v.attempt || idx + 1}`,
+        isForcedRound: roundNum > 0 && attemptNum > 0 && attemptNum === this.forcedRoundForRoom(room),
         leader: `${leaderSeat}号`,
         team: teamSeats || "-",
         approve: approves || "-",
@@ -749,6 +1262,7 @@ Page({
     const seats = Array.isArray(room.seats) ? room.seats : [];
     const players = Array.isArray(room.players) ? room.players : [];
     const game = room && room.game ? room.game : null;
+    const endVotes = game && game.endVotes ? game.endVotes : {};
     const phase = room && room.phase ? room.phase : "";
     const leaderId = game ? game.leaderId : "";
     const isLeaderNow = !!(this.data.clientId && leaderId && this.data.clientId === leaderId);
@@ -800,6 +1314,7 @@ Page({
         roleLabel: this.getRevealedRoleLabel(room, pid),
         roleImage: this.roleImageFor(this.getRevealedRoleLabel(room, pid)),
         roleClass: this.roleClassFor(this.getRevealedRoleLabel(room, pid)),
+        endVoteSummaryText: pid && phase === "end" ? this.formatEndVoteSummary(this.summarizeEndVotes(endVotes, pid)) : "",
         action,
         actionDone
       });
@@ -836,12 +1351,15 @@ Page({
         const pid = room.seats[idx];
         const p = room.players.find((it) => it.id === pid);
         const avatarMeta = this.avatarMeta(p && p.avatar ? p.avatar : (p ? "🙂" : ""));
+        const roleDetails = info && info.roleDetails ? info.roleDetails : {};
+        const role = pid && roleDetails[pid] ? roleDetails[pid] : "";
         return {
           seat: seatNo,
           nickname: p ? p.nickname : "未知",
           avatarImage: avatarMeta.image,
           avatarText: avatarMeta.text || (p ? "🙂" : ""),
-          evilVisible: isMerlinView
+          evilVisible: isMerlinView,
+          role
         };
       })
       .filter(Boolean);
@@ -859,6 +1377,7 @@ Page({
   buildPlayerCards(room) {
     if (!room || !Array.isArray(room.players)) return [];
     const seats = Array.isArray(room.seats) ? room.seats : [];
+    const endVotes = room && room.game ? room.game.endVotes || {} : {};
     const bySeat = {};
     seats.forEach((pid, idx) => {
       if (pid) bySeat[pid] = idx + 1;
@@ -886,6 +1405,7 @@ Page({
           statusClass = "status-ended";
         }
         const avatarMeta = this.avatarMeta(p.avatar || "🙂");
+        const endVoteSummary = this.summarizeEndVotes(endVotes, p.id);
         return {
           id: p.id,
           seat,
@@ -902,7 +1422,8 @@ Page({
           statusClass,
           role,
           roleImage: this.roleImageFor(role),
-          roleClass: this.roleClassFor(role)
+          roleClass: this.roleClassFor(role),
+          endVoteSummaryText: this.formatEndVoteSummary(endVoteSummary)
         };
       })
       .sort((a, b) => {
@@ -911,6 +1432,30 @@ Page({
         if (sa !== sb) return sa - sb;
         return a.nickname.localeCompare(b.nickname);
       });
+  },
+
+  buildEndVoteResultGroups(playerCards = [], endVotes = {}) {
+    return END_VOTE_OPTIONS.map((option) => {
+      const entries = playerCards
+        .map((item) => {
+          const summary = this.summarizeEndVotes(endVotes, item.id);
+          const count = Number(summary[option.value] || 0);
+          if (!count) return null;
+          return {
+            id: item.id,
+            text: `${item.seatText} ${item.nickname} x${count}`,
+            count
+          };
+        })
+        .filter(Boolean)
+        .sort((a, b) => b.count - a.count || a.text.localeCompare(b.text, "zh-Hans-CN"));
+      return {
+        key: option.value,
+        label: option.label,
+        icon: option.icon,
+        entries
+      };
+    }).filter((group) => group.entries.length);
   },
 
   buildRoomConfig(room, leaderSeat) {
@@ -927,16 +1472,46 @@ Page({
     };
     const phaseText = phaseMap[room.phase] || (room.started ? "进行中" : "未开始");
     const roleSummary = this.summarizeRoomRoles(room.roles);
+    const forcedRound = this.forcedRoundForRoom(room);
     return [
       { label: "房间号", value: room.code || "-" },
       { label: "人数", value: `${room.maxPlayers || "-"}人` },
       { label: "状态", value: phaseText },
       { label: "轮次", value: room.started ? `${game.round || 1}-${game.attempt || 1}` : "-" },
       { label: "队长", value: leaderSeat ? `${leaderSeat}号` : "-" },
-      { label: "发言时长", value: `${room.speakingSeconds || 180}s` },
+      { label: "发言时长", value: `${room.speakingSeconds || 120}s` },
       { label: "扩展", value: room.ladyOfLakeEnabled ? "湖中仙女" : "标准局" },
+      { label: "坏人互认", value: room.evilRoleVisibleEnabled ? "显示具体身份" : "仅显示队友座位" },
+      { label: "强制轮", value: `第${forcedRound}次组队` },
       { label: "角色配置", value: roleSummary || "-" }
     ];
+  },
+
+  buildRoomRoleCards(room) {
+    const roles = room && Array.isArray(room.roles) ? room.roles : [];
+    if (!roles.length) return [];
+    const counts = new Map();
+    roles.forEach((role) => {
+      const name = String(role || "").trim();
+      if (!name) return;
+      counts.set(name, (counts.get(name) || 0) + 1);
+    });
+    return Array.from(counts.entries())
+      .sort((a, b) => {
+        const ai = ROLE_ORDER.indexOf(a[0]);
+        const bi = ROLE_ORDER.indexOf(b[0]);
+        if (ai === -1 && bi === -1) return a[0].localeCompare(b[0]);
+        if (ai === -1) return 1;
+        if (bi === -1) return -1;
+        return ai - bi;
+      })
+      .map(([role, count]) => ({
+        role,
+        count,
+        image: this.roleImageFor(role),
+        roleClass: this.roleClassFor(role),
+        description: ROLE_DESCRIPTION_MAP[role] || "暂无角色说明"
+      }));
   },
 
   buildLadyTargets(room) {
@@ -1083,7 +1658,9 @@ Page({
     const next = {
       maxPlayersIndex: idx,
       selectedRoles,
-      hostRoleOptions: this.withRoleImages(this.uniqueRoles(selectedRoles))
+      hostRoleOptions: this.withRoleImages(this.uniqueRoles(selectedRoles)),
+      advancedRoleSummary: this.formatAdvancedRoleSummary(selectedRoles),
+      advancedQuotaText: this.formatAdvancedQuotaText(maxPlayers)
     };
     if (this.data.hostRole !== "随机" && !selectedRoles.includes(this.data.hostRole)) {
       next.hostRole = "随机";
@@ -1092,6 +1669,89 @@ Page({
       next.ladyOfLakeEnabled = false;
     }
     this.setData(next);
+  },
+
+  onPickSpeakingSeconds(e) {
+    const seconds = Number(e.currentTarget.dataset.seconds || 120);
+    if (!SPEAKING_SECONDS_OPTIONS.includes(seconds)) return;
+    this.setData({ speakingSeconds: seconds });
+  },
+
+  onToggleAdvancedSettings() {
+    this.setData({ showAdvancedSettings: !this.data.showAdvancedSettings });
+  },
+
+  onPickForceRoundMode(e) {
+    const mode = String(e.currentTarget.dataset.mode || "fixed5");
+    this.setData({ forceRoundMode: mode === "evil_plus_one" ? "evil_plus_one" : "fixed5" });
+  },
+
+  onPickEvilRoleVisible(e) {
+    const enabled = !!Number(e.currentTarget.dataset.enabled);
+    this.setData({ evilRoleVisibleEnabled: enabled });
+  },
+
+  onAddAdvancedRole(e) {
+    const role = String(e.currentTarget.dataset.role || "");
+    if (!role) return;
+    const maxPlayers = 5 + Number(this.data.maxPlayersIndex || 0);
+    const selectedRoles = Array.isArray(this.data.selectedRoles) ? this.data.selectedRoles.slice() : [];
+    if (selectedRoles.length >= maxPlayers) {
+      wx.showToast({ title: "角色数量已满", icon: "none" });
+      return;
+    }
+    const { good, evil } = this.countRolesByFaction(selectedRoles);
+    if (EVIL_ROLES.has(role)) {
+      if (evil >= this.expectedEvilCount(maxPlayers)) {
+        wx.showToast({ title: "坏人数量已满", icon: "none" });
+        return;
+      }
+    } else if (good >= this.expectedGoodCount(maxPlayers)) {
+      wx.showToast({ title: "好人数量已满", icon: "none" });
+      return;
+    }
+    selectedRoles.push(role);
+    const unique = this.uniqueRoles(selectedRoles);
+    const next = {
+      selectedRoles,
+      hostRoleOptions: this.withRoleImages(unique),
+      advancedRoleSummary: this.formatAdvancedRoleSummary(selectedRoles),
+      advancedQuotaText: this.formatAdvancedQuotaText(maxPlayers)
+    };
+    if (this.data.hostRole !== "随机" && !unique.includes(this.data.hostRole)) {
+      next.hostRole = "随机";
+    }
+    this.setData(next);
+  },
+
+  onRemoveAdvancedRole(e) {
+    const idx = Number(e.currentTarget.dataset.idx);
+    const selectedRoles = Array.isArray(this.data.selectedRoles) ? this.data.selectedRoles.slice() : [];
+    if (!Number.isInteger(idx) || idx < 0 || idx >= selectedRoles.length) return;
+    selectedRoles.splice(idx, 1);
+    const unique = this.uniqueRoles(selectedRoles);
+    const next = {
+      selectedRoles,
+      hostRoleOptions: this.withRoleImages(unique),
+      advancedRoleSummary: this.formatAdvancedRoleSummary(selectedRoles),
+      advancedQuotaText: this.formatAdvancedQuotaText(5 + Number(this.data.maxPlayersIndex || 0))
+    };
+    if (this.data.hostRole !== "随机" && !unique.includes(this.data.hostRole)) {
+      next.hostRole = "随机";
+    }
+    this.setData(next);
+  },
+
+  onResetAdvancedRoles() {
+    const maxPlayers = 5 + Number(this.data.maxPlayersIndex || 0);
+    const selectedRoles = this.defaultRolesForCount(maxPlayers);
+    this.setData({
+      selectedRoles,
+      hostRole: "随机",
+      hostRoleOptions: this.withRoleImages(this.uniqueRoles(selectedRoles)),
+      advancedRoleSummary: this.formatAdvancedRoleSummary(selectedRoles),
+      advancedQuotaText: this.formatAdvancedQuotaText(maxPlayers)
+    });
   },
 
   uniqueRoles(roles = []) {
@@ -1113,14 +1773,86 @@ Page({
   },
 
   defaultRolesForCount(count) {
+    return defaultRolesForCount(count);
+  },
+
+  expectedEvilCount(count) {
+    return (
+      {
+        5: 2,
+        6: 2,
+        7: 3,
+        8: 3,
+        9: 4,
+        10: 4
+      }[Number(count) || 7] || 3
+    );
+  },
+
+  expectedGoodCount(count) {
     const n = Number(count) || 7;
-    if (n === 5) return ["梅林", "派西维尔", "莫甘娜", "刺客", "忠臣"];
-    if (n === 6) return ["梅林", "派西维尔", "莫甘娜", "刺客", "忠臣", "忠臣"];
-    if (n === 7) return ["梅林", "派西维尔", "莫甘娜", "刺客", "忠臣", "忠臣", "奥伯伦"];
-    if (n === 8) return ["梅林", "派西维尔", "莫甘娜", "刺客", "爪牙", "忠臣", "忠臣", "忠臣"];
-    if (n === 9) return ["梅林", "派西维尔", "莫甘娜", "莫德雷德", "奥伯伦", "忠臣", "忠臣", "忠臣", "忠臣"];
-    if (n === 10) return ["梅林", "派西维尔", "莫甘娜", "莫德雷德", "刺客", "奥伯伦", "忠臣", "忠臣", "忠臣", "忠臣"];
-    return Array.from({ length: n }, () => "忠臣");
+    return n - this.expectedEvilCount(n);
+  },
+
+  countRolesByFaction(roles = []) {
+    let good = 0;
+    let evil = 0;
+    (roles || []).forEach((role) => {
+      if (EVIL_ROLES.has(role)) {
+        evil += 1;
+      } else {
+        good += 1;
+      }
+    });
+    return { good, evil };
+  },
+
+  formatAdvancedRoleSummary(roles = []) {
+    const counts = {};
+    (roles || []).forEach((role) => {
+      counts[role] = (counts[role] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .sort((a, b) => {
+        const ai = ROLE_ORDER.indexOf(a[0]);
+        const bi = ROLE_ORDER.indexOf(b[0]);
+        if (ai !== bi) return ai - bi;
+        return a[0].localeCompare(b[0]);
+      })
+      .map(([role, count]) => (count > 1 ? `${role}x${count}` : role))
+      .join("、");
+  },
+
+  formatAdvancedQuotaText(maxPlayers) {
+    return `本局需配置 ${this.expectedGoodCount(maxPlayers)} 个好人、${this.expectedEvilCount(maxPlayers)} 个坏人，且必须包含梅林与刺客。`;
+  },
+
+  summarizeEndVotes(endVotes = {}, targetId = "") {
+    const summary = { c_le: 0, blame: 0, effort: 0 };
+    Object.values(endVotes || {}).forEach((vote) => {
+      if (!vote || vote.targetId !== targetId) return;
+      if (summary[vote.voteType] !== undefined) summary[vote.voteType] += 1;
+    });
+    return summary;
+  },
+
+  formatEndVoteSummary(summary = {}) {
+    const parts = [];
+    if (summary.c_le) parts.push(`C麻了 ${summary.c_le}`);
+    if (summary.blame) parts.push(`背锅侠 ${summary.blame}`);
+    if (summary.effort) parts.push(`尽力 ${summary.effort}`);
+    return parts.join(" · ");
+  },
+
+  validateSelectedRoles(maxPlayers, roles) {
+    const selected = Array.isArray(roles) ? roles.slice() : [];
+    const { good, evil } = this.countRolesByFaction(selected);
+    if (selected.length !== maxPlayers) return `角色数量需为${maxPlayers}个`;
+    if (!selected.includes("梅林")) return "高级配置必须包含梅林";
+    if (!selected.includes("刺客")) return "高级配置必须包含刺客";
+    if (evil !== this.expectedEvilCount(maxPlayers)) return `坏人数量需为${this.expectedEvilCount(maxPlayers)}个`;
+    if (good !== this.expectedGoodCount(maxPlayers)) return `好人数量需为${this.expectedGoodCount(maxPlayers)}个`;
+    return "";
   },
 
   onPickHostRole(e) {
@@ -1133,6 +1865,17 @@ Page({
     const description = String(e.currentTarget.dataset.description || "暂无说明");
     wx.showModal({
       title: name,
+      content: description,
+      showCancel: false,
+      confirmText: "知道了"
+    });
+  },
+
+  onTapRoomRoleCard(e) {
+    const role = String(e.currentTarget.dataset.role || "角色");
+    const description = String(e.currentTarget.dataset.description || "暂无角色说明");
+    wx.showModal({
+      title: role,
       content: description,
       showCancel: false,
       confirmText: "知道了"
@@ -1206,8 +1949,20 @@ Page({
       return;
     }
     const maxPlayers = 5 + Number(this.data.maxPlayersIndex || 0);
-    const roles = this.defaultRolesForCount(maxPlayers);
-    const payload = { avatar: this.data.avatar || "🐺", maxPlayers, roles };
+    const roles = Array.isArray(this.data.selectedRoles) ? this.data.selectedRoles.slice() : [];
+    const roleError = this.validateSelectedRoles(maxPlayers, roles);
+    if (roleError) {
+      wx.showToast({ title: roleError, icon: "none" });
+      return;
+    }
+    const payload = {
+      avatar: this.data.avatar || "🐺",
+      maxPlayers,
+      roles,
+      speakingSeconds: Number(this.data.speakingSeconds || 120) || 120,
+      evilRoleVisibleEnabled: !!this.data.evilRoleVisibleEnabled,
+      forceRoundMode: this.data.forceRoundMode || "fixed5"
+    };
     const hostRole = this.data.hostRole || "随机";
     if (hostRole !== "随机") {
       if (!roles.includes(hostRole)) {
@@ -1255,6 +2010,24 @@ Page({
     });
   },
 
+  onShareAppMessage() {
+    const payload = this.buildSharePayload();
+    return {
+      title: payload.title,
+      path: payload.path,
+      imageUrl: payload.imageUrl
+    };
+  },
+
+  onShareTimeline() {
+    const payload = this.buildSharePayload();
+    return {
+      title: payload.title,
+      query: payload.query,
+      imageUrl: payload.imageUrl
+    };
+  },
+
   onWatchRoom() {
     if (!this.data.loggedIn) {
       wx.showToast({ title: "请先登录", icon: "none" });
@@ -1270,55 +2043,68 @@ Page({
   },
 
   onLeaveRoom() {
-    this.send("LEAVE_ROOM");
-    this.setData({
-      room: null,
-      atHome: true,
-      teamPhaseKey: "",
-      seatSlots: [],
-      roundSeats: [],
-      roleInfo: null,
-      showRolePanel: false,
-      roleVisibleSeats: [],
-      roleInfoImage: "",
-      roleInfoClass: "",
-      roleRequested: false,
-      myRole: "",
-      selectedTeam: [],
-      teamConfirmed: false,
-      leaderActionText: "提交队伍",
-      leaderActionDisabled: true,
-      teamCandidates: [],
-      currentVoteTeam: [],
-      isLadyHolder: false,
-      ladyHolderName: "",
-      ladyHistory: [],
-      ladyTargets: [],
-      selectedAssassinate: "",
-      speakText: "",
-      speakingSeat: 0,
-      isMyTurn: false,
-      speakMessages: [],
-      speakKeys: [],
-      speakRoundView: "",
-      showSpeakPanel: true,
-      showPlayerList: false,
-      playerCards: [],
-      cheatRevealPlayerId: "",
-      cheatRoles: {},
-      roomConfigLines: [],
-      missionAnimBootstrapped: false,
-      missionAnimRoomCode: "",
-      missionAnimLastKey: "",
-      showMissionAnim: false,
-      missionAnimText: "",
-      missionAnimRound: 0,
-      missionAnimClass: "",
-      missionAnimImage: "",
-      endMedals: [],
-      leaderSeat: 0,
-      phase: "",
-      roomTip: "已离开房间"
+    wx.showModal({
+      title: "退出房间",
+      content: "确认要退出当前房间吗？",
+      confirmText: "退出",
+      confirmColor: "#b02c34",
+      success: (res) => {
+        if (!res || !res.confirm) return;
+        this.send("LEAVE_ROOM");
+        this.setData({
+          room: null,
+          atHome: true,
+          teamPhaseKey: "",
+          seatSlots: [],
+          roundSeats: [],
+          roleInfo: null,
+          showRolePanel: false,
+          roleVisibleSeats: [],
+          roleInfoImage: "",
+          roleInfoClass: "",
+          roleRequested: false,
+          myRole: "",
+          selectedTeam: [],
+          teamConfirmed: false,
+          leaderActionText: "提交队伍",
+          leaderActionDisabled: true,
+          leaderActionClass: "",
+          teamCandidates: [],
+          currentVoteTeam: [],
+          selectedEndVoteType: "",
+          isLadyHolder: false,
+          ladyHolderName: "",
+          ladyHistory: [],
+          ladyTargets: [],
+          selectedAssassinate: "",
+          speakText: "",
+          speakingSeat: 0,
+          isMyTurn: false,
+          speakMessages: [],
+          speakKeys: [],
+          speakRoundView: "",
+          showSpeakPanel: true,
+          showPlayerList: false,
+          playerCards: [],
+          endVoteResultGroups: [],
+          cheatRevealPlayerId: "",
+          cheatRoles: {},
+          roomConfigLines: [],
+          roomRoleCards: [],
+          missionAnimBootstrapped: false,
+          missionAnimRoomCode: "",
+          missionAnimLastKey: "",
+          showMissionAnim: false,
+          missionAnimText: "",
+          missionAnimRound: 0,
+          missionAnimClass: "",
+          missionAnimImage: "",
+          endMedals: [],
+          leaderSeat: 0,
+          phase: "",
+          roomTip: "已离开房间"
+        });
+      }
     });
   },
 
@@ -1427,6 +2213,35 @@ Page({
     const slot = (this.data.seatSlots || [])[idx];
     const pid = slot && slot.playerId;
     if (!pid) return;
+    if (this.data.phase === "end") {
+      if (pid === this.data.clientId) {
+        wx.showToast({ title: "不能给自己投票", icon: "none" });
+        return;
+      }
+      const endVotes = (room.game && room.game.endVotes) || {};
+      if (endVotes[this.data.clientId]) {
+        wx.showToast({ title: "本局已投过票", icon: "none" });
+        return;
+      }
+      const picked = this.getEndVoteOption(this.data.selectedEndVoteType || "");
+      if (!picked) {
+        wx.showToast({ title: "先选择一个评价", icon: "none" });
+        return;
+      }
+      wx.showModal({
+        title: "确认互评",
+        content: `确认将“${picked.label}”投给 ${slot.seat}号位 ${slot.name} 吗？`,
+        confirmText: "确认提交",
+        cancelText: "取消",
+        success: (res) => {
+          if (!res.confirm) return;
+          this.send("END_PLAYER_VOTE", { targetId: pid, voteType: picked.value });
+          this.setData({ gameTip: `已评价 ${slot.name}：${picked.label}` });
+          wx.showToast({ title: "评价已提交", icon: "none" });
+        }
+      });
+      return;
+    }
     if ((this.data.phase === "team" || this.data.phase === "speaking") && this.data.isLeader) {
       this.onToggleTeamById(pid);
       return;
@@ -1543,7 +2358,8 @@ Page({
           avatarText: avatarMeta.text || "🙂"
         };
       })
-      .filter(Boolean);
+      .filter(Boolean)
+      .sort((a, b) => a.seat - b.seat);
   },
 
   onConfirmTeam() {
@@ -1634,6 +2450,15 @@ Page({
   onVoteReject() {
     this.send("VOTE_TEAM", { approve: false });
     this.setData({ gameTip: "你已投：反对" });
+  },
+
+  onPickEndVoteType(e) {
+    const voteType = String((e.currentTarget.dataset && e.currentTarget.dataset.type) || "");
+    if (!this.getEndVoteOption(voteType)) return;
+    this.setData({
+      selectedEndVoteType: voteType,
+      gameTip: "已选择评价，点击桌面上的玩家提交"
+    });
   },
 
   onMissionSuccess() {
@@ -1781,6 +2606,8 @@ Page({
       avatarImage: avatarMeta.image,
       avatarText: avatarMeta.text,
       loginTip: "头像已更新"
+    }, () => {
+      if (this.data.room) this.ensureShareInviteImage(this.data.room);
     });
     wx.setStorageSync("awalonAvatar", avatar);
   },
@@ -1805,7 +2632,9 @@ Page({
           return;
         }
         this.send("SET_PROFILE", { nickname: next });
-        this.setData({ nickname: next, loginTip: `昵称已更新：${next}` });
+        this.setData({ nickname: next, loginTip: `昵称已更新：${next}` }, () => {
+          this.ensureShareInviteImage(this.data.room || null);
+        });
         wx.setStorageSync("awalonNickname", next);
         wx.showToast({ title: "昵称已修改", icon: "success" });
       }

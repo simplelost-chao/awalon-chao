@@ -47,6 +47,8 @@ Page({
     goodSummary: { total: 0, wins: 0, winRate: 0 },
     evilSummary: { total: 0, wins: 0, winRate: 0 },
     medalTotal: 0,
+    receivedVotesText: "",
+    receivedVoteTags: [],
     goodMedals: [],
     evilMedals: []
   },
@@ -78,6 +80,9 @@ Page({
           total,
           wins,
           winRate,
+          receivedVotes: found && found.receivedVotes ? found.receivedVotes : { c_le: 0, blame: 0, effort: 0 },
+          receivedVotesText: this.formatVoteSummary(found && found.receivedVotes ? found.receivedVotes : {}),
+          receivedVoteTags: this.buildVoteTags(found && found.receivedVotes ? found.receivedVotes : {}),
           roleImage: ROLE_IMAGE_MAP[role] || "",
           winRateClass: winRate >= 50 ? "rate-good" : "rate-bad",
           roleNameClass: faction === "evil" ? "role-name-evil" : "role-name-good",
@@ -113,6 +118,8 @@ Page({
         goodSummary,
         evilSummary,
         medalTotal: Number((roleStats && roleStats.totalMedals) || 0),
+        receivedVotesText: this.formatVoteSummary((roleStats && roleStats.receivedVotes) || {}),
+        receivedVoteTags: this.buildVoteTags((roleStats && roleStats.receivedVotes) || {}),
         goodMedals,
         evilMedals,
         loading: false
@@ -145,6 +152,22 @@ Page({
       showCancel: false,
       confirmText: "知道了"
     });
+  },
+
+  formatVoteSummary(summary = {}) {
+    const parts = [];
+    if (summary.c_le) parts.push(`C麻了 ${summary.c_le}`);
+    if (summary.blame) parts.push(`背锅侠 ${summary.blame}`);
+    if (summary.effort) parts.push(`尽力 ${summary.effort}`);
+    return parts.join(" · ");
+  },
+
+  buildVoteTags(summary = {}) {
+    return [
+      { key: "c_le", label: "C麻了", count: Number(summary.c_le || 0), icon: "/assets/comments/c.png" },
+      { key: "blame", label: "背锅侠", count: Number(summary.blame || 0), icon: "/assets/comments/guo.png" },
+      { key: "effort", label: "尽力位", count: Number(summary.effort || 0), icon: "/assets/comments/try.png" }
+    ];
   },
 
   onBackHome() {

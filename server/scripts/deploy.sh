@@ -72,10 +72,15 @@ RSYNC_ARGS=(
   --exclude "node_modules/"
   --exclude ".DS_Store"
   --exclude "*.log"
+  --exclude ".env"
+  --exclude ".env.production"
   --exclude ".env*.local"
   --exclude "npm-debug.*"
   --exclude "yarn-error.*"
   --exclude "uploads/"
+  --filter "P .env"
+  --filter "P .env.production"
+  --filter "P uploads/"
   -e "ssh -i $SSH_KEY -p $REMOTE_PORT"
 )
 
@@ -84,6 +89,9 @@ if [[ "$INCLUDE_DB" != "1" ]]; then
     --exclude "*.sqlite"
     --exclude "*.sqlite-wal"
     --exclude "*.sqlite-shm"
+    --filter "P *.sqlite"
+    --filter "P *.sqlite-wal"
+    --filter "P *.sqlite-shm"
   )
 fi
 

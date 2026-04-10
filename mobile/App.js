@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { SafeAreaView, View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Share, Modal, ImageBackground, Platform, Image, Alert, AppState, Animated, Easing } from 'react-native';
+import { SafeAreaView, View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Modal, ImageBackground, Platform, Image, Alert, AppState, Animated, Easing } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 const { decorateMedal, decorateMedals } = require('./miniprogram/utils/medals');
 
@@ -1256,14 +1256,9 @@ export default function App() {
             <Text style={styles.label}>湖中仙女: {room.ladyOfLakeEnabled ? '开启' : '关闭'}</Text>
             <Text style={styles.label}>角色配置: {room.roles.join('，')}</Text>
             {isSpectator && <Text style={styles.label}>当前身份: 观战者（只读）</Text>}
-            <View style={styles.row}>
-              <TouchableOpacity style={styles.button} onPress={() => Share.share({ message: `阿瓦隆房间号: ${room.code}` })}>
-                <Text style={styles.buttonText}>邀请好友</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.buttonAlt} onPress={leaveRoom}>
-                <Text style={styles.buttonText}>离开房间</Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity style={styles.buttonAlt} onPress={leaveRoom}>
+              <Text style={styles.buttonText}>离开房间</Text>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -1861,7 +1856,6 @@ export default function App() {
                     }}
                   >
                     {leaderSeatIndex === idx && <Text style={styles.crown}>👑</Text>}
-                    {isLadyHolderSeat && <Text style={styles.ladyBadge}>🧝</Text>}
                     <View style={styles.seatNumberWrap} pointerEvents="none">
                       <Text style={styles.seatNumberBg}>{idx + 1}</Text>
                     </View>
@@ -2852,14 +2846,11 @@ const styles = StyleSheet.create({
   },
   crown: {
     position: 'absolute',
-    top: -10,
-    fontSize: 14,
-  },
-  ladyBadge: {
-    position: 'absolute',
-    top: -10,
-    right: 2,
-    fontSize: 14,
+    top: -16,
+    fontSize: 20,
+    textShadowColor: 'rgba(72, 42, 8, 0.55)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   centerButtonWrap: {
     position: 'absolute',

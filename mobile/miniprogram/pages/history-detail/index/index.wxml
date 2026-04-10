@@ -24,6 +24,7 @@
         </view>
         <text class="meta">房间：{{historyDetail.detail.roomCode}} ｜ 人数：{{historyDetail.detail.maxPlayers}}</text>
         <text class="meta">胜方：{{historyDetail.detail.winner}}</text>
+        <text class="meta" wx:if="{{myVoteText}}">{{myVoteText}}</text>
         <view class="medal-row" wx:if="{{historyDetail.medals && historyDetail.medals.length}}">
           <view class="medal-chip" wx:for="{{historyDetail.medals}}" wx:key="code" catchtap="onTapMedal" data-name="{{item.name}}" data-description="{{item.description}}">
             <image class="medal-chip-image" wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFit" />
@@ -38,6 +39,16 @@
         <view class="assassination-banner {{assassinationResultClass}}">
           <text class="assassination-main">{{assassinationText}}</text>
           <text class="assassination-sub">{{assassinationTargetText}}</text>
+        </view>
+      </view>
+
+      <view class="panel" wx:if="{{peerVoteRows.length}}">
+        <text class="section-title">终局互评</text>
+        <view class="peer-vote-list">
+          <view class="peer-vote-row" wx:for="{{peerVoteRows}}" wx:key="id">
+            <text class="peer-vote-name">{{item.seat}}号 · {{item.nickname}}</text>
+            <text class="peer-vote-summary">{{item.summary}}</text>
+          </view>
         </view>
       </view>
 

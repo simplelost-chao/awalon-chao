@@ -49,7 +49,8 @@ Page({
       const list = rawList.map((item) => ({
         ...item,
         roleImage: ROLE_IMAGE_MAP[item.role] || "",
-        medals: decorateMedals(item.medals)
+        medals: decorateMedals(item.medals),
+        peerVoteSummary: this.formatPeerVoteSummary(item.peerVotes || {})
       }));
       const page = Number(payload && payload.page) || 1;
       const limit = Number(payload && payload.limit) || 10;
@@ -80,6 +81,14 @@ Page({
       return;
     }
     wx.reLaunch({ url: "/pages/index/index" });
+  },
+
+  formatPeerVoteSummary(summary = {}) {
+    const parts = [];
+    if (summary.c_le) parts.push(`C麻了 ${summary.c_le}`);
+    if (summary.blame) parts.push(`背锅侠 ${summary.blame}`);
+    if (summary.effort) parts.push(`尽力 ${summary.effort}`);
+    return parts.join(" · ");
   },
 
   fetchPage(page) {

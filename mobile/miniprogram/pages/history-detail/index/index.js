@@ -39,7 +39,9 @@ Page({
     assassinationResultClass: "",
     assassinationTargetText: "",
     roundSeats: [],
-    missionRows: []
+    missionRows: [],
+    peerVoteRows: [],
+    myVoteText: ""
   },
 
   onLoad(query) {
@@ -230,6 +232,32 @@ Page({
     });
   },
 
+  buildPeerVoteRows(detailObj) {
+    const payload = detailObj && detailObj.detail ? detailObj.detail : {};
+    const players = Array.isArray(payload.players) ? payload.players : [];
+    const peerVotes = Array.isArray(detailObj && detailObj.peerVotes) ? detailObj.peerVotes : [];
+    return players
+      .map((player) => {
+        const summary = { c_le: 0, blame: 0, effort: 0 };
+        peerVotes.forEach((vote) => {
+          if (!vote || vote.targetId !== player.id) return;
+          if (summary[vote.voteType] !== undefined) summary[vote.voteType] += 1;
+        });
+        const parts = [];
+        if (summary.c_le) parts.push(`C麻了 ${summary.c_le}`);
+        if (summary.blame) parts.push(`背锅侠 ${summary.blame}`);
+        if (summary.effort) parts.push(`尽力 ${summary.effort}`);
+        return {
+          id: player.id,
+          seat: this.seatNoFromRaw(player.seat, Number(payload.maxPlayers || 7)) || "?",
+          nickname: player.nickname || "玩家",
+          summary: parts.join(" · ")
+        };
+      })
+      .filter((item) => !!item.summary)
+      .sort((a, b) => Number(a.seat) - Number(b.seat));
+  },
+
   applyDetail(detail) {
     if (!detail || !detail.detail) return;
     const historyDetail = {
@@ -252,6 +280,19 @@ Page({
       assassinationTargetText = `${seatText} ${targetName}`;
       assassinationResultClass = assassination.hit ? "assassination-hit" : "assassination-miss";
     }
+    const myVote = detail.myVote || null;
+    const myVoteLabel =
+      myVote && myVote.voteType === "c_le"
+        ? "C麻了"
+        : myVote && myVote.voteType === "blame"
+          ? "背锅侠"
+          : myVote && myVote.voteType === "effort"
+            ? "尽力位"
+            : "";
+    const myVoteTarget =
+      myVote && detail.detail && Array.isArray(detail.detail.players)
+        ? detail.detail.players.find((player) => player.id === myVote.targetId)
+        : null;
     this.setData({
       historyDetail,
       myRoleImage: this.roleImageFor(detail.myRole || ""),
@@ -262,6 +303,8 @@ Page({
       assassinationTargetText,
       roundSeats: this.buildRoundSeats(detail),
       missionRows: this.buildMissionRows(detail),
+      peerVoteRows: this.buildPeerVoteRows(detail),
+      myVoteText: myVoteLabel && myVoteTarget ? `你投给了 ${myVoteTarget.nickname}：${myVoteLabel}` : "",
       loading: false
     });
   }
