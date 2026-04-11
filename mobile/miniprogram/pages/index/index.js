@@ -1,6 +1,6 @@
 const socket = require("../../utils/socket");
 const { decorateMedals } = require("../../utils/medals");
-const { defaultRolesForCount } = require("../../utils/default-role-config");
+const app = getApp();
 
 const ROLE_IMAGE_MAP = {
   梅林: "https://www.awalon.top/mp-assets/role-split/merlin.png",
@@ -17,6 +17,23 @@ const ROLE_IMAGE_MAP = {
 };
 
 const EVIL_ROLES = new Set(["刺客", "莫甘娜", "莫德雷德", "奥伯伦", "爪牙", "兰斯洛特（邪恶）"]);
+const NOTE_LABELS = ["疑似梅林", "偏坏", "偏好", "狼人", "好人", "排水"];
+const NOTE_BADGE_STYLE = {
+  "疑似梅林": "background:rgba(70,25,130,0.88);border-color:rgba(180,120,255,0.65);",
+  "偏坏":    "background:rgba(120,18,18,0.88);border-color:rgba(255,80,80,0.6);",
+  "偏好":    "background:rgba(18,90,40,0.88);border-color:rgba(80,210,120,0.6);",
+  "狼人":    "background:rgba(140,10,10,0.92);border-color:rgba(220,40,40,0.7);",
+  "好人":    "background:rgba(18,100,50,0.88);border-color:rgba(60,220,130,0.6);",
+  "排水":    "background:rgba(12,85,105,0.88);border-color:rgba(60,210,230,0.6);",
+};
+const NOTE_TEXT_STYLE = {
+  "疑似梅林": "color:#d4aaff;",
+  "偏坏":    "color:#ff9898;",
+  "偏好":    "color:#90e8a8;",
+  "狼人":    "color:#ff7070;",
+  "好人":    "color:#70e8a0;",
+  "排水":    "color:#70d8ea;",
+};
 const ROLE_ORDER = ["梅林", "派西维尔", "忠臣", "刺客", "莫甘娜", "莫德雷德", "奥伯伦", "爪牙"];
 const FORCE_ROUND_OPTIONS = [
   { value: "fixed5", label: "第5次组队判负" },
@@ -80,6 +97,10 @@ Page({
     teamPhaseKey: "",
     seatSlots: [],
     roundSeats: [],
+    seatNotes: {},
+    noteLabels: NOTE_LABELS,
+    noteModal: { show: false, seatIndex: -1, seat: 0, name: "", label: "" },
+    assassinAnim: null,
     roleInfo: null,
     showRolePanel: false,
     roleVisibleSeats: [],
@@ -130,6 +151,7 @@ Page({
     roomRoleCards: [],
     advancedRoleSummary: "",
     advancedQuotaText: "",
+    currentRoleChips: [],
     playerCards: [],
     historyPage: 1,
     historyList: [],
@@ -151,7 +173,11 @@ Page({
     isCurrentForcedAttempt: false,
     endMedals: [],
     loginTip: "请先登录，再做后续房间功能迁移。",
-    roomTip: "登录后可创建或加入房间。"
+    roomTip: "登录后可创建或加入房间。",
+    showRecapModal: false,
+    recapReady: false,
+    recapList: [],
+    recapIndex: 0,
   },
 
   onLoad(options) {
@@ -182,7 +208,8 @@ Page({
       selectedRoles: this.defaultRolesForCount(7),
       hostRoleOptions: this.withRoleImages(this.uniqueRoles(this.defaultRolesForCount(7))),
       advancedRoleSummary: this.formatAdvancedRoleSummary(this.defaultRolesForCount(7)),
-      advancedQuotaText: this.formatAdvancedQuotaText(7)
+      advancedQuotaText: this.formatAdvancedQuotaText(7),
+      currentRoleChips: this.buildCurrentRoleChips(this.defaultRolesForCount(7))
     });
     if (sharedRoomCode) {
       this.setData({ roomTip: `已识别分享房间 ${sharedRoomCode}，登录后将自动加入。` });
@@ -197,11 +224,7 @@ Page({
   },
 
   onShow() {
-    if (!this.data.wsUrl) return;
-    if (!this.data.connected) {
-      this.connect(this.data.wsUrl);
-      return;
-    }
+    if (!this.data.wsUrl || !this.data.connected) return;
     this.requestRoomRecovery();
   },
 
@@ -242,7 +265,7 @@ Page({
       .map((id) => this.getSeatNo(room, id, snapshot))
       .filter((seat) => Number.isFinite(seat) && seat > 0)
       .sort((a, b) => a - b);
-    return seats.length ? seats.join(",") : "?";
+    return seats.length ? seats.join(",") : "-";
   },
 
   isSpectatorInRoom(room, playerId) {
@@ -710,6 +733,11 @@ Page({
         }
         if (msg.type === "ROOM_STATE" && msg.room) {
           const room = msg.room;
+          const prevRoom = this.data.room;
+          // clear notes when game resets (started → not started)
+          if (prevRoom && prevRoom.started && !room.started) {
+            this.setData({ seatNotes: {} });
+          }
           const currentPhase = room.phase || "";
           const nextTeamPhaseKey =
             room && room.game && Number(room.game.round) && Number(room.game.attempt)
@@ -773,6 +801,8 @@ Page({
           this.refreshGameState(room);
           this.maybeShowMissionResultAnim(room);
           this.maybeShowPhasePrompt(room);
+          this.maybeShowAssassinAnim(room, prevRoom);
+          this.maybeShowRecap(room, prevRoom);
           return;
         }
         if (msg.type === "RECOVERED" && msg.data && msg.data.playerId) {
@@ -876,6 +906,11 @@ Page({
               this._cheatReqTimer = null;
             }
           }
+          return;
+        }
+        if (msg.type === "KICKED") {
+          this.setData({ room: null, seatNotes: {} });
+          wx.showToast({ title: "你已被房主踢出房间", icon: "none", duration: 2000 });
           return;
         }
         if (msg.type === "ERROR") {
@@ -1069,8 +1104,116 @@ Page({
     return {
       key: `${round}-${success ? 1 : 0}-${fails}`,
       round,
-      success
+      success,
+      fails
     };
+  },
+
+  maybeShowAssassinAnim(room, prevRoom) {
+    const anim = room && room.game && room.game.assassination;
+    if (!anim) return;
+    const prevAnim = prevRoom && prevRoom.game && prevRoom.game.assassination;
+    if (prevAnim) return; // already shown
+    const players = Array.isArray(room.players) ? room.players : [];
+    const target = players.find((p) => p.id === anim.targetId);
+    const assassin = players.find((p) => p.id === anim.assassinId);
+    const targetRole = this.getRevealedRoleLabel(room, anim.targetId);
+    const targetMeta = this.avatarMeta(target && target.avatar ? target.avatar : '');
+    this.setData({
+      assassinAnim: {
+        show: true,
+        hit: anim.hit,
+        targetName: target ? target.nickname : '目标',
+        targetAvatar: targetMeta.image,
+        targetAvatarText: targetMeta.text,
+        targetRole,
+        targetRoleImage: this.roleImageFor(targetRole),
+        assassinName: assassin ? assassin.nickname : '刺客',
+        resultText: anim.hit ? '刺中梅林！坏人阵营胜利' : '刺杀失败！好人阵营胜利',
+        resultClass: anim.hit ? 'assassin-result-evil' : 'assassin-result-good',
+      }
+    });
+  },
+
+  onCloseMissionAnim() {
+    if (this._missionAnimTimer) {
+      clearTimeout(this._missionAnimTimer);
+      this._missionAnimTimer = null;
+    }
+    this.setData({ showMissionAnim: false });
+  },
+
+  onCloseAssassinAnim() {
+    this.setData({ assassinAnim: null });
+  },
+
+  maybeShowRecap(room, prevRoom) {
+    const recap = room && room.game && Array.isArray(room.game.recap) ? room.game.recap : [];
+    const prevRecap = prevRoom && prevRoom.game && Array.isArray(prevRoom.game.recap) ? prevRoom.game.recap : [];
+    // Only trigger when recap first arrives (was empty, now has data)
+    if (!recap.length || prevRecap.length) return;
+    if (room.phase !== "end") return;
+    const recapList = recap.map(r => this.formatRecapEntry(r));
+    if (!recapList.length) return;
+    // Store recap but don't auto-open — user clicks the button to view
+    this.setData({ recapReady: true, recapList, recapIndex: 0 });
+  },
+
+  onOpenRecap() {
+    this.setData({ showRecapModal: true });
+  },
+
+  formatRecapEntry(r) {
+    if (!r) return null;
+    const review = r.review || null;
+    const sections = [];
+    if (review && review.overview) {
+      sections.push({ label: "总体复盘", text: review.overview });
+    }
+    if (review && review.speak && review.speak.thought) {
+      sections.push({ label: "发言策略", text: review.speak.thought + (review.speak.adjustment ? `\n→ 调整：${review.speak.adjustment}` : '') });
+    }
+    if (review && review.vote && review.vote.thought) {
+      sections.push({ label: "投票决策", text: review.vote.thought + (review.vote.adjustment ? `\n→ 调整：${review.vote.adjustment}` : '') });
+    }
+    if (review && review.team && review.team.thought) {
+      sections.push({ label: "组队思路", text: review.team.thought + (review.team.adjustment ? `\n→ 调整：${review.team.adjustment}` : '') });
+    }
+    if (review && review.nextGamePlan) {
+      sections.push({ label: "下局计划", text: review.nextGamePlan });
+    }
+    // Role-specific known info
+    let knownInfo = "";
+    if (r.merlin && r.merlin.evilSeats) {
+      knownInfo = `已知坏人座位：${r.merlin.evilSeats.join("、")}号`;
+    } else if (r.percival && r.percival.guessMerlinSeat) {
+      knownInfo = `猜测梅林：${r.percival.guessMerlinSeat}号，莫甘娜：${r.percival.guessMorganaSeat || "?"}号`;
+    } else if (r.evil && r.evil.guessMerlinSeat) {
+      knownInfo = `猜测梅林：${r.evil.guessMerlinSeat}号`;
+    } else if (r.loyal && r.loyal.suspicious) {
+      knownInfo = `怀疑座位：${(r.loyal.suspicious || []).join("、")}号`;
+    }
+    return {
+      nickname: r.nickname || "",
+      seat: r.seat || 0,
+      reason: r.reason || "",
+      knownInfo,
+      sections,
+    };
+  },
+
+  onRecapPrev() {
+    const idx = Math.max(0, this.data.recapIndex - 1);
+    this.setData({ recapIndex: idx });
+  },
+
+  onRecapNext() {
+    const idx = Math.min(this.data.recapList.length - 1, this.data.recapIndex + 1);
+    this.setData({ recapIndex: idx });
+  },
+
+  onCloseRecap() {
+    this.setData({ showRecapModal: false });
   },
 
   maybeShowMissionResultAnim(room) {
@@ -1097,15 +1240,18 @@ Page({
     this.setData({
       missionAnimLastKey: latestKey,
       showMissionAnim: true,
+      missionAnimSuccess: latest.success,
       missionAnimText: latest.success ? "任务成功" : "任务失败",
       missionAnimRound: latest.round,
+      missionAnimFails: latest.fails,
+      missionAnimFailsText: latest.fails === 0 ? "无失败票" : `${latest.fails} 张失败票`,
       missionAnimClass: latest.success ? "mission-anim-success" : "mission-anim-fail",
       missionAnimImage: latest.success ? "https://www.awalon.top/mp-assets/quest-success-420x300.png" : "https://www.awalon.top/mp-assets/quest-failed-420x300.png"
     });
     this._missionAnimTimer = setTimeout(() => {
       this.setData({ showMissionAnim: false });
       this._missionAnimTimer = null;
-    }, 1800);
+    }, 2800);
   },
 
   missionMetaByCount(count) {
@@ -1196,7 +1342,7 @@ Page({
     return voteHistory.map((v, idx) => {
       const mission = v && v.approved ? missionByRound[Number(v.round || 0)] || null : null;
       const snapshot = (v && v.seatSnapshot) || (mission && mission.seatSnapshot) || null;
-      const leaderSeat = this.getSeatNo(room, v && v.leaderId, snapshot) || "?";
+      const leaderSeat = this.getSeatNo(room, v && v.leaderId, snapshot) || "-";
       const teamSeats = this.formatSeatList(room, v && v.team, snapshot);
       const approves = this.formatSeatList(
         room,
@@ -1634,10 +1780,6 @@ Page({
     socket.send({ type, payload });
   },
 
-  onReconnect() {
-    this.setData({ connected: false });
-    this.connect(this.data.wsUrl);
-  },
 
   onRoomCodeInput(e) {
     const v = (e.detail.value || "").replace(/\D/g, "").slice(0, 5);
@@ -1660,7 +1802,8 @@ Page({
       selectedRoles,
       hostRoleOptions: this.withRoleImages(this.uniqueRoles(selectedRoles)),
       advancedRoleSummary: this.formatAdvancedRoleSummary(selectedRoles),
-      advancedQuotaText: this.formatAdvancedQuotaText(maxPlayers)
+      advancedQuotaText: this.formatAdvancedQuotaText(maxPlayers),
+      currentRoleChips: this.buildCurrentRoleChips(selectedRoles)
     };
     if (this.data.hostRole !== "随机" && !selectedRoles.includes(this.data.hostRole)) {
       next.hostRole = "随机";
@@ -1675,6 +1818,12 @@ Page({
     const seconds = Number(e.currentTarget.dataset.seconds || 120);
     if (!SPEAKING_SECONDS_OPTIONS.includes(seconds)) return;
     this.setData({ speakingSeconds: seconds });
+  },
+
+  onPickRoleChip(e) {
+    const role = String(e.currentTarget.dataset.role || "");
+    if (!role) return;
+    this.setData({ hostRole: this.data.hostRole === role ? "随机" : role });
   },
 
   onToggleAdvancedSettings() {
@@ -1716,7 +1865,8 @@ Page({
       selectedRoles,
       hostRoleOptions: this.withRoleImages(unique),
       advancedRoleSummary: this.formatAdvancedRoleSummary(selectedRoles),
-      advancedQuotaText: this.formatAdvancedQuotaText(maxPlayers)
+      advancedQuotaText: this.formatAdvancedQuotaText(maxPlayers),
+      currentRoleChips: this.buildCurrentRoleChips(selectedRoles)
     };
     if (this.data.hostRole !== "随机" && !unique.includes(this.data.hostRole)) {
       next.hostRole = "随机";
@@ -1734,7 +1884,8 @@ Page({
       selectedRoles,
       hostRoleOptions: this.withRoleImages(unique),
       advancedRoleSummary: this.formatAdvancedRoleSummary(selectedRoles),
-      advancedQuotaText: this.formatAdvancedQuotaText(5 + Number(this.data.maxPlayersIndex || 0))
+      advancedQuotaText: this.formatAdvancedQuotaText(5 + Number(this.data.maxPlayersIndex || 0)),
+      currentRoleChips: this.buildCurrentRoleChips(selectedRoles)
     };
     if (this.data.hostRole !== "随机" && !unique.includes(this.data.hostRole)) {
       next.hostRole = "随机";
@@ -1750,7 +1901,8 @@ Page({
       hostRole: "随机",
       hostRoleOptions: this.withRoleImages(this.uniqueRoles(selectedRoles)),
       advancedRoleSummary: this.formatAdvancedRoleSummary(selectedRoles),
-      advancedQuotaText: this.formatAdvancedQuotaText(maxPlayers)
+      advancedQuotaText: this.formatAdvancedQuotaText(maxPlayers),
+      currentRoleChips: this.buildCurrentRoleChips(selectedRoles)
     });
   },
 
@@ -1772,8 +1924,23 @@ Page({
     }));
   },
 
+  buildCurrentRoleChips(roles = []) {
+    const counts = {};
+    (roles || []).forEach((r) => { counts[r] = (counts[r] || 0) + 1; });
+    return ROLE_ORDER
+      .filter((r) => counts[r])
+      .map((r) => ({
+        role: r,
+        image: this.roleImageFor(r),
+        isEvil: EVIL_ROLES.has(r),
+        count: counts[r]
+      }));
+  },
+
   defaultRolesForCount(count) {
-    return defaultRolesForCount(count);
+    const config = app.globalData.roleConfig || {};
+    const roles = config[count] || config[String(count)];
+    return Array.isArray(roles) ? roles.slice() : [];
   },
 
   expectedEvilCount(count) {
@@ -1783,7 +1950,7 @@ Page({
         6: 2,
         7: 3,
         8: 3,
-        9: 4,
+        9: 3,
         10: 4
       }[Number(count) || 7] || 3
     );
@@ -2057,6 +2224,7 @@ Page({
           teamPhaseKey: "",
           seatSlots: [],
           roundSeats: [],
+          seatNotes: {},
           roleInfo: null,
           showRolePanel: false,
           roleVisibleSeats: [],
@@ -2207,6 +2375,18 @@ Page({
     const idx = Number(e.currentTarget.dataset.index);
     if (!Number.isFinite(idx)) return;
     if (!room.started) {
+      const seats = Array.isArray(room.seats) ? room.seats : [];
+      const isMyOwnSeat = seats[idx] === this.data.clientId;
+      if (isMyOwnSeat) {
+        wx.showModal({
+          title: "离开座位",
+          content: "确认离开该座位？离开后可以切换为观战模式。",
+          confirmText: "离开",
+          cancelText: "取消",
+          success: (res) => { if (res.confirm) this.send("CHOOSE_SEAT", { seatIndex: idx }); }
+        });
+        return;
+      }
       this.send("CHOOSE_SEAT", { seatIndex: idx });
       return;
     }
@@ -2284,10 +2464,94 @@ Page({
 
   noop() {},
 
+  onSeatTouchStart(e) {
+    const idx = Number(e.currentTarget.dataset.index);
+    this._seatLongPressTimer = setTimeout(() => {
+      this._seatLongPressTimer = null;
+      const room = this.data.room;
+      const pid = room && Array.isArray(room.seats) ? room.seats[idx] : null;
+      const player = pid && Array.isArray(room.players) ? room.players.find((p) => p.id === pid) : null;
+      const existing = this.data.seatNotes[idx] || {};
+      this.setData({
+        noteModal: {
+          show: true,
+          seatIndex: idx,
+          seat: idx + 1,
+          name: player ? player.nickname : `${idx + 1}号位`,
+          label: existing.label || "",
+          targetId: pid || ""
+        }
+      });
+    }, 400);
+  },
+
+  onSeatTouchEnd() {
+    if (this._seatLongPressTimer) {
+      clearTimeout(this._seatLongPressTimer);
+      this._seatLongPressTimer = null;
+    }
+  },
+
+  onSeatTouchCancel() {
+    if (this._seatLongPressTimer) {
+      clearTimeout(this._seatLongPressTimer);
+      this._seatLongPressTimer = null;
+    }
+  },
+
+  onPickNoteLabel(e) {
+    const label = String(e.currentTarget.dataset.label || "");
+    const cur = this.data.noteModal.label;
+    this.setData({ "noteModal.label": cur === label ? "" : label });
+  },
+
+  onSaveNote() {
+    const { seatIndex, label } = this.data.noteModal;
+    if (seatIndex < 0) return;
+    const notes = Object.assign({}, this.data.seatNotes);
+    if (!label) {
+      delete notes[seatIndex];
+    } else {
+      notes[seatIndex] = { label, badgeStyle: NOTE_BADGE_STYLE[label] || '', textStyle: NOTE_TEXT_STYLE[label] || '' };
+    }
+    this.setData({ seatNotes: notes, "noteModal.show": false });
+  },
+
+  onClearNote() {
+    const { seatIndex } = this.data.noteModal;
+    const notes = Object.assign({}, this.data.seatNotes);
+    delete notes[seatIndex];
+    this.setData({ seatNotes: notes, "noteModal.show": false });
+  },
+
+  onCloseNoteModal() {
+    this.setData({ "noteModal.show": false });
+  },
+
+  noteModalNoop() {},
+
+  onKickPlayer() {
+    const { targetId, name } = this.data.noteModal;
+    if (!targetId) return;
+    wx.showModal({
+      title: "踢出玩家",
+      content: `确认将 ${name} 踢出房间？`,
+      confirmText: "踢出",
+      confirmColor: "#c0392b",
+      success: (res) => {
+        if (res.confirm) {
+          this.send("KICK_PLAYER", { targetId });
+          this.setData({ "noteModal.show": false });
+        }
+      }
+    });
+  },
+
   onStartGame() {
     this.send("START_GAME");
     this.setData({ gameTip: "开始游戏请求已发送..." });
   },
+
 
   onStartMissionPhase() {
     this.send("START_MISSION_PHASE");

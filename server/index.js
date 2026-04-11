@@ -6,12 +6,13 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const Database = require('better-sqlite3');
-const { defaultRolesForCount } = require('./default-role-config');
+const { defaultRolesForCount, DEFAULT_ROLE_CONFIG } = require('./default-role-config');
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '8mb' }));
 app.get('/health', (req, res) => res.json({ ok: true }));
+app.get('/api/role-config', (req, res) => res.json(DEFAULT_ROLE_CONFIG));
 const uploadRoot = path.join(__dirname, 'uploads');
 const avatarUploadDir = path.join(uploadRoot, 'avatars');
 fs.mkdirSync(avatarUploadDir, { recursive: true });
@@ -334,7 +335,7 @@ const EVIL_COUNT_BY_PLAYERS = {
   6: 2,
   7: 3,
   8: 3,
-  9: 4,
+  9: 3,
   10: 4,
 };
 
@@ -353,7 +354,8 @@ function normalizeForceRoundMode(mode) {
 function deriveForcedRound(maxPlayers, roles, mode) {
   const normalized = normalizeForceRoundMode(mode);
   if (normalized === FORCE_ROUND_MODE_EVIL_PLUS_ONE) {
-    return Math.max(1, Math.min(MAX_ROUNDS, expectedEvilCount(maxPlayers) + 1));
+    const evilCount = Array.isArray(roles) && roles.length ? countEvilRoles(roles) : expectedEvilCount(maxPlayers);
+    return Math.max(1, Math.min(MAX_ROUNDS, evilCount + 1));
   }
   return MAX_ROUNDS;
 }
@@ -396,6 +398,7 @@ const MEDAL_DEFS = {
 const {
   recordGameSummary,
   recordAiRecapMemory,
+  evaluateGameSpeeches,
   decideSpeak,
   decideTeam,
   decideVote,
@@ -421,16 +424,64 @@ const AI_NAMES = [
 ];
 let aiNameSeq = 1;
 
-const AI_STYLES = [
-  '激进冲锋，善于带节奏',
-  '稳健保守，偏结构分析',
-  '逻辑推理型，喜欢追投票与任务',
-  '社交观察型，重视发言细节',
-  '搅局误导型，擅长制造分歧',
-  '冷静克制，少量但关键发言',
-  '强势控场，偏主动组队',
-  '谨慎试探，逐轮修正判断',
-];
+const AI_PERSONAS = {
+  '激进冲锋': {
+    style: '激进冲锋，善于带节奏',
+    speakTone: '直接强势，喜欢点名质疑，句子简短有力',
+    voteHabits: '倾向快速通过，不喜欢长时间否决拉锯',
+    bluffFreq: 'high',
+    trustThreshold: 'low',
+  },
+  '稳健保守': {
+    style: '稳健保守，偏结构分析',
+    speakTone: '措辞谨慎，引用具体投票和任务记录说话',
+    voteHabits: '倾向基于证据投票，不轻易赌博',
+    bluffFreq: 'low',
+    trustThreshold: 'medium',
+  },
+  '逻辑推理': {
+    style: '逻辑推理型，喜欢追投票与任务',
+    speakTone: '喜欢列举证据链，用"因为...所以..."句式',
+    voteHabits: '严格按任务/投票记录判断，不受发言影响',
+    bluffFreq: 'low',
+    trustThreshold: 'high',
+  },
+  '社交观察': {
+    style: '社交观察型，重视发言细节',
+    speakTone: '关注他人情绪和用词，善于捕捉矛盾发言',
+    voteHabits: '重视发言一致性，对前后矛盾的人投反对',
+    bluffFreq: 'medium',
+    trustThreshold: 'medium',
+  },
+  '搅局误导': {
+    style: '搅局误导型，擅长制造分歧',
+    speakTone: '善于引导话题，在好人阵营制造内耗，发言模糊',
+    voteHabits: '偶尔出乎意料地投票，制造混乱',
+    bluffFreq: 'very_high',
+    trustThreshold: 'low',
+  },
+  '冷静克制': {
+    style: '冷静克制，少量但关键发言',
+    speakTone: '话少精准，每句话都有指向性',
+    voteHabits: '非必要不否决，保留判断等到关键轮次',
+    bluffFreq: 'low',
+    trustThreshold: 'high',
+  },
+  '强势控场': {
+    style: '强势控场，偏主动组队',
+    speakTone: '喜欢主动表态和定性，说话带有引导性',
+    voteHabits: '敢于强推自己认为的队伍',
+    bluffFreq: 'medium',
+    trustThreshold: 'low',
+  },
+  '谨慎试探': {
+    style: '谨慎试探，逐轮修正判断',
+    speakTone: '多用疑问句，倾向观察而非定性',
+    voteHabits: '早期保守，后期根据积累信息行动',
+    bluffFreq: 'medium',
+    trustThreshold: 'high',
+  },
+};
 
 function shuffle(arr) {
   const a = arr.slice();
@@ -831,6 +882,20 @@ function joinRoom(client, payload) {
   client.roomCode = room.code;
   broadcastRoom(room);
   return ok(client, { roomCode: room.code, spectator: forceSpectator });
+}
+
+function kickPlayer(client, payload) {
+  const room = rooms.get(client.roomCode);
+  if (!room || room.hostId !== client.id) return;
+  const { targetId } = payload;
+  if (!targetId || targetId === client.id) return;
+  const target = room.players.get(targetId);
+  if (!target) return;
+  // Notify the kicked player before removing
+  if (target.ws && target.ws.readyState === 1) {
+    target.ws.send(JSON.stringify({ type: 'KICKED' }));
+  }
+  removePlayerById(room, targetId);
 }
 
 function leaveRoom(client) {
@@ -1607,8 +1672,11 @@ function chooseSeat(client, payload) {
     return;
   }
 
-  // Clicking own seat: no-op
+  // Clicking own seat: leave the seat (toggle off)
   if (occupant === client.id) {
+    room.seats[seatIndex] = null;
+    const me = room.players.get(client.id);
+    if (me) { me.seat = null; me.spectator = false; }
     broadcastRoom(room);
     return;
   }
@@ -1642,13 +1710,14 @@ function updateSettings(client, payload) {
 
   if (payload.maxPlayers && payload.maxPlayers >= countSeatedPlayers(room) && payload.maxPlayers <= 10) {
     room.maxPlayers = payload.maxPlayers;
+    room.roles = defaultRoles(room.maxPlayers);
     while (room.seats.length > room.maxPlayers) room.seats.pop();
     if (room.maxPlayers < 8) room.ladyOfLakeEnabled = false;
   }
   if (payload.speakingSeconds && payload.speakingSeconds >= 10 && payload.speakingSeconds <= 300) {
     room.speakingSeconds = payload.speakingSeconds;
   }
-  if (payload.roles !== undefined) {
+  if (payload.roles !== undefined && payload.maxPlayers === undefined) {
     if (!isValidRoleConfig(room.maxPlayers, payload.roles)) return error(client, 'INVALID_ROLE_CONFIG');
     room.roles = payload.roles;
   }
@@ -1676,11 +1745,27 @@ function updateSettings(client, payload) {
   broadcastRoom(room);
 }
 
-function startGame(client) {
+function startGame(client, payload) {
   const room = rooms.get(client.roomCode);
   if (!room) return;
   if (room.hostId !== client.id) return error(client, 'HOST_ONLY');
   if (room.started) return error(client, 'ALREADY_STARTED');
+  // 任何没有主动入座的真人，开局时标为观战者（不强制参与）
+  // 如果 payload.spectate=true，还可以把已入座的房主移出去
+  for (const p of room.players.values()) {
+    if (p.isAI) continue;
+    const inSeat = room.seats.some((id) => id === p.id);
+    if (p.id === room.hostId && inSeat && payload && payload.spectate) {
+      const idx = room.seats.indexOf(p.id);
+      if (idx >= 0) room.seats[idx] = null;
+      p.seat = null;
+      p.spectator = true;
+      p.avatar = '👀';
+    } else if (!inSeat && !isSpectatorPlayer(p)) {
+      p.spectator = true;
+      p.avatar = '👀';
+    }
+  }
   // auto-seat humans, then fill AI for empty seats
   autoSeatHumans(room);
   fillAiPlayers(room);
@@ -2462,7 +2547,8 @@ function fillAiPlayers(room) {
   if (room.aiNameRegistry) {
     for (const name of room.aiNameRegistry) usedNames.add(name);
   }
-  let styleIndex = Math.floor(Math.random() * AI_STYLES.length);
+  const personaKeys = Object.keys(AI_PERSONAS);
+  let styleIndex = Math.floor(Math.random() * personaKeys.length);
   for (let i = 0; i < toAdd; i++) {
     const id = `ai${existingCount + i + 1}`;
     const aiName = randomAiName(usedNames);
@@ -2470,6 +2556,7 @@ function fillAiPlayers(room) {
     usedNames.add(fullName);
     if (room.aiNameRegistry) room.aiNameRegistry.add(fullName);
     const aiPersonaId = fullName;
+    const aiPersonaKey = personaKeys[styleIndex % personaKeys.length];
     room.players.set(id, {
       id,
       nickname: fullName,
@@ -2477,7 +2564,8 @@ function fillAiPlayers(room) {
       seat: null,
       joinedAt: now(),
       isAI: true,
-      aiStyle: AI_STYLES[styleIndex % AI_STYLES.length],
+      aiPersonaKey,
+      aiStyle: AI_PERSONAS[aiPersonaKey].style,
       aiPersonaId,
     });
     styleIndex += 1;
@@ -2497,7 +2585,9 @@ function fillAiPlayers(room) {
 function autoSeatHumans(room) {
   while (room.seats.length < room.maxPlayers) room.seats.push(null);
   const seated = new Set(room.seats.filter((id) => id));
-  const humans = Array.from(room.players.values()).filter((p) => !p.isAI && !isSpectatorPlayer(p));
+  // 只坐入已明确选座（在 room.seats 里）的真人；
+  // 没有主动点过座位的人视为旁观，不强制入座。
+  const humans = Array.from(room.players.values()).filter((p) => !p.isAI && !isSpectatorPlayer(p) && seated.has(p.id));
   for (const p of humans) {
     if (p.seat !== null && p.seat !== undefined) continue;
     if (seated.has(p.id)) continue;
@@ -2873,6 +2963,8 @@ function generateRecaps(room) {
     if (!room || !room.game || room.game !== gameRef) return;
     room.game.recap = recaps.sort((a, b) => (a.seat || 0) - (b.seat || 0));
     broadcastRoom(room);
+    // 异步评估本局 AI 发言质量，将高分发言存入动态 few-shot 池（不影响主流程）
+    evaluateGameSpeeches(room, ROLE_FACTIONS).catch(() => {});
   });
 }
 
@@ -3628,6 +3720,9 @@ wss.on('connection', (ws) => {
       case 'LEAVE_ROOM':
         leaveRoom(client);
         break;
+      case 'KICK_PLAYER':
+        kickPlayer(client, payload || {});
+        break;
       case 'SET_PROFILE':
         setProfile(client, payload || {});
         break;
@@ -3641,7 +3736,7 @@ wss.on('connection', (ws) => {
         updateSettings(client, payload || {});
         break;
       case 'START_GAME':
-        startGame(client);
+        startGame(client, payload);
         break;
       case 'RESET_GAME':
         resetGame(client);
