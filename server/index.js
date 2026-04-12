@@ -398,6 +398,7 @@ const MEDAL_DEFS = {
 const {
   recordGameSummary,
   recordAiRecapMemory,
+  storeRecapInsights,
   evaluateGameSpeeches,
   extractStrategyPatterns,
   decideSpeak,
@@ -2887,6 +2888,7 @@ function generateRecaps(room) {
             actionSummary,
           });
           recordAiRecapMemory(room, p, role, { review });
+          storeRecapInsights(room, p, role, recap, ROLE_FACTIONS).catch(() => {});
           return;
         }
         if (role === '派西维尔') {
@@ -2913,6 +2915,7 @@ function generateRecaps(room) {
             actionSummary,
           });
           recordAiRecapMemory(room, p, role, { review });
+          storeRecapInsights(room, p, role, recap, ROLE_FACTIONS).catch(() => {});
           return;
         }
         if (ROLE_FACTIONS[role] === 'evil') {
@@ -2938,6 +2941,7 @@ function generateRecaps(room) {
             actionSummary,
           });
           recordAiRecapMemory(room, p, role, { review });
+          storeRecapInsights(room, p, role, recap, ROLE_FACTIONS).catch(() => {});
           return;
         }
         // loyal / other good
@@ -2957,6 +2961,7 @@ function generateRecaps(room) {
           actionSummary,
         });
         recordAiRecapMemory(room, p, role, { review });
+        storeRecapInsights(room, p, role, recap, ROLE_FACTIONS).catch(() => {});
       })()
     );
   }
