@@ -611,19 +611,19 @@
       <text class="recap-who">{{recapList[recapIndex].seat}}号 · {{recapList[recapIndex].nickname}}{{recapList[recapIndex].role ? ' · ' + recapList[recapIndex].role : ''}}</text>
       <text class="recap-nav-btn {{recapIndex === recapList.length - 1 ? 'disabled' : ''}}" bindtap="onRecapNext">下一位 ›</text>
     </view>
-    <view class="recap-known" wx:if="{{recapList[recapIndex].knownInfo}}">
-      <text class="recap-known-text">{{recapList[recapIndex].knownInfo}}</text>
-    </view>
-    <view class="recap-think-wrap" wx:if="{{recapList[recapIndex].think}}">
-      <view class="recap-think-toggle" bindtap="onToggleThink">
-        <text class="recap-think-label">推理过程</text>
-        <text class="recap-think-arrow">{{recapList[recapIndex].showThink ? '▲' : '▼'}}</text>
-      </view>
-      <view class="recap-think-body" wx:if="{{recapList[recapIndex].showThink}}">
-        <text class="recap-think-text">{{recapList[recapIndex].think}}</text>
-      </view>
-    </view>
     <scroll-view class="recap-sections" scroll-y>
+      <view class="recap-known" wx:if="{{recapList[recapIndex].knownInfo}}">
+        <text class="recap-known-text">{{recapList[recapIndex].knownInfo}}</text>
+      </view>
+      <view class="recap-think-wrap" wx:if="{{recapList[recapIndex].think}}">
+        <view class="recap-think-toggle" bindtap="onToggleThink">
+          <text class="recap-think-label">推理过程</text>
+          <text class="recap-think-arrow">{{recapList[recapIndex].showThink ? '▲' : '▼'}}</text>
+        </view>
+        <view class="recap-think-body" wx:if="{{recapList[recapIndex].showThink}}">
+          <text class="recap-think-text">{{recapList[recapIndex].think}}</text>
+        </view>
+      </view>
       <view class="recap-section" wx:for="{{recapList[recapIndex].sections}}" wx:key="label">
         <text class="recap-section-label">{{item.label}}</text>
         <text class="recap-section-text">{{item.text}}</text>
