@@ -59,6 +59,23 @@ fi
 
 SSH_CMD=(ssh -i "$SSH_KEY" -p "$REMOTE_PORT")
 
+# Resolve source directory: always the server/ folder, regardless of where script is called from
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SERVER_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+echo "==> Validating source directory: $SERVER_DIR"
+for required_file in package.json index.js ai.js; do
+  if [[ ! -f "$SERVER_DIR/$required_file" ]]; then
+    echo "ERROR: $SERVER_DIR/$required_file not found — aborting to prevent syncing wrong directory." >&2
+    exit 1
+  fi
+done
+if [[ -d "$SERVER_DIR/mobile" || -d "$SERVER_DIR/docs" ]]; then
+  echo "ERROR: Source dir looks like a monorepo root (contains mobile/ or docs/). Aborting." >&2
+  exit 1
+fi
+echo "    Source OK: package.json, index.js, ai.js found"
+
 echo "==> Checking SSH connectivity"
 "${SSH_CMD[@]}" "${REMOTE_USER}@${REMOTE_HOST}" "echo connected >/dev/null"
 
@@ -104,9 +121,6 @@ if [[ "$DRY_RUN" == "1" ]]; then
 fi
 
 echo "==> Syncing files to ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}"
-# Resolve source: always sync the server/ directory regardless of where the script is called from
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SERVER_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 rsync "${RSYNC_ARGS[@]}" "$SERVER_DIR/" "${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/"
 
 if [[ -n "$REMOTE_CMD" ]]; then
