@@ -104,7 +104,10 @@ if [[ "$DRY_RUN" == "1" ]]; then
 fi
 
 echo "==> Syncing files to ${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}"
-rsync "${RSYNC_ARGS[@]}" ./ "${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/"
+# Resolve source: always sync the server/ directory regardless of where the script is called from
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SERVER_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+rsync "${RSYNC_ARGS[@]}" "$SERVER_DIR/" "${REMOTE_USER}@${REMOTE_HOST}:${REMOTE_DIR}/"
 
 if [[ -n "$REMOTE_CMD" ]]; then
   echo "==> Running remote command"
