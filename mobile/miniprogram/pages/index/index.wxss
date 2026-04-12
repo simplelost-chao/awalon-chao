@@ -2490,12 +2490,12 @@
   left: 0;
   background: rgba(0,0,0,0.72);
   z-index: 900;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
 }
 .recap-modal {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  width: 100%;
   height: 85vh;
   z-index: 901;
   background: linear-gradient(160deg, #1a1430 0%, #0e1a2b 100%);
