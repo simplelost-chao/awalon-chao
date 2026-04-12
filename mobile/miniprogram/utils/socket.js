@@ -12,6 +12,8 @@ function safeCloseTask(socketTask) {
 
 function connect(url, handlers = {}) {
   if (task) {
+    // 先把旧 task 的 onClose 替换成空函数，防止它触发重连逻辑
+    try { task.onClose(() => {}); } catch (e) {}
     safeCloseTask(task);
     task = null;
   }
