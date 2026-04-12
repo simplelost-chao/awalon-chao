@@ -950,6 +950,12 @@ Page({
             }
             return;
           }
+          // 服务器重启导致 session 失效 → 自动退出登录状态，让用户重新登录
+          if (code === "INVALID_TOKEN") {
+            this.setData({ loggedIn: false, room: null, loginTip: "服务已重启，请重新登录", roomTip: "" });
+            wx.removeStorageSync("awalonAuthToken");
+            return;
+          }
           this.setData({ loginTip: tip, roomTip: tip });
           if (code === "NOT_YOUR_TURN" || code === "NOT_SPEAKING_PHASE" || code === "ROOM_FULL") {
             this.requestRoomRecovery();
@@ -2131,6 +2137,7 @@ Page({
         wx.request({
           url: `${app.globalData.apiBase}/api/wx/openid-login`,
           method: "POST",
+          timeout: 10000,
           data: {
             code: wxCode,
             nickname: ""

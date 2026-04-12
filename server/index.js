@@ -50,7 +50,7 @@ async function getWxAccessToken() {
 async function getWxOpenIdByCode(code) {
   if (!WX_APPID || !WX_APPSECRET) throw new Error('WX_CONFIG_MISSING');
   const url = `https://api.weixin.qq.com/sns/jscode2session?appid=${WX_APPID}&secret=${WX_APPSECRET}&js_code=${code}&grant_type=authorization_code`;
-  const resp = await fetch(url);
+  const resp = await fetch(url, { signal: AbortSignal.timeout(8000) });
   const data = await resp.json();
   if (!resp.ok || data.errcode || !data.openid) {
     throw new Error(`WX_CODE2SESSION_ERROR:${data.errcode || resp.status}`);
