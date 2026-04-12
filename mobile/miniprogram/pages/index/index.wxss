@@ -2484,13 +2484,14 @@
   inset: 0;
   background: rgba(0,0,0,0.72);
   z-index: 900;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
 }
 .recap-modal {
-  width: 100%;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
   height: 85vh;
+  z-index: 901;
   background: linear-gradient(160deg, #1a1430 0%, #0e1a2b 100%);
   border-radius: 32rpx 32rpx 0 0;
   border-top: 1rpx solid rgba(140,100,255,0.3);
@@ -2577,12 +2578,6 @@
   padding: 16rpx 24rpx 20rpx;
   background: rgba(20,30,100,0.15);
 }
-.recap-think-text {
-  font-size: 22rpx;
-  color: #8898cc;
-  line-height: 1.7;
-  white-space: pre-wrap;
-}
 .recap-reason {
   margin: 0 36rpx 12rpx;
   padding: 16rpx 24rpx;
@@ -2596,9 +2591,10 @@
 }
 .recap-sections {
   flex: 1;
-  min-height: 0;
+  height: 0;
   padding: 0 36rpx 32rpx;
   box-sizing: border-box;
+  overflow: hidden;
 }
 .recap-section {
   margin-bottom: 20rpx;
@@ -2620,6 +2616,14 @@
   color: rgba(255,255,255,0.8);
   line-height: 1.7;
   white-space: pre-wrap;
+  word-break: break-all;
+}
+.recap-think-text {
+  font-size: 22rpx;
+  color: #8898cc;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 .recap-dots {
   display: flex;
