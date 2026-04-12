@@ -1400,18 +1400,21 @@ async function decideRecap({ room, player, role, roleFactions }) {
     `本局${faction === winner ? '你方获胜' : '你方失败'}，${winner === 'good' ? '好人' : '坏人'}阵营赢得比赛。\n` +
     `本局角色配置：${rolesInGame.join('、')}\n` +
     (knownInfoText ? `${knownInfoText}（这是已知事实，不要质疑）\n` : '') +
-    `请以第一人称写一份专业深度复盘。要求：\n` +
-    `1. 紧扣我的每一次实际发言/投票/任务行为，评价当时判断是否正确，为什么\n` +
-    `2. 点出本局关键转折点（哪轮哪个决策影响了结果）\n` +
-    `3. 对其他玩家给出你的读人判断（结合发言/投票行为，不是泛泛而谈）\n` +
-    `4. 诚实指出你的最大失误，并给出具体改进方案\n` +
+    `你必须先在 think 字段完成逐步推理，再写复盘。think 字段的推理步骤：\n` +
+    `  Step1 逐轮回顾：每轮发生了什么，我做了哪些决策，当时的依据是什么\n` +
+    `  Step2 玩家行为分析：每个玩家的发言/投票模式透露了什么信号\n` +
+    `  Step3 关键决策评估：哪些决策是对的，哪些是错的，为什么\n` +
+    `  Step4 转折点定位：哪一个时刻决定了最终结果\n` +
+    `  Step5 改进方向：下局具体要改什么，为什么\n` +
+    `think 字段是内部推理过程，不限字数，要真正想清楚再写。review 必须以 think 的推理为基础。\n` +
     `输出严格JSON。`;
 
   const user =
     `【完整对局记录】\n${fullNarrative}\n\n` +
     `【我(${mySeat}号/${role})的行为记录】\n${actionText}\n\n` +
-    `请输出以下格式的JSON（字数要求是下限，请写得详细）：\n` +
+    `输出JSON（think 不限字数，review 各字段字数见要求）：\n` +
     `{\n` +
+    `  "think": "Step1 逐轮回顾：...\\nStep2 玩家分析：...\\nStep3 决策评估：...\\nStep4 转折点：...\\nStep5 改进方向：...",\n` +
     `  "role": "${role}",\n` +
     `  "knownInfo": "角色视野已知信息，或无特殊视野",\n` +
     `  "review": {\n` +
@@ -1425,7 +1428,7 @@ async function decideRecap({ room, player, role, roleFactions }) {
     `  }\n` +
     `}`;
 
-  const res = await callLLM(system, user, 0.7);
+  const res = await callLLM(system, user, 0.6);
   const cleaned = res.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
   const obj = parseJSON(cleaned, {});
   return { ...obj, info, actionSummary };

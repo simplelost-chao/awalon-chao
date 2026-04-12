@@ -614,8 +614,14 @@
     <view class="recap-known" wx:if="{{recapList[recapIndex].knownInfo}}">
       <text class="recap-known-text">{{recapList[recapIndex].knownInfo}}</text>
     </view>
-    <view class="recap-reason" wx:if="{{recapList[recapIndex].reason}}">
-      <text class="recap-reason-text">{{recapList[recapIndex].reason}}</text>
+    <view class="recap-think-wrap" wx:if="{{recapList[recapIndex].think}}">
+      <view class="recap-think-toggle" bindtap="onToggleThink">
+        <text class="recap-think-label">推理过程</text>
+        <text class="recap-think-arrow">{{recapList[recapIndex].showThink ? '▲' : '▼'}}</text>
+      </view>
+      <view class="recap-think-body" wx:if="{{recapList[recapIndex].showThink}}">
+        <text class="recap-think-text">{{recapList[recapIndex].think}}</text>
+      </view>
     </view>
     <scroll-view class="recap-sections" scroll-y>
       <view class="recap-section" wx:for="{{recapList[recapIndex].sections}}" wx:key="label">

@@ -1202,12 +1202,15 @@ Page({
     }
 
     const knownInfo = r.knownInfo || "";
+    const think = r.think || "";
 
     return {
       nickname: r.nickname || "",
       seat: r.seat || 0,
       role: r.role || "",
       reason: "",
+      think,
+      showThink: false,
       knownInfo,
       sections,
     };
@@ -1221,6 +1224,13 @@ Page({
   onRecapNext() {
     const idx = Math.min(this.data.recapList.length - 1, this.data.recapIndex + 1);
     this.setData({ recapIndex: idx });
+  },
+
+  onToggleThink() {
+    const list = this.data.recapList.slice();
+    const idx = this.data.recapIndex;
+    list[idx] = { ...list[idx], showThink: !list[idx].showThink };
+    this.setData({ recapList: list });
   },
 
   onCloseRecap() {
