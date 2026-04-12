@@ -888,7 +888,7 @@ function recordAiRecapMemory(room, player, role, recap) {
  *   keyMoments   → strategy_patterns（按角色+局面标签，自动参与 getRelevantPatterns 检索）
  *   nextGamePlan → strategy_patterns（confidence=2，优先级高于 extractStrategyPatterns 提取的普通规律）
  */
-function storeRecapInsights(room, player, role, recap, roleFactions) {
+async function storeRecapInsights(room, player, role, recap, roleFactions) {
   if (!recap) return;
   const review      = recap.review || {};
   const think       = recap.think  || '';
