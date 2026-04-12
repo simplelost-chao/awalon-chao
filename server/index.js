@@ -399,6 +399,7 @@ const {
   recordGameSummary,
   recordAiRecapMemory,
   evaluateGameSpeeches,
+  extractStrategyPatterns,
   decideSpeak,
   decideTeam,
   decideVote,
@@ -2963,8 +2964,9 @@ function generateRecaps(room) {
     if (!room || !room.game || room.game !== gameRef) return;
     room.game.recap = recaps.sort((a, b) => (a.seat || 0) - (b.seat || 0));
     broadcastRoom(room);
-    // 异步评估本局 AI 发言质量，将高分发言存入动态 few-shot 池（不影响主流程）
+    // 异步后处理：发言质量评分 + 战略规律提炼（不影响主流程）
     evaluateGameSpeeches(room, ROLE_FACTIONS).catch(() => {});
+    extractStrategyPatterns(room, ROLE_FACTIONS).catch(() => {});
   });
 }
 

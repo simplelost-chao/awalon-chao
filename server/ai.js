@@ -29,9 +29,25 @@ db.exec(`
     text TEXT,
     score INTEGER,
     context TEXT,
+    situation_type TEXT,
+    player_count INTEGER DEFAULT 0,
+    created_at INTEGER
+  );
+  CREATE TABLE IF NOT EXISTS strategy_patterns (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    role TEXT NOT NULL,
+    faction TEXT NOT NULL,
+    situation_type TEXT NOT NULL,
+    player_count INTEGER DEFAULT 0,
+    pattern TEXT NOT NULL,
+    outcome TEXT NOT NULL,
+    confidence INTEGER DEFAULT 1,
     created_at INTEGER
   );
 `);
+// 字段迁移（兼容旧表结构）
+try { db.exec('ALTER TABLE good_speeches ADD COLUMN situation_type TEXT'); } catch (e) {}
+try { db.exec('ALTER TABLE good_speeches ADD COLUMN player_count INTEGER DEFAULT 0'); } catch (e) {}
 
 function buildPersonaDesc(player) {
   const key = player && player.aiPersonaKey;
@@ -249,20 +265,18 @@ function getDynamicSpeeches(faction, n = 3) {
   }
 }
 
-function storeSpeech(faction, role, intent, text, score, context) {
+function storeSpeech(faction, role, intent, text, score, context, situationType, playerCount) {
   try {
     db.prepare(
-      'INSERT INTO good_speeches(faction, role, intent, text, score, context, created_at) VALUES(?,?,?,?,?,?,?)'
-    ).run(faction, role, intent, text, score, context || '', Date.now());
-    // 每个 faction 最多保留 200 条，超出删最旧的
+      `INSERT INTO good_speeches(faction, role, intent, text, score, context, situation_type, player_count, created_at)
+       VALUES(?,?,?,?,?,?,?,?,?)`
+    ).run(faction, role, intent, text, score, context || '', situationType || '', playerCount || 0, Date.now());
     db.prepare(
       `DELETE FROM good_speeches WHERE faction = ? AND id NOT IN (
         SELECT id FROM good_speeches WHERE faction = ? ORDER BY score DESC, id DESC LIMIT 200
       )`
     ).run(faction, faction);
-  } catch (e) {
-    // no-op
-  }
+  } catch (e) {}
 }
 
 // 在一局结束后，批量评估 AI 发言质量，将高质量发言存入 good_speeches
@@ -283,9 +297,11 @@ async function evaluateGameSpeeches(room, roleFactions) {
       // 只评估 AI 玩家
       const player = room.players && room.players.get ? room.players.get(m.playerId) : null;
       if (!player || !player.isAI) continue;
-      const faction = (roleFactions[role] || 'good');
-      const context = `第${round}轮，${winner || '?'}方胜，角色${role}`;
-      candidates.push({ playerId: m.playerId, role, faction, text: m.text, intent: m.intent || '', context });
+      const faction      = (roleFactions[role] || 'good');
+      const player2      = room.players && room.players.get ? room.players.get(m.playerId) : null;
+      const sitType      = player2 ? classifySituation(room, m.playerId) : 'info_available';
+      const context      = `第${round}轮，${winner || '?'}方胜，角色${role}`;
+      candidates.push({ playerId: m.playerId, role, faction, text: m.text, intent: m.intent || '', context, sitType });
     }
   }
 
@@ -321,7 +337,8 @@ async function evaluateGameSpeeches(room, roleFactions) {
       const c = batch[item.index];
       if (!c) continue;
       if (item.score >= 4) {
-        storeSpeech(c.faction, c.role, c.intent, c.text, item.score, c.context);
+        const pCount = (room.seats || []).length;
+        storeSpeech(c.faction, c.role, c.intent, c.text, item.score, c.context, c.sitType, pCount);
       }
     }
   } catch (e) {
@@ -564,6 +581,254 @@ function buildActionSummaryText(room, playerId, summary, mySeat) {
   return parts.join('\n');
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ──  LEARNING SYSTEM: 情景分类 / 信念状态 / 情绪寄存器 / 发言多样性 / 模式检索  ──
+// ─────────────────────────────────────────────────────────────────────────────
+
+// 8 种标准局面类型，用于跨局知识的标签化存储和精准检索
+const SIT = {
+  EARLY:       'early_game',        // 第1轮，无有效信息
+  MID:         'info_available',    // 中局，有任务/投票记录
+  FAIL_1:      'first_failure',     // 第一次任务失败刚发生
+  FAIL_2:      'consecutive_fails', // 连续失败，坏人接近获胜
+  GOOD_LEAD:   'good_leading',      // 好人已赢2局
+  EVIL_EDGE:   'evil_needs_one',    // 坏人只需1次失败即获胜
+  PRE_ASGN:    'pre_assassination', // 好人赢3局，进入刺杀阶段
+  ACCUSED:     'under_suspicion',   // 当前玩家刚被点名怀疑
+};
+
+/** 根据游戏状态和最近发言判断当前局面类型 */
+function classifySituation(room, playerId) {
+  const missions = (room.game && room.game.missionHistory) || [];
+  const goodWins = missions.filter(m => m.success).length;
+  const evilWins = missions.filter(m => !m.success).length;
+  const round    = (room.game && room.game.round) || 1;
+  const mySeat   = seatNo(room, playerId);
+
+  // 优先检测是否被点名（影响当轮发言策略）
+  const speakHistory = (room.game && room.game.speakHistory) || {};
+  const recentKeys = Object.keys(speakHistory).sort().slice(-2);
+  for (const key of recentKeys) {
+    for (const m of (speakHistory[key] || []).slice(-10)) {
+      if (m && m.text && m.playerId !== playerId &&
+          m.text.includes(`${mySeat}号`) &&
+          /怀疑|坏人|问题|排查|出局/.test(m.text)) {
+        return SIT.ACCUSED;
+      }
+    }
+  }
+
+  if (goodWins >= 3) return SIT.PRE_ASGN;
+  if (evilWins >= 2) return missions.length > 0 && !missions[missions.length - 1].success
+    ? SIT.FAIL_2 : SIT.EVIL_EDGE;
+  if (goodWins >= 2) return SIT.GOOD_LEAD;
+  if (missions.length > 0 && !missions[missions.length - 1].success) return SIT.FAIL_1;
+  if (round <= 1) return SIT.EARLY;
+  return SIT.MID;
+}
+
+/**
+ * 基于任务失败记录和投票相关性，为每个座位计算嫌疑分 (0~1)。
+ * 梅林/坏人会覆盖已知角色的分数。
+ */
+function computeBeliefState(room, playerId, role, roleFactions) {
+  const info        = roleInfo(room, playerId, role, roleFactions);
+  const mySeat      = seatNo(room, playerId);
+  const missions    = (room.game && room.game.missionHistory) || [];
+  const votes       = (room.game && room.game.voteHistory)    || [];
+  const faction     = roleFactions[role] || 'good';
+  const totalSeats  = (room.seats || []).length;
+
+  const sus = {};   // seat -> float
+  const evi = {};   // seat -> string[]
+  for (let s = 1; s <= totalSeats; s++) { sus[s] = 0.3; evi[s] = []; }
+
+  // 角色视野覆盖（确定性信息最高权重）
+  if (role === '梅林') {
+    for (const s of info.seats) {
+      sus[s] = 0.92; evi[s] = ['梅林视野：确认坏人'];
+    }
+    for (let s = 1; s <= totalSeats; s++) {
+      if (s !== mySeat && !info.seats.includes(s)) {
+        sus[s] = 0.08; evi[s] = ['梅林视野：确认好人'];
+      }
+    }
+  } else if (faction === 'evil' && role !== '奥伯伦') {
+    for (const s of info.seats) {
+      if (s !== mySeat) { sus[s] = 0.05; evi[s] = ['坏人视野：确认队友']; }
+    }
+  }
+
+  // 任务失败分析（最强信号）
+  for (const m of missions) {
+    const teamSeats = (m.team || []).map(id => seatNo(room, id)).filter(Boolean);
+    if (!m.success) {
+      for (const s of teamSeats) {
+        if (s !== mySeat && (sus[s] || 0) < 0.9) {
+          sus[s] = Math.min(0.92, (sus[s] || 0.3) + 0.18);
+          evi[s] = [...(evi[s] || []), `第${m.round}轮失败任务成员`];
+        }
+      }
+      // 不在失败队伍里 → 微弱好人信号
+      for (let s = 1; s <= totalSeats; s++) {
+        if (!teamSeats.includes(s) && s !== mySeat && (sus[s] || 0) < 0.9) {
+          sus[s] = Math.max(0.05, (sus[s] || 0.3) - 0.03);
+        }
+      }
+    }
+  }
+
+  // 投票相关性（次级信号）
+  for (const v of votes) {
+    const relMission = missions.find(m => m.round === v.round);
+    if (!relMission) continue;
+    for (const [pid, approved] of Object.entries(v.votes || {})) {
+      const s = seatNo(room, pid);
+      if (!s || s === mySeat || (sus[s] || 0) >= 0.9) continue;
+      if (approved && !relMission.success) {
+        sus[s] = Math.min(0.85, (sus[s] || 0.3) + 0.07);
+        evi[s] = [...(evi[s] || []), `第${v.round}轮赞成了后来失败的队伍`];
+      } else if (!approved && !relMission.success) {
+        sus[s] = Math.max(0.05, (sus[s] || 0.3) - 0.07);
+        evi[s] = [...(evi[s] || []), `第${v.round}轮反对了后来失败的队伍`];
+      }
+    }
+  }
+
+  const topSuspects = Object.entries(sus)
+    .filter(([s]) => Number(s) !== mySeat)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 3)
+    .map(([s]) => Number(s));
+
+  return {
+    suspicion: sus,
+    evidence: evi,
+    topSuspects,
+    knownEvil:   role === '梅林' ? info.seats : [],
+    knownAllies: faction === 'evil' && role !== '奥伯伦' ? info.seats : [],
+  };
+}
+
+/** 把 beliefState 格式化为可读文本，注入到 LLM prompt */
+function formatBeliefStateForPrompt(bs, mySeat) {
+  const lines = ['【当前嫌疑评估（基于任务/投票分析）】'];
+  if (bs.knownEvil.length)    lines.push(`已知坏人（梅林视野）：${bs.knownEvil.join('、')}号`);
+  if (bs.knownAllies.length)  lines.push(`已知队友（坏人视野）：${bs.knownAllies.join('、')}号`);
+
+  const sorted = Object.entries(bs.suspicion)
+    .filter(([s]) => Number(s) !== mySeat)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 5);
+
+  for (const [seat, score] of sorted) {
+    const ev   = (bs.evidence[seat] || []).slice(-2).join('；');
+    const lvl  = score >= 0.8 ? '高度可疑' : score >= 0.55 ? '中等嫌疑' : '较低嫌疑';
+    if (ev) lines.push(`${seat}号：${lvl}(${Math.round(score * 100)}%) — ${ev}`);
+  }
+  return lines.join('\n');
+}
+
+/** 根据当前战局计算情绪寄存器，让发言有真实情绪而非永远理性分析 */
+function computeEmotionalRegister(room, playerId, role, roleFactions) {
+  const missions  = (room.game && room.game.missionHistory) || [];
+  const faction   = roleFactions[role] || 'good';
+  const goodWins  = missions.filter(m => m.success).length;
+  const evilWins  = missions.filter(m => !m.success).length;
+  const mySeat    = seatNo(room, playerId);
+
+  // 最近是否被点名
+  const speakHistory = (room.game && room.game.speakHistory) || {};
+  const recentKeys   = Object.keys(speakHistory).sort().slice(-2);
+  let accused = false;
+  outer: for (const key of recentKeys) {
+    for (const m of (speakHistory[key] || []).slice(-8)) {
+      if (m && m.text && m.playerId !== playerId &&
+          m.text.includes(`${mySeat}号`) &&
+          /怀疑|坏人|问题|出局/.test(m.text)) {
+        accused = true; break outer;
+      }
+    }
+  }
+
+  if (accused) return { state: 'defensive',
+    hint: '刚被点名，内心有点不爽，说话可以稍微急一点或者有点不服气，不要只是冷静解释' };
+
+  if (faction === 'good') {
+    if (evilWins >= 2) return { state: 'stressed',
+      hint: '好人快输了，局势很紧张，语气可以透出急迫感，需要尽快锁定坏人' };
+    if (goodWins >= 2) return { state: 'confident',
+      hint: '好人形势不错，可以更主动地推进，语气自信一些' };
+    if (missions.length === 0) return { state: 'observing',
+      hint: '第一轮完全没有信息，可以说说自己的判断标准或者直觉，不要强行分析' };
+  } else {
+    if (goodWins >= 2) return { state: 'stressed',
+      hint: '好人快赢了，坏人需要搅局，语气可以有压迫感，主动制造混乱' };
+    if (evilWins >= 2) return { state: 'confident',
+      hint: '坏人局势占优，保持沉稳，不要过度表现' };
+  }
+  return { state: 'neutral', hint: '局面普通，按正常节奏说话' };
+}
+
+/** 获取该玩家最近使用过的发言意图，防止连续重复 */
+function getForbiddenIntents(room, playerId) {
+  const patterns = room.game && room.game.speechPatterns && room.game.speechPatterns[playerId];
+  if (!patterns || patterns.length < 2) return [];
+  const recent = patterns.slice(-4);
+  const forbidden = new Set();
+  // 连续相同意图 → 禁止
+  if (recent.length >= 2 && recent[recent.length - 1] === recent[recent.length - 2]) {
+    forbidden.add(recent[recent.length - 1]);
+  }
+  // 最近4次出现3次同意图 → 也禁止
+  const counts = {};
+  for (const x of recent) counts[x] = (counts[x] || 0) + 1;
+  for (const [intent, cnt] of Object.entries(counts)) {
+    if (cnt >= 3) forbidden.add(intent);
+  }
+  return [...forbidden];
+}
+
+/** 记录本次发言意图（在 decideSpeak 返回后调用） */
+function recordSpeechIntent(room, playerId, intent) {
+  if (!room.game) return;
+  if (!room.game.speechPatterns) room.game.speechPatterns = {};
+  const arr = room.game.speechPatterns[playerId] || [];
+  arr.push(intent || 'neutral');
+  room.game.speechPatterns[playerId] = arr.slice(-12); // 保留最近12条
+}
+
+/** 从 strategy_patterns 检索与当前角色+局面匹配的历史经验 */
+function getRelevantPatterns(role, faction, situationType, playerCount = 0, limit = 4) {
+  try {
+    // 优先：精确角色 + 精确局面
+    let rows = db.prepare(
+      `SELECT pattern, outcome, confidence FROM strategy_patterns
+       WHERE role = ? AND situation_type = ?
+       ORDER BY confidence DESC, created_at DESC LIMIT ?`
+    ).all(role, situationType, limit);
+
+    // 补充：同阵营 + 同局面（不同角色）
+    if (rows.length < 2) {
+      const more = db.prepare(
+        `SELECT pattern, outcome, confidence FROM strategy_patterns
+         WHERE faction = ? AND situation_type = ? AND role != ?
+         ORDER BY confidence DESC, created_at DESC LIMIT ?`
+      ).all(faction, situationType, role, limit - rows.length);
+      rows = [...rows, ...more];
+    }
+
+    if (!rows.length) return '';
+    const lines = ['【同类局面历史经验】'];
+    for (const r of rows) {
+      lines.push(`• [${r.outcome === 'win' ? '胜方' : '败方'}经验×${r.confidence}] ${r.pattern}`);
+    }
+    return lines.join('\n');
+  } catch (e) { return ''; }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 function formatAiRecapMemory(room, player, role, recap) {
   const review = recap && recap.review ? recap.review : {};
   const lines = [
@@ -803,15 +1068,23 @@ function buildGameNarrative(room, mySeat, role, roleFactions, info) {
 }
 
 async function decideSpeak({ room, player, role, roleFactions }) {
-  const info = roleInfo(room, player.id, role, roleFactions);
-  const mySeat = seatNo(room, player.id);
+  const info          = roleInfo(room, player.id, role, roleFactions);
+  const mySeat        = seatNo(room, player.id);
   if (!mySeat) return '';
 
-  const speakHistoryAll = room.game.speakHistory || {};
-  const rolesInGame = Array.from(new Set(room.roles || []));
+  const speakHistoryAll  = room.game.speakHistory || {};
+  const rolesInGame      = Array.from(new Set(room.roles || []));
   const roleFactionLocal = roleFactions[role] || 'good';
+  const currentRound     = room.game.round || 1;
+  const playerCount      = (room.seats || []).length;
 
-  // 我的历史发言
+  // ── 1. 局面分类 + 信念状态 + 情绪寄存器 ──
+  const situation  = classifySituation(room, player.id);
+  const bs         = computeBeliefState(room, player.id, role, roleFactions);
+  const emotion    = computeEmotionalRegister(room, player.id, role, roleFactions);
+  const bsText     = formatBeliefStateForPrompt(bs, mySeat);
+
+  // ── 2. 我的历史发言（禁止重复） ──
   const myPreviousSpeeches = [];
   for (const arr of Object.values(speakHistoryAll)) {
     for (const m of (arr || [])) {
@@ -819,22 +1092,25 @@ async function decideSpeak({ room, player, role, roleFactions }) {
     }
   }
 
-  // 被指控检测
+  // ── 3. 被指控检测 ──
   const accusationPattern = new RegExp(`${mySeat}号`);
-  const recentSpeakLines = [];
-  const keys = Object.keys(speakHistoryAll).sort((a, b) => {
-    const [ar, aa] = a.split('-').map(Number); const [br, ba] = b.split('-').map(Number);
+  const recentLines = [];
+  const sortedKeys = Object.keys(speakHistoryAll).sort((a, b) => {
+    const [ar, aa] = a.split('-').map(Number);
+    const [br, ba] = b.split('-').map(Number);
     return ar !== br ? ar - br : aa - ba;
   });
-  for (const key of keys.slice(-2)) {
+  for (const key of sortedKeys.slice(-2)) {
     for (const m of (speakHistoryAll[key] || []).slice(-10)) {
-      if (m && m.text) recentSpeakLines.push(m.text);
+      if (m && m.text) recentLines.push(m.text);
     }
   }
-  const accusedTexts = recentSpeakLines.filter(s => accusationPattern.test(s) && /怀疑|坏人|问题|排水|出局|反对|不信/.test(s));
+  const accusedTexts = recentLines.filter(s =>
+    accusationPattern.test(s) && /怀疑|坏人|问题|排水|出局|反对|不信/.test(s)
+  );
   const accused = accusedTexts.length > 0 ? accusedTexts.slice(-2).join('；') : null;
 
-  // 坏人队友近期发言
+  // ── 4. 坏人队友近期发言 ──
   let allySpeeches = [];
   if (roleFactionLocal === 'evil') {
     const assignments = room.game.assignments || {};
@@ -846,118 +1122,180 @@ async function decideSpeak({ room, player, role, roleFactions }) {
           if (m && m.playerId === pid && m.text) allyTalks.push(m.text);
         }
       }
-      const allySeat = seatNo(room, pid);
-      allyTalks.slice(-2).forEach(t => allySpeeches.push(`${allySeat}号队友说："${t}"`));
+      allyTalks.slice(-2).forEach(t =>
+        allySpeeches.push(`${seatNo(room, pid)}号队友说："${t}"`)
+      );
     }
   }
 
-  // 预处理游戏叙事（人类可读，非 JSON）
-  const narrative = buildGameNarrative(room, mySeat, role, roleFactions, info);
-  const fewShotBlock = buildFewShotBlock(roleFactionLocal, room.game.round || 1, accused, allySpeeches.length ? allySpeeches : null);
+  // ── 5. 发言多样性 ──
+  const forbiddenIntents = getForbiddenIntents(room, player.id);
 
-  // 角色专属策略指导
+  // ── 6. 历史经验检索 ──
+  const patternBlock = getRelevantPatterns(role, roleFactionLocal, situation, playerCount);
+
+  // ── 7. Few-shot 示例 ──
+  const fewShotBlock = buildFewShotBlock(roleFactionLocal, currentRound, accused, allySpeeches.length ? allySpeeches : null);
+
+  // ── 8. 角色策略 ──
   const roleStrategy = {
-    '梅林': '你知道坏人是谁，但不能直接说。用"投票异常""任务失败涉及人员"等间接方式暗示。绝不说"我看到了"。',
-    '派西维尔': '你看到两个拇指位之一是梅林，保护梅林。不要轻易表态哪个是梅林。',
-    '忠臣': '你没有额外信息，靠推理。分析任务失败涉及的座位和投票中的反常行为。',
-    '刺客': '伪装好人。观察谁发言最有信息量（可能是梅林），记录在心。',
-    '莫甘娜': '让派西维尔认为你可能是梅林。模仿梅林的发言方式但不要太明显。',
-    '莫德雷德': '梅林看不到你。伪装成强好人，可以大胆推好人队伍，建立信任。',
-    '奥伯伦': '你不知道队友，队友也不知道你。靠自己判断，让任务失败即可。',
-    '爪牙': '配合其他坏人，保护刺客和莫甘娜，制造混乱转移视线。',
+    '梅林':   '你知道坏人是谁，绝不直说。用"投票记录""任务失败涉及人员"间接暗示，保护自己。',
+    '派西维尔':'你看到两个拇指位（梅林或莫甘娜），保护梅林，不轻易透露你知道谁是梅林。',
+    '忠臣':   '靠推理，分析任务失败和投票中的矛盾行为，锁定可疑目标。',
+    '刺客':   '伪装好人。留心谁发言最有深度信息量——那很可能是梅林，记在心里。',
+    '莫甘娜': '让派西维尔认为你可能是梅林。模仿梅林风格但不要太刻意。',
+    '莫德雷德':'梅林看不到你，可以大胆建立好人形象，强推队伍建立信任。',
+    '奥伯伦': '你不知道队友，靠自己判断，偷偷让任务失败。',
+    '爪牙':   '配合坏人队友，保护核心坏人，制造混乱转移好人视线。',
   };
-  const strategyHint = roleStrategy[role] || '用逻辑推理，分析任务和投票记录。';
+  const strategyHint = roleStrategy[role] || '用逻辑推理分析任务和投票记录。';
 
-  const forbiddenStarters = '禁止用以下任何词语开头：我觉得、我认为、我注意到、大家、说实话、作为、首先、其次、总的来说、综合来看、从逻辑上、经过分析。禁止在一句话里连续使用两个以上问句或反问句，不要以疑问句结尾。';
+  // ── 9. 构建 system prompt ──
+  const forbidStarters = '禁止以下开头：我觉得、我认为、我注意到、大家、说实话、作为、首先、其次、总的来说、从逻辑上。';
+  const forbidQuestions = '不要连续使用2个以上反问句，不以疑问句结尾。';
+  const forbidIntentStr = forbiddenIntents.length
+    ? `本次禁止使用以下发言意图（最近已重复）：${forbiddenIntents.join('、')}。` : '';
+
   const system =
-    `你是阿瓦隆桌游真人玩家，当前角色：${role}（${roleFactionLocal === 'good' ? '好人阵营' : '坏人阵营'}），座位：${mySeat}号。\n` +
-    `策略目标：${strategyHint}\n` +
-    `你的说话风格：${buildPersonaDesc(player)}\n` +
-    `发言要求：40-80字，像真实玩家在说话——可以有情绪、疑问、反问、停顿感。不能写成分析报告，不能列清单，不能暴露身份。${forbiddenStarters}\n` +
-    `think字段（内部推理，不超过120字，不展示给玩家）：先想清楚当前局面对我最有利的发言方向是什么，再决定说什么。\n` +
+    `你是阿瓦隆桌游真人玩家，角色：${role}（${roleFactionLocal === 'good' ? '好人' : '坏人'}阵营），座位：${mySeat}号。\n` +
+    `策略方向：${strategyHint}\n` +
+    `说话风格：${buildPersonaDesc(player)}\n` +
+    `当前情绪状态：${emotion.hint}\n` +
+    `发言规则：40-80字，像真实玩家说话，可以有情绪和停顿感，不能写成报告或清单，不能暴露身份。${forbidStarters}${forbidQuestions}${forbidIntentStr}\n` +
+    `think（内部推理，不超过120字，不展示给其他玩家）：先基于嫌疑评估和情绪状态决定本轮发言方向。\n` +
     (myPreviousSpeeches.length
-      ? `你前几轮说过的话（禁止重复相同观点或相同目标）：${myPreviousSpeeches.slice(-3).map((t, i) => `(${i + 1})${t}`).join('；')}\n`
+      ? `【我说过的话——禁止重复相同观点或相同目标】${myPreviousSpeeches.slice(-3).map((t, i) => `(${i + 1})${t}`).join('；')}\n`
       : '') +
-    (accused ? `【重要】有人指控你：${accused}。必须回应这个指控。\n` : '') +
-    (allySpeeches.length ? `【坏人队友近期说法，叙事要保持一致但不要说一样的话】${allySpeeches.join('；')}\n` : '') +
+    (accused ? `【被指控】有人刚才怀疑我：${accused}。必须回应。\n` : '') +
+    (allySpeeches.length ? `【坏人队友说法（保持叙事一致但不要重复他的话）】${allySpeeches.join('；')}\n` : '') +
+    (patternBlock ? patternBlock + '\n' : '') +
     (fewShotBlock ? fewShotBlock + '\n' : '') +
     '输出严格JSON，不含其他内容。';
 
-  const currentRound = room.game.round || 1;
+  // ── 10. 构建 user prompt（叙事 + 嫌疑评估） ──
+  const narrative = buildGameNarrative(room, mySeat, role, roleFactions, info);
   const user =
     `【第${currentRound}轮，轮到你(${mySeat}号)发言】\n\n` +
+    `${bsText}\n\n` +
     `游戏局面：\n${narrative}\n\n` +
     `本局角色配置：${rolesInGame.join('、')}\n` +
-    '输出格式（严格JSON，think字段内部推理不超过120字）：\n' +
-    '{"think":"先分析局面，想清楚本轮发言对我最有利的策略方向","intent":"accusation|defense|redirect|claim|probe|support|neutral","target":目标座位号(整数,可省略),"text":"发言内容(40-80字)"}';
+    '输出JSON（think不超过120字）：\n' +
+    '{"think":"基于嫌疑分析和情绪状态，本轮最优发言方向是...","intent":"accusation|defense|redirect|claim|probe|support|neutral","target":目标座位号或省略,"text":"发言内容40-80字"}';
 
-  const res = await callLLM(system, user, 0.9);
-  // 解析 think + text 格式
+  const res     = await callLLM(system, user, 0.9);
   const cleaned = res.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-  const obj = parseJSON(cleaned, { text: '' });
-  const text = sanitizeSpeech(obj.text || '', rolesInGame);
+  const obj     = parseJSON(cleaned, { text: '', intent: 'neutral' });
+  const text    = sanitizeSpeech(obj.text || '', rolesInGame);
+
+  // 记录本次发言意图（供下次多样性检测）
+  if (text) recordSpeechIntent(room, player.id, obj.intent || 'neutral');
+
   return hasExplicitIdentityReveal(text) ? '' : text;
 }
 
 async function decideTeam({ room, leaderId, role, roleFactions, teamSize }) {
-  const leader = room.players.get(leaderId);
-  const leaderKey = leader ? leader.aiPersonaId || leader.nickname : 'AI';
-  const memory = getAiMemory(leaderKey, 6).concat(getRecentSummaries(3));
-  const info = roleInfo(room, leaderId, role, roleFactions);
+  const leader          = room.players.get(leaderId);
+  const info            = roleInfo(room, leaderId, role, roleFactions);
+  const bs              = computeBeliefState(room, leaderId, role, roleFactions);
+  const bsText          = formatBeliefStateForPrompt(bs, seatNo(room, leaderId));
+  const situation       = classifySituation(room, leaderId);
+  const faction         = roleFactions[role] || 'good';
+  const resolvedSize    = teamSize || (room.game.team ? room.game.team.length : 0);
+  const mySeat          = seatNo(room, leaderId);
+  const missions        = (room.game && room.game.missionHistory) || [];
+  const patternBlock    = getRelevantPatterns(role, faction, situation, (room.seats || []).length);
+
+  // 博弈提示：好人/坏人组队策略差异
+  const goodWins  = missions.filter(m => m.success).length;
+  const evilWins  = missions.filter(m => !m.success).length;
+  let gameTheoryHint = '';
+  if (faction === 'good') {
+    gameTheoryHint = `好人组队：避开嫌疑分高的座位，优先选嫌疑分低的可信玩家。当前最可疑：${bs.topSuspects.join('、')}号。`;
+  } else {
+    const evilSeats = info.seats.filter(s => s !== mySeat);
+    const needFail  = resolvedSize >= 4 ? 2 : 1; // 大队伍需要2票失败
+    gameTheoryHint = `坏人组队：本轮任务需要${needFail}票失败。${evilSeats.length > 0
+      ? `队友(${evilSeats.join('、')}号)可带${Math.min(evilSeats.length, needFail)}人，其余用好人补位以帮助过票。`
+      : '只有自己是坏人，慎重考虑是否本轮出失败票。'}若队伍明显可疑则难以过票，权衡利弊。`;
+  }
+
+  const narrative = buildGameNarrative(room, mySeat, role, roleFactions, info);
   const system =
-    '你是阿瓦隆队长AI，目标是带领阵营获胜。' +
-    '选择队伍时要考虑本阵营目标、玩家发言与投票历史、任务结果。' +
-    '允许欺骗和试探，但需给出能过票的合理队伍。尊重你的底牌阵营目标。' +
-    '如果你是坏人队长，不要机械地把所有坏人都塞进队伍；通常只带足够影响任务的人数（例如只需1张失败票时优先只露1个坏人）。' +
-    '组队时必须认真利用任务失败票数量和投票记录，不要忽视明显的失败队伍嫌疑。' +
-    '你可能掌握同阵营座位号（info.seats），但不要明说，只能暗中使用。' +
-    `当前AI人格特征：${buildPersonaDesc(leader)}输出必须是严格JSON，teamSeats为座位号数组。`;
-  const resolvedTeamSize = teamSize || (room.game.team ? room.game.team.length : 0);
-  const aiStyle = leader && leader.aiStyle ? leader.aiStyle : '偏结构，稳健';
-  const user = JSON.stringify({
-    task: 'pick_team',
-    role,
-    seat: seatNo(room, leaderId),
-    teamSize: resolvedTeamSize,
-    rolesInGame: Array.from(new Set(room.roles || [])),
-    style: aiStyle,
-    info,
-    state: publicState(room),
-    memory,
-    format: { teamSeats: [1, 2] },
-  });
+    `你是阿瓦隆队长，角色：${role}（${faction === 'good' ? '好人' : '坏人'}阵营），座位：${mySeat}号。\n` +
+    `组队规则：需选${resolvedSize}人（含自己或不含均可）。${gameTheoryHint}\n` +
+    (patternBlock ? patternBlock + '\n' : '') +
+    `风格：${buildPersonaDesc(leader)}输出严格JSON，teamSeats为座位号整数数组。`;
+
+  const user =
+    `${bsText}\n\n` +
+    `游戏局面：\n${narrative}\n\n` +
+    `好人已赢${goodWins}局，坏人已赢${evilWins}局。连续否决次数：${room.game.rejectsInRow || 0}。\n` +
+    `请选出${resolvedSize}人的队伍（座位号），同时给出简要理由。\n` +
+    `输出JSON：{"teamSeats":[座位号数组],"reason":"简要说明"}`;
+
   const res = await callLLM(system, user, 0.6);
-  const obj = parseJSON(res, { teamSeats: [] });
+  const cleaned = res.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+  const obj = parseJSON(cleaned, { teamSeats: [] });
   return Array.isArray(obj.teamSeats) ? obj.teamSeats : [];
 }
 
 async function decideVote({ room, playerId, role, roleFactions }) {
-  const player = room.players.get(playerId);
-  const playerKey = player ? player.aiPersonaId || player.nickname : 'AI';
-  const memory = getAiMemory(playerKey, 6).concat(getRecentSummaries(3));
-  const info = roleInfo(room, playerId, role, roleFactions);
+  const player      = room.players.get(playerId);
+  const info        = roleInfo(room, playerId, role, roleFactions);
+  const bs          = computeBeliefState(room, playerId, role, roleFactions);
+  const bsText      = formatBeliefStateForPrompt(bs, seatNo(room, playerId));
+  const faction     = roleFactions[role] || 'good';
+  const mySeat      = seatNo(room, playerId);
+  const teamSeats   = (room.game.team || []).map(id => seatNo(room, id)).filter(Boolean);
+  const rejectsInRow = room.game.rejectsInRow || 0;
+  const missions    = (room.game && room.game.missionHistory) || [];
+  const goodWins    = missions.filter(m => m.success).length;
+  const evilWins    = missions.filter(m => !m.success).length;
+
+  // 计算当前队伍的嫌疑分合计（供决策参考）
+  const teamSuspicion = teamSeats.map(s => ({
+    seat: s, score: bs.suspicion[s] || 0.3,
+    ev: (bs.evidence[s] || []).slice(-1).join('')
+  }));
+  const avgTeamSuspicion = teamSuspicion.length
+    ? teamSuspicion.reduce((a, b) => a + b.score, 0) / teamSuspicion.length : 0.3;
+
+  // 博弈论提示
+  let gameTheoryHint = '';
+  if (faction === 'good') {
+    if (rejectsInRow >= 4) gameTheoryHint = '已连续否决4次，再否决坏人直接获胜，必须通过。';
+    else if (avgTeamSuspicion > 0.6) gameTheoryHint = `队伍平均嫌疑分${Math.round(avgTeamSuspicion*100)}%，偏高，好人应考虑否决。`;
+    else if (avgTeamSuspicion < 0.35) gameTheoryHint = `队伍嫌疑分较低，好人可以通过。`;
+  } else {
+    const evilInTeam = teamSeats.filter(s => (bs.knownAllies || []).includes(s) || s === mySeat);
+    if (evilInTeam.length > 0) gameTheoryHint = `队伍中有坏人(${evilInTeam.join('、')}号)，通常应投通过以让任务进行。`;
+    else gameTheoryHint = `队伍中没有坏人，可考虑策略性否决，但${rejectsInRow >= 3 ? '连续否决已多，风险较大' : '权衡暴露风险'}。`;
+  }
+
+  const situation    = classifySituation(room, playerId);
+  const patternBlock = getRelevantPatterns(role, faction, situation, (room.seats || []).length);
+  const narrative    = buildGameNarrative(room, mySeat, role, roleFactions, info);
+
   const system =
-    '你是阿瓦隆高水平AI玩家。投票时考虑队伍结构、历史表现与自身身份目标。' +
-    '可以策略性通过或否决以迷惑对手，但不能暴露真实身份。尊重你的底牌阵营目标。' +
-    '投票必须结合任务失败票数量与历史队伍结果；如果出现明显高嫌疑队伍（尤其失败票很多的组合），好人不应轻易通过。' +
-    '如果你是坏人，队伍里已有坏人时可以考虑策略性投反对来藏票，但要有收益，不要乱投。' +
-    '若连续否决过多会导致坏人直接获胜，因此避免无意义否决。' +
-    `当前AI人格特征：${buildPersonaDesc(player)}输出必须是严格JSON。`;
-  const user = JSON.stringify({
-    task: 'vote_team',
-    role,
-    seat: seatNo(room, playerId),
-    teamSeats: room.game.team.map((id) => seatNo(room, id)).filter(Boolean),
-    rolesInGame: Array.from(new Set(room.roles || [])),
-    style: player && player.aiStyle ? player.aiStyle : '理性',
-    info,
-    state: publicState(room),
-    memory,
-    rejectsInRow: room.game.rejectsInRow || 0,
-    format: { approve: true },
-  });
+    `你是阿瓦隆${role}（${faction === 'good' ? '好人' : '坏人'}阵营，${mySeat}号座位）。\n` +
+    `投票原则：${gameTheoryHint}\n` +
+    (patternBlock ? patternBlock + '\n' : '') +
+    `风格：${buildPersonaDesc(player)}输出严格JSON。`;
+
+  const teamDetail = teamSuspicion.map(t =>
+    `${t.seat}号(嫌疑${Math.round(t.score*100)}%${t.ev ? '，' + t.ev : ''})`
+  ).join('、');
+
+  const user =
+    `${bsText}\n\n` +
+    `本轮提议队伍：${teamDetail}\n` +
+    `好人已赢${goodWins}局，坏人已赢${evilWins}局，已连续否决${rejectsInRow}次。\n\n` +
+    `游戏局面：\n${narrative}\n\n` +
+    `输出JSON：{"approve":true或false,"reason":"一句话理由"}`;
+
   const res = await callLLM(system, user, 0.5);
-  const obj = parseJSON(res, { approve: true });
+  const cleaned = res.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+  const obj = parseJSON(cleaned, { approve: true });
   return !!obj.approve;
 }
 
@@ -1093,10 +1431,81 @@ async function decideRecap({ room, player, role, roleFactions }) {
   return { ...obj, info, actionSummary };
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ──  POST-GAME LEARNING: 从完整对局提炼战略规律，存入 strategy_patterns  ──────
+// ─────────────────────────────────────────────────────────────────────────────
+async function extractStrategyPatterns(room, roleFactions) {
+  if (!room || !room.game) return;
+  const winner      = room.game.winner || '';
+  const assignments = room.game.assignments || {};
+  const playerCount = (room.seats || []).length;
+  const fullNarrative = buildFullGameNarrative(room, roleFactions);
+
+  const aiPlayers = room.players
+    ? Array.from(room.players.values()).filter(p => p.isAI)
+    : [];
+
+  for (const player of aiPlayers) {
+    const role    = assignments[player.id];
+    if (!role) continue;
+    const faction = roleFactions[role] || 'good';
+    const won     = faction === winner;
+    const mySeat  = seatNo(room, player.id);
+    const actionSummary = buildPlayerActionSummary(room, player.id);
+    const actionText    = buildActionSummaryText(room, player.id, actionSummary, mySeat);
+    const sitType       = classifySituation(room, player.id);
+
+    const system =
+      `你是阿瓦隆策略分析专家。从以下对局中，以${role}（${faction === 'good' ? '好人' : '坏人'}阵营，${mySeat}号，` +
+      `${won ? '本局获胜' : '本局失败'}）的视角，提炼3-5条具体的战略规律。\n` +
+      `每条规律必须：①说明什么局面 ②应该做什么或避免什么 ③为什么。\n` +
+      `规律要足够具体，下次遇到类似局面可以直接使用。禁止写泛泛的废话。\n` +
+      `situation_type 必须是以下之一：early_game, info_available, first_failure, consecutive_fails, good_leading, evil_needs_one, pre_assassination, under_suspicion\n` +
+      `输出严格JSON数组。`;
+
+    const user =
+      `【完整对局】\n${fullNarrative}\n\n` +
+      `【我(${mySeat}号/${role})的行为】\n${actionText}\n\n` +
+      `输出：[{"situation_type":"...","pattern":"规律描述（50-120字）","lesson_type":"do或avoid"}]`;
+
+    try {
+      const res     = await callLLM(system, user, 0.4);
+      const clean2  = res.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+      const patterns = parseJSON(clean2, []);
+      if (!Array.isArray(patterns)) continue;
+
+      for (const p of patterns) {
+        if (!p.pattern || !p.situation_type) continue;
+
+        // 同角色+同局面+相似规律 → 累加 confidence，避免重复
+        const existing = db.prepare(
+          `SELECT id FROM strategy_patterns WHERE role=? AND situation_type=? AND pattern=?`
+        ).get(role, p.situation_type, p.pattern);
+
+        if (existing) {
+          db.prepare('UPDATE strategy_patterns SET confidence=confidence+1 WHERE id=?').run(existing.id);
+        } else {
+          db.prepare(
+            `INSERT INTO strategy_patterns(role,faction,situation_type,player_count,pattern,outcome,confidence,created_at)
+             VALUES(?,?,?,?,?,?,1,?)`
+          ).run(role, faction, p.situation_type, playerCount, p.pattern, won ? 'win' : 'loss', Date.now());
+        }
+      }
+      // 每个角色保留最多 150 条，按 confidence 降序
+      db.prepare(
+        `DELETE FROM strategy_patterns WHERE role=? AND id NOT IN (
+          SELECT id FROM strategy_patterns WHERE role=? ORDER BY confidence DESC, created_at DESC LIMIT 150
+        )`
+      ).run(role, role);
+    } catch (e) { /* best-effort */ }
+  }
+}
+
 module.exports = {
   recordGameSummary,
   recordAiRecapMemory,
   evaluateGameSpeeches,
+  extractStrategyPatterns,
   decideSpeak,
   decideTeam,
   decideVote,
