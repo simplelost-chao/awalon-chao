@@ -331,10 +331,7 @@
               </view>
             </view>
           </view>
-          <view class="end-action-row" wx:if="{{phase==='end'}}">
-            <button class="btn primary center-leader-btn {{recapReady ? 'half' : ''}}" wx:if="{{isHost}}" bindtap="onRedealIdentities">重新开始</button>
-            <button class="btn ghost center-leader-btn half" wx:if="{{recapReady}}" bindtap="onOpenRecap">查看复盘</button>
-          </view>
+          <button class="btn primary center-leader-btn" wx:if="{{isHost && phase==='end'}}" bindtap="onRedealIdentities">重新开始</button>
         </view>
         <view class="center-leader-panel" wx:if="{{isLeader && (phase==='team' || phase==='speaking') && !showCenterResult}}">
           <button class="btn primary center-leader-btn {{leaderActionClass}}" bindtap="onLeaderTeamAction" disabled="{{leaderActionDisabled}}">
@@ -353,6 +350,10 @@
           <button class="btn primary" bindtap="onStartGame">开始游戏</button>
         </view>
         <button class="btn ghost" bindtap="onStartMissionPhase" wx:if="{{isLeader && phase==='speaking'}}">下一阶段（任务流程）</button>
+      </view>
+
+      <view class="recap-btn-wrap" wx:if="{{phase==='end' && recapReady}}">
+        <button class="btn ghost recap-entry-btn" bindtap="onOpenRecap">查看 AI 复盘</button>
       </view>
 
       <view class="control-wrap" wx:if="{{phase==='end' && endVoteResultGroups.length}}">
@@ -607,7 +608,7 @@
     </view>
     <view class="recap-nav">
       <text class="recap-nav-btn {{recapIndex === 0 ? 'disabled' : ''}}" bindtap="onRecapPrev">‹ 上一位</text>
-      <text class="recap-who">{{recapList[recapIndex].seat}}号 · {{recapList[recapIndex].nickname}}</text>
+      <text class="recap-who">{{recapList[recapIndex].seat}}号 · {{recapList[recapIndex].nickname}}{{recapList[recapIndex].role ? ' · ' + recapList[recapIndex].role : ''}}</text>
       <text class="recap-nav-btn {{recapIndex === recapList.length - 1 ? 'disabled' : ''}}" bindtap="onRecapNext">下一位 ›</text>
     </view>
     <view class="recap-known" wx:if="{{recapList[recapIndex].knownInfo}}">

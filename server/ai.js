@@ -429,6 +429,141 @@ function buildPlayerActionSummary(room, playerId) {
   return out;
 }
 
+// 构建完整对局叙事（复盘用，包含所有发言/投票/任务）
+function buildFullGameNarrative(room, roleFactions) {
+  const game = room.game || {};
+  const missionHistory = game.missionHistory || [];
+  const voteHistory = game.voteHistory || [];
+  const speakHistory = game.speakHistory || {};
+  const lines = [];
+
+  // 按轮次整理发言+投票+任务
+  const rounds = Math.max(
+    missionHistory.length ? missionHistory[missionHistory.length - 1].round : 0,
+    voteHistory.length ? voteHistory[voteHistory.length - 1].round : 0,
+    1
+  );
+
+  for (let r = 1; r <= rounds; r++) {
+    lines.push(`\n=== 第${r}轮 ===`);
+
+    // 本轮投票（可能多次）
+    const roundVotes = voteHistory.filter(v => v.round === r);
+    for (const v of roundVotes) {
+      const teamStr = (v.team || []).map(id => seatNo(room, id)).filter(Boolean).join('、');
+      const noes = v.votes
+        ? Object.entries(v.votes).filter(([, ok]) => !ok).map(([id]) => `${seatNo(room, id)}号`).join(' ')
+        : '';
+      lines.push(`  [组队第${v.attempt || 1}次] 队长推[${teamStr}号] → ${v.approved ? '通过' : '否决'}(${v.approves}赞/${v.rejects}反)${noes ? '，反对票：' + noes : ''}`);
+    }
+
+    // 本轮发言（按 speakHistory key 匹配，格式 "轮次-attempt"）
+    const speakKeys = Object.keys(speakHistory).filter(k => k.startsWith(`${r}-`)).sort();
+    for (const key of speakKeys) {
+      const msgs = speakHistory[key] || [];
+      if (!msgs.length) continue;
+      lines.push(`  [发言阶段 ${key}]`);
+      for (const m of msgs) {
+        if (!m || !m.text) continue;
+        const s = seatNo(room, m.playerId);
+        if (s) lines.push(`    ${s}号："${m.text}"`);
+      }
+    }
+
+    // 本轮任务结果
+    const mission = missionHistory.find(m => m.round === r);
+    if (mission) {
+      const teamStr = (mission.team || []).map(id => seatNo(room, id)).filter(Boolean).join('、');
+      lines.push(`  [任务结果] 队伍[${teamStr}号] → ${mission.success ? '✓成功' : `✗失败(${mission.fails}票失败，需${mission.needFail || 1}票)`}`);
+    }
+  }
+
+  // 刺杀
+  const asgn = game.assassination;
+  if (asgn) {
+    const assassinSeat = seatNo(room, asgn.assassinId);
+    const targetSeat = seatNo(room, asgn.targetId);
+    lines.push(`\n=== 刺杀阶段 ===`);
+    lines.push(`  刺客(${assassinSeat}号) 指向 ${targetSeat}号 → ${asgn.hit ? '刺杀成功，坏人获胜' : '刺杀失败，好人获胜'}`);
+  }
+
+  lines.push(`\n=== 最终结果 ===`);
+  lines.push(`  获胜方：${game.winner === 'good' ? '好人阵营' : '坏人阵营'}`);
+
+  // 公开身份（结束后全部揭开）
+  const assignments = game.assignments || {};
+  const roleLines = [];
+  for (const [pid, r] of Object.entries(assignments)) {
+    const s = seatNo(room, pid);
+    if (s) roleLines.push(`${s}号=${r}`);
+  }
+  if (roleLines.length) lines.push(`  身份揭示：${roleLines.join('，')}`);
+
+  return lines.join('\n');
+}
+
+// 把 actionSummary 格式化为可读文本（供 LLM 复盘分析）
+function buildActionSummaryText(room, playerId, summary, mySeat) {
+  const parts = [];
+  const game = room.game || {};
+  const missionHistory = game.missionHistory || [];
+  const voteHistory = game.voteHistory || [];
+
+  // 发言
+  if (summary.speeches.length) {
+    parts.push('【我的发言记录】');
+    for (const s of summary.speeches) {
+      const [r, a] = (s.key || '').split('-');
+      // 找本轮任务结果作为上下文
+      const roundMission = missionHistory.find(m => m.round === Number(r));
+      const ctx = roundMission ? `（${roundMission.success ? '本轮任务最终成功' : '本轮任务最终失败'}）` : '';
+      parts.push(`  第${r}轮第${a || 1}次${ctx}："${s.text}"`);
+    }
+  } else {
+    parts.push('【我的发言记录】无');
+  }
+
+  // 投票
+  if (summary.votes.length) {
+    parts.push('【我的投票记录】');
+    for (const v of summary.votes) {
+      const teamStr = (v.teamSeats || []).join('、');
+      const missionAfter = missionHistory.find(m => m.round === v.round);
+      const missionCtx = missionAfter ? `，任务最终${missionAfter.success ? '成功' : '失败'}` : '';
+      parts.push(`  第${v.round}轮第${v.attempt || 1}次：队伍[${teamStr}号] → 我投${v.approve ? '赞成' : '反对'} → 队伍${v.approved ? '通过' : '否决'}(${v.voteResult})${missionCtx}`);
+    }
+  }
+
+  // 任务
+  if (summary.missions.length) {
+    parts.push('【我的任务行为】');
+    for (const m of summary.missions) {
+      const teamStr = (m.teamSeats || []).join('、');
+      parts.push(`  第${m.round}轮：队伍[${teamStr}号] → 我出了${m.myMissionVote === 'fail' ? '失败票' : m.myMissionVote === 'success' ? '成功票' : '未知票'} → 任务${m.success ? '成功' : `失败(${m.fails}票失败)`}`);
+    }
+  }
+
+  // 组队决策（作为队长时）
+  if (summary.teamDecisions.length) {
+    parts.push('【我作为队长的组队】');
+    for (const t of summary.teamDecisions) {
+      parts.push(`  第${t.round}轮第${t.attempt || 1}次：我推[${(t.teamSeats || []).join('、')}号] → ${t.approved ? '通过' : '否决'}(${t.voteResult})`);
+    }
+  }
+
+  // 刺杀
+  if (summary.assassination) {
+    const a = summary.assassination;
+    if (a.acted) {
+      parts.push(`【刺杀行为】我（刺客）选择了${a.targetSeat}号 → ${a.hit ? '刺杀成功' : '刺杀失败'}`);
+    } else if (a.targeted) {
+      parts.push(`【被刺杀】我（${a.targeted}号）被刺客选中 → ${a.hit ? '刺杀命中，坏人获胜' : '刺杀未中，好人获胜'}`);
+    }
+  }
+
+  return parts.join('\n');
+}
+
 function formatAiRecapMemory(room, player, role, recap) {
   const review = recap && recap.review ? recap.review : {};
   const lines = [
@@ -733,7 +868,7 @@ async function decideSpeak({ room, player, role, roleFactions }) {
   };
   const strategyHint = roleStrategy[role] || '用逻辑推理，分析任务和投票记录。';
 
-  const forbiddenStarters = '禁止用以下任何词语开头：我觉得、我认为、我注意到、大家、说实话、作为、首先、其次、总的来说、综合来看、从逻辑上、经过分析。';
+  const forbiddenStarters = '禁止用以下任何词语开头：我觉得、我认为、我注意到、大家、说实话、作为、首先、其次、总的来说、综合来看、从逻辑上、经过分析。禁止在一句话里连续使用两个以上问句或反问句，不要以疑问句结尾。';
   const system =
     `你是阿瓦隆桌游真人玩家，当前角色：${role}（${roleFactionLocal === 'good' ? '好人阵营' : '坏人阵营'}），座位：${mySeat}号。\n` +
     `策略目标：${strategyHint}\n` +
@@ -903,44 +1038,58 @@ async function decideEvilIntel({ room, player, role, roleFactions }) {
 }
 
 async function decideRecap({ room, player, role, roleFactions }) {
-  const memory = getAiMemory(player.aiPersonaId || player.nickname, 6).concat(getRecentSummaries(3));
   const info = roleInfo(room, player.id, role, roleFactions);
+  const mySeat = seatNo(room, player.id);
   const actionSummary = buildPlayerActionSummary(room, player.id);
-  const system =
-    '你是阿瓦隆AI玩家，请按角色复盘，逻辑必须建立在已知信息之上。' +
-    '已知信息(info.seats)必须作为判断基点，不要怀疑自己已知的好/坏阵营身份。' +
-    '必须结合 actionSummary 中你自己本局真实做过的发言、组队、投票、任务与刺杀行为。' +
-    '复盘要明确说明这些行为当时的思考、哪里做对、哪里做错、下局如何调整。' +
-    '输出必须是严格JSON。';
+  const fullNarrative = buildFullGameNarrative(room, roleFactions);
+  const actionText = buildActionSummaryText(room, player.id, actionSummary, mySeat);
+  const faction = roleFactions[role] || 'good';
+  const winner = (room.game || {}).winner || 'unknown';
   const rolesInGame = Array.from(new Set(room.roles || []));
-  const user = JSON.stringify({
-    task: 'recap',
-    role,
-    seat: seatNo(room, player.id),
-    rolesInGame,
-    info,
-    state: publicState(room),
-    actionSummary,
-    memory,
-    format: {
-      role,
-      merlin: { evilSeats: [2, 5], guessMordredSeat: 3, reason: 'string(120-200字)' },
-      percival: { guessMerlinSeat: 2, guessMorganaSeat: 5, reason: 'string(120-200字)' },
-      evil: { teammateRoles: [{ seat: 2, role: '莫甘娜' }], guessMerlinSeat: 6, reason: 'string(120-200字)' },
-      loyal: { suspicious: [2, 5], guessMerlinSeat: 4, reason: 'string(120-200字)' },
-      review: {
-        overview: 'string(80-160字)',
-        speak: { thought: 'string(60-120字)', didWell: 'string(40-80字)', mistake: 'string(40-80字)', adjustment: 'string(40-80字)' },
-        team: { thought: 'string(60-120字)', didWell: 'string(40-80字)', mistake: 'string(40-80字)', adjustment: 'string(40-80字)' },
-        vote: { thought: 'string(60-120字)', didWell: 'string(40-80字)', mistake: 'string(40-80字)', adjustment: 'string(40-80字)' },
-        mission: { thought: 'string(60-120字)', didWell: 'string(40-80字)', mistake: 'string(40-80字)', adjustment: 'string(40-80字)' },
-        assassination: { thought: 'string(40-100字)', didWell: 'string(20-60字)', mistake: 'string(20-60字)', adjustment: 'string(20-60字)' },
-        nextGamePlan: 'string(60-120字)'
-      }
-    },
-  });
-  const res = await callLLM(system, user, 0.6);
-  const obj = parseJSON(res, {});
+
+  // 角色视野文字
+  let knownInfoText = '';
+  if (role === '梅林' && info.seats.length) {
+    knownInfoText = `【梅林视野】确认坏人座位：${info.seats.join('、')}号`;
+  } else if (role === '派西维尔' && info.seats.length) {
+    knownInfoText = `【派西维尔视野】梅林或莫甘娜之一：${info.seats.join('、')}号`;
+  } else if (faction === 'evil' && role !== '奥伯伦' && info.seats.length) {
+    knownInfoText = `【坏人视野】队友座位：${info.seats.join('、')}号`;
+  }
+
+  const system =
+    `你是阿瓦隆${role}（${faction === 'good' ? '好人' : '坏人'}阵营，${mySeat}号座位）。` +
+    `本局${faction === winner ? '你方获胜' : '你方失败'}，${winner === 'good' ? '好人' : '坏人'}阵营赢得比赛。\n` +
+    `本局角色配置：${rolesInGame.join('、')}\n` +
+    (knownInfoText ? `${knownInfoText}（这是已知事实，不要质疑）\n` : '') +
+    `请以第一人称写一份专业深度复盘。要求：\n` +
+    `1. 紧扣我的每一次实际发言/投票/任务行为，评价当时判断是否正确，为什么\n` +
+    `2. 点出本局关键转折点（哪轮哪个决策影响了结果）\n` +
+    `3. 对其他玩家给出你的读人判断（结合发言/投票行为，不是泛泛而谈）\n` +
+    `4. 诚实指出你的最大失误，并给出具体改进方案\n` +
+    `输出严格JSON。`;
+
+  const user =
+    `【完整对局记录】\n${fullNarrative}\n\n` +
+    `【我(${mySeat}号/${role})的行为记录】\n${actionText}\n\n` +
+    `请输出以下格式的JSON（字数要求是下限，请写得详细）：\n` +
+    `{\n` +
+    `  "role": "${role}",\n` +
+    `  "knownInfo": "角色视野已知信息，或无特殊视野",\n` +
+    `  "review": {\n` +
+    `    "overview": "整局总结150-250字：关键转折、最终结果、我方整体表现",\n` +
+    `    "keyMoments": [{"round":轮次数字, "decision":"我做了什么决策", "outcome":"结果怎样", "assessment":"正确还是失误，为什么，100字以上"}],\n` +
+    `    "playerAnalysis": [{"seat":座位号数字, "assessment":"对该玩家的读人判断及依据80字以上，结合他的具体发言和行为"}],\n` +
+    `    "speak": {"summary":"我的发言策略复盘100-200字", "bestMove":"最好的一句话原文及原因", "mistake":"最大发言失误及应如何改"},\n` +
+    `    "vote": {"summary":"投票决策复盘80-150字", "keyVote":"最关键的一票：具体是哪轮，投了什么，为什么对或错"},\n` +
+    `    "mission": {"summary":"任务行为复盘（如未上车可写无记录）"},\n` +
+    `    "nextGamePlan": "下一局具体改进计划100-200字，要具体，不要说废话"\n` +
+    `  }\n` +
+    `}`;
+
+  const res = await callLLM(system, user, 0.7);
+  const cleaned = res.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+  const obj = parseJSON(cleaned, {});
   return { ...obj, info, actionSummary };
 }
 

@@ -847,10 +847,17 @@
   font-size: 24rpx;
 }
 
-.end-action-row {
-  display: flex;
-  gap: 14rpx;
-  margin-top: 10rpx;
+.recap-btn-wrap {
+  padding: 0 32rpx;
+  margin-top: 16rpx;
+}
+
+.recap-entry-btn {
+  width: 100%;
+  font-size: 26rpx;
+  height: 72rpx;
+  border-color: rgba(180, 160, 220, 0.5) !important;
+  color: #c4a8e8 !important;
 }
 
 .player-vote-summary {

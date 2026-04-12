@@ -1165,38 +1165,49 @@ Page({
 
   formatRecapEntry(r) {
     if (!r) return null;
-    const review = r.review || null;
+    const review = r.review || {};
     const sections = [];
-    if (review && review.overview) {
+
+    if (review.overview) {
       sections.push({ label: "总体复盘", text: review.overview });
     }
-    if (review && review.speak && review.speak.thought) {
-      sections.push({ label: "发言策略", text: review.speak.thought + (review.speak.adjustment ? `\n→ 调整：${review.speak.adjustment}` : '') });
+    // 关键转折点
+    if (Array.isArray(review.keyMoments) && review.keyMoments.length) {
+      const text = review.keyMoments.map(m =>
+        `第${m.round}轮：${m.decision} → ${m.outcome}\n${m.assessment}`
+      ).join('\n\n');
+      sections.push({ label: "关键节点", text });
     }
-    if (review && review.vote && review.vote.thought) {
-      sections.push({ label: "投票决策", text: review.vote.thought + (review.vote.adjustment ? `\n→ 调整：${review.vote.adjustment}` : '') });
+    // 读人分析
+    if (Array.isArray(review.playerAnalysis) && review.playerAnalysis.length) {
+      const text = review.playerAnalysis.map(p => `${p.seat}号：${p.assessment}`).join('\n');
+      sections.push({ label: "读人分析", text });
     }
-    if (review && review.team && review.team.thought) {
-      sections.push({ label: "组队思路", text: review.team.thought + (review.team.adjustment ? `\n→ 调整：${review.team.adjustment}` : '') });
+    if (review.speak && review.speak.summary) {
+      const lines = [review.speak.summary];
+      if (review.speak.bestMove) lines.push(`✓ ${review.speak.bestMove}`);
+      if (review.speak.mistake) lines.push(`✗ ${review.speak.mistake}`);
+      sections.push({ label: "发言复盘", text: lines.join('\n') });
     }
-    if (review && review.nextGamePlan) {
+    if (review.vote && review.vote.summary) {
+      const lines = [review.vote.summary];
+      if (review.vote.keyVote) lines.push(`关键一票：${review.vote.keyVote}`);
+      sections.push({ label: "投票复盘", text: lines.join('\n') });
+    }
+    if (review.mission && review.mission.summary) {
+      sections.push({ label: "任务复盘", text: review.mission.summary });
+    }
+    if (review.nextGamePlan) {
       sections.push({ label: "下局计划", text: review.nextGamePlan });
     }
-    // Role-specific known info
-    let knownInfo = "";
-    if (r.merlin && r.merlin.evilSeats) {
-      knownInfo = `已知坏人座位：${r.merlin.evilSeats.join("、")}号`;
-    } else if (r.percival && r.percival.guessMerlinSeat) {
-      knownInfo = `猜测梅林：${r.percival.guessMerlinSeat}号，莫甘娜：${r.percival.guessMorganaSeat || "?"}号`;
-    } else if (r.evil && r.evil.guessMerlinSeat) {
-      knownInfo = `猜测梅林：${r.evil.guessMerlinSeat}号`;
-    } else if (r.loyal && r.loyal.suspicious) {
-      knownInfo = `怀疑座位：${(r.loyal.suspicious || []).join("、")}号`;
-    }
+
+    const knownInfo = r.knownInfo || "";
+
     return {
       nickname: r.nickname || "",
       seat: r.seat || 0,
-      reason: r.reason || "",
+      role: r.role || "",
+      reason: "",
       knownInfo,
       sections,
     };
