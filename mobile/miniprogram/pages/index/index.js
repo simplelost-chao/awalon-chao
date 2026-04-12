@@ -1233,6 +1233,8 @@ Page({
     this.setData({ recapList: list });
   },
 
+  onNoop() {},
+
   onCloseRecap() {
     this.setData({ showRecapModal: false });
   },

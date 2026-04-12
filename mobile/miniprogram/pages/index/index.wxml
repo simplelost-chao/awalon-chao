@@ -601,7 +601,7 @@
 </view>
 
 <view class="recap-modal-mask" wx:if="{{showRecapModal && recapList.length}}" bindtap="onCloseRecap">
-  <view class="recap-modal" catchtap="stopPropagation">
+  <view class="recap-modal" catchtap="onNoop">
     <view class="recap-header">
       <text class="recap-title">AI 复盘</text>
       <text class="recap-close" bindtap="onCloseRecap">✕</text>

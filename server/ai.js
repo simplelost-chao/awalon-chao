@@ -798,6 +798,31 @@ function recordSpeechIntent(room, playerId, intent) {
   room.game.speechPatterns[playerId] = arr.slice(-12); // 保留最近12条
 }
 
+/**
+ * 记录本轮发言摘要到房间级别（跨AI去重用）
+ * key = "round-subround"，方便按轮清理
+ */
+function recordRoomSpeech(room, seat, text, intent, target) {
+  if (!room.game) return;
+  if (!room.game.roomSpeechLog) room.game.roomSpeechLog = [];
+  const round = (room.game.round || 1);
+  room.game.roomSpeechLog.push({ round, seat, text: text.slice(0, 60), intent, target });
+  // 只保留最近 20 条（覆盖当前轮及上一轮）
+  room.game.roomSpeechLog = room.game.roomSpeechLog.slice(-20);
+}
+
+/**
+ * 获取当前轮已有的其他玩家发言摘要（排除自己），用于提示AI不要重复
+ */
+function getRecentRoomSpeeches(room, myPlayerId, limit = 4) {
+  if (!room.game || !room.game.roomSpeechLog) return [];
+  const currentRound = room.game.round || 1;
+  const mySeat = seatNo(room, myPlayerId);
+  return room.game.roomSpeechLog
+    .filter(e => e.round === currentRound && e.seat !== mySeat)
+    .slice(-limit);
+}
+
 /** 从 strategy_patterns 检索与当前角色+局面匹配的历史经验 */
 function getRelevantPatterns(role, faction, situationType, playerCount = 0, limit = 4) {
   try {
@@ -853,9 +878,86 @@ function recordAiRecapMemory(room, player, role, recap) {
     const aiId = player.aiPersonaId || player.nickname;
     const summary = formatAiRecapMemory(room, player, role, recap);
     db.prepare('INSERT INTO ai_memory(ai_name, summary, created_at) VALUES(?,?,?)').run(aiId, summary, Date.now());
-  } catch (e) {
-    // no-op
-  }
+  } catch (e) {}
+}
+
+/**
+ * 把复盘 CoT 推理 + 关键节点 + 下局计划存入持久记忆，供后续对局检索。
+ * 三类数据分别存入不同位置：
+ *   think        → ai_memory（个人推理历史，原文保留）
+ *   keyMoments   → strategy_patterns（按角色+局面标签，自动参与 getRelevantPatterns 检索）
+ *   nextGamePlan → strategy_patterns（confidence=2，优先级高于 extractStrategyPatterns 提取的普通规律）
+ */
+function storeRecapInsights(room, player, role, recap, roleFactions) {
+  if (!recap) return;
+  const review      = recap.review || {};
+  const think       = recap.think  || '';
+  const faction     = roleFactions[role] || 'good';
+  const winner      = (room.game || {}).winner || '';
+  const won         = faction === winner;
+  const playerCount = (room.seats || []).length;
+  const situation   = classifySituation(room, player.id);
+  const aiId        = player.aiPersonaId || player.nickname;
+
+  try {
+    // ── 1. think 推理链 → ai_memory（原文，最多保留最近 20 条/AI）──────────────
+    if (think.length > 30) {
+      const tag = `[复盘推理|${role}|${won ? '胜' : '败'}|${situation}]`;
+      db.prepare('INSERT INTO ai_memory(ai_name,summary,created_at) VALUES(?,?,?)')
+        .run(aiId, `${tag} ${think}`.slice(0, 1200), Date.now());
+      db.prepare(
+        `DELETE FROM ai_memory WHERE ai_name=? AND summary LIKE '[复盘推理|%' AND id NOT IN (
+          SELECT id FROM ai_memory WHERE ai_name=? AND summary LIKE '[复盘推理|%'
+          ORDER BY id DESC LIMIT 20
+        )`
+      ).run(aiId, aiId);
+    }
+
+    // ── 2. keyMoments 每条教训 → strategy_patterns ────────────────────────────
+    if (Array.isArray(review.keyMoments)) {
+      for (const km of review.keyMoments) {
+        if (!km.assessment || km.assessment.length < 15) continue;
+        const pattern = `[第${km.round}轮教训] ${km.decision}→${km.outcome}：${km.assessment}`;
+        db.prepare(
+          `INSERT INTO strategy_patterns(role,faction,situation_type,player_count,pattern,outcome,confidence,created_at)
+           VALUES(?,?,?,?,?,?,1,?)`
+        ).run(role, faction, situation, playerCount, pattern, won ? 'win' : 'loss', Date.now());
+      }
+    }
+
+    // ── 3. nextGamePlan → strategy_patterns（confidence=2，高优先级）─────────
+    if (review.nextGamePlan && review.nextGamePlan.length > 20) {
+      db.prepare(
+        `INSERT INTO strategy_patterns(role,faction,situation_type,player_count,pattern,outcome,confidence,created_at)
+         VALUES(?,?,?,?,?,?,2,?)`
+      ).run(role, faction, situation, playerCount,
+        `[下局计划] ${review.nextGamePlan}`, won ? 'win' : 'loss', Date.now());
+    }
+
+    // 清理 strategy_patterns 超限条目（每角色最多150条）
+    db.prepare(
+      `DELETE FROM strategy_patterns WHERE role=? AND id NOT IN (
+        SELECT id FROM strategy_patterns WHERE role=? ORDER BY confidence DESC, created_at DESC LIMIT 150
+      )`
+    ).run(role, role);
+
+  } catch (e) {}
+}
+
+/**
+ * 检索该 AI 在同角色下的历史复盘推理，注入到下局 prompt 作为"上次的反思"
+ */
+function getRecapInsights(aiId, role, limit = 1) {
+  try {
+    return db.prepare(
+      `SELECT summary FROM ai_memory
+       WHERE ai_name=? AND summary LIKE ?
+       ORDER BY id DESC LIMIT ?`
+    ).all(aiId, `[复盘推理|${role}|%`, limit).map(r => {
+      // 去掉 tag 前缀，只保留推理内容
+      return r.summary.replace(/^\[复盘推理\|[^\]]+\]\s*/, '');
+    });
+  } catch (e) { return []; }
 }
 
 function roleInfo(room, playerId, role, roleFactions) {
@@ -1128,11 +1230,13 @@ async function decideSpeak({ room, player, role, roleFactions }) {
     }
   }
 
-  // ── 5. 发言多样性 ──
+  // ── 5. 发言多样性（自身 + 房间级别跨AI去重） ──
   const forbiddenIntents = getForbiddenIntents(room, player.id);
+  const recentRoomSpeeches = getRecentRoomSpeeches(room, player.id, 4);
 
-  // ── 6. 历史经验检索 ──
-  const patternBlock = getRelevantPatterns(role, roleFactionLocal, situation, playerCount);
+  // ── 6. 历史经验检索 + 上局复盘推理记忆 ──
+  const patternBlock   = getRelevantPatterns(role, roleFactionLocal, situation, playerCount);
+  const recapInsights  = getRecapInsights(player.aiPersonaId || player.nickname, role, 1);
 
   // ── 7. Few-shot 示例 ──
   const fewShotBlock = buildFewShotBlock(roleFactionLocal, currentRound, accused, allySpeeches.length ? allySpeeches : null);
@@ -1156,6 +1260,11 @@ async function decideSpeak({ room, player, role, roleFactions }) {
   const forbidIntentStr = forbiddenIntents.length
     ? `本次禁止使用以下发言意图（最近已重复）：${forbiddenIntents.join('、')}。` : '';
 
+  // 本轮已有玩家覆盖的论点摘要，要求AI说不同的
+  const roomSpeechHint = recentRoomSpeeches.length
+    ? `【本轮其他玩家已说过（禁止重复相同观点/目标）】\n${recentRoomSpeeches.map(e => `${e.seat}号(${e.intent})："${e.text}"`).join('\n')}\n你必须换一个角度或针对不同的人说话，不能重复以上内容。\n`
+    : '';
+
   const system =
     `你是阿瓦隆桌游真人玩家，角色：${role}（${roleFactionLocal === 'good' ? '好人' : '坏人'}阵营），座位：${mySeat}号。\n` +
     `策略方向：${strategyHint}\n` +
@@ -1166,8 +1275,10 @@ async function decideSpeak({ room, player, role, roleFactions }) {
     (myPreviousSpeeches.length
       ? `【我说过的话——禁止重复相同观点或相同目标】${myPreviousSpeeches.slice(-3).map((t, i) => `(${i + 1})${t}`).join('；')}\n`
       : '') +
+    roomSpeechHint +
     (accused ? `【被指控】有人刚才怀疑我：${accused}。必须回应。\n` : '') +
     (allySpeeches.length ? `【坏人队友说法（保持叙事一致但不要重复他的话）】${allySpeeches.join('；')}\n` : '') +
+    (recapInsights.length ? `【我上局作为${role}的复盘推理（参考，不要照抄）】\n${recapInsights[0]}\n` : '') +
     (patternBlock ? patternBlock + '\n' : '') +
     (fewShotBlock ? fewShotBlock + '\n' : '') +
     '输出严格JSON，不含其他内容。';
@@ -1188,7 +1299,11 @@ async function decideSpeak({ room, player, role, roleFactions }) {
   const text    = sanitizeSpeech(obj.text || '', rolesInGame);
 
   // 记录本次发言意图（供下次多样性检测）
-  if (text) recordSpeechIntent(room, player.id, obj.intent || 'neutral');
+  if (text) {
+    recordSpeechIntent(room, player.id, obj.intent || 'neutral');
+    // 记录到房间级别，让后续发言的AI知道此论点已被覆盖
+    recordRoomSpeech(room, mySeat, text, obj.intent || 'neutral', obj.target || null);
+  }
 
   return hasExplicitIdentityReveal(text) ? '' : text;
 }
@@ -1507,6 +1622,7 @@ async function extractStrategyPatterns(room, roleFactions) {
 module.exports = {
   recordGameSummary,
   recordAiRecapMemory,
+  storeRecapInsights,
   evaluateGameSpeeches,
   extractStrategyPatterns,
   decideSpeak,

@@ -2878,6 +2878,9 @@ function generateRecaps(room) {
             id: p.id,
             nickname: p.nickname,
             seat: seatNumber(room, p.id),
+            role,
+            think: recap.think || '',
+            knownInfo: recap.knownInfo || '',
             info,
             merlin: {
               evilSeats,
@@ -2905,6 +2908,9 @@ function generateRecaps(room) {
             id: p.id,
             nickname: p.nickname,
             seat: seatNumber(room, p.id),
+            role,
+            think: recap.think || '',
+            knownInfo: recap.knownInfo || '',
             info,
             percival: {
               guessMerlinSeat,
@@ -2931,6 +2937,9 @@ function generateRecaps(room) {
             id: p.id,
             nickname: p.nickname,
             seat: seatNumber(room, p.id),
+            role,
+            think: recap.think || '',
+            knownInfo: recap.knownInfo || '',
             info,
             evil: {
               teammateRoles: normalizedTeammates,
@@ -2951,6 +2960,9 @@ function generateRecaps(room) {
           id: p.id,
           nickname: p.nickname,
           seat: seatNumber(room, p.id),
+          role,
+          think: recap.think || '',
+          knownInfo: recap.knownInfo || '',
           info,
           loyal: {
             suspicious,
