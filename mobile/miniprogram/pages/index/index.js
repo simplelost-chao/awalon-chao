@@ -224,7 +224,13 @@ Page({
   },
 
   onShow() {
-    if (!this.data.wsUrl || !this.data.connected) return;
+    if (!this.data.wsUrl) return;
+    if (!this.data.connected) {
+      // 切回前台时如果断连，立即重连（不等重连定时器）
+      this._reconnectDelay = 1000;
+      this.connect(this.data.wsUrl);
+      return;
+    }
     this.requestRoomRecovery();
   },
 
@@ -240,6 +246,10 @@ Page({
     if (this._cheatReqTimer) {
       clearTimeout(this._cheatReqTimer);
       this._cheatReqTimer = null;
+    }
+    if (this._reconnectTimer) {
+      clearTimeout(this._reconnectTimer);
+      this._reconnectTimer = null;
     }
   },
 
@@ -670,8 +680,15 @@ Page({
   },
 
   connect(url) {
+    if (this._reconnectTimer) {
+      clearTimeout(this._reconnectTimer);
+      this._reconnectTimer = null;
+    }
+    this._reconnectDelay = this._reconnectDelay || 1000;
+
     socket.connect(url, {
       onOpen: () => {
+        this._reconnectDelay = 1000; // 重置退避延迟
         this.setData({ connected: true });
         const token = this.data.authToken;
         if (token) {
@@ -680,6 +697,14 @@ Page({
       },
       onClose: () => {
         this.setData({ connected: false });
+        // 自动重连：指数退避，最长 16s
+        const delay = this._reconnectDelay || 1000;
+        this._reconnectDelay = Math.min(delay * 2, 16000);
+        this._reconnectTimer = setTimeout(() => {
+          if (!this.data.connected && this.data.wsUrl) {
+            this.connect(this.data.wsUrl);
+          }
+        }, delay);
       },
       onError: () => {
         this.setData({ connected: false });
