@@ -1179,14 +1179,16 @@ Page({
   },
 
   maybeShowRecap(room, prevRoom) {
-    const recap = room && room.game && Array.isArray(room.game.recap) ? room.game.recap : [];
-    const prevRecap = prevRoom && prevRoom.game && Array.isArray(prevRoom.game.recap) ? prevRoom.game.recap : [];
-    // Only trigger when recap first arrives (was empty, now has data)
-    if (!recap.length || prevRecap.length) return;
     if (room.phase !== "end") return;
+    const recap = room && room.game && Array.isArray(room.game.recap) ? room.game.recap : [];
+    if (!recap.length) return;
+    const prevRecap = prevRoom && prevRoom.game && Array.isArray(prevRoom.game.recap) ? prevRoom.game.recap : [];
+    // Trigger when recap first arrives, OR when we reconnect and recap is already there
+    const recapChanged = recap.length !== prevRecap.length;
+    const alreadyReady = this.data.recapReady && this.data.recapList && this.data.recapList.length;
+    if (!recapChanged && alreadyReady) return;
     const recapList = recap.map(r => this.formatRecapEntry(r));
     if (!recapList.length) return;
-    // Store recap but don't auto-open — user clicks the button to view
     this.setData({ recapReady: true, recapList, recapIndex: 0 });
   },
 
