@@ -92,6 +92,18 @@
   margin-bottom: 10rpx;
 }
 
+.section-chip {
+  padding: 8rpx 14rpx;
+  border-left: 6rpx solid #d8b06b;
+  border-radius: 8rpx;
+  background: linear-gradient(90deg, rgba(216, 176, 107, 0.2), rgba(216, 176, 107, 0.04));
+  color: #f2e5c8;
+  letter-spacing: 1rpx;
+  font-size: 26rpx;
+  font-weight: 700;
+  margin-bottom: 0;
+}
+
 .meta {
   display: block;
   margin-top: 8rpx;
@@ -165,48 +177,147 @@
   color: #f8e8c2;
 }
 
-.assassination-banner {
-  margin-top: 8rpx;
-  padding: 16rpx;
-  border-radius: 14rpx;
-  border: 1rpx solid rgba(255, 255, 255, 0.2);
+.assass-card {
+  display: flex;
+  align-items: center;
+  gap: 28rpx;
+  margin-top: 10rpx;
+  padding: 24rpx;
+  border-radius: 16rpx;
 }
 
 .assassination-hit {
-  background: rgba(163, 44, 44, 0.42);
-  border-color: rgba(255, 132, 132, 0.55);
+  background: rgba(80, 8, 8, 0.52);
+  border: 1rpx solid rgba(220, 60, 60, 0.4);
 }
 
 .assassination-miss {
-  background: rgba(64, 96, 150, 0.42);
-  border-color: rgba(141, 181, 255, 0.55);
+  background: rgba(10, 40, 24, 0.52);
+  border: 1rpx solid rgba(80, 180, 100, 0.4);
 }
 
-.assassination-main {
-  display: block;
-  color: #fff4f4;
-  font-size: 30rpx;
-  font-weight: 700;
+
+.assass-avatar-wrap {
+  width: 110rpx;
+  height: 110rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+  overflow: hidden;
 }
 
-.assassination-sub {
-  display: block;
-  margin-top: 6rpx;
-  color: #e6edf9;
-  font-size: 22rpx;
+.assass-avatar-hit {
+  border: 3rpx solid rgba(220, 60, 60, 0.8);
 }
 
-.my-role-row {
+.assass-avatar-miss {
+  border: 3rpx solid rgba(230, 193, 125, 0.7);
+}
+
+.assass-avatar-img {
+  width: 100%;
+  height: 100%;
+}
+
+.assass-avatar-text {
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
-  gap: 10rpx;
+  justify-content: center;
+  font-size: 52rpx;
 }
 
-.my-role-img {
-  width: 96rpx;
-  height: 96rpx;
-  border-radius: 50%;
-  border: 1rpx solid rgba(255, 255, 255, 0.24);
+.assass-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.assass-result {
+  font-size: 32rpx;
+  font-weight: 800;
+  letter-spacing: 2rpx;
+}
+
+.assass-hit {
+  color: #ff5a5a;
+  text-shadow: 0 0 20rpx rgba(255, 60, 60, 0.5);
+}
+
+.assass-miss {
+  color: #70e8a0;
+  text-shadow: 0 0 20rpx rgba(80, 220, 140, 0.5);
+}
+
+.assass-target-name {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #eedfc0;
+}
+
+.assass-role {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: #e6c17d;
+}
+
+.assass-by {
+  font-size: 22rpx;
+  color: rgba(200, 180, 140, 0.5);
+  margin-top: 2rpx;
+}
+
+.game-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 20rpx;
+  margin-top: 4rpx;
+}
+
+.game-role-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6rpx;
+  flex-shrink: 0;
+}
+
+.game-role-img {
+  width: 110rpx;
+  height: 110rpx;
+  border-radius: 16rpx;
+  border: 2rpx solid rgba(216, 176, 107, 0.5);
+}
+
+.game-role-label {
+  font-size: 20rpx;
+  color: #e6c17d;
+  font-weight: 600;
+  max-width: 110rpx;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.game-info-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+  flex: 1;
+  padding-top: 4rpx;
+}
+
+.game-id-text {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #f2e5c8;
+}
+
+.game-meta-line {
+  font-size: 22rpx;
+  color: #cfd8ea;
+  line-height: 1.5;
 }
 
 .table-wrap {
@@ -254,11 +365,11 @@
 }
 
 .winner-good {
-  background: rgba(70, 120, 212, 0.7);
+  background: rgba(30, 90, 200, 0.7);
 }
 
 .winner-evil {
-  background: rgba(196, 66, 66, 0.75);
+  background: rgba(160, 35, 45, 0.75);
 }
 
 .seat-round {
@@ -273,6 +384,7 @@
   align-content: center;
   justify-items: center;
   padding: 8rpx;
+  overflow: visible;
 }
 
 .seat-assassinated {
@@ -314,18 +426,15 @@
   color: #fff;
 }
 
-.seat-mark-killed {
-  margin-top: 4rpx;
-  color: #ff9d9d;
-  font-size: 26rpx;
-  line-height: 1;
-}
-
-.seat-mark-assassin {
-  margin-top: 4rpx;
-  color: #ffd38f;
-  font-size: 24rpx;
-  line-height: 1;
+.seat-killed-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-25%, -72%) rotate(-20deg);
+  width: 180rpx;
+  height: 180rpx;
+  opacity: 0.92;
+  z-index: 10;
 }
 
 .role-good {
@@ -382,4 +491,154 @@
 
 .col-reject {
   color: #ff8f8f;
+}
+
+/* 发言记录 */
+.speak-title-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10rpx;
+  margin-bottom: 10rpx;
+}
+
+.speak-title-round {
+  font-size: 22rpx;
+  color: #d8b06b;
+}
+
+.speak-inline-pager {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  flex-shrink: 0;
+}
+
+.speak-inline-btn {
+  width: 52rpx;
+  height: 52rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1rpx solid rgba(255, 255, 255, 0.2);
+  color: #dfe7f8;
+  font-size: 34rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.speak-inline-disabled {
+  opacity: 0.3;
+}
+
+.speak-chat {
+  max-height: 560rpx;
+  padding: 4rpx 0;
+}
+
+.speak-bubble {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 14rpx;
+}
+
+.speak-bubble:last-child {
+  margin-bottom: 0;
+}
+
+.bubble-name {
+  font-size: 20rpx;
+  color: #8bbeea;
+  margin-bottom: 5rpx;
+  padding-left: 4rpx;
+}
+
+.bubble-body {
+  max-width: 88%;
+  background: rgba(50, 72, 116, 0.48);
+  border: 1rpx solid rgba(120, 160, 220, 0.28);
+  border-radius: 4rpx 16rpx 16rpx 16rpx;
+  padding: 10rpx 16rpx;
+}
+
+.bubble-text {
+  font-size: 22rpx;
+  color: #dde6f5;
+  line-height: 1.65;
+}
+
+/* AI 复盘 */
+.recap-card {
+  margin-top: 10rpx;
+  border-radius: 12rpx;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1rpx solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.recap-header {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  padding: 14rpx 16rpx;
+}
+
+.recap-seat {
+  color: #e6c17d;
+  font-size: 24rpx;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.recap-role {
+  color: #a89fc8;
+  font-size: 20rpx;
+  flex-shrink: 0;
+}
+
+.recap-nick {
+  color: #d0d8e8;
+  font-size: 22rpx;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recap-toggle {
+  flex-shrink: 0;
+  font-size: 20rpx;
+  color: #8bbeea;
+}
+
+.recap-overview {
+  display: block;
+  color: #cfd8ea;
+  font-size: 22rpx;
+  line-height: 1.6;
+  padding: 0 16rpx 12rpx;
+  border-top: 1rpx solid rgba(255, 255, 255, 0.07);
+  padding-top: 12rpx;
+}
+
+.recap-section {
+  padding: 8rpx 16rpx 12rpx;
+  border-top: 1rpx solid rgba(255, 255, 255, 0.06);
+}
+
+.recap-section-title {
+  display: block;
+  color: #9ab4cc;
+  font-size: 20rpx;
+  font-weight: 600;
+  margin-bottom: 5rpx;
+}
+
+.recap-body {
+  display: block;
+  color: #b8c3d7;
+  font-size: 21rpx;
+  line-height: 1.65;
 }

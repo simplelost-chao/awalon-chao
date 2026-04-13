@@ -17,9 +17,9 @@ const ROLE_IMAGE_MAP = {
 };
 
 const EVIL_ROLES = new Set(["刺客", "莫甘娜", "莫德雷德", "奥伯伦", "爪牙", "兰斯洛特（邪恶）"]);
-const NOTE_LABELS = ["疑似梅林", "偏坏", "偏好", "狼人", "好人", "排水"];
+const NOTE_LABELS = ["梅林", "偏坏", "偏好", "狼人", "好人", "排水"];
 const NOTE_BADGE_STYLE = {
-  "疑似梅林": "background:rgba(70,25,130,0.88);border-color:rgba(180,120,255,0.65);",
+  "梅林": "background:rgba(70,25,130,0.88);border-color:rgba(180,120,255,0.65);",
   "偏坏":    "background:rgba(120,18,18,0.88);border-color:rgba(255,80,80,0.6);",
   "偏好":    "background:rgba(18,90,40,0.88);border-color:rgba(80,210,120,0.6);",
   "狼人":    "background:rgba(140,10,10,0.92);border-color:rgba(220,40,40,0.7);",
@@ -27,7 +27,7 @@ const NOTE_BADGE_STYLE = {
   "排水":    "background:rgba(12,85,105,0.88);border-color:rgba(60,210,230,0.6);",
 };
 const NOTE_TEXT_STYLE = {
-  "疑似梅林": "color:#d4aaff;",
+  "梅林": "color:#d4aaff;",
   "偏坏":    "color:#ff9898;",
   "偏好":    "color:#90e8a8;",
   "狼人":    "color:#ff7070;",
@@ -102,6 +102,7 @@ Page({
     noteModal: { show: false, seatIndex: -1, seat: 0, name: "", label: "" },
     assassinAnim: null,
     roleInfo: null,
+    roleInfoLoading: false,
     showRolePanel: false,
     roleVisibleSeats: [],
     roleInfoImage: "",
@@ -127,6 +128,7 @@ Page({
     speakMessages: [],
     speakKeys: [],
     speakRoundView: "",
+    speakRoundIdx: 0,
     showSpeakPanel: true,
     showPlayerList: false,
     cheatPressingPlayerId: "",
@@ -178,6 +180,11 @@ Page({
     recapReady: false,
     recapList: [],
     recapIndex: 0,
+    showMissionProgress: false,
+    missionProgressTeam: [],
+    missionVotedCount: 0,
+    missionProgressRound: 0,
+    missionAllVoted: false,
   },
 
   onLoad(options) {
@@ -215,6 +222,13 @@ Page({
       this.setData({ roomTip: `已识别分享房间 ${sharedRoomCode}，登录后将自动加入。` });
     }
     this.ensureShareInviteImage(null);
+    // 若 roleConfig 已加载则立即重建，否则注册回调等 config 到达
+    const existingConfig = app.globalData.roleConfig;
+    if (existingConfig && Object.keys(existingConfig).length > 0) {
+      this._rebuildRoleChips();
+    } else {
+      app.globalData.roleConfigListener = () => { this._rebuildRoleChips(); };
+    }
     this.connect(wsUrl);
     this._speakTicker = setInterval(() => {
       if (this.data.room && this.data.phase === "speaking") {
@@ -763,6 +777,10 @@ Page({
           if (prevRoom && prevRoom.started && !room.started) {
             this.setData({ seatNotes: {} });
           }
+          // clear cached role info when a new game starts (not started → started)
+          if (prevRoom && !prevRoom.started && room.started) {
+            this.setData({ roleInfo: null, roleInfoImage: "", roleInfoClass: "", roleVisibleSeats: [], roleInfoLoading: false });
+          }
           const currentPhase = room.phase || "";
           const nextTeamPhaseKey =
             room && room.game && Number(room.game.round) && Number(room.game.attempt)
@@ -890,6 +908,7 @@ Page({
           const roleVisibleSeats = this.buildRoleVisibleSeats(info);
           this.setData({
             roleInfo: info,
+            roleInfoLoading: false,
             roleVisibleSeats,
             showRolePanel: this.data.showRolePanel,
             roleInfoImage: this.roleImageFor(info.role),
@@ -1094,6 +1113,16 @@ Page({
       ...leaderAction,
       teamCandidates: this.buildTeamCandidates(room, selectedTeam),
       currentVoteTeam: this.buildCurrentVoteTeam(room),
+      ...(() => {
+        const mp = this.buildMissionProgress(room);
+        return {
+          showMissionProgress: mp.show && !inTeam,
+          missionProgressTeam: mp.team,
+          missionVotedCount: mp.votedCount,
+          missionProgressRound: mp.round,
+          missionAllVoted: mp.allVoted,
+        };
+      })(),
       roomConfigLines: this.buildRoomConfig(room, leaderSeat),
       roomRoleCards: this.buildRoomRoleCards(room),
       playerCards: this.buildPlayerCards(room),
@@ -1179,17 +1208,21 @@ Page({
   },
 
   maybeShowRecap(room, prevRoom) {
-    if (room.phase !== "end") return;
+    // When transitioning away from 'end' (new game started), clear stale recap state
+    if (room.phase !== "end") {
+      if (this.data.recapReady || this.data._recapFingerprint) {
+        this.setData({ recapReady: false, recapList: [], _recapFingerprint: "" });
+      }
+      return;
+    }
     const recap = room && room.game && Array.isArray(room.game.recap) ? room.game.recap : [];
-    if (!recap.length) return;
-    const prevRecap = prevRoom && prevRoom.game && Array.isArray(prevRoom.game.recap) ? prevRoom.game.recap : [];
-    // Trigger when recap first arrives, OR when we reconnect and recap is already there
-    const recapChanged = recap.length !== prevRecap.length;
-    const alreadyReady = this.data.recapReady && this.data.recapList && this.data.recapList.length;
-    if (!recapChanged && alreadyReady) return;
+    // Build a fingerprint from player IDs + count to detect genuinely new recap data
+    const fingerprint = recap.map(r => (r.id || "") + ":" + (r.role || "")).join("|");
+    if (!fingerprint) return;
+    if (fingerprint === this.data._recapFingerprint) return;
     const recapList = recap.map(r => this.formatRecapEntry(r));
     if (!recapList.length) return;
-    this.setData({ recapReady: true, recapList, recapIndex: 0 });
+    this.setData({ recapReady: true, recapList, recapIndex: 0, _recapFingerprint: fingerprint });
   },
 
   onOpenRecap() {
@@ -1541,27 +1574,49 @@ Page({
   },
 
   buildRoleVisibleSeats(info) {
-    const seats = Array.isArray(info && info.seats) ? info.seats : [];
+    const visibleSeatNos = Array.isArray(info && info.seats) ? info.seats.map(Number) : [];
     const room = this.data.room;
+    const clientId = this.data.clientId;
     const currentRole = String((info && info.role) || this.data.myRole || "");
-    const isMerlinView = currentRole === "梅林";
+    const isEvilViewer = EVIL_ROLES.has(currentRole);
+    const visibleAreEvil = !!(info && info.visibleFaction === 'evil');
+    const roleDetails = (info && info.roleDetails) ? info.roleDetails : {};
     if (!room || !Array.isArray(room.seats) || !Array.isArray(room.players)) return [];
-    return seats
+
+    // 自己的座位号
+    const mySeatIdx = room.seats.indexOf(clientId);
+    const mySeatNo = mySeatIdx >= 0 ? mySeatIdx + 1 : null;
+
+    // 只展示：自己 + 能看到身份的玩家
+    const seatNosToShow = mySeatNo
+      ? [mySeatNo, ...visibleSeatNos.filter(s => s !== mySeatNo)]
+      : visibleSeatNos;
+
+    return seatNosToShow
       .map((seatNo) => {
         const idx = Number(seatNo) - 1;
         if (idx < 0) return null;
         const pid = room.seats[idx];
         const p = room.players.find((it) => it.id === pid);
-        const avatarMeta = this.avatarMeta(p && p.avatar ? p.avatar : (p ? "🙂" : ""));
-        const roleDetails = info && info.roleDetails ? info.roleDetails : {};
-        const role = pid && roleDetails[pid] ? roleDetails[pid] : "";
+        const isSelf = pid === clientId;
+        const role = isSelf ? currentRole : (pid && roleDetails[pid] ? roleDetails[pid] : "");
+        const roleImage = role ? this.roleImageFor(role) : "";
+        // 坏人视角下 info.seats 都是坏人队友；其他情况靠 roleDetails 里的角色判断
+        const isEvil = isSelf ? EVIL_ROLES.has(currentRole) : (role ? EVIL_ROLES.has(role) : (!isSelf && (isEvilViewer || visibleAreEvil)));
+        const isKnown = isSelf || !!role || isEvilViewer || visibleAreEvil;
+        const rowClass = isEvil ? "role-seat-row-evil" : isKnown ? "role-seat-row-good" : "role-seat-row-unknown";
+        const roleClass = isEvil ? "role-seat-role-evil" : isSelf ? "role-seat-role-self" : "role-seat-role-other";
+        const avatarMeta = this.avatarMeta(p && p.avatar ? p.avatar : "🙂");
         return {
           seat: seatNo,
           nickname: p ? p.nickname : "未知",
+          isSelf,
+          role,
+          roleImage,
           avatarImage: avatarMeta.image,
-          avatarText: avatarMeta.text || (p ? "🙂" : ""),
-          evilVisible: isMerlinView,
-          role
+          avatarText: avatarMeta.text || "🙂",
+          rowClass,
+          roleClass,
         };
       })
       .filter(Boolean);
@@ -1611,7 +1666,7 @@ Page({
         return {
           id: p.id,
           seat,
-          seatText: seat > 0 ? `${seat}号` : "未入座",
+          seatText: seat > 0 ? `${seat}号` : "观战",
           nickname: p.nickname,
           avatar: p.avatar || "🙂",
           avatarImage: avatarMeta.image,
@@ -1676,16 +1731,10 @@ Page({
     const roleSummary = this.summarizeRoomRoles(room.roles);
     const forcedRound = this.forcedRoundForRoom(room);
     return [
-      { label: "房间号", value: room.code || "-" },
-      { label: "人数", value: `${room.maxPlayers || "-"}人` },
-      { label: "状态", value: phaseText },
-      { label: "轮次", value: room.started ? `${game.round || 1}-${game.attempt || 1}` : "-" },
-      { label: "队长", value: leaderSeat ? `${leaderSeat}号` : "-" },
-      { label: "发言时长", value: `${room.speakingSeconds || 120}s` },
       { label: "扩展", value: room.ladyOfLakeEnabled ? "湖中仙女" : "标准局" },
       { label: "坏人互认", value: room.evilRoleVisibleEnabled ? "显示具体身份" : "仅显示队友座位" },
       { label: "强制轮", value: `第${forcedRound}次组队` },
-      { label: "角色配置", value: roleSummary || "-" }
+      { label: "发言时长", value: `${room.speakingSeconds || 120}s` }
     ];
   },
 
@@ -1791,6 +1840,7 @@ Page({
     return {
       speakKeys: keys,
       speakRoundView: viewKey,
+      speakRoundIdx: keys.indexOf(viewKey),
       speakMessages: this.buildSpeakMessagesByRound(room, viewKey)
     };
   },
@@ -1978,6 +2028,18 @@ Page({
       role,
       image: this.roleImageFor(role)
     }));
+  },
+
+  _rebuildRoleChips() {
+    const maxPlayers = 5 + Number(this.data.maxPlayersIndex || 0);
+    const selectedRoles = this.defaultRolesForCount(maxPlayers);
+    this.setData({
+      selectedRoles,
+      currentRoleChips: this.buildCurrentRoleChips(selectedRoles),
+      hostRoleOptions: this.withRoleImages(this.uniqueRoles(selectedRoles)),
+      advancedRoleSummary: this.formatAdvancedRoleSummary(selectedRoles),
+      advancedQuotaText: this.formatAdvancedQuotaText(maxPlayers),
+    });
   },
 
   buildCurrentRoleChips(roles = []) {
@@ -2169,7 +2231,7 @@ Page({
 
   onCreateRoom() {
     if (!this.data.loggedIn) {
-      wx.showToast({ title: "请先登录", icon: "none" });
+      this.onWxLogin().then(() => { if (this.data.loggedIn) this.onCreateRoom(); });
       return;
     }
     const maxPlayers = 5 + Number(this.data.maxPlayersIndex || 0);
@@ -2212,7 +2274,7 @@ Page({
 
   onJoinRoomPrompt() {
     if (!this.data.loggedIn) {
-      wx.showToast({ title: "请先登录", icon: "none" });
+      this.onWxLogin().then(() => { if (this.data.loggedIn) this.onJoinRoomPrompt(); });
       return;
     }
     wx.showModal({
@@ -2367,6 +2429,7 @@ Page({
     const nextKey = keys[idx - 1];
     this.setData({
       speakRoundView: nextKey,
+      speakRoundIdx: idx - 1,
       speakMessages: this.buildSpeakMessagesByRound(this.data.room, nextKey)
     });
   },
@@ -2379,6 +2442,7 @@ Page({
     const nextKey = keys[idx + 1];
     this.setData({
       speakRoundView: nextKey,
+      speakRoundIdx: idx + 1,
       speakMessages: this.buildSpeakMessagesByRound(this.data.room, nextKey)
     });
   },
@@ -2507,11 +2571,8 @@ Page({
       return;
     }
     const room = this.data.room;
-    if (!room || !room.started) {
-      wx.showToast({ title: "游戏开始后可查看身份", icon: "none" });
-      return;
-    }
-    this.setData({ showRolePanel: true, showPlayerList: false });
+    if (!room || !room.started) return;
+    this.setData({ showRolePanel: true, showPlayerList: false, roleInfoLoading: !this.data.roleInfo });
     this.send("VIEW_ROLE");
   },
 
@@ -2558,26 +2619,15 @@ Page({
 
   onPickNoteLabel(e) {
     const label = String(e.currentTarget.dataset.label || "");
-    const cur = this.data.noteModal.label;
-    this.setData({ "noteModal.label": cur === label ? "" : label });
-  },
-
-  onSaveNote() {
-    const { seatIndex, label } = this.data.noteModal;
+    const { seatIndex, label: cur } = this.data.noteModal;
     if (seatIndex < 0) return;
     const notes = Object.assign({}, this.data.seatNotes);
-    if (!label) {
+    const newLabel = (label && label !== cur) ? label : "";
+    if (!newLabel) {
       delete notes[seatIndex];
     } else {
-      notes[seatIndex] = { label, badgeStyle: NOTE_BADGE_STYLE[label] || '', textStyle: NOTE_TEXT_STYLE[label] || '' };
+      notes[seatIndex] = { label: newLabel, badgeStyle: NOTE_BADGE_STYLE[newLabel] || '', textStyle: NOTE_TEXT_STYLE[newLabel] || '' };
     }
-    this.setData({ seatNotes: notes, "noteModal.show": false });
-  },
-
-  onClearNote() {
-    const { seatIndex } = this.data.noteModal;
-    const notes = Object.assign({}, this.data.seatNotes);
-    delete notes[seatIndex];
     this.setData({ seatNotes: notes, "noteModal.show": false });
   },
 
@@ -2587,19 +2637,27 @@ Page({
 
   noteModalNoop() {},
 
-  onKickPlayer() {
-    const { targetId, name } = this.data.noteModal;
+  onKickFromList(e) {
+    const targetId = String(e.currentTarget.dataset.id || "");
+    const name = String(e.currentTarget.dataset.name || "该玩家");
     if (!targetId) return;
     wx.showModal({
       title: "踢出玩家",
-      content: `确认将 ${name} 踢出房间？`,
-      confirmText: "踢出",
-      confirmColor: "#c0392b",
-      success: (res) => {
-        if (res.confirm) {
-          this.send("KICK_PLAYER", { targetId });
-          this.setData({ "noteModal.show": false });
-        }
+      content: `确认将「${name}」踢出房间？`,
+      confirmText: "确认",
+      cancelText: "取消",
+      success: (res1) => {
+        if (!res1.confirm) return;
+        wx.showModal({
+          title: "再次确认",
+          content: `踢出操作不可撤销，确定继续？`,
+          confirmText: "踢出",
+          confirmColor: "#c0392b",
+          cancelText: "取消",
+          success: (res2) => {
+            if (res2.confirm) this.send("KICK_PLAYER", { targetId });
+          }
+        });
       }
     });
   },
@@ -2681,6 +2739,36 @@ Page({
       })
       .filter(Boolean)
       .sort((a, b) => a.seat - b.seat);
+  },
+
+  buildMissionProgress(room) {
+    if (!room || !room.game || room.phase !== "mission") {
+      return { show: false, team: [], votedCount: 0, round: 0, allVoted: false };
+    }
+    const game = room.game;
+    const teamIds = Array.isArray(game.team) ? game.team : [];
+    const missionVotes = game.missionVotes || {};
+    const votedCount = teamIds.filter((id) => missionVotes[id] !== undefined).length;
+    const team = teamIds.map((pid) => {
+      const seat = Array.isArray(room.seats) ? room.seats.findIndex((id) => id === pid) + 1 : 0;
+      const player = Array.isArray(room.players) ? room.players.find((p) => p.id === pid) : null;
+      const avatarMeta = this.avatarMeta((player && player.avatar) || "🙂");
+      return {
+        id: pid,
+        seat,
+        nickname: player ? player.nickname : "?",
+        avatarImage: avatarMeta.image,
+        avatarText: avatarMeta.text || "🙂",
+        voted: missionVotes[pid] !== undefined,
+      };
+    }).sort((a, b) => a.seat - b.seat);
+    return {
+      show: true,
+      team,
+      votedCount,
+      round: Number(game.round || 0),
+      allVoted: votedCount >= teamIds.length && teamIds.length > 0,
+    };
   },
 
   onConfirmTeam() {

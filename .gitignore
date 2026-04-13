@@ -7,3 +7,6 @@
   *.sqlite-shm
   *.sqlite-wal
   .DS_Store
+  mobile/scripts/mp-upload.key
+  mobile/scripts/.mp-auditid
+  mobile/scripts/.mp-version

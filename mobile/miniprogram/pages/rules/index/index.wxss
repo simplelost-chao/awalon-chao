@@ -86,6 +86,18 @@
   border: 1rpx solid rgba(255, 255, 255, 0.1);
 }
 
+/* ── Section title ── */
+
+.section-title {
+  display: block;
+  color: #f2e5c8;
+  font-size: 28rpx;
+  font-weight: 700;
+  margin-bottom: 12rpx;
+}
+
+/* ── Journey steps ── */
+
 .journey-card {
   margin-top: 12rpx;
   padding: 14rpx;
@@ -111,6 +123,7 @@
   font-size: 24rpx;
   font-weight: 800;
   background: linear-gradient(135deg, #f6deb0, #d7a45f);
+  flex-shrink: 0;
 }
 
 .journey-meta {
@@ -132,256 +145,24 @@
 
 .journey-point {
   margin-top: 10rpx;
+  padding-left: 12rpx;
   color: #d6dfef;
   font-size: 22rpx;
   line-height: 1.55;
 }
 
-.mock-card {
-  margin-top: 14rpx;
-  padding: 14rpx;
-  border-radius: 16rpx;
-  border: 1rpx solid rgba(255, 255, 255, 0.1);
-  background: rgba(7, 10, 16, 0.46);
-}
-
-.mock-title {
-  display: block;
-  color: #f2dfb3;
-  font-size: 24rpx;
-  font-weight: 700;
-}
-
-.mock-action-grid {
-  margin-top: 12rpx;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10rpx;
-}
-
-.mock-action {
-  min-height: 72rpx;
-  border-radius: 14rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 1rpx solid rgba(255, 255, 255, 0.1);
-}
-
-.mock-action.gold { background: linear-gradient(135deg, rgba(213, 157, 71, 0.34), rgba(68, 43, 12, 0.8)); }
-.mock-action.blue { background: linear-gradient(135deg, rgba(81, 123, 214, 0.36), rgba(17, 34, 74, 0.82)); }
-.mock-action.red { background: linear-gradient(135deg, rgba(180, 71, 71, 0.34), rgba(63, 17, 17, 0.82)); }
-.mock-action.teal { background: linear-gradient(135deg, rgba(63, 160, 145, 0.34), rgba(14, 53, 49, 0.82)); }
-
-.mock-action-label {
-  color: #eef2fb;
-  font-size: 23rpx;
-  font-weight: 700;
-}
-
-.mock-table-wrap {
-  position: relative;
-  margin-top: 14rpx;
-  padding: 20rpx 16rpx 18rpx;
-  border-radius: 18rpx;
-  min-height: 340rpx;
-  background:
-    radial-gradient(circle at center, rgba(137, 101, 61, 0.55) 0, rgba(92, 63, 28, 0.5) 90rpx, rgba(18, 22, 31, 0) 92rpx),
-    rgba(10, 13, 20, 0.68);
-}
-
-.mock-table-core {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 190rpx;
-  height: 190rpx;
-  border-radius: 50%;
-  border: 2rpx solid rgba(244, 219, 169, 0.26);
-  background: radial-gradient(circle at 40% 35%, rgba(205, 159, 93, 0.4), rgba(58, 36, 18, 0.86));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-}
-
-.mock-table-room {
-  color: #f5e5c1;
-  font-size: 22rpx;
-  font-weight: 700;
-}
-
-.mock-table-stage {
-  margin-top: 6rpx;
-  color: #dce5f4;
-  font-size: 20rpx;
-}
-
-.mock-seat {
-  position: absolute;
-  width: 110rpx;
-  min-height: 58rpx;
-  padding: 8rpx 10rpx;
-  border-radius: 14rpx;
-  border: 1rpx solid rgba(255, 255, 255, 0.12);
-  background: rgba(29, 36, 50, 0.92);
-  box-sizing: border-box;
-}
-
-.mock-seat:nth-child(2) { left: 50%; top: 12rpx; transform: translateX(-50%); }
-.mock-seat:nth-child(3) { right: 18rpx; top: 74rpx; }
-.mock-seat:nth-child(4) { right: 28rpx; bottom: 68rpx; }
-.mock-seat:nth-child(5) { left: 50%; bottom: 12rpx; transform: translateX(-50%); }
-.mock-seat:nth-child(6) { left: 28rpx; bottom: 68rpx; }
-.mock-seat:nth-child(7) { left: 18rpx; top: 74rpx; }
-
-.mock-seat-name {
-  display: block;
-  color: #edf3ff;
-  font-size: 20rpx;
-  font-weight: 700;
-}
-
-.mock-seat-state {
-  display: block;
-  margin-top: 4rpx;
-  color: #c8d3e7;
-  font-size: 18rpx;
-}
-
-.mock-seat.tone-gold { box-shadow: inset 0 0 0 1rpx rgba(230, 192, 110, 0.46); }
-.mock-seat.tone-blue { box-shadow: inset 0 0 0 1rpx rgba(103, 146, 231, 0.42); }
-.mock-seat.tone-teal { box-shadow: inset 0 0 0 1rpx rgba(78, 176, 160, 0.42); }
-.mock-seat.tone-gray { box-shadow: inset 0 0 0 1rpx rgba(151, 167, 197, 0.18); }
-
-.mock-vote-list {
-  margin-top: 12rpx;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8rpx 10rpx;
-}
-
-.mock-vote-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8rpx 10rpx;
-  border-radius: 12rpx;
-  background: rgba(16, 20, 29, 0.78);
-}
-
-.mock-vote-name {
-  color: #e8eefb;
-  font-size: 20rpx;
-}
-
-.mock-vote-pill {
-  padding: 4rpx 10rpx;
-  border-radius: 999rpx;
-  font-size: 18rpx;
-  font-weight: 700;
-}
-
-.mock-vote-pill.tone-good {
-  color: #ecfff4;
-  background: rgba(74, 174, 110, 0.82);
-}
-
-.mock-vote-pill.tone-bad {
-  color: #fff2f2;
-  background: rgba(196, 79, 79, 0.82);
-}
-
-.mock-track {
-  margin-top: 14rpx;
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 8rpx;
-}
-
-.mock-track-node {
-  min-height: 78rpx;
-  padding: 8rpx 6rpx;
-  border-radius: 12rpx;
-  text-align: center;
-  border: 1rpx solid rgba(255, 255, 255, 0.08);
-}
-
-.mock-track-round {
-  display: block;
-  color: #eef3fb;
-  font-size: 18rpx;
-  font-weight: 700;
-}
-
-.mock-track-result {
-  display: block;
-  margin-top: 6rpx;
-  color: #dce5f2;
-  font-size: 18rpx;
-}
-
-.mock-track-node.tone-success { background: rgba(47, 118, 85, 0.7); }
-.mock-track-node.tone-fail { background: rgba(125, 44, 44, 0.76); }
-.mock-track-node.tone-pending { background: rgba(52, 60, 77, 0.76); }
-
-.mock-result-head {
-  margin-top: 12rpx;
-  padding: 14rpx;
-  border-radius: 14rpx;
-  background: linear-gradient(180deg, rgba(32, 79, 61, 0.86), rgba(17, 32, 27, 0.92));
-}
-
-.mock-result-badge {
-  display: inline-block;
-  padding: 6rpx 14rpx;
-  border-radius: 999rpx;
-  color: #effff1;
-  font-size: 22rpx;
-  font-weight: 800;
-  background: rgba(122, 214, 145, 0.24);
-}
-
-.mock-result-sub {
-  display: block;
-  margin-top: 10rpx;
-  color: #d8e6de;
-  font-size: 20rpx;
-  line-height: 1.45;
-}
-
-.mock-medal-row {
-  margin-top: 12rpx;
-  display: flex;
-  gap: 10rpx;
-}
-
-.mock-medal {
-  width: 54rpx;
-  height: 54rpx;
-  border-radius: 16rpx;
-  background: linear-gradient(135deg, rgba(242, 207, 126, 0.9), rgba(157, 112, 38, 0.88));
-  box-shadow: inset 0 0 0 2rpx rgba(255, 255, 255, 0.18);
-}
-
-.section-title {
-  display: block;
-  color: #f2e5c8;
-  font-size: 28rpx;
-  font-weight: 700;
-  margin-bottom: 10rpx;
-}
+/* ── Bullet list ── */
 
 .bullet {
   margin-top: 8rpx;
   color: #d2dbeb;
-  font-size: 23rpx;
-  line-height: 1.5;
+  font-size: 22rpx;
+  line-height: 1.55;
 }
 
+/* ── Phase cards ── */
+
 .phase-grid {
-  margin-top: 14rpx;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10rpx;
@@ -418,6 +199,125 @@
   font-size: 21rpx;
   line-height: 1.4;
 }
+
+/* ── Feature tip rows ── */
+
+.feature-tip-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14rpx;
+}
+
+.feature-icon {
+  font-size: 40rpx;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 4rpx;
+}
+
+.feature-tip-body {
+  flex: 1;
+}
+
+/* ── Peer vote tags ── */
+
+.peer-tag-row {
+  display: flex;
+  gap: 12rpx;
+  margin-top: 14rpx;
+  flex-wrap: wrap;
+}
+
+.peer-tag {
+  padding: 8rpx 20rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+.peer-tag-c {
+  color: #fff2f2;
+  background: rgba(196, 79, 79, 0.72);
+  border: 1rpx solid rgba(220, 100, 100, 0.5);
+}
+
+.peer-tag-b {
+  color: #fff8e8;
+  background: rgba(176, 130, 50, 0.72);
+  border: 1rpx solid rgba(210, 165, 80, 0.5);
+}
+
+.peer-tag-e {
+  color: #efffef;
+  background: rgba(60, 160, 100, 0.72);
+  border: 1rpx solid rgba(80, 190, 120, 0.5);
+}
+
+/* ── AI recap section list ── */
+
+.recap-section-list {
+  margin-top: 10rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.recap-section-item {
+  padding: 8rpx 12rpx;
+  border-radius: 10rpx;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1rpx solid rgba(255, 255, 255, 0.08);
+}
+
+.recap-section-label {
+  display: block;
+  color: #9ab4cc;
+  font-size: 20rpx;
+  font-weight: 600;
+  margin-bottom: 4rpx;
+}
+
+.recap-section-desc {
+  display: block;
+  color: #b8c3d7;
+  font-size: 21rpx;
+  line-height: 1.5;
+}
+
+/* ── Win conditions ── */
+
+.win-row {
+  margin-top: 10rpx;
+  padding: 12rpx 14rpx;
+  border-radius: 12rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.good-win {
+  background: rgba(40, 90, 70, 0.52);
+  border: 1rpx solid rgba(80, 180, 120, 0.3);
+}
+
+.evil-win {
+  background: rgba(80, 20, 20, 0.52);
+  border: 1rpx solid rgba(200, 70, 70, 0.3);
+}
+
+.win-label {
+  font-size: 22rpx;
+  font-weight: 700;
+  color: #f2e5c8;
+}
+
+.win-desc {
+  font-size: 21rpx;
+  color: #d0d8ea;
+  line-height: 1.5;
+}
+
+/* ── Roles ── */
 
 .role-item {
   margin-top: 10rpx;
@@ -463,7 +363,10 @@
   margin-top: 8rpx;
   color: #d2dbeb;
   font-size: 22rpx;
+  line-height: 1.5;
 }
+
+/* ── Tip panel ── */
 
 .tip-panel {
   margin-bottom: 24rpx;
@@ -481,5 +384,5 @@
   margin-top: 8rpx;
   color: #c9d3e7;
   font-size: 22rpx;
-  line-height: 1.5;
+  line-height: 1.6;
 }

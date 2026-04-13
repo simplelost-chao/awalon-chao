@@ -21,14 +21,16 @@
           <view class="record-grid">
             <view class="avatar-col">
               <image class="role-avatar" wx:if="{{item.roleImage}}" src="{{item.roleImage}}" mode="aspectFill" />
+              <text class="role-avatar-emoji" wx:elif="{{item.spectatorAvatar}}">{{item.spectatorAvatar}}</text>
+              <text class="role-avatar-emoji" wx:else>👤</text>
             </view>
             <view class="record-main">
               <view class="record-head-main">
                 <text class="line strong">对局 #{{item.gameId}} · {{item.role}}</text>
-                <text class="result-pill {{item.result==='win'?'result-win':'result-lose'}}">{{item.result==='win'?'胜利':'失败'}}</text>
+                <text class="result-pill {{item.result==='win'?'result-win':item.result==='spectator'?'result-spectator':'result-lose'}}">{{item.result==='win'?'胜利':item.result==='spectator'?'观战':'失败'}}</text>
               </view>
-              <text class="line">房间 {{item.roomCode}} · {{item.maxPlayers}} 人 · 座位 {{item.seat}}</text>
-              <text class="line">结束时间：{{item.playedAt || item.endedAt || '-'}}</text>
+              <text class="line">房间 {{item.roomCode}} · {{item.maxPlayers}} 人{{item.seat ? ' · 座位 '+item.seat : ''}}</text>
+              <text class="line">{{item.friendlyTime}}</text>
               <text class="line" wx:if="{{item.peerVoteSummary}}">本局被投：{{item.peerVoteSummary}}</text>
               <view class="medal-row" wx:if="{{item.medals && item.medals.length}}">
                 <view class="medal-chip" wx:for="{{item.medals}}" wx:key="code" catchtap="onTapMedal" data-name="{{item.name}}" data-description="{{item.description}}">

@@ -105,10 +105,16 @@ Page({
         wins: evilWins,
         winRate: evilTotal > 0 ? Number((evilWins * 100 / evilTotal).toFixed(1)) : 0
       };
-      const medalMap = new Map((((roleStats && roleStats.medals) || [])).map((m) => [m.code, Number(m.total || 0)]));
-      const medalList = decorateMedals(ALL_MEDALS.map((m) => ({
+      const rawMedalMap = new Map((((roleStats && roleStats.medals) || [])).map((m) => [m.code, Number(m.total || 0)]));
+      // Merge legacy code counts into canonical codes
+      const legacyMerge = { good_protect_round_fail_captain: "good_first_round_clean_captain" };
+      for (const [legacyCode, newCode] of Object.entries(legacyMerge)) {
+        const legacyCount = rawMedalMap.get(legacyCode) || 0;
+        if (legacyCount > 0) rawMedalMap.set(newCode, (rawMedalMap.get(newCode) || 0) + legacyCount);
+      }
+      const medalList = decorateMedals(ALL_MEDALS.filter((m) => !m.hidden).map((m) => ({
         ...m,
-        total: medalMap.get(m.code) || 0
+        total: rawMedalMap.get(m.code) || 0
       })));
       const goodMedals = medalList.filter((m) => m.faction === "good");
       const evilMedals = medalList.filter((m) => m.faction === "evil");

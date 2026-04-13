@@ -38,9 +38,18 @@ Page({
     assassinationText: "",
     assassinationResultClass: "",
     assassinationTargetText: "",
+    assassinationTargetRole: "",
+    assassinationTargetRoleImage: "",
+    assassinName: "",
+    assassinSeat: "",
     roundSeats: [],
     missionRows: [],
     peerVoteRows: [],
+    speakRows: [],
+    speakPageIdx: 0,
+    currentSpeakRow: null,
+    recapRows: [],
+    recapExpanded: {},
     myVoteText: ""
   },
 
@@ -85,6 +94,25 @@ Page({
       return;
     }
     wx.reLaunch({ url: "/pages/index/index" });
+  },
+
+  onSpeakPrev() {
+    const idx = Math.max(0, (this.data.speakPageIdx || 0) - 1);
+    const rows = this.data.speakRows || [];
+    this.setData({ speakPageIdx: idx, currentSpeakRow: rows[idx] || null });
+  },
+
+  onSpeakNext() {
+    const rows = this.data.speakRows || [];
+    const idx = Math.min(rows.length - 1, (this.data.speakPageIdx || 0) + 1);
+    this.setData({ speakPageIdx: idx, currentSpeakRow: rows[idx] || null });
+  },
+
+  onToggleRecap(e) {
+    const key = String(e.currentTarget.dataset.key);
+    const expanded = Object.assign({}, this.data.recapExpanded);
+    expanded[key] = !expanded[key];
+    this.setData({ recapExpanded: expanded });
   },
 
   onTapMedal(e) {
@@ -258,6 +286,48 @@ Page({
       .sort((a, b) => Number(a.seat) - Number(b.seat));
   },
 
+  buildSpeakRows(detailObj) {
+    const payload = detailObj && detailObj.detail ? detailObj.detail : {};
+    const speakHistory = payload.speakHistory || {};
+    const keys = Object.keys(speakHistory).sort((a, b) => {
+      const [ar, aa] = a.split('-').map(Number);
+      const [br, ba] = b.split('-').map(Number);
+      return ar !== br ? ar - br : aa - ba;
+    });
+    return keys.map(key => ({
+      key,
+      label: `第 ${key.split('-')[0]} 轮 · 第 ${key.split('-')[1]} 次`,
+      lines: (speakHistory[key] || []).map(s => ({
+        nickname: s.nickname || s.from || '玩家',
+        text: s.text || s.msg || ''
+      })).filter(s => s.text)
+    })).filter(r => r.lines.length > 0);
+  },
+
+  buildRecapRows(detailObj) {
+    const payload = detailObj && detailObj.detail ? detailObj.detail : {};
+    const recaps = Array.isArray(payload.recaps) ? payload.recaps : [];
+    const players = Array.isArray(payload.players) ? payload.players : [];
+    const maxPlayers = Number(payload.maxPlayers || 7);
+    return recaps
+      .filter(r => r && (r.review || r.overview))
+      .map(r => {
+        const review = r.review || {};
+        const player = players.find(p => p.id === r.playerId);
+        const seat = player ? this.seatNoFromRaw(player.seat, maxPlayers) : (r.seat || '?');
+        return {
+          key: r.playerId || String(seat),
+          seat,
+          role: r.role || '',
+          nickname: (player && player.nickname) || r.nickname || `${seat}号`,
+          overview: review.overview || r.overview || '',
+          speakSummary: (review.speak && review.speak.summary) || '',
+          nextPlan: review.nextGamePlan || ''
+        };
+      })
+      .sort((a, b) => Number(a.seat) - Number(b.seat));
+  },
+
   applyDetail(detail) {
     if (!detail || !detail.detail) return;
     const historyDetail = {
@@ -271,14 +341,27 @@ Page({
     let assassinationText = "";
     let assassinationResultClass = "";
     let assassinationTargetText = "";
+    let assassinationTargetRole = "";
+    let assassinationTargetRoleImage = "";
+    let assassinName = "";
+    let assassinSeat = "";
     if (assassination) {
-      const targetPlayer = (detail.detail.players || []).find((p) => p.id === assassination.targetId);
-      const seat = targetPlayer ? this.seatNoFromRaw(targetPlayer.seat, Number(detail.detail.maxPlayers || 7)) : 0;
-      const seatText = seat ? `${seat}号位` : "未知座位";
+      const maxP = Number(detail.detail.maxPlayers || 7);
+      const players = detail.detail.players || [];
+      const targetPlayer = players.find((p) => p.id === assassination.targetId);
+      const assassinPlayer = players.find((p) => p.id === assassination.assassinId);
+      const seat = targetPlayer ? this.seatNoFromRaw(targetPlayer.seat, maxP) : 0;
       const targetName = targetPlayer && targetPlayer.nickname ? targetPlayer.nickname : "未知玩家";
       assassinationText = assassination.hit ? "刺杀命中" : "刺杀失败";
-      assassinationTargetText = `${seatText} ${targetName}`;
+      assassinationTargetText = seat ? `${seat}号  ${targetName}` : targetName;
       assassinationResultClass = assassination.hit ? "assassination-hit" : "assassination-miss";
+      assassinationTargetRole = (targetPlayer && targetPlayer.role) || "";
+      assassinationTargetRoleImage = this.roleImageFor(assassinationTargetRole);
+      if (assassinPlayer) {
+        const aSeat = this.seatNoFromRaw(assassinPlayer.seat, maxP);
+        assassinName = assassinPlayer.nickname || "刺客";
+        assassinSeat = aSeat ? `${aSeat}号` : "";
+      }
     }
     const myVote = detail.myVote || null;
     const myVoteLabel =
@@ -293,6 +376,8 @@ Page({
       myVote && detail.detail && Array.isArray(detail.detail.players)
         ? detail.detail.players.find((player) => player.id === myVote.targetId)
         : null;
+    const speakRows = this.buildSpeakRows(detail);
+    const recapRows = this.buildRecapRows(detail);
     this.setData({
       historyDetail,
       myRoleImage: this.roleImageFor(detail.myRole || ""),
@@ -301,9 +386,18 @@ Page({
       assassinationText,
       assassinationResultClass,
       assassinationTargetText,
+      assassinationTargetRole,
+      assassinationTargetRoleImage,
+      assassinName,
+      assassinSeat,
       roundSeats: this.buildRoundSeats(detail),
       missionRows: this.buildMissionRows(detail),
       peerVoteRows: this.buildPeerVoteRows(detail),
+      speakRows,
+      speakPageIdx: 0,
+      currentSpeakRow: speakRows[0] || null,
+      recapRows,
+      recapExpanded: {},
       myVoteText: myVoteLabel && myVoteTarget ? `你投给了 ${myVoteTarget.nickname}：${myVoteLabel}` : "",
       loading: false
     });

@@ -14,6 +14,25 @@ const ROLE_IMAGE_MAP = {
   "兰斯洛特（邪恶）": "https://www.awalon.top/mp-assets/role-split/lancelot_evil.png"
 };
 
+function formatFriendlyTime(ts) {
+  if (!ts) return '-';
+  const now = Date.now();
+  const diff = now - ts;
+  const min = Math.floor(diff / 60000);
+  const hour = Math.floor(diff / 3600000);
+  const day = Math.floor(diff / 86400000);
+  if (diff < 60000) return '刚刚';
+  if (min < 60) return `${min}分钟前`;
+  if (hour < 24) return `${hour}小时前`;
+  if (day === 1) {
+    const d = new Date(ts);
+    return `昨天 ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  }
+  if (day < 7) return `${day}天前`;
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
 function getIndexPage() {
   const pages = getCurrentPages();
   for (let i = pages.length - 1; i >= 0; i -= 1) {
@@ -46,9 +65,12 @@ Page({
     const app = getApp();
     app.globalData.historyListListener = (payload) => {
       const rawList = Array.isArray(payload && payload.list) ? payload.list : [];
+      const userAvatar = (app.globalData.userInfo && app.globalData.userInfo.avatar) || '';
       const list = rawList.map((item) => ({
         ...item,
-        roleImage: ROLE_IMAGE_MAP[item.role] || "",
+        roleImage: item.result === 'spectator' ? '' : (ROLE_IMAGE_MAP[item.role] || ''),
+        spectatorAvatar: item.result === 'spectator' ? userAvatar : '',
+        friendlyTime: formatFriendlyTime(item.playedAt),
         medals: decorateMedals(item.medals),
         peerVoteSummary: this.formatPeerVoteSummary(item.peerVotes || {})
       }));
@@ -62,11 +84,8 @@ Page({
       });
     };
 
-    if (app.globalData.latestHistoryList) {
-      app.globalData.historyListListener(app.globalData.latestHistoryList);
-    } else {
-      this.fetchPage(1);
-    }
+    // 每次进入历史页都强制从服务器拉最新数据，避免缓存导致新记录不显示
+    this.fetchPage(1);
   },
 
   onUnload() {

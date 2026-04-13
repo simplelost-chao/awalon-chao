@@ -17,14 +17,19 @@
 
     <block wx:if="{{!loading && historyDetail}}">
       <view class="panel">
-        <view class="section-title">对局 #{{historyDetail.gameId}}</view>
-        <view class="my-role-row">
-          <image class="my-role-img" wx:if="{{myRoleImage}}" src="{{myRoleImage}}" mode="aspectFill" />
-          <text class="meta">我的身份：{{historyDetail.myRole}} ｜ 结果：{{historyDetail.myResult==='win'?'胜利':'失败'}} ｜ 座位：{{historyDetail.mySeat}}</text>
+        <view class="game-header">
+          <view class="game-role-block" wx:if="{{myRoleImage}}">
+            <image class="game-role-img" src="{{myRoleImage}}" mode="aspectFill" />
+            <text class="game-role-label">{{historyDetail.myRole}}</text>
+          </view>
+          <view class="game-info-block">
+            <text class="game-id-text">对局 #{{historyDetail.gameId}}</text>
+            <text class="game-meta-line">{{historyDetail.myResult==='win'?'🏆 胜利':historyDetail.myResult==='spectator'?'👁 观战':'💀 失败'}}{{historyDetail.myResult!=='spectator'?' · 座位 '+historyDetail.mySeat+'号':''}}</text>
+            <text class="game-meta-line">房间 {{historyDetail.detail.roomCode}} · {{historyDetail.detail.maxPlayers}}人局</text>
+            <text class="game-meta-line">胜方：{{historyDetail.detail.winner}}</text>
+            <text class="game-meta-line" wx:if="{{myVoteText}}">{{myVoteText}}</text>
+          </view>
         </view>
-        <text class="meta">房间：{{historyDetail.detail.roomCode}} ｜ 人数：{{historyDetail.detail.maxPlayers}}</text>
-        <text class="meta">胜方：{{historyDetail.detail.winner}}</text>
-        <text class="meta" wx:if="{{myVoteText}}">{{myVoteText}}</text>
         <view class="medal-row" wx:if="{{historyDetail.medals && historyDetail.medals.length}}">
           <view class="medal-chip" wx:for="{{historyDetail.medals}}" wx:key="code" catchtap="onTapMedal" data-name="{{item.name}}" data-description="{{item.description}}">
             <image class="medal-chip-image" wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFit" />
@@ -34,15 +39,7 @@
         </view>
       </view>
 
-      <view class="panel" wx:if="{{assassinationText}}">
-        <text class="section-title">刺杀结算</text>
-        <view class="assassination-banner {{assassinationResultClass}}">
-          <text class="assassination-main">{{assassinationText}}</text>
-          <text class="assassination-sub">{{assassinationTargetText}}</text>
-        </view>
-      </view>
-
-      <view class="panel" wx:if="{{peerVoteRows.length}}">
+<view class="panel" wx:if="{{peerVoteRows.length}}">
         <text class="section-title">终局互评</text>
         <view class="peer-vote-list">
           <view class="peer-vote-row" wx:for="{{peerVoteRows}}" wx:key="id">
@@ -67,8 +64,7 @@
               <image class="seat-role-img" wx:if="{{item.roleImage}}" src="{{item.roleImage}}" mode="aspectFill" />
               <text class="seat-role">{{item.role}}</text>
             </view>
-            <text class="seat-mark-assassin" wx:if="{{item.isAssassin}}">🗡</text>
-            <text class="seat-mark-killed" wx:if="{{item.isAssassinated}}">☠</text>
+            <image class="seat-killed-icon" wx:if="{{item.isAssassinated}}" src="https://www.awalon.top/mp-assets/ui-icons/kill.png" mode="aspectFit" />
           </view>
         </view>
       </view>
@@ -92,6 +88,48 @@
             <text class="vote-part col-reject">{{item.reject}}</text>
           </view>
           <text class="col col-res {{item.resClass}}">{{item.result}}</text>
+        </view>
+      </view>
+
+      <view class="panel" wx:if="{{speakRows.length}}">
+        <view class="speak-title-wrap">
+          <text class="section-title section-chip">发言记录</text>
+          <view class="speak-inline-pager">
+            <view class="speak-inline-btn {{speakPageIdx <= 0 ? 'speak-inline-disabled' : ''}}" bindtap="onSpeakPrev">‹</view>
+            <text class="speak-title-round" wx:if="{{currentSpeakRow}}">{{currentSpeakRow.label}}</text>
+            <view class="speak-inline-btn {{speakPageIdx >= speakRows.length - 1 ? 'speak-inline-disabled' : ''}}" bindtap="onSpeakNext">›</view>
+          </view>
+        </view>
+        <scroll-view class="speak-chat" scroll-y>
+          <view class="speak-bubble" wx:for="{{currentSpeakRow.lines}}" wx:key="index">
+            <text class="bubble-name">{{item.nickname}}</text>
+            <view class="bubble-body">
+              <text class="bubble-text">{{item.text}}</text>
+            </view>
+          </view>
+        </scroll-view>
+      </view>
+
+      <view class="panel" wx:if="{{recapRows.length}}">
+        <text class="section-title">AI 复盘</text>
+        <view class="recap-card" wx:for="{{recapRows}}" wx:key="key" bindtap="onToggleRecap" data-key="{{item.key}}">
+          <view class="recap-header">
+            <text class="recap-seat">{{item.seat}}号</text>
+            <text class="recap-role">{{item.role}}</text>
+            <text class="recap-nick">{{item.nickname}}</text>
+            <text class="recap-toggle">{{recapExpanded[item.key] ? '收起 ▲' : '展开 ▼'}}</text>
+          </view>
+          <block wx:if="{{recapExpanded[item.key]}}">
+            <text class="recap-overview" wx:if="{{item.overview}}">{{item.overview}}</text>
+            <view wx:if="{{item.speakSummary}}" class="recap-section">
+              <text class="recap-section-title">发言策略</text>
+              <text class="recap-body">{{item.speakSummary}}</text>
+            </view>
+            <view wx:if="{{item.nextPlan}}" class="recap-section">
+              <text class="recap-section-title">下局计划</text>
+              <text class="recap-body">{{item.nextPlan}}</text>
+            </view>
+          </block>
         </view>
       </view>
     </block>

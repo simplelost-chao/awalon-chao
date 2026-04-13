@@ -7,6 +7,7 @@ const path = require('path');
 const fs = require('fs');
 const Database = require('better-sqlite3');
 const { defaultRolesForCount, DEFAULT_ROLE_CONFIG } = require('./default-role-config');
+const { MEDAL_DEFS, evaluateMedalsForPayload } = require('./medals');
 
 const app = express();
 app.use(cors());
@@ -368,32 +369,6 @@ function isValidRoleConfig(maxPlayers, roles) {
   return countEvilRoles(roles) === expectedEvilCount(count);
 }
 
-const MEDAL_DEFS = {
-  good_blocker: { code: 'good_blocker', name: '挡刀侠', faction: 'good' },
-  good_clean_captain: { code: 'good_clean_captain', name: '老司机', faction: 'good' },
-  good_wolf_trust: { code: 'good_wolf_trust', name: '钻狼窝', faction: 'good' },
-  merlin_survivor: { code: 'merlin_survivor', name: '梅林是狗', faction: 'good' },
-  merlin_three_fail_lose: { code: 'merlin_three_fail_lose', name: '心累', faction: 'good' },
-  good_clean_trust: { code: 'good_clean_trust', name: '开眼玩家', faction: 'good' },
-  percival_morgana_trust: { code: 'percival_morgana_trust', name: '晕头转向', faction: 'good' },
-  good_protect_round_fail_captain: { code: 'good_protect_round_fail_captain', name: '盲人骑瞎马', faction: 'good' },
-  good_three_evil_team_captain: { code: 'good_three_evil_team_captain', name: '错到极致也是对', faction: 'good' },
-  good_three_fail_lose: { code: 'good_three_fail_lose', name: '不嘻嘻', faction: 'good' },
-  good_comeback_win: { code: 'good_comeback_win', name: '开往春田花花', faction: 'good' },
-  good_three_success_participant: { code: 'good_three_success_participant', name: '好人王', faction: 'good' },
-  assassin_early_hit_merlin: { code: 'assassin_early_hit_merlin', name: '刺客大师', faction: 'evil' },
-  morgana_percival_fail_master: { code: 'morgana_percival_fail_master', name: '洗头大师', faction: 'evil' },
-  oberon_no_fail_with_evil: { code: 'oberon_no_fail_with_evil', name: '找到组织', faction: 'evil' },
-  oberon_double_fail_with_evil: { code: 'oberon_double_fail_with_evil', name: '撞车', faction: 'evil' },
-  evil_protect_round_fail: { code: 'evil_protect_round_fail', name: '保护轮也炸了', faction: 'evil' },
-  evil_three_fail_win: { code: 'evil_three_fail_win', name: '炸三塔', faction: 'evil' },
-  evil_hide_votes_master: { code: 'evil_hide_votes_master', name: '藏票大师', faction: 'evil' },
-  evil_all_fail_non_protect: { code: 'evil_all_fail_non_protect', name: '毫无默契', faction: 'evil' },
-  evil_first_three_fail_win: { code: 'evil_first_three_fail_win', name: '车胎炸了', faction: 'evil' },
-  evil_three_fail_participant: { code: 'evil_three_fail_participant', name: '狼王', faction: 'evil' },
-  evil_no_fail_win: { code: 'evil_no_fail_win', name: '演技派', faction: 'evil' },
-  evil_fake_good_voter: { code: 'evil_fake_good_voter', name: '我想当个好人', faction: 'evil' },
-};
 
 const {
   recordGameSummary,
@@ -410,77 +385,96 @@ const {
   decideEvilIntel,
 } = require('./ai');
 
-const AI_NAMES = [
-  '阿七',
-  '小北',
-  '阿蓝',
-  '夜行',
-  '风铃',
-  '山鬼',
-  '小满',
-  '阿柒',
-  '一诺',
-  '小白',
-  '北野',
-  '星河',
-];
-let aiNameSeq = 1;
-
-const AI_PERSONAS = {
-  '激进冲锋': {
-    style: '激进冲锋，善于带节奏',
-    speakTone: '直接强势，喜欢点名质疑，句子简短有力',
-    voteHabits: '倾向快速通过，不喜欢长时间否决拉锯',
-    bluffFreq: 'high',
-    trustThreshold: 'low',
+// AI 角色库：名字即人设，每个角色有独特发言风格与博弈习惯
+const AI_CHARACTERS = {
+  '莫甘娜的微笑': {
+    style: '擅长伪装好人，发言滴水不漏，逻辑自洽',
+    speakTone: '逻辑严密，从不直接表态，善用反问和"逻辑上讲"，让别人替自己下结论',
+    catchphrase: '逻辑上讲……|大家可以想想。|我只是觉得，合理的人不需要解释。',
+    voteHabits: '跟随主流，避免出头，偶尔在关键局意外倒戈',
+    bluffHint: '坏人时构造无懈可击的洗白逻辑，完美扮演理性好人',
+    bluffFreq: 'very_high',
+    trustThreshold: 'high',
   },
-  '稳健保守': {
-    style: '稳健保守，偏结构分析',
-    speakTone: '措辞谨慎，引用具体投票和任务记录说话',
-    voteHabits: '倾向基于证据投票，不轻易赌博',
-    bluffFreq: 'low',
-    trustThreshold: 'medium',
+  '梅林看穿你了': {
+    style: '分析型，喜欢点破别人，暗示多于明说',
+    speakTone: '发言含沙射影，"某些人心里应该很清楚"，从不明点名但暗示强烈',
+    catchphrase: '某些人心里应该很清楚。|我不说，但懂的人懂。|有些事不用我点破吧。',
+    voteHabits: '基于信息优势独立判断，不轻易跟风',
+    bluffHint: '坏人时模仿梅林风格，故意用暗示把锅甩给真正的好人',
+    bluffFreq: 'medium',
+    trustThreshold: 'high',
   },
-  '逻辑推理': {
-    style: '逻辑推理型，喜欢追投票与任务',
-    speakTone: '喜欢列举证据链，用"因为...所以..."句式',
-    voteHabits: '严格按任务/投票记录判断，不受发言影响',
+  '奥伯龙没朋友': {
+    style: '沉默寡言，独立判断，不跟风投票',
+    speakTone: '极简发言，一两句话点到即止，从不给完整理由，制造神秘感',
+    catchphrase: '我有自己的判断。|不必解释。|结果会说明一切。',
+    voteHabits: '完全独立，无论多大压力绝不跟风，行动代替言语',
+    bluffHint: '坏人时用沉默迷惑对手，关键票意外翻局',
     bluffFreq: 'low',
     trustThreshold: 'high',
   },
-  '社交观察': {
-    style: '社交观察型，重视发言细节',
-    speakTone: '关注他人情绪和用词，善于捕捉矛盾发言',
-    voteHabits: '重视发言一致性，对前后矛盾的人投反对',
-    bluffFreq: 'medium',
+  '我知道你知道': {
+    style: '博弈感强，喜欢和别人打信息战',
+    speakTone: '盯特定玩家制造心理压力，"你知道我在看你"，暗示自己掌握内部信息',
+    catchphrase: '你我之间心知肚明。|你知道我在看你。|信息战，开始了。',
+    voteHabits: '通过投票发信号，喜欢在关键轮次传递元信息',
+    bluffHint: '坏人时假装掌握核心情报，把真实信息搅混',
+    bluffFreq: 'high',
     trustThreshold: 'medium',
   },
-  '搅局误导': {
-    style: '搅局误导型，擅长制造分歧',
-    speakTone: '善于引导话题，在好人阵营制造内耗，发言模糊',
-    voteHabits: '偶尔出乎意料地投票，制造混乱',
+  '背刺有理': {
+    style: '激进坏人风，关键时刻翻脸，擅长甩锅',
+    speakTone: '前期低调表忠心，后期突然翻脸攻击昔日盟友，理由冠冕堂皇',
+    catchphrase: '不好意思了。|到这里我必须说实话了。|对不起，但逻辑不允许我护着你。',
+    voteHabits: '前期顺势通过，后期在关键局突然否决翻盘',
+    bluffHint: '坏人时等好人建立互信后精准背刺，配合队友翻局',
     bluffFreq: 'very_high',
     trustThreshold: 'low',
   },
-  '冷静克制': {
-    style: '冷静克制，少量但关键发言',
-    speakTone: '话少精准，每句话都有指向性',
-    voteHabits: '非必要不否决，保留判断等到关键轮次',
+  '沉默即答案': {
+    style: '极简发言，让别人猜，神秘感拉满',
+    speakTone: '只说一句话甚至一个词，在沉默里制造压迫感，让对方自行脑补',
+    catchphrase: '懂的自然懂。|我选择沉默。|.',
+    voteHabits: '投票就是表态，不需要语言辅助，行动胜过千言',
+    bluffHint: '坏人时用极简发言降低暴露风险，神秘感天然洗白',
     bluffFreq: 'low',
     trustThreshold: 'high',
   },
-  '强势控场': {
-    style: '强势控场，偏主动组队',
-    speakTone: '喜欢主动表态和定性，说话带有引导性',
-    voteHabits: '敢于强推自己认为的队伍',
+  '任务失败不是我': {
+    style: '擅长甩锅，第一个跳出来洗白自己',
+    speakTone: '任务一失败立刻抢话，条理清晰地把锅推给别人，声音最响理由最多',
+    catchphrase: '肯定是X的问题。|我早就说了不该带他。|反正不是我，证据我都列出来了。',
+    voteHabits: '倾向通过以显得积极，但失败后立刻转向甩锅',
+    bluffHint: '坏人时第一个开始洗白，抢占话语权，主动指控无辜玩家',
+    bluffFreq: 'high',
+    trustThreshold: 'low',
+  },
+  '帕西法尔的直觉': {
+    style: '靠感觉判断，发言感性，容易被带节奏',
+    speakTone: '大量"我感觉""直觉上""说不出来但就觉得有问题"，充满情绪感染力',
+    catchphrase: '我感觉……就是感觉啦。|直觉告诉我。|说不清楚，但就是有种感觉。',
+    voteHabits: '跟随直觉，容易被最后发言的人影响，感性驱动',
+    bluffHint: '坏人时用情绪感染力带跑好人判断，把怀疑引向无辜者',
     bluffFreq: 'medium',
     trustThreshold: 'low',
   },
-  '谨慎试探': {
-    style: '谨慎试探，逐轮修正判断',
-    speakTone: '多用疑问句，倾向观察而非定性',
-    voteHabits: '早期保守，后期根据积累信息行动',
+  '三号位可疑': {
+    style: '喜欢盯人，专注怀疑特定玩家',
+    speakTone: '锁定目标后每轮必提，专注、执着、不轻易松口，旁人劝也没用',
+    catchphrase: 'X号一直很奇怪。|我锁定了。|不管你们怎么想，我就认准这个人。',
+    voteHabits: '拒绝包含目标玩家的队伍，即使全场只有自己否决',
+    bluffHint: '坏人时把执着怀疑引向真正的好人，用专注洗白自己',
     bluffFreq: 'medium',
+    trustThreshold: 'medium',
+  },
+  '不解释': {
+    style: '强硬派，从不为自己辩护，让对手猜',
+    speakTone: '别人质疑一律不辩护，只说"随便"或"爱信不信"，反而制造神秘压迫感',
+    catchphrase: '随便。|爱信不信。|我不解释，结果会说话。',
+    voteHabits: '想法坚定，不受任何舆论影响，投票前不打招呼',
+    bluffHint: '坏人时用强硬沉默代替解释，让对方自行揣测从而放松警惕',
+    bluffFreq: 'low',
     trustThreshold: 'high',
   },
 };
@@ -881,6 +875,13 @@ function joinRoom(client, payload) {
     spectator: forceSpectator,
     offline: false,
   });
+  // If joining as spectator during a live game, add to snapshot immediately so history records them even if they leave early
+  if (forceSpectator && room.started && room.game && client.userPhone) {
+    const snap = room.game.spectatorSnapshot = room.game.spectatorSnapshot || [];
+    if (!snap.some((s) => s.id === client.id)) {
+      snap.push({ id: client.id, nickname, phone: client.userPhone });
+    }
+  }
   client.roomCode = room.code;
   broadcastRoom(room);
   return ok(client, { roomCode: room.code, spectator: forceSpectator });
@@ -1079,6 +1080,7 @@ function cheatReveal(client, payload) {
 
 function buildGameHistoryPayload(room) {
   const assignments = (room.game && room.game.assignments) || {};
+  const seatedIds = new Set(room.seats.filter(Boolean));
   const players = room.seats
     .map((id, idx) => {
       const p = room.players.get(id);
@@ -1095,6 +1097,22 @@ function buildGameHistoryPayload(room) {
       };
     })
     .filter((x) => !!x.id);
+
+  // Spectators: merge snapshot (handles early-leavers) with any still-present live spectators
+  const addedSpectatorIds = new Set();
+  const snapshotList = (room.game && room.game.spectatorSnapshot) || [];
+  for (const s of snapshotList) {
+    if (!s || !s.id || seatedIds.has(s.id)) continue;
+    addedSpectatorIds.add(s.id);
+    players.push({ id: s.id, seat: null, nickname: s.nickname, phone: s.phone,
+      isAI: false, isHost: false, role: '观战', faction: 'spectator' });
+  }
+  for (const [id, p] of room.players.entries()) {
+    if (!p || p.isAI || !p.spectator || !p.phone || seatedIds.has(id) || addedSpectatorIds.has(id)) continue;
+    players.push({ id, seat: null, nickname: p.nickname || '观战者', phone: p.phone,
+      isAI: false, isHost: false, role: '观战', faction: 'spectator' });
+  }
+
   return {
     roomCode: room.code,
     maxPlayers: room.maxPlayers,
@@ -1107,7 +1125,7 @@ function buildGameHistoryPayload(room) {
     speakHistory: room.game.speakHistory || {},
     messages: room.messages || [],
     assassination: room.game.assassination || null,
-    recaps: room.game.recaps || [],
+    recaps: room.game.recap || [],
     evilIntel: room.game.evilIntel || [],
     ladyOfLake: room.game.ladyOfLake || null,
     endVotes: room.game.endVotes || {},
@@ -1124,227 +1142,12 @@ function buildSeatSnapshot(room) {
   return out;
 }
 
-function toSeatNoMap(payload) {
-  const out = {};
-  const players = Array.isArray(payload && payload.players) ? payload.players : [];
-  players.forEach((p) => {
-    if (!p || !p.id) return;
-    const seat = Number(p.seat);
-    out[p.id] = Number.isFinite(seat) ? seat : 0;
-  });
-  return out;
-}
-
-function roleByPlayerId(payload) {
-  const out = {};
-  const players = Array.isArray(payload && payload.players) ? payload.players : [];
-  players.forEach((p) => {
-    if (!p || !p.id) return;
-    out[p.id] = p.role || '';
-  });
-  return out;
-}
-
-function evaluateMedalsForPayload(payload) {
-  const result = {};
-  const players = Array.isArray(payload && payload.players) ? payload.players : [];
-  const voteHistory = Array.isArray(payload && payload.voteHistory) ? payload.voteHistory : [];
-  const missionHistory = Array.isArray(payload && payload.missionHistory) ? payload.missionHistory : [];
-  const assassination = payload && payload.assassination ? payload.assassination : null;
-  const winner = payload && payload.winner ? payload.winner : '';
-  const roleById = roleByPlayerId(payload);
-
-  const missionByRound = {};
-  missionHistory.forEach((m) => {
-    const r = Number(m && m.round ? m.round : 0);
-    if (r > 0 && !missionByRound[r]) missionByRound[r] = m;
-  });
-
-  const failedMissionCount = missionHistory.filter((m) => m && !m.success).length;
-  const evilWonByThreeFails = winner === 'evil' && failedMissionCount >= 3;
-  const firstThreeMissions = missionHistory
-    .filter((m) => m && Number(m.round || 0) > 0)
-    .slice()
-    .sort((a, b) => Number(a.round || 0) - Number(b.round || 0))
-    .slice(0, 3);
-  const goodWonFirstThreeSuccess =
-    winner === 'good' && firstThreeMissions.length >= 3 && firstThreeMissions.every((m) => !!m.success);
-  const evilWonFirstThreeFails =
-    winner === 'evil' && firstThreeMissions.length >= 3 && firstThreeMissions.every((m) => !m.success);
-
-  const isGoodNonMerlin = (id) => {
-    const role = roleById[id] || '';
-    return role && role !== '梅林' && ROLE_FACTIONS[role] === 'good';
-  };
-
-  const ensure = (id, code) => {
-    if (!id || !MEDAL_DEFS[code]) return;
-    if (!result[id]) result[id] = [];
-    if (!result[id].includes(code)) result[id].push(code);
-  };
-
-  const teamEvilCount = (team) =>
-    (Array.isArray(team) ? team : []).filter((id) => ROLE_FACTIONS[roleById[id] || ''] === 'evil').length;
-  const teamHasRole = (team, roleName) => (Array.isArray(team) ? team : []).some((id) => (roleById[id] || '') === roleName);
-
-  players.forEach((p) => {
-    const pid = p.id;
-    const role = p.role || '';
-    const faction = ROLE_FACTIONS[role] || '';
-    if (!pid || !role || !faction) return;
-
-    let cleanLeaderCount = 0;
-    let trustWolfCount = 0;
-    let trustCleanCount = 0;
-    let merlinTrustWolfCount = 0;
-    let percivalTrustMorganaCount = 0;
-    let firstRoundCleanLeader = false;
-    let threeEvilTeamLeader = false;
-    let morganaPercivalFailCount = 0;
-    let oberonNoFailWithEvil = false;
-    let oberonDoubleFailWithEvil = false;
-    let evilSuccessVoteStreak = 0;
-    let evilSuccessVoteStreakMax = 0;
-    let evilAllFailNonProtect = false;
-    let successfulMissionParticipation = 0;
-    let failedMissionParticipation = 0;
-    let alwaysTrustedCleanTeam = true;
-    let alwaysRejectedEvilTeam = true;
-    let castAnyVote = false;
-    let castMissionFail = false;
-
-    voteHistory.forEach((v) => {
-      if (!v || !Array.isArray(v.team) || !v.votes) return;
-      const team = v.team;
-      const playerVoteApprove = !!v.votes[pid];
-      const evilCount = teamEvilCount(team);
-      const isLeader = v.leaderId === pid;
-
-      if (isLeader && isGoodNonMerlin(pid) && evilCount === 0) cleanLeaderCount += 1;
-      if (isLeader && isGoodNonMerlin(pid) && evilCount >= 3) threeEvilTeamLeader = true;
-
-      if (isGoodNonMerlin(pid) && playerVoteApprove && evilCount > 0) trustWolfCount += 1;
-      if (role === '梅林' && playerVoteApprove && evilCount > 0) merlinTrustWolfCount += 1;
-
-      if (isGoodNonMerlin(pid)) {
-        castAnyVote = true;
-        if (evilCount === 0) {
-          if (!playerVoteApprove) alwaysTrustedCleanTeam = false;
-        } else if (playerVoteApprove) {
-          alwaysRejectedEvilTeam = false;
-        }
-      }
-
-      if (ROLE_FACTIONS[role] === 'evil') {
-        castAnyVote = true;
-        if (evilCount === 0) {
-          if (!playerVoteApprove) alwaysTrustedCleanTeam = false;
-        } else if (playerVoteApprove) {
-          alwaysRejectedEvilTeam = false;
-        }
-      }
-
-      if (role === '派西维尔' && playerVoteApprove && teamHasRole(team, '莫甘娜')) {
-        percivalTrustMorganaCount += 1;
-      }
-
-      if (role === '莫甘娜' && team.includes(pid) && playerVoteApprove) {
-        const percivalId = players.find((x) => (x && x.role) === '派西维尔')?.id;
-        const percivalApproved = !!(percivalId && v.votes[percivalId]);
-        const mission = v.approved ? missionByRound[Number(v.round || 0)] : null;
-        if (percivalApproved && mission && !mission.success) {
-          morganaPercivalFailCount += 1;
-        }
-      }
-
-      if (isLeader && isGoodNonMerlin(pid) && Number(v.round || 0) === 1 && evilCount === 0) {
-        firstRoundCleanLeader = true;
-      }
-    });
-
-    let evilProtectRoundFailed = false;
-
-    missionHistory.forEach((m) => {
-      if (!m || !Array.isArray(m.team) || !m.team.includes(pid)) return;
-      const missionVotes = m.missionVotes || {};
-      const myFail = !!missionVotes[pid];
-      const fails = Number(m.fails || 0);
-      const needFail = Number(m.needFail || 1);
-      const team = m.team;
-
-      if (m.success) successfulMissionParticipation += 1;
-      if (!m.success) failedMissionParticipation += 1;
-
-      if (ROLE_FACTIONS[role] === 'evil') {
-        if (myFail) castMissionFail = true;
-        if (!myFail) {
-          evilSuccessVoteStreak += 1;
-          if (evilSuccessVoteStreak > evilSuccessVoteStreakMax) evilSuccessVoteStreakMax = evilSuccessVoteStreak;
-        } else {
-          evilSuccessVoteStreak = 0;
-        }
-
-        if (needFail >= 2 && !m.success && myFail) {
-          evilProtectRoundFailed = true;
-        }
-
-        if (needFail < 2) {
-          const evilOnTeam = team.filter((id) => ROLE_FACTIONS[roleById[id] || ''] === 'evil');
-          if (evilOnTeam.length > 0) {
-            const allEvilFailed = evilOnTeam.every((id) => !!missionVotes[id]);
-            if (allEvilFailed && evilOnTeam.includes(pid)) {
-              evilAllFailNonProtect = true;
-            }
-          }
-        }
-      }
-
-      if (role !== '奥伯伦') return;
-      const evilMateCount = team.filter((id) => id !== pid && ROLE_FACTIONS[roleById[id] || ''] === 'evil').length;
-      if (evilMateCount <= 0) return;
-      if (!myFail && fails > 0) oberonNoFailWithEvil = true;
-      if (myFail && fails > 1) oberonDoubleFailWithEvil = true;
-    });
-
-    if (assassination && assassination.targetId === pid && isGoodNonMerlin(pid)) {
-      ensure(pid, 'good_blocker');
-    }
-    if (cleanLeaderCount >= 2 && isGoodNonMerlin(pid)) ensure(pid, 'good_clean_captain');
-    if (trustWolfCount >= 5 && isGoodNonMerlin(pid)) ensure(pid, 'good_wolf_trust');
-    if (role === '梅林' && merlinTrustWolfCount >= 3) ensure(pid, 'merlin_survivor');
-    if (castAnyVote && alwaysTrustedCleanTeam && alwaysRejectedEvilTeam && isGoodNonMerlin(pid)) ensure(pid, 'good_clean_trust');
-    if (role === '派西维尔' && percivalTrustMorganaCount >= 3) ensure(pid, 'percival_morgana_trust');
-    if (firstRoundCleanLeader && isGoodNonMerlin(pid)) ensure(pid, 'good_protect_round_fail_captain');
-    if (threeEvilTeamLeader && isGoodNonMerlin(pid)) ensure(pid, 'good_three_evil_team_captain');
-
-    if (role === '梅林' && evilWonByThreeFails) ensure(pid, 'merlin_three_fail_lose');
-    if (isGoodNonMerlin(pid) && evilWonByThreeFails) ensure(pid, 'good_three_fail_lose');
-    if (ROLE_FACTIONS[role] === 'good' && goodWonFirstThreeSuccess) ensure(pid, 'good_comeback_win');
-    if (ROLE_FACTIONS[role] === 'good' && successfulMissionParticipation >= 3) ensure(pid, 'good_three_success_participant');
-
-    if (role === '刺客' && assassination && assassination.hit) {
-      const successCount = missionHistory.filter((x) => x && x.success).length;
-      if (successCount < 3) ensure(pid, 'assassin_early_hit_merlin');
-    }
-    if (role === '莫甘娜' && morganaPercivalFailCount >= 2) ensure(pid, 'morgana_percival_fail_master');
-    if (role === '奥伯伦' && oberonNoFailWithEvil) ensure(pid, 'oberon_no_fail_with_evil');
-    if (role === '奥伯伦' && oberonDoubleFailWithEvil) ensure(pid, 'oberon_double_fail_with_evil');
-    if (ROLE_FACTIONS[role] === 'evil' && evilProtectRoundFailed) ensure(pid, 'evil_protect_round_fail');
-    if (ROLE_FACTIONS[role] === 'evil' && evilWonByThreeFails) ensure(pid, 'evil_three_fail_win');
-    if (ROLE_FACTIONS[role] === 'evil' && evilSuccessVoteStreakMax >= 2) ensure(pid, 'evil_hide_votes_master');
-    if (ROLE_FACTIONS[role] === 'evil' && evilAllFailNonProtect) ensure(pid, 'evil_all_fail_non_protect');
-    if (ROLE_FACTIONS[role] === 'evil' && evilWonFirstThreeFails) ensure(pid, 'evil_first_three_fail_win');
-    if (ROLE_FACTIONS[role] === 'evil' && failedMissionParticipation >= 3) ensure(pid, 'evil_three_fail_participant');
-    if (ROLE_FACTIONS[role] === 'evil' && winner === 'evil' && !castMissionFail) ensure(pid, 'evil_no_fail_win');
-    if (ROLE_FACTIONS[role] === 'evil' && castAnyVote && alwaysTrustedCleanTeam && alwaysRejectedEvilTeam) ensure(pid, 'evil_fake_good_voter');
-  });
-
-  return result;
-}
-
 function persistGameHistory(room) {
   if (!room || !room.game || room.game.historySaved) return;
   try {
+    const snap = room.game.spectatorSnapshot || [];
+    const livePlayers = Array.from(room.players.entries()).map(([id,p]) => ({id, phone: p&&p.phone, spectator: p&&p.spectator}));
+    console.log(`[HISTORY] room=${room.code} snap=${JSON.stringify(snap)} livePlayers=${JSON.stringify(livePlayers)}`);
     const payload = buildGameHistoryPayload(room);
     const medalByPlayerId = evaluateMedalsForPayload(payload);
     const latestEarnedMedals = {};
@@ -1382,9 +1185,12 @@ function persistGameHistory(room) {
         JSON.stringify(payload)
       );
       const gameId = Number(res.lastInsertRowid);
+      room.game.historyGameId = gameId;
       for (const p of payload.players) {
         const result =
-          (payload.winner === 'good' && p.faction === 'good') || (payload.winner === 'evil' && p.faction === 'evil')
+          p.faction === 'spectator'
+            ? 'spectator'
+            : (payload.winner === 'good' && p.faction === 'good') || (payload.winner === 'evil' && p.faction === 'evil')
             ? 'win'
             : 'lose';
         insertParticipant.run(
@@ -1392,7 +1198,7 @@ function persistGameHistory(room) {
           p.phone || null,
           p.id,
           p.nickname,
-          p.seat,
+          p.seat ?? 0,   // 观战者 seat=null → 存 0
           p.role,
           p.faction,
           result,
@@ -1412,7 +1218,21 @@ function persistGameHistory(room) {
     });
     tx();
   } catch (e) {
-    // keep game flow alive
+    console.error('[HISTORY ERROR]', e && e.message, e && e.stack && e.stack.split('\n').slice(0,3).join(' | '));
+  }
+}
+
+function updateGameHistoryPayload(room) {
+  if (!room || !room.game || !room.game.historyGameId) return;
+  try {
+    const gameId = room.game.historyGameId;
+    const row = userDb.prepare('SELECT payload FROM game_records WHERE id = ?').get(gameId);
+    if (!row) return;
+    const payload = JSON.parse(row.payload);
+    payload.recaps = room.game.recap || [];
+    userDb.prepare('UPDATE game_records SET payload = ? WHERE id = ?').run(JSON.stringify(payload), gameId);
+  } catch (e) {
+    console.error('[HISTORY] updateGameHistoryPayload error:', e && e.message);
   }
 }
 
@@ -1483,6 +1303,7 @@ function getHistoryListForPhone(phone, limit = 30, offset = 0) {
   );
   return stmt.all(phone, limit, offset).map((row) => ({
     ...row,
+    seat: row.seat === 0 ? null : row.seat,   // 观战者 seat=0 还原为 null
     medals: row.medalCodes
       ? row.medalCodes.split('|').filter(Boolean).map((code, idx) => ({
           code,
@@ -1563,7 +1384,7 @@ function getRoleStatsForPhone(phone) {
          COUNT(1) AS total,
          SUM(CASE WHEN result = 'win' THEN 1 ELSE 0 END) AS wins
        FROM game_participants
-       WHERE phone = ?
+       WHERE phone = ? AND role != '观战'
        GROUP BY role
        ORDER BY total DESC, role ASC`
     )
@@ -1777,6 +1598,12 @@ function startGame(client, payload) {
   room.started = true;
   room.phase = 'team';
   startGameState(room);
+  // Snapshot spectators at game start so we can record them in history even if they leave early
+  const seatedAtStart = new Set(room.seats.filter(Boolean));
+  for (const [id, p] of room.players.entries()) {
+    if (!p || p.isAI || !p.spectator || !p.phone || seatedAtStart.has(id)) continue;
+    room.game.spectatorSnapshot.push({ id, nickname: p.nickname || '观战者', phone: p.phone });
+  }
   preselectTeam(room);
   room.messages.push({ ts: now(), from: '系统', text: '游戏开始，进入组队阶段' });
   if (room.game.ladyOfLake && room.game.ladyOfLake.holderId) {
@@ -2130,6 +1957,7 @@ function viewRole(client) {
       if (ROLE_FACTIONS[r] === 'evil' && r !== '莫德雷德') seats.push(seatNumber(room, id));
     }
     info.seats = seats.filter(Boolean);
+    info.visibleFaction = 'evil';
   } else if (ROLE_FACTIONS[myRole] === 'evil') {
     // evil sees evil teammates (not specific roles), except Oberon sees nobody
     if (myRole === '奥伯伦') {
@@ -2196,6 +2024,7 @@ function startGameState(room) {
     revealedEvil: null,
     winner: null,
     endVotes: {},
+    spectatorSnapshot: [],
     ladyOfLake:
       room.ladyOfLakeEnabled && room.maxPlayers >= 8
         ? {
@@ -2549,28 +2378,29 @@ function fillAiPlayers(room) {
   if (room.aiNameRegistry) {
     for (const name of room.aiNameRegistry) usedNames.add(name);
   }
-  const personaKeys = Object.keys(AI_PERSONAS);
-  let styleIndex = Math.floor(Math.random() * personaKeys.length);
+  // Pick unused AI characters; shuffle so each game gets different combos
+  const allChars = Object.keys(AI_CHARACTERS);
+  const available = shuffle(allChars.filter((n) => !usedNames.has(n)));
+  let charIdx = 0;
   for (let i = 0; i < toAdd; i++) {
     const id = `ai${existingCount + i + 1}`;
-    const aiName = randomAiName(usedNames);
-    const fullName = `${aiName}·AI`;
-    usedNames.add(fullName);
-    if (room.aiNameRegistry) room.aiNameRegistry.add(fullName);
-    const aiPersonaId = fullName;
-    const aiPersonaKey = personaKeys[styleIndex % personaKeys.length];
+    // Pick next available character, fallback to sequential if exhausted
+    const charName = available[charIdx] || `AI${existingCount + i + 1}`;
+    charIdx += 1;
+    usedNames.add(charName);
+    if (room.aiNameRegistry) room.aiNameRegistry.add(charName);
+    const char = AI_CHARACTERS[charName] || AI_CHARACTERS[Object.keys(AI_CHARACTERS)[0]];
     room.players.set(id, {
       id,
-      nickname: fullName,
+      nickname: charName,
       avatar: '🤖',
       seat: null,
       joinedAt: now(),
       isAI: true,
-      aiPersonaKey,
-      aiStyle: AI_PERSONAS[aiPersonaKey].style,
-      aiPersonaId,
+      aiPersonaKey: charName,
+      aiStyle: char.style,
+      aiPersonaId: charName,
     });
-    styleIndex += 1;
   }
   // fill empty seats with AI
   for (let idx = 0; idx < room.maxPlayers; idx++) {
@@ -2612,6 +2442,7 @@ function autoSpeakIfAi(room) {
     try {
       msg = await decideSpeak({ room, player, role, roleFactions: ROLE_FACTIONS });
     } catch (e) {
+      console.error('[decideSpeak] error:', e.message);
       msg = '';
     }
     if (!msg) msg = aiSpeak(room, player, role);
@@ -2622,9 +2453,39 @@ function autoSpeakIfAi(room) {
     broadcastRoom(room);
     if (room.speakingTimeout) clearTimeout(room.speakingTimeout);
     if (room.game.leaderId === player.id) {
+      // 队长发完言后，基于本轮所有发言重新评估队伍
+      const leaderRole = room.game.assignments[player.id];
+      const teamSize = getTeamSize(room);
+      let revised = false;
+      try {
+        const newSeats = await decideTeam({
+          room, leaderId: player.id, role: leaderRole,
+          roleFactions: ROLE_FACTIONS, teamSize,
+        });
+        if (newSeats && newSeats.length > 0) {
+          const idMap = {};
+          room.seats.forEach((id, idx) => (idMap[idx + 1] = id));
+          const newIds = [...new Set(newSeats.map(s => idMap[s]).filter(Boolean))];
+          // 加上队长自己
+          if (!newIds.includes(player.id)) newIds.unshift(player.id);
+          const finalIds = newIds.slice(0, teamSize);
+          if (finalIds.length === teamSize) {
+            const oldTeam = [...(room.game.team || [])];
+            const changed = finalIds.length !== oldTeam.length
+              || finalIds.some(id => !oldTeam.includes(id));
+            if (changed) {
+              room.game.team = finalIds;
+              const newSeatNums = finalIds.map(id => seatNumber(room, id)).filter(Boolean).join('、');
+              room.messages.push({ ts: now(), from: player.nickname, text: `（思考后调整了队伍）新队伍：${newSeatNums}号` });
+              broadcastRoom(room);
+              revised = true;
+            }
+          }
+        }
+      } catch (_) {}
       room.phase = 'voting';
       room.game.votes = {};
-      room.messages.push({ ts: now(), from: '系统', text: '队长发言结束，进入投票' });
+      room.messages.push({ ts: now(), from: '系统', text: revised ? '队长重新调整队伍后，进入投票' : '队长发言结束，进入投票' });
       broadcastRoom(room);
       autoVoteIfAi(room);
     } else {
@@ -2891,7 +2752,7 @@ function generateRecaps(room) {
             actionSummary,
           });
           recordAiRecapMemory(room, p, role, { review });
-          storeRecapInsights(room, p, role, recap, ROLE_FACTIONS).catch(() => {});
+          Promise.resolve(storeRecapInsights(room, p, role, recap, ROLE_FACTIONS)).catch(() => {});
           return;
         }
         if (role === '派西维尔') {
@@ -2921,7 +2782,7 @@ function generateRecaps(room) {
             actionSummary,
           });
           recordAiRecapMemory(room, p, role, { review });
-          storeRecapInsights(room, p, role, recap, ROLE_FACTIONS).catch(() => {});
+          Promise.resolve(storeRecapInsights(room, p, role, recap, ROLE_FACTIONS)).catch(() => {});
           return;
         }
         if (ROLE_FACTIONS[role] === 'evil') {
@@ -2950,7 +2811,7 @@ function generateRecaps(room) {
             actionSummary,
           });
           recordAiRecapMemory(room, p, role, { review });
-          storeRecapInsights(room, p, role, recap, ROLE_FACTIONS).catch(() => {});
+          Promise.resolve(storeRecapInsights(room, p, role, recap, ROLE_FACTIONS)).catch(() => {});
           return;
         }
         // loyal / other good
@@ -2973,13 +2834,14 @@ function generateRecaps(room) {
           actionSummary,
         });
         recordAiRecapMemory(room, p, role, { review });
-        storeRecapInsights(room, p, role, recap, ROLE_FACTIONS).catch(() => {});
-      })()
+        Promise.resolve(storeRecapInsights(room, p, role, recap, ROLE_FACTIONS)).catch(() => {});
+      })().catch((e) => console.error('[generateRecaps] task error:', e && e.message))
     );
   }
-  Promise.all(tasks).then(() => {
+  Promise.allSettled(tasks).then(() => {
     if (!room || !room.game || room.game !== gameRef) return;
     room.game.recap = recaps.sort((a, b) => (a.seat || 0) - (b.seat || 0));
+    updateGameHistoryPayload(room);
     broadcastRoom(room);
     // 异步后处理：发言质量评分 + 战略规律提炼（不影响主流程）
     evaluateGameSpeeches(room, ROLE_FACTIONS).catch(() => {});
@@ -3437,32 +3299,20 @@ function autoVoteIfAi(room) {
   if (!room || !room.game || room.phase !== 'voting') return;
   const gameRef = room.game;
   const allIds = room.seats.filter((id) => id);
-  for (const id of allIds) {
-    const player = room.players.get(id);
-    if (player && player.isAI) {
-      (async () => {
-        let approve = null;
-        try {
-          approve = await decideVote({
-            room,
-            playerId: id,
-            role: room.game.assignments[id],
-            roleFactions: ROLE_FACTIONS,
-          });
-        } catch (e) {
-          approve = null;
-        }
-        if (!room.game || room.game !== gameRef || room.phase !== 'voting') return;
-        if (approve === null) approve = aiVote(room, player);
-        if (!room.game || room.game !== gameRef || room.phase !== 'voting') return;
-        room.game.votes[id] = normalizeAiVote(room, id, approve);
-        if (!room.game || room.game !== gameRef || room.phase !== 'voting') return;
-        if (allIds.every((pid) => room.game.votes[pid] !== undefined)) {
-          resolveVote(room);
-        }
-        if (room.game && room.game === gameRef) broadcastRoom(room);
-      })();
-    }
+  const aiIds = allIds.filter((id) => { const p = room.players.get(id); return p && p.isAI; });
+  if (!aiIds.length) return;
+
+  for (const id of aiIds) {
+    decideVote({
+      room, playerId: id,
+      role: room.game.assignments[id],
+      roleFactions: ROLE_FACTIONS,
+    }).then((approve) => {
+      if (!room.game || room.game !== gameRef || room.phase !== 'voting') return;
+      room.game.votes[id] = normalizeAiVote(room, id, approve);
+      if (allIds.every((pid) => room.game.votes[pid] !== undefined)) resolveVote(room);
+      broadcastRoom(room);
+    }).catch(() => {});
   }
 }
 
@@ -3564,32 +3414,21 @@ function autoMissionIfAi(room) {
   if (!room || !room.game || room.phase !== 'mission') return;
   const gameRef = room.game;
   const teamIds = room.game.team;
-  const tasks = teamIds.map(async (id) => {
-    const player = room.players.get(id);
-    if (!player || !player.isAI) return;
-    let fail = null;
-    try {
-      fail = await decideMission({
-        room,
-        playerId: id,
-        role: room.game.assignments[id],
-        roleFactions: ROLE_FACTIONS,
-      });
-    } catch (e) {
-      fail = null;
-    }
-    if (!room.game || room.game !== gameRef || room.phase !== 'mission') return;
-    if (fail === null) fail = aiMissionVote(room, player);
-    if (!room.game || room.game !== gameRef || room.phase !== 'mission') return;
-    room.game.missionVotes[id] = normalizeAiMission(room, id, fail);
-  });
-  Promise.all(tasks).then(() => {
-    if (!room.game || room.game !== gameRef || room.phase !== 'mission') return;
-    if (teamIds.every((id) => room.game.missionVotes[id] !== undefined)) {
-      resolveMission(room);
-    }
-    if (room.game && room.game === gameRef) broadcastRoom(room);
-  });
+  const aiIds = teamIds.filter((id) => { const p = room.players.get(id); return p && p.isAI; });
+  if (!aiIds.length) return;
+
+  for (const id of aiIds) {
+    decideMission({
+      room, playerId: id,
+      role: room.game.assignments[id],
+      roleFactions: ROLE_FACTIONS,
+    }).then((fail) => {
+      if (!room.game || room.game !== gameRef || room.phase !== 'mission') return;
+      room.game.missionVotes[id] = normalizeAiMission(room, id, fail);
+      if (teamIds.every((tid) => room.game.missionVotes[tid] !== undefined)) resolveMission(room);
+      broadcastRoom(room);
+    }).catch(() => {});
+  }
 }
 
 function aiMissionVote(room, player) {
@@ -3642,17 +3481,6 @@ function pushSpeak(room, from, text, playerId) {
   }
 }
 
-function randomAiName(used) {
-  const pool = AI_NAMES.filter((n) => !used.has(`${n}·AI`));
-  if (pool.length > 0) {
-    return pool[Math.floor(Math.random() * pool.length)];
-  }
-  let name;
-  do {
-    name = `小AI${aiNameSeq++}`;
-  } while (used.has(`${name}·AI`));
-  return name;
-}
 
 function revealEvilToEvil(room) {
   const evilIds = Object.keys(room.game.assignments).filter((id) => ROLE_FACTIONS[room.game.assignments[id]] === 'evil');

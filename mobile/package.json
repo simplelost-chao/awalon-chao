@@ -8,7 +8,11 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "deploy": "bash scripts/deploy.sh",
-    "deploy:prod": "bash scripts/deploy.sh --prod"
+    "deploy:prod": "bash scripts/deploy.sh --prod",
+    "mp:upload": "node scripts/mp-deploy.js upload",
+    "mp:review": "node scripts/mp-deploy.js review",
+    "mp:status": "node scripts/mp-deploy.js status",
+    "mp:release": "node scripts/mp-deploy.js release"
   },
   "dependencies": {
     "@expo-google-fonts/press-start-2p": "^0.2.3",
@@ -21,5 +25,8 @@
     "react-native": "0.81.5",
     "react-native-web": "^0.21.0"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "miniprogram-ci": "^2.1.31"
+  }
 }

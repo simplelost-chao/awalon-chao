@@ -52,17 +52,70 @@ try { db.exec('ALTER TABLE good_speeches ADD COLUMN player_count INTEGER DEFAULT
 function buildPersonaDesc(player) {
   const key = player && player.aiPersonaKey;
   const personas = {
-    '激进冲锋': { speakTone: '直接强势，喜欢点名质疑，句子简短有力', voteHabits: '倾向快速通过', bluffHint: '坏人时更敢于硬跳身份' },
-    '稳健保守': { speakTone: '措辞谨慎，引用具体投票和任务记录', voteHabits: '基于证据投票', bluffHint: '坏人时偏向藏在人群里' },
-    '逻辑推理': { speakTone: '喜欢列举证据链，用"因为...所以..."', voteHabits: '严格按记录判断', bluffHint: '坏人时构造看起来合理的逻辑链' },
-    '社交观察': { speakTone: '关注他人情绪和用词，善于捕捉矛盾', voteHabits: '重视发言一致性', bluffHint: '坏人时专注指出别人矛盾转移视线' },
-    '搅局误导': { speakTone: '引导话题，制造分歧，发言模糊', voteHabits: '偶尔出乎意料地投票', bluffHint: '坏人时尤其享受在好人中制造内耗' },
-    '冷静克制': { speakTone: '话少精准，每句有指向性', voteHabits: '非必要不否决', bluffHint: '坏人时沉默是金，偶尔一语中的' },
-    '强势控场': { speakTone: '主动表态定性，带有引导性', voteHabits: '敢于强推队伍', bluffHint: '坏人时更强势地主导局势' },
-    '谨慎试探': { speakTone: '多用疑问句，倾向观察', voteHabits: '早保守晚行动', bluffHint: '坏人时前期极度低调积累信任' },
+    '莫甘娜的微笑': {
+      speakTone: '逻辑严密，从不直接表态，善用反问，让别人替自己下结论',
+      voteHabits: '跟随主流，偶尔在关键局意外倒戈',
+      bluffHint: '坏人时构造无懈可击的洗白逻辑，扮演最理性的好人',
+      catchphrase: '逻辑上讲……|大家可以想想。|我只是觉得，合理的人不需要解释。',
+    },
+    '梅林看穿你了': {
+      speakTone: '含沙射影，"某些人心里应该很清楚"，从不明点名但暗示强烈',
+      voteHabits: '基于信息优势独立判断，不轻易跟风',
+      bluffHint: '坏人时模仿梅林风格，用暗示把锅甩给无辜者',
+      catchphrase: '某些人心里应该很清楚。|我不说，但懂的人懂。|有些事不用我点破吧。',
+    },
+    '奥伯龙没朋友': {
+      speakTone: '极简发言，一两句点到即止，从不给完整理由，制造神秘感',
+      voteHabits: '完全独立，无论多大压力绝不跟风',
+      bluffHint: '坏人时用沉默迷惑对手，关键票意外翻局',
+      catchphrase: '我有自己的判断。|不必解释。|结果会说明一切。',
+    },
+    '我知道你知道': {
+      speakTone: '盯特定玩家制造心理压力，暗示自己掌握内部信息',
+      voteHabits: '通过投票发信号，在关键轮次传递元信息',
+      bluffHint: '坏人时假装掌握核心情报，把真实信息搅混',
+      catchphrase: '你知道我在看你。|我们之间心知肚明。|信息战，开始了。',
+    },
+    '背刺有理': {
+      speakTone: '前期低调表忠心，后期突然翻脸攻击昔日盟友，理由冠冕堂皇',
+      voteHabits: '前期顺势通过，后期在关键局突然否决翻盘',
+      bluffHint: '坏人时等好人建立互信后精准背刺，配合队友翻局',
+      catchphrase: '不好意思了。|到这里我必须说实话了。|对不起，但逻辑不允许我护着你。',
+    },
+    '沉默即答案': {
+      speakTone: '只说一句话甚至一个词，在沉默里制造压迫感，让对方自行脑补',
+      voteHabits: '投票就是表态，不需要语言辅助',
+      bluffHint: '坏人时用极简发言降低暴露风险，神秘感天然洗白',
+      catchphrase: '懂的自然懂。|我选择沉默。|.',
+    },
+    '任务失败不是我': {
+      speakTone: '任务一失败立刻抢话，条理清晰地把锅推给别人，声音最响理由最多',
+      voteHabits: '倾向通过以显得积极，失败后立刻转向甩锅',
+      bluffHint: '坏人时第一个开始洗白，抢占话语权，主动指控无辜玩家',
+      catchphrase: '肯定是某人的问题。|我早就说了不该带他。|反正不是我，证据我都列出来了。',
+    },
+    '帕西法尔的直觉': {
+      speakTone: '大量"我感觉""直觉上""说不出来但就觉得有问题"，充满情绪感染力',
+      voteHabits: '跟随直觉，容易被最后发言的人影响',
+      bluffHint: '坏人时用情绪感染力带跑好人判断，把怀疑引向无辜者',
+      catchphrase: '我感觉……就是感觉啦。|直觉告诉我。|说不清楚，但就是有种感觉。',
+    },
+    '三号位可疑': {
+      speakTone: '锁定目标后每轮必提，专注执着不轻易松口，旁人劝也没用',
+      voteHabits: '拒绝包含目标玩家的队伍，即使全场只有自己否决',
+      bluffHint: '坏人时把执着怀疑引向无辜好人，用专注洗白自己',
+      catchphrase: '某号一直很奇怪。|我锁定了。|不管你们怎么想，我就认准这个人。',
+    },
+    '不解释': {
+      speakTone: '别人质疑一律不辩护，只说"随便"或"爱信不信"，制造神秘压迫感',
+      voteHabits: '想法坚定，不受任何舆论影响，投票前不打招呼',
+      bluffHint: '坏人时用强硬沉默代替解释，让对方自行揣测放松警惕',
+      catchphrase: '随便。|爱信不信。|我不解释，结果会说话。',
+    },
   };
-  const p = personas[key] || { speakTone: '理性分析', voteHabits: '综合判断', bluffHint: '灵活应对' };
-  return `发言风格：${p.speakTone}。投票习惯：${p.voteHabits}。坏人策略倾向：${p.bluffHint}。`;
+  const p = personas[key] || { speakTone: '理性分析', voteHabits: '综合判断', bluffHint: '灵活应对', catchphrase: '' };
+  const catchphraseHint = p.catchphrase ? `\n口头禅参考（可变形使用）：${p.catchphrase}` : '';
+  return `发言风格：${p.speakTone}。投票习惯：${p.voteHabits}。坏人策略倾向：${p.bluffHint}。${catchphraseHint}`;
 }
 
 function recordGameSummary(room, winner) {
@@ -247,7 +300,7 @@ function buildFewShotBlock(faction, round = 1, accused = null, allyNarrative = n
   // 动态高分发言（最多2条，来自历史对局评分）
   const dynamic = getDynamicSpeeches(faction, 2);
   if (dynamic.length) {
-    lines.push('【历史高分发言参考】');
+    lines.push('【历史高分发言参考】（仅学习表达风格，其中涉及的座位号/任务/投票均为历史对局数据，与本局无关，禁止照搬）');
     for (const d of dynamic) {
       lines.push(`"${d.text}" （${d.role}/${d.intent}，${d.context}）`);
     }
@@ -359,6 +412,20 @@ function sanitizeSpeech(text, rolesInGame) {
   return out;
 }
 
+// 去除 LLM 输出中重复的句子（如"X。X。"）
+function dedupSentences(text) {
+  if (!text) return text;
+  const parts = text.split(/(?<=[。！？])/);
+  const seen = new Set();
+  const out = [];
+  for (const p of parts) {
+    const key = p.trim();
+    if (!key) continue;
+    if (!seen.has(key)) { seen.add(key); out.push(p); }
+  }
+  return out.join('').trim();
+}
+
 function hasExplicitIdentityReveal(text) {
   const t = String(text || '').replace(/\s+/g, '');
   if (!t) return false;
@@ -452,7 +519,10 @@ function buildFullGameNarrative(room, roleFactions) {
   const missionHistory = game.missionHistory || [];
   const voteHistory = game.voteHistory || [];
   const speakHistory = game.speakHistory || {};
+  const forceRound = room.forceRound || 5;
   const lines = [];
+
+  lines.push(`【规则说明】本局强制轮上限为第${forceRound}次组队：若同一任务轮内连续被否决${forceRound}次，坏人自动获胜（与任务失败次数无关）。`);
 
   // 按轮次整理发言+投票+任务
   const rounds = Math.max(
@@ -471,7 +541,9 @@ function buildFullGameNarrative(room, roleFactions) {
       const noes = v.votes
         ? Object.entries(v.votes).filter(([, ok]) => !ok).map(([id]) => `${seatNo(room, id)}号`).join(' ')
         : '';
-      lines.push(`  [组队第${v.attempt || 1}次] 队长推[${teamStr}号] → ${v.approved ? '通过' : '否决'}(${v.approves}赞/${v.rejects}反)${noes ? '，反对票：' + noes : ''}`);
+      const isForceAttempt = Number(v.attempt || 1) >= forceRound;
+      const forceLabel = isForceAttempt ? `【⚠️强制轮：第${forceRound}次，若否决则坏人自动获胜】` : '';
+      lines.push(`  [组队第${v.attempt || 1}次]${forceLabel} 队长推[${teamStr}号] → ${v.approved ? '通过' : `否决${isForceAttempt && !v.approved ? '→坏人胜' : ''}`}(${v.approves}赞/${v.rejects}反)${noes ? '，反对票：' + noes : ''}`);
     }
 
     // 本轮发言（按 speakHistory key 匹配，格式 "轮次-attempt"）
@@ -659,10 +731,36 @@ function computeBeliefState(room, playerId, role, roleFactions) {
     }
   }
 
+  // 全局坏人总数（用于确定性推断）
+  const totalEvilCount = (room.roles || []).filter(r => (roleFactions[r] || 'good') === 'evil').length;
+
   // 任务失败分析（最强信号）
   for (const m of missions) {
     const teamSeats = (m.team || []).map(id => seatNo(room, id)).filter(Boolean);
     if (!m.success) {
+      const failVotes = typeof m.fails === 'number' ? m.fails : 1;
+
+      // ── 决定性推断 ─────────────────────────────────────────────────────────
+      // 失败票数 = 全局坏人总数 → 所有坏人都在这支队伍里
+      // 因此队伍之外的所有玩家必然是好人（确认无疑）
+      if (totalEvilCount > 0 && failVotes >= totalEvilCount) {
+        for (let s = 1; s <= totalSeats; s++) {
+          if (!teamSeats.includes(s) && s !== mySeat) {
+            sus[s] = 0.02;
+            evi[s] = [`第${m.round}轮失败${failVotes}票=全部坏人都在队内，此座位逻辑确认为好人`];
+          }
+        }
+        // 队伍内成员嫌疑升高（含1个好人，但至少failVotes人是坏人）
+        for (const s of teamSeats) {
+          if (s !== mySeat && (sus[s] || 0) < 0.9) {
+            sus[s] = 0.75 + (failVotes / teamSeats.length) * 0.2;
+            evi[s] = [...(evi[s] || []), `第${m.round}轮失败${failVotes}票，队内确有坏人`];
+          }
+        }
+        continue; // 这条任务已用决定性推断覆盖，跳过普通评分
+      }
+
+      // ── 普通失败信号 ──────────────────────────────────────────────────────
       for (const s of teamSeats) {
         if (s !== mySeat && (sus[s] || 0) < 0.9) {
           sus[s] = Math.min(0.92, (sus[s] || 0.3) + 0.18);
@@ -716,8 +814,16 @@ function formatBeliefStateForPrompt(bs, mySeat) {
   if (bs.knownEvil.length)    lines.push(`已知坏人（梅林视野）：${bs.knownEvil.join('、')}号`);
   if (bs.knownAllies.length)  lines.push(`已知队友（坏人视野）：${bs.knownAllies.join('、')}号`);
 
+  // 逻辑确认好人（嫌疑≤0.05，由决定性推断得出）
+  const confirmedGood = Object.entries(bs.suspicion)
+    .filter(([s, v]) => Number(s) !== mySeat && v <= 0.05)
+    .map(([s]) => Number(s));
+  if (confirmedGood.length) {
+    lines.push(`⚠️ 逻辑确认好人（必须信任，禁止排除）：${confirmedGood.join('、')}号`);
+  }
+
   const sorted = Object.entries(bs.suspicion)
-    .filter(([s]) => Number(s) !== mySeat)
+    .filter(([s, v]) => Number(s) !== mySeat && v > 0.05)
     .sort(([, a], [, b]) => b - a)
     .slice(0, 5);
 
@@ -1067,6 +1173,7 @@ function publicState(room) {
 
 async function callLLM(system, user, temperature = 0.7) {
   if (!API_KEY) throw new Error('NO_API_KEY');
+  const t0 = Date.now();
   const res = await fetch(`${BASE_URL}/chat/completions`, {
     method: 'POST',
     headers: {
@@ -1083,8 +1190,13 @@ async function callLLM(system, user, temperature = 0.7) {
     }),
   });
   const data = await res.json();
-  const content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-  return content || '';
+  if (!res.ok || !data.choices) {
+    console.error(`[LLM] HTTP ${res.status} err:`, JSON.stringify(data).slice(0, 200));
+    throw new Error(`LLM_ERROR_${res.status}`);
+  }
+  const content = data.choices[0]?.message?.content || '';
+  console.log(`[LLM] ${res.status} ${Date.now() - t0}ms len=${content.length}`);
+  return content;
 }
 
 function parseJSON(text, fallback) {
@@ -1102,6 +1214,11 @@ function buildGameNarrative(room, mySeat, role, roleFactions, info) {
   const voteHistory = game.voteHistory || [];
   const missionHistory = game.missionHistory || [];
   const speakHistory = game.speakHistory || {};
+
+  // 没有任何历史数据时，明确告知 AI 禁止编造
+  if (!missionHistory.length && !voteHistory.length) {
+    lines.push('⚠️ 当前是第一轮，游戏尚无任务记录也无投票记录。禁止捏造任何具体座位号、投票行为或任务结果，只能谈观察方向或判断框架。');
+  }
 
   // 任务结果
   if (missionHistory.length) {
@@ -1242,17 +1359,18 @@ async function decideSpeak({ room, player, role, roleFactions }) {
   const fewShotBlock = buildFewShotBlock(roleFactionLocal, currentRound, accused, allySpeeches.length ? allySpeeches : null);
 
   // ── 8. 角色策略 ──
+  const hasGameData = (room.game.voteHistory || []).length > 0 || (room.game.missionHistory || []).length > 0;
   const roleStrategy = {
-    '梅林':   '你知道坏人是谁，绝不直说。用"投票记录""任务失败涉及人员"间接暗示，保护自己。',
-    '派西维尔':'你看到两个拇指位（梅林或莫甘娜），保护梅林，不轻易透露你知道谁是梅林。',
-    '忠臣':   '靠推理，分析任务失败和投票中的矛盾行为，锁定可疑目标。',
+    '梅林':   '你知道坏人是谁，绝不直说。用任务失败涉及人员或投票异常间接暗示，保护自己。',
+    '派西维尔': '你看到两个拇指位（梅林或莫甘娜），保护梅林，不轻易透露你知道谁是梅林。',
+    '忠臣':   '靠推理和观察锁定可疑目标。有任务/投票记录时分析矛盾行为；没有记录时谈判断标准或观察谁的行为异常。',
     '刺客':   '伪装好人。留心谁发言最有深度信息量——那很可能是梅林，记在心里。',
     '莫甘娜': '让派西维尔认为你可能是梅林。模仿梅林风格但不要太刻意。',
-    '莫德雷德':'梅林看不到你，可以大胆建立好人形象，强推队伍建立信任。',
+    '莫德雷德': '梅林看不到你，可以大胆建立好人形象，强推队伍建立信任。',
     '奥伯伦': '你不知道队友，靠自己判断，偷偷让任务失败。',
     '爪牙':   '配合坏人队友，保护核心坏人，制造混乱转移好人视线。',
   };
-  const strategyHint = roleStrategy[role] || '用逻辑推理分析任务和投票记录。';
+  const strategyHint = roleStrategy[role] || '用逻辑推理分析局面，有数据时用数据，没有数据时谈判断框架。';
 
   // ── 9. 构建 system prompt ──
   const forbidStarters = '禁止以下开头：我觉得、我认为、我注意到、大家、说实话、作为、首先、其次、总的来说、从逻辑上。';
@@ -1260,9 +1378,9 @@ async function decideSpeak({ room, player, role, roleFactions }) {
   const forbidIntentStr = forbiddenIntents.length
     ? `本次禁止使用以下发言意图（最近已重复）：${forbiddenIntents.join('、')}。` : '';
 
-  // 本轮已有玩家覆盖的论点摘要，要求AI说不同的
+  // 本轮已有玩家覆盖的论点摘要，引导 AI 呼应或补充而非被迫回避
   const roomSpeechHint = recentRoomSpeeches.length
-    ? `【本轮其他玩家已说过（禁止重复相同观点/目标）】\n${recentRoomSpeeches.map(e => `${e.seat}号(${e.intent})："${e.text}"`).join('\n')}\n你必须换一个角度或针对不同的人说话，不能重复以上内容。\n`
+    ? `【本轮其他玩家已说】\n${recentRoomSpeeches.map(e => `${e.seat}号(${e.intent})："${e.text}"`).join('\n')}\n可以回应上面某人的观点（赞成/反驳/补充），也可以针对尚未被讨论的人或信息，但不要逐字复述别人的话。\n`
     : '';
 
   const system =
@@ -1270,8 +1388,8 @@ async function decideSpeak({ room, player, role, roleFactions }) {
     `策略方向：${strategyHint}\n` +
     `说话风格：${buildPersonaDesc(player)}\n` +
     `当前情绪状态：${emotion.hint}\n` +
-    `发言规则：40-80字，像真实玩家说话，可以有情绪和停顿感，不能写成报告或清单，不能暴露身份。${forbidStarters}${forbidQuestions}${forbidIntentStr}\n` +
-    `think（内部推理，不超过120字，不展示给其他玩家）：先基于嫌疑评估和情绪状态决定本轮发言方向。\n` +
+    `发言规则：80-150字，像真实玩家说话，有逻辑有细节，可以有情绪和停顿感，不能写成报告或清单，不能暴露身份。${forbidStarters}${forbidQuestions}${forbidIntentStr}\n` +
+    `think（内部推理，不超过80字，不展示给其他玩家）：先基于嫌疑评估和情绪状态决定本轮发言方向。\n` +
     (myPreviousSpeeches.length
       ? `【我说过的话——禁止重复相同观点或相同目标】${myPreviousSpeeches.slice(-3).map((t, i) => `(${i + 1})${t}`).join('；')}\n`
       : '') +
@@ -1291,12 +1409,12 @@ async function decideSpeak({ room, player, role, roleFactions }) {
     `游戏局面：\n${narrative}\n\n` +
     `本局角色配置：${rolesInGame.join('、')}\n` +
     '输出JSON（think不超过120字）：\n' +
-    '{"think":"基于嫌疑分析和情绪状态，本轮最优发言方向是...","intent":"accusation|defense|redirect|claim|probe|support|neutral","target":目标座位号或省略,"text":"发言内容40-80字"}';
+    '{"think":"本轮发言方向...","intent":"accusation|defense|redirect|claim|probe|support|neutral","target":目标座位号或省略,"text":"发言内容80-150字"}';
 
   const res     = await callLLM(system, user, 0.9);
   const cleaned = res.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
   const obj     = parseJSON(cleaned, { text: '', intent: 'neutral' });
-  const text    = sanitizeSpeech(obj.text || '', rolesInGame);
+  const text    = dedupSentences(sanitizeSpeech(obj.text || '', rolesInGame));
 
   // 记录本次发言意图（供下次多样性检测）
   if (text) {
@@ -1510,9 +1628,40 @@ async function decideRecap({ room, player, role, roleFactions }) {
     knownInfoText = `【坏人视野】队友座位：${info.seats.join('、')}号`;
   }
 
+  const assassination = (room.game || {}).assassination || null;
+  const missionHistory = (room.game || {}).missionHistory || [];
+  const voteHistory = (room.game || {}).voteHistory || [];
+  const failedCount = missionHistory.filter(m => m && !m.success).length;
+  const successCount = missionHistory.filter(m => m && m.success).length;
+  const forceRound = room.forceRound || 5;
+  // Detect consecutive-rejection win: evil wins but not via 3 mission failures or assassination
+  const evilWonByRejectionLimit = winner === 'evil' && failedCount < 3 && !(assassination && assassination.hit);
+  let endReason = '';
+  if (winner === 'evil') {
+    if (assassination && assassination.hit) {
+      endReason = `坏人通过刺客刺中梅林获胜（好人已完成3次任务成功，但梅林被指认）`;
+    } else if (evilWonByRejectionLimit) {
+      const totalAttempts = voteHistory.length;
+      endReason = `坏人因好人阵营连续组队被否决达到强制上限（第${forceRound}次否决）自动获胜。注意：本局任务失败仅${failedCount}次、成功${successCount}次，坏人胜因不是任务失败，而是好人无法在强制轮前通过一支有效队伍`;
+    } else {
+      endReason = `坏人通过${failedCount}次任务失败获胜`;
+    }
+  } else {
+    if (assassination && !assassination.hit) {
+      endReason = `好人获胜：完成3次任务成功，且刺客未能刺中梅林`;
+    } else {
+      endReason = `好人获胜：完成3次任务成功`;
+    }
+  }
+
+  const totalSeats = (room.seats || []).length;
+  const validSeatNums = room.seats.map((_, i) => i + 1);
+
   const system =
     `你是阿瓦隆${role}（${faction === 'good' ? '好人' : '坏人'}阵营，${mySeat}号座位）。` +
-    `本局${faction === winner ? '你方获胜' : '你方失败'}，${winner === 'good' ? '好人' : '坏人'}阵营赢得比赛。\n` +
+    `本局${faction === winner ? '你方获胜' : '你方失败'}。【结局原因】${endReason}。这是确定的事实，不得与之矛盾。\n` +
+    `【强制轮规则】本局强制上限为第${forceRound}次组队：同一任务轮若连续被否决${forceRound}次，坏人自动获胜，与任务失败次数无关。\n` +
+    `本局共${totalSeats}名玩家，座位号只有 ${validSeatNums.join('、')} 号，不存在其他座位号，复盘中禁止出现超出此范围的座位号。\n` +
     `本局角色配置：${rolesInGame.join('、')}\n` +
     (knownInfoText ? `${knownInfoText}（这是已知事实，不要质疑）\n` : '') +
     `你必须先在 think 字段完成逐步推理，再写复盘。think 字段的推理步骤：\n` +
@@ -1535,7 +1684,7 @@ async function decideRecap({ room, player, role, roleFactions }) {
     `  "review": {\n` +
     `    "overview": "整局总结150-250字：关键转折、最终结果、我方整体表现",\n` +
     `    "keyMoments": [{"round":轮次数字, "decision":"我做了什么决策", "outcome":"结果怎样", "assessment":"正确还是失误，为什么，100字以上"}],\n` +
-    `    "playerAnalysis": [{"seat":座位号数字, "assessment":"对该玩家的读人判断及依据80字以上，结合他的具体发言和行为"}],\n` +
+    `    "playerAnalysis": [{"seat":座位号数字（只能是${validSeatNums.join('/')}之一）, "assessment":"对该玩家的读人判断及依据80字以上，结合他的具体发言和行为"}],\n` +
     `    "speak": {"summary":"我的发言策略复盘100-200字", "bestMove":"最好的一句话原文及原因", "mistake":"最大发言失误及应如何改"},\n` +
     `    "vote": {"summary":"投票决策复盘80-150字", "keyVote":"最关键的一票：具体是哪轮，投了什么，为什么对或错"},\n` +
     `    "mission": {"summary":"任务行为复盘（如未上车可写无记录）"},\n` +
