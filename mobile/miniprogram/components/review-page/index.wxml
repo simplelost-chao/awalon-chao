@@ -1,0 +1,241 @@
+<view class="rv-page">
+  <image class="rv-bg" src="https://www.awalon.top/mp-assets/home-bg-optimized.jpg" mode="aspectFill" />
+  <view class="rv-mask"></view>
+  <view class="rv-nav" style="padding-top:{{statusBarHeight}}px; height:{{navBarHeight}}px;">
+    <text class="rv-nav-logo">Awalon</text>
+    <text class="rv-nav-tag">发牌小工具</text>
+  </view>
+  <scroll-view scroll-y class="rv-body" style="top:{{navTotalHeight}}px;">
+
+    <!-- 顶部 Banner -->
+    <view class="rv-banner">
+      <text class="rv-banner-sub">职场团队效能提升工具</text>
+      <text class="rv-banner-title">阿瓦隆发牌工具</text>
+      <text class="rv-banner-en">The Resistance: Avalon — Team Building Edition</text>
+      <text class="rv-banner-desc">真正的团队协作，不只靠流程。阿瓦隆通过信息博弈与角色扮演，帮助团队在压力情境下暴露沟通盲点、识别决策风格，是比传统破冰更有效的团队洞察工具。</text>
+    </view>
+
+    <!-- 随机发卡 -->
+    <view class="rv-draw-wrap">
+      <view class="rv-draw-btn" bindtap="onDrawCard">
+        <text class="rv-draw-btn-icon">🃏</text>
+        <text class="rv-draw-btn-text">随机发一张角色卡</text>
+      </view>
+      <view class="rv-card rv-card-{{currentCard.faction}}" wx:if="{{cardVisible && currentCard}}">
+        <image class="rv-card-img" src="{{currentCard.image}}" mode="aspectFill" />
+        <view class="rv-card-body">
+          <view class="rv-card-head">
+            <text class="rv-card-title">{{currentCard.title}}</text>
+            <text class="rv-card-role-badge rv-card-badge-{{currentCard.faction}}">{{currentCard.role}}</text>
+          </view>
+          <text class="rv-card-copy">{{currentCard.copy}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 办公 & 团队场景 -->
+    <view class="rv-section-title">企业 · 团队适用场景</view>
+    <view class="rv-office-grid">
+      <view class="rv-office-card">
+        <text class="rv-office-icon">🏢</text>
+        <text class="rv-office-name">团队建设</text>
+        <text class="rv-office-desc">推理博弈激活团队协作与信任，效果优于传统破冰游戏</text>
+      </view>
+      <view class="rv-office-card"
+        bindtouchstart="onEnterTouchStart"
+        bindtouchend="onEnterTouchEnd"
+        bindtouchmove="onEnterTouchEnd">
+        <text class="rv-office-icon">🤝</text>
+        <text class="rv-office-name">企业破冰</text>
+        <text class="rv-office-desc">新员工入职或跨部门启动，快速拉近陌生同事距离</text>
+      </view>
+      <view class="rv-office-card">
+        <text class="rv-office-icon">🎯</text>
+        <text class="rv-office-name">决策力训练</text>
+        <text class="rv-office-desc">模拟不完全信息环境，锻炼管理者不确定性下的判断力</text>
+      </view>
+      <view class="rv-office-card">
+        <text class="rv-office-icon">👑</text>
+        <text class="rv-office-name">领导力培养</text>
+        <text class="rv-office-desc">队长轮换机制观察指挥风格与团队说服力，适合管培场景</text>
+      </view>
+      <view class="rv-office-card">
+        <text class="rv-office-icon">💬</text>
+        <text class="rv-office-name">沟通技巧提升</text>
+        <text class="rv-office-desc">发言阶段训练逻辑表达与主动倾听，提升职场沟通效率</text>
+      </view>
+      <view class="rv-office-card">
+        <text class="rv-office-icon">🎉</text>
+        <text class="rv-office-name">年会 / 部门活动</text>
+        <text class="rv-office-desc">5～10人即可开局，无需道具，手机联机随时随地开始</text>
+      </view>
+      <view class="rv-office-card">
+        <text class="rv-office-icon">📋</text>
+        <text class="rv-office-name">项目复盘参考</text>
+        <text class="rv-office-desc">对局数据记录发言与决策路径，可类比项目复盘方法论</text>
+      </view>
+      <view class="rv-office-card">
+        <text class="rv-office-icon">🌐</text>
+        <text class="rv-office-name">远程团队协作</text>
+        <text class="rv-office-desc">全程线上联机，适合分布式办公团队的异地团建热身</text>
+      </view>
+    </view>
+
+    <!-- 角色与场景对照 -->
+    <view class="rv-section-title">角色能力 · 职场映射</view>
+    <view class="rv-map-list">
+      <view class="rv-map-item">
+        <view class="rv-map-role rv-map-role-good">梅林</view>
+        <view class="rv-map-arrow">→</view>
+        <view class="rv-map-skill">信息整合者 · 能看穿全局但需谨慎表达，对应企业中的战略顾问角色</view>
+      </view>
+      <view class="rv-map-item">
+        <view class="rv-map-role rv-map-role-good">忠臣</view>
+        <view class="rv-map-arrow">→</view>
+        <view class="rv-map-skill">执行层协作者 · 依靠观察与推理做出判断，对应一线员工的协作信任</view>
+      </view>
+      <view class="rv-map-item">
+        <view class="rv-map-role rv-map-role-evil">刺客</view>
+        <view class="rv-map-arrow">→</view>
+        <view class="rv-map-skill">风险识别训练 · 模拟组织内部潜在的信息不对称与决策干扰</view>
+      </view>
+      <view class="rv-map-item">
+        <view class="rv-map-role rv-map-role-evil">莫甘娜</view>
+        <view class="rv-map-arrow">→</view>
+        <view class="rv-map-skill">反欺骗意识 · 识别伪装者，提升团队对模糊信号的甄别能力</view>
+      </view>
+    </view>
+
+    <!-- 核心功能 -->
+    <view class="rv-section-title">核心功能</view>
+    <view class="rv-feature-list">
+      <view class="rv-feature-item">
+        <view class="rv-feature-icon">🃏</view>
+        <view class="rv-feature-body">
+          <text class="rv-feature-name">随机发牌</text>
+          <text class="rv-feature-desc">按人数自动随机分配角色，结果私密发送至各参与者，保障实验公平性与盲法要求</text>
+        </view>
+      </view>
+      <view class="rv-feature-item">
+        <view class="rv-feature-icon">🔐</view>
+        <view class="rv-feature-body">
+          <text class="rv-feature-name">私密身份验证</text>
+          <text class="rv-feature-desc">玩家独立查看角色及阵营信息，消除实体卡牌的信息泄漏风险，适用于实验室及田野研究</text>
+        </view>
+      </view>
+      <view class="rv-feature-item">
+        <view class="rv-feature-icon">📊</view>
+        <view class="rv-feature-body">
+          <text class="rv-feature-name">对局数据记录</text>
+          <text class="rv-feature-desc">自动留存每局角色分配、任务投票结果及胜负结论，可导出供后续统计分析使用</text>
+        </view>
+      </view>
+      <view class="rv-feature-item">
+        <view class="rv-feature-icon">⚙️</view>
+        <view class="rv-feature-body">
+          <text class="rv-feature-name">灵活角色配置</text>
+          <text class="rv-feature-desc">支持 5～10 人规模，可自定义特殊角色组合，满足不同实验条件的对照组设置需求</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 研究背景 -->
+    <view class="rv-section-title">研究背景</view>
+    <view class="rv-research-block">
+      <text class="rv-research-text">《阿瓦隆》（The Resistance: Avalon）是一款以不完全信息博弈为核心机制的社交推理桌游。游戏中，正义阵营与邪恶阵营之间存在显著信息不对称：邪恶方互知身份，正义方只能通过行为观察进行推理。这一结构天然契合欺骗检测、信任博弈与社会信号传递等研究议题。</text>
+      <text class="rv-research-text">本工具旨在降低组织实验的操作门槛，将发牌、身份核验等流程数字化，使研究者能够专注于被试的决策行为数据采集与分析。</text>
+    </view>
+
+    <!-- 研究图 -->
+    <view class="rv-section-title">游戏状态表示</view>
+    <view class="rv-paper-card">
+      <image class="rv-paper-img" src="https://www.awalon.top/mp-assets/research/game_states.png" mode="widthFix" />
+      <text class="rv-paper-caption">图：游戏上下文可从全局视角（绿色）或轮次视角（黄色）表示，后者携带跨轮次的角色信念推断。来源：Stepputtis et al., EMNLP 2023</text>
+    </view>
+
+    <view class="rv-section-title">LLM 角色识别表现</view>
+    <view class="rv-paper-card">
+      <image class="rv-paper-img" src="https://www.awalon.top/mp-assets/research/role_prediction.png" mode="widthFix" />
+      <text class="rv-paper-caption">图：GPT-4、GPT-3.5 及 Llama-2 在角色预测任务上的表现均未达到人类水平，表明长链对话中的欺骗推理对当前 LLM 仍具挑战性。</text>
+    </view>
+
+    <view class="rv-section-title">对局对话示例</view>
+    <view class="rv-paper-card">
+      <image class="rv-paper-img" src="https://www.awalon.top/mp-assets/research/chat_example.png" mode="widthFix" />
+      <text class="rv-paper-caption">图：数据集对局示例，包含玩家发言、劝说策略标注与欺骗行为标记，共收录 20 局、2384 条发言。</text>
+    </view>
+
+    <!-- 角色体系 -->
+    <view class="rv-section-title">角色体系</view>
+    <view class="rv-faction-wrap">
+      <view class="rv-faction-label rv-faction-good-label">正义阵营 · Good</view>
+      <view class="rv-role-row rv-role-row-3">
+        <view class="rv-role-card rv-role-card-3 rv-role-good">
+          <image class="rv-role-img" src="https://www.awalon.top/mp-assets/role-split/merlin.png" mode="aspectFill" />
+          <text class="rv-role-name">梅林</text>
+          <text class="rv-role-badge rv-badge-good">全知</text>
+          <text class="rv-role-desc">知晓所有邪恶玩家，但须隐藏自身以防刺杀</text>
+        </view>
+        <view class="rv-role-card rv-role-card-3 rv-role-good">
+          <image class="rv-role-img" src="https://www.awalon.top/mp-assets/role-split/percival.png" mode="aspectFill" />
+          <text class="rv-role-name">派西维尔</text>
+          <text class="rv-role-badge rv-badge-good">侦察</text>
+          <text class="rv-role-desc">能看到梅林，但莫甘娜会同时显示，需甄别</text>
+        </view>
+        <view class="rv-role-card rv-role-card-3 rv-role-good">
+          <image class="rv-role-img" src="https://www.awalon.top/mp-assets/role-split/arthur_loyal.png" mode="aspectFill" />
+          <text class="rv-role-name">忠臣</text>
+          <text class="rv-role-badge rv-badge-good">推理</text>
+          <text class="rv-role-desc">无特殊信息，依赖推理与行为观察做出判断</text>
+        </view>
+      </view>
+      <view class="rv-faction-label rv-faction-evil-label">邪恶阵营 · Evil</view>
+      <view class="rv-role-row rv-role-row-4">
+        <view class="rv-role-card rv-role-card-4 rv-role-evil">
+          <image class="rv-role-img rv-role-img-sm" src="https://www.awalon.top/mp-assets/role-split/assassin.png" mode="aspectFill" />
+          <text class="rv-role-name">刺客</text>
+          <text class="rv-role-badge rv-badge-evil">终局</text>
+          <text class="rv-role-desc-sm">刺杀梅林，逆转胜负</text>
+        </view>
+        <view class="rv-role-card rv-role-card-4 rv-role-evil">
+          <image class="rv-role-img rv-role-img-sm" src="https://www.awalon.top/mp-assets/role-split/morgana.png" mode="aspectFill" />
+          <text class="rv-role-name">莫甘娜</text>
+          <text class="rv-role-badge rv-badge-evil">伪装</text>
+          <text class="rv-role-desc-sm">冒充梅林迷惑正义</text>
+        </view>
+        <view class="rv-role-card rv-role-card-4 rv-role-evil">
+          <image class="rv-role-img rv-role-img-sm" src="https://www.awalon.top/mp-assets/role-split/mordred.png" mode="aspectFill" />
+          <text class="rv-role-name">莫德雷德</text>
+          <text class="rv-role-badge rv-badge-evil">隐匿</text>
+          <text class="rv-role-desc-sm">对梅林完全隐身</text>
+        </view>
+        <view class="rv-role-card rv-role-card-4 rv-role-evil">
+          <image class="rv-role-img rv-role-img-sm" src="https://www.awalon.top/mp-assets/role-split/oberon.png" mode="aspectFill" />
+          <text class="rv-role-name">奥伯伦</text>
+          <text class="rv-role-badge rv-badge-evil">孤立</text>
+          <text class="rv-role-desc-sm">不知队友身份</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 信息不对称结构 -->
+    <view class="rv-section-title">信息不对称结构</view>
+    <view class="rv-info-table">
+      <view class="rv-info-row rv-info-header">
+        <text class="rv-info-cell rv-info-role">角色</text>
+        <text class="rv-info-cell">知晓邪恶方</text>
+        <text class="rv-info-cell">对梅林可见</text>
+        <text class="rv-info-cell">阵营</text>
+      </view>
+      <view class="rv-info-row"><text class="rv-info-cell rv-info-role">梅林</text><text class="rv-info-cell rv-cell-yes">✓</text><text class="rv-info-cell rv-cell-no">—</text><text class="rv-info-cell rv-cell-good">好</text></view>
+      <view class="rv-info-row"><text class="rv-info-cell rv-info-role">派西维尔</text><text class="rv-info-cell rv-cell-no">—</text><text class="rv-info-cell rv-cell-no">—</text><text class="rv-info-cell rv-cell-good">好</text></view>
+      <view class="rv-info-row"><text class="rv-info-cell rv-info-role">忠臣</text><text class="rv-info-cell rv-cell-no">—</text><text class="rv-info-cell rv-cell-no">—</text><text class="rv-info-cell rv-cell-good">好</text></view>
+      <view class="rv-info-row"><text class="rv-info-cell rv-info-role">刺客</text><text class="rv-info-cell rv-cell-no">互知</text><text class="rv-info-cell rv-cell-yes">✓</text><text class="rv-info-cell rv-cell-evil">恶</text></view>
+      <view class="rv-info-row"><text class="rv-info-cell rv-info-role">莫甘娜</text><text class="rv-info-cell rv-cell-no">互知</text><text class="rv-info-cell rv-cell-yes">✓</text><text class="rv-info-cell rv-cell-evil">恶</text></view>
+      <view class="rv-info-row"><text class="rv-info-cell rv-info-role">莫德雷德</text><text class="rv-info-cell rv-cell-no">互知</text><text class="rv-info-cell rv-cell-no">隐藏</text><text class="rv-info-cell rv-cell-evil">恶</text></view>
+      <view class="rv-info-row"><text class="rv-info-cell rv-info-role">奥伯伦</text><text class="rv-info-cell rv-cell-no">不知</text><text class="rv-info-cell rv-cell-yes">✓</text><text class="rv-info-cell rv-cell-evil">恶</text></view>
+    </view>
+
+    <view class="rv-bottom-space"></view>
+  </scroll-view>
+</view>

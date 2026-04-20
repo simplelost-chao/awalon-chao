@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>Awalon · 系统全貌</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Noto+Serif+SC:wght@400;700;900&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --gold: #d9b36b;
+    --gold-dim: rgba(217,179,107,0.18);
+    --gold-border: rgba(217,179,107,0.35);
+    --blue: #4e9eff;
+    --blue-dim: rgba(78,158,255,0.12);
+    --blue-border: rgba(78,158,255,0.3);
+    --red: #ff5f5f;
+    --red-dim: rgba(255,95,95,0.12);
+    --red-border: rgba(255,95,95,0.3);
+    --green: #5cd08a;
+    --green-dim: rgba(92,208,138,0.12);
+    --green-border: rgba(92,208,138,0.3);
+    --purple: #b07cff;
+    --purple-dim: rgba(176,124,255,0.12);
+    --purple-border: rgba(176,124,255,0.3);
+    --bg: #080c14;
+    --panel: rgba(14,20,36,0.9);
+    --border: rgba(255,255,255,0.08);
+    --text: #eef1f7;
+    --sub: #7a8499;
+    --mono: 'JetBrains Mono', monospace;
+    --serif: 'Noto Serif SC', serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    min-height: 100vh;
+    padding: 48px 32px 80px;
+  }
+
+  /* ── 背景网格 ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(217,179,107,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(217,179,107,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; }
+
+  /* ── 页头 ── */
+  .page-header {
+    text-align: center;
+    margin-bottom: 60px;
+  }
+  .page-header-eyebrow {
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .page-header h1 {
+    font-family: var(--serif);
+    font-size: 42px;
+    font-weight: 900;
+    color: var(--text);
+    letter-spacing: 4px;
+    margin-bottom: 10px;
+  }
+  .page-header-sub {
+    font-size: 13px;
+    color: var(--sub);
+    letter-spacing: 1px;
+  }
+
+  /* ── 区块标题 ── */
+  .section {
+    margin-bottom: 48px;
+  }
+  .section-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+  .section-label::before {
+    content: '';
+    display: inline-block;
+    width: 24px;
+    height: 1px;
+    background: var(--gold);
+    opacity: 0.6;
+  }
+
+  /* ── 卡片基础 ── */
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 28px;
+  }
+
+  /* ── 审核模式流程图 ── */
+  .review-flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-wrap: wrap;
+    row-gap: 16px;
+  }
+  .flow-node {
+    flex-shrink: 0;
+    border-radius: 12px;
+    padding: 16px 20px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.03);
+    min-width: 130px;
+  }
+  .flow-node-label {
+    font-size: 10px;
+    color: var(--sub);
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+  .flow-node-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .flow-node-detail {
+    font-size: 11px;
+    color: var(--sub);
+    margin-top: 4px;
+    line-height: 1.5;
+  }
+  .flow-node.gold  { border-color: var(--gold-border);   background: var(--gold-dim);   }
+  .flow-node.blue  { border-color: var(--blue-border);   background: var(--blue-dim);   }
+  .flow-node.green { border-color: var(--green-border);  background: var(--green-dim);  }
+  .flow-node.red   { border-color: var(--red-border);    background: var(--red-dim);    }
+  .flow-node.purple{ border-color: var(--purple-border); background: var(--purple-dim); }
+
+  .flow-arrow {
+    color: var(--sub);
+    font-size: 18px;
+    padding: 0 10px;
+    flex-shrink: 0;
+  }
+  .flow-branch {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* ── 模式切换对比 ── */
+  .mode-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .mode-card {
+    border-radius: 14px;
+    padding: 24px;
+    border: 1px solid var(--border);
+  }
+  .mode-card.review { border-color: var(--red-border); background: var(--red-dim); }
+  .mode-card.game   { border-color: var(--green-border); background: var(--green-dim); }
+  .mode-title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    margin-bottom: 16px;
+  }
+  .mode-card.review .mode-title { color: var(--red); }
+  .mode-card.game   .mode-title { color: var(--green); }
+  .mode-rows { display: flex; flex-direction: column; gap: 10px; }
+  .mode-row { display: flex; align-items: flex-start; gap: 12px; font-size: 12px; }
+  .mode-row-icon { flex-shrink: 0; opacity: 0.7; }
+  .mode-row-text { color: rgba(238,241,247,0.7); line-height: 1.5; }
+
+  /* ── 服务端模块 ── */
+  .server-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .srv-card {
+    border-radius: 12px;
+    padding: 18px 18px 16px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+  }
+  .srv-file {
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .srv-desc {
+    font-size: 11px;
+    color: var(--sub);
+    line-height: 1.6;
+  }
+  .srv-card.index  { border-color: var(--gold-border); }
+  .srv-card.index .srv-file { color: var(--gold); }
+  .srv-card.game   { border-color: var(--blue-border); }
+  .srv-card.game .srv-file  { color: var(--blue); }
+  .srv-card.gameai { border-color: var(--purple-border); }
+  .srv-card.gameai .srv-file{ color: var(--purple); }
+  .srv-card.db     { border-color: var(--green-border); }
+  .srv-card.db .srv-file    { color: var(--green); }
+  .srv-card.other  { border-color: rgba(255,255,255,0.1); }
+  .srv-card.other .srv-file { color: rgba(200,210,230,0.7); }
+
+  /* ── 小程序结构 ── */
+  .mp-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .mp-group {
+    border-radius: 12px;
+    padding: 18px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+  }
+  .mp-group-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+  }
+  .mp-items { display: flex; flex-direction: column; gap: 6px; }
+  .mp-item {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 11px;
+  }
+  .mp-item-name { font-weight: 600; color: var(--text); flex-shrink: 0; }
+  .mp-item-desc { color: var(--sub); line-height: 1.4; }
+
+  /* ── WS 消息流 ── */
+  .ws-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .ws-table th {
+    text-align: left;
+    padding: 10px 14px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--gold);
+    background: rgba(217,179,107,0.06);
+    border-bottom: 1px solid var(--border);
+  }
+  .ws-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: rgba(238,241,247,0.75);
+    line-height: 1.5;
+  }
+  .ws-table tr:last-child td { border-bottom: none; }
+  .tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    letter-spacing: 1px;
+  }
+  .tag-cs { background: rgba(78,158,255,0.18); color: #7ac7ff; }
+  .tag-sc { background: rgba(217,179,107,0.18); color: var(--gold); }
+  .tag-both { background: rgba(176,124,255,0.18); color: #c8a8ff; }
+  .msg-name { font-family: var(--mono); font-weight: 700; color: var(--text); }
+
+  /* ── Admin / 切换方式 ── */
+  .switch-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+  }
+  .switch-card {
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .switch-num {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--gold);
+    opacity: 0.4;
+    line-height: 1;
+  }
+  .switch-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .switch-detail {
+    font-size: 11px;
+    color: var(--sub);
+    line-height: 1.6;
+  }
+  .switch-badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    letter-spacing: 1px;
+    align-self: flex-start;
+  }
+  .badge-instant { background: rgba(92,208,138,0.18); color: var(--green); }
+  .badge-restart { background: rgba(255,95,95,0.18); color: var(--red); }
+  .badge-hidden  { background: rgba(176,124,255,0.18); color: var(--purple); }
+
+  /* ── AI 系统 ── */
+  .ai-layer-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .ai-layer {
+    border-radius: 14px;
+    padding: 24px;
+    border: 1px solid var(--border);
+  }
+  .ai-layer.realtime { border-color: var(--blue-border); background: var(--blue-dim); }
+  .ai-layer.llm      { border-color: var(--purple-border); background: var(--purple-dim); }
+  .ai-layer-title { font-size: 12px; font-weight: 700; letter-spacing: 2px; margin-bottom: 4px; }
+  .ai-layer.realtime .ai-layer-title { color: var(--blue); }
+  .ai-layer.llm      .ai-layer-title { color: var(--purple); }
+  .ai-layer-file { font-size: 11px; color: var(--sub); margin-bottom: 14px; }
+  .ai-layer-items { display: flex; flex-direction: column; gap: 8px; }
+  .ai-layer-item { font-size: 12px; display: flex; align-items: baseline; gap: 8px; }
+  .ai-layer-item-name { font-weight: 600; color: var(--text); flex-shrink: 0; font-family: var(--mono); font-size: 11px; }
+  .ai-layer-item-desc { color: var(--sub); font-size: 11px; line-height: 1.4; }
+
+  /* 决策链 */
+  .decision-chain {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .dc-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .dc-phase {
+    width: 90px;
+    flex-shrink: 0;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--gold);
+    text-align: right;
+  }
+  .dc-arrow { color: var(--sub); font-size: 14px; flex-shrink: 0; }
+  .dc-fn {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--blue);
+    background: var(--blue-dim);
+    border: 1px solid var(--blue-border);
+    border-radius: 6px;
+    padding: 3px 10px;
+    flex-shrink: 0;
+  }
+  .dc-llm {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--purple);
+    background: var(--purple-dim);
+    border: 1px solid var(--purple-border);
+    border-radius: 6px;
+    padding: 3px 10px;
+    flex-shrink: 0;
+  }
+  .dc-effect {
+    font-size: 11px;
+    color: var(--sub);
+    margin-left: 4px;
+  }
+
+  /* AI 人格 */
+  .persona-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+  }
+  .persona-card {
+    border-radius: 12px;
+    padding: 16px 14px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .persona-avatar { font-size: 22px; line-height: 1; }
+  .persona-name { font-size: 12px; font-weight: 700; color: var(--text); }
+  .persona-style { font-size: 10px; color: var(--sub); line-height: 1.5; }
+  .persona-bluff {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 4px;
+    align-self: flex-start;
+    margin-top: 2px;
+  }
+  .bluff-very-high { background: rgba(255,95,95,0.18); color: var(--red); }
+  .bluff-high      { background: rgba(255,165,0,0.18); color: #ffb347; }
+  .bluff-medium    { background: rgba(217,179,107,0.18); color: var(--gold); }
+  .bluff-low       { background: rgba(92,208,138,0.18); color: var(--green); }
+
+  /* 记忆系统 */
+  .memory-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .memory-card {
+    border-radius: 12px;
+    padding: 18px;
+    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .memory-table { font-size: 11px; font-weight: 700; color: var(--purple); font-family: var(--mono); }
+  .memory-title { font-size: 12px; font-weight: 700; color: var(--text); }
+  .memory-desc { font-size: 11px; color: var(--sub); line-height: 1.5; }
+
+  code {
+    font-family: var(--mono);
+    font-size: 10px;
+    background: rgba(255,255,255,0.06);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--gold);
+  }
+
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(217,179,107,0.2), transparent);
+    margin: 8px 0 24px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="page-header">
+    <div class="page-header-eyebrow">System Overview · 2026</div>
+    <h1>Awalon 系统全貌</h1>
+    <div class="page-header-sub">微信小程序 · 游戏服务器 · 审核伪装机制 · Admin 切换</div>
+  </div>
+
+  <!-- ① 审核模式启动流程 -->
+  <div class="section">
+    <div class="section-label">01 · 启动时 reviewMode 判断</div>
+    <div class="card">
+      <div class="review-flow">
+        <div class="flow-node gold">
+          <div class="flow-node-label">小程序启动</div>
+          <div class="flow-node-name">app.js onLaunch</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node blue">
+          <div class="flow-node-label">HTTP 请求</div>
+          <div class="flow-node-name">GET /api/review-mode</div>
+          <div class="flow-node-detail">服务端读 runtimeReviewMode</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-branch">
+          <div class="flow-node red">
+            <div class="flow-node-label">reviewMode: true</div>
+            <div class="flow-node-name">review-page 组件</div>
+            <div class="flow-node-detail">展示伪装发牌工具界面</div>
+          </div>
+          <div class="flow-node green">
+            <div class="flow-node-label">reviewMode: false</div>
+            <div class="flow-node-name">正常游戏首页</div>
+            <div class="flow-node-detail">大厅 · 房间 · 对战</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ② 两种模式对比 -->
+  <div class="section">
+    <div class="section-label">02 · 两种模式对比</div>
+    <div class="mode-grid">
+      <div class="mode-card review">
+        <div class="mode-title">REVIEW MODE · 审核伪装</div>
+        <div class="mode-rows">
+          <div class="mode-row"><span class="mode-row-icon">🎭</span><span class="mode-row-text">展示 <code>review-page</code> 组件，外观为"职场团队效能提升工具"</span></div>
+          <div class="mode-row"><span class="mode-row-icon">🃏</span><span class="mode-row-text">随机发一张阿瓦隆角色卡，附带职场文案</span></div>
+          <div class="mode-row"><span class="mode-row-icon">📋</span><span class="mode-row-text">展示企业使用场景、角色职场映射、研究背景</span></div>
+          <div class="mode-row"><span class="mode-row-icon">🤝</span><span class="mode-row-text">长按"企业破冰"卡片 1 秒 → 本地退出伪装，进入游戏</span></div>
+        </div>
+      </div>
+      <div class="mode-card game">
+        <div class="mode-title">GAME MODE · 正常游戏</div>
+        <div class="mode-rows">
+          <div class="mode-row"><span class="mode-row-icon">🏠</span><span class="mode-row-text">游戏大厅，展示在线房间列表</span></div>
+          <div class="mode-row"><span class="mode-row-icon">⚔️</span><span class="mode-row-text">完整游戏流程：组队 → 投票 → 任务 → 刺杀</span></div>
+          <div class="mode-row"><span class="mode-row-icon">🤖</span><span class="mode-row-text">AI 托管、复盘、勋章、历史记录</span></div>
+          <div class="mode-row"><span class="mode-row-icon">🔗</span><span class="mode-row-text">WebSocket 实时通信，全量 ROOM_STATE 驱动</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ③ 模式切换方式 -->
+  <div class="section">
+    <div class="section-label">03 · 模式切换方式</div>
+    <div class="switch-grid">
+      <div class="switch-card">
+        <div class="switch-num">01</div>
+        <div class="switch-title">Admin 接口</div>
+        <div class="switch-detail"><code>POST /api/admin/set-mode</code><br>携带 <code>?key=ADMIN_KEY</code> 及 body <code>{"mode":"game"}</code><br>修改服务端内存变量，立即对所有新打开的用户生效</div>
+        <div class="switch-badge badge-instant">立即生效</div>
+      </div>
+      <div class="switch-card">
+        <div class="switch-num">02</div>
+        <div class="switch-title">修改环境变量</div>
+        <div class="switch-detail">在服务平台将 <code>REVIEW_MODE</code> 设为 <code>true</code> 或 <code>false</code><br>需触发重新部署，服务启动时读取一次性初始化</div>
+        <div class="switch-badge badge-restart">需重启</div>
+      </div>
+      <div class="switch-card">
+        <div class="switch-num">03</div>
+        <div class="switch-title">客户端彩蛋</div>
+        <div class="switch-detail">长按 review-page 内"企业破冰"卡片 1 秒<br>客户端本地切换 <code>reviewMode: false</code><br>不通知服务端，仅当前用户生效</div>
+        <div class="switch-badge badge-hidden">隐藏入口</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ④ 服务端模块 -->
+  <div class="section">
+    <div class="section-label">04 · 服务端模块</div>
+    <div class="server-grid">
+      <div class="srv-card index">
+        <div class="srv-file">index.js</div>
+        <div class="srv-desc">HTTP 接口入口、WebSocket 消息分发、Admin 路由、ReviewMode 切换</div>
+      </div>
+      <div class="srv-card game">
+        <div class="srv-file">game.js</div>
+        <div class="srv-desc">游戏状态机：发牌、队长、投票、任务、刺杀、结算、endReason</div>
+      </div>
+      <div class="srv-card gameai">
+        <div class="srv-file">game-ai.js</div>
+        <div class="srv-desc">AI 托管决策：自动发言、投票、任务出牌、验人（Lady of the Lake）</div>
+      </div>
+      <div class="srv-card db">
+        <div class="srv-file">db.js</div>
+        <div class="srv-desc">SQLite 访问层：用户、断线重连、历史对战</div>
+      </div>
+      <div class="srv-card other">
+        <div class="srv-file">room.js</div>
+        <div class="srv-desc">房间内存管理、玩家席位、断线保留</div>
+      </div>
+      <div class="srv-card other">
+        <div class="srv-file">history.js</div>
+        <div class="srv-desc">对战历史读写：发言记录、任务投票、勋章</div>
+      </div>
+      <div class="srv-card other">
+        <div class="srv-file">medals.js</div>
+        <div class="srv-desc">对局结束后勋章结算逻辑</div>
+      </div>
+      <div class="srv-card other">
+        <div class="srv-file">ai.js</div>
+        <div class="srv-desc">AI 复盘生成、玩家记忆存储（SQLite）</div>
+      </div>
+      <div class="srv-card other">
+        <div class="srv-file">presence.js</div>
+        <div class="srv-desc">在线状态 ping/pong 管理</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑤ 小程序结构 -->
+  <div class="section">
+    <div class="section-label">05 · 小程序结构</div>
+    <div class="mp-grid">
+      <div class="mp-group">
+        <div class="mp-group-title" style="color:var(--blue);">PAGES · 页面</div>
+        <div class="mp-items">
+          <div class="mp-item"><span class="mp-item-name">pages/index</span><span class="mp-item-desc">主页（大厅+游戏房间，全量状态机驱动）</span></div>
+          <div class="mp-item"><span class="mp-item-name">subpkg/history</span><span class="mp-item-desc">历史对战列表</span></div>
+          <div class="mp-item"><span class="mp-item-name">subpkg/history-detail</span><span class="mp-item-desc">对战详情：圆桌回放 · 任务进度 · 发言 · AI复盘</span></div>
+          <div class="mp-item"><span class="mp-item-name">subpkg/role-stats</span><span class="mp-item-desc">角色胜率统计</span></div>
+          <div class="mp-item"><span class="mp-item-name">subpkg/rules</span><span class="mp-item-desc">游戏规则说明</span></div>
+        </div>
+      </div>
+      <div class="mp-group">
+        <div class="mp-group-title" style="color:var(--purple);">COMPONENTS · 组件</div>
+        <div class="mp-items">
+          <div class="mp-item"><span class="mp-item-name">review-page</span><span class="mp-item-desc">审核伪装界面（含彩蛋入口）</span></div>
+          <div class="mp-item"><span class="mp-item-name">round-table</span><span class="mp-item-desc">圆桌座位布局</span></div>
+          <div class="mp-item"><span class="mp-item-name">identity-panel</span><span class="mp-item-desc">身份查看面板</span></div>
+          <div class="mp-item"><span class="mp-item-name">action-panel</span><span class="mp-item-desc">操作面板（投票/任务）</span></div>
+          <div class="mp-item"><span class="mp-item-name">mission-pills</span><span class="mp-item-desc">任务进度胶囊（游戏页 + 历史详情复用）</span></div>
+          <div class="mp-item"><span class="mp-item-name">mission-table</span><span class="mp-item-desc">任务详情表格</span></div>
+          <div class="mp-item"><span class="mp-item-name">speak-panel / speak-list</span><span class="mp-item-desc">发言输入 · 历史记录</span></div>
+        </div>
+      </div>
+      <div class="mp-group">
+        <div class="mp-group-title" style="color:var(--gold);">UTILS · 工具</div>
+        <div class="mp-items">
+          <div class="mp-item"><span class="mp-item-name">gameUtils.js</span><span class="mp-item-desc">buildMissionPills 等游戏工具函数</span></div>
+          <div class="mp-item"><span class="mp-item-name">socket.js</span><span class="mp-item-desc">WebSocket 封装，心跳 · 重连</span></div>
+          <div class="mp-item"><span class="mp-item-name">medals.js</span><span class="mp-item-desc">勋章数据装饰</span></div>
+          <div class="mp-item"><span class="mp-item-name">shareCard.js</span><span class="mp-item-desc">分享卡片生成</span></div>
+        </div>
+      </div>
+      <div class="mp-group">
+        <div class="mp-group-title" style="color:var(--green);">GLOBAL · 全局数据</div>
+        <div class="mp-items">
+          <div class="mp-item"><span class="mp-item-name">reviewMode</span><span class="mp-item-desc">当前是否审核伪装模式</span></div>
+          <div class="mp-item"><span class="mp-item-name">roleConfig</span><span class="mp-item-desc">服务端下发的角色配置</span></div>
+          <div class="mp-item"><span class="mp-item-name">wsUrl / apiBase</span><span class="mp-item-desc">连接地址（wss · https）</span></div>
+          <div class="mp-item"><span class="mp-item-name">nav</span><span class="mp-item-desc">状态栏/导航栏高度（适配机型）</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑥ WebSocket 关键消息 -->
+  <div class="section">
+    <div class="section-label">06 · WebSocket 关键消息</div>
+    <div class="card" style="padding:0; overflow:hidden;">
+      <table class="ws-table">
+        <thead>
+          <tr>
+            <th>消息</th>
+            <th>方向</th>
+            <th>说明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="msg-name">AUTH</span></td>
+            <td><span class="tag tag-cs">C→S</span></td>
+            <td>登录鉴权，携带手机号和 token，服务端触发断线恢复检查</td>
+          </tr>
+          <tr>
+            <td><span class="msg-name">JOIN_ROOM</span></td>
+            <td><span class="tag tag-cs">C→S</span></td>
+            <td>加入 / 重新接管原席位，同一手机号可恢复断线前的位置</td>
+          </tr>
+          <tr>
+            <td><span class="msg-name">ROOM_STATE</span></td>
+            <td><span class="tag tag-sc">S→C</span></td>
+            <td>全量房间状态广播，客户端整包替换，驱动所有 UI 渲染</td>
+          </tr>
+          <tr>
+            <td><span class="msg-name">GAME_ACTION</span></td>
+            <td><span class="tag tag-cs">C→S</span></td>
+            <td>游戏操作：选人、投票、任务出牌、验人等，携带 action 类型和参数</td>
+          </tr>
+          <tr>
+            <td><span class="msg-name">CHAT</span></td>
+            <td><span class="tag tag-cs">C→S</span></td>
+            <td>玩家发言，服务端广播至房间所有成员</td>
+          </tr>
+          <tr>
+            <td><span class="msg-name">PONG</span></td>
+            <td><span class="tag tag-both">双向</span></td>
+            <td>心跳保活，客户端响应服务端 PING，维持连接稳定</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+
+  <!-- ⑦ AI 系统两层架构 -->
+  <div class="section">
+    <div class="section-label">07 · AI 系统两层架构</div>
+    <div class="ai-layer-grid">
+      <div class="ai-layer realtime">
+        <div class="ai-layer-title">GAME-AI · 实时决策层</div>
+        <div class="ai-layer-file">server/game-ai.js — 游戏内行为触发，无 LLM 延迟</div>
+        <div class="ai-layer-items">
+          <div class="ai-layer-item"><span class="ai-layer-item-name">fillAiPlayers</span><span class="ai-layer-item-desc">创建 AI 玩家，分配人格、随机名字</span></div>
+          <div class="ai-layer-item"><span class="ai-layer-item-name">autoSpeakIfAi</span><span class="ai-layer-item-desc">AI 玩家发言（调用 LLM），推进发言队列</span></div>
+          <div class="ai-layer-item"><span class="ai-layer-item-name">autoVoteIfAi</span><span class="ai-layer-item-desc">AI 玩家投票（调用 LLM）</span></div>
+          <div class="ai-layer-item"><span class="ai-layer-item-name">autoMissionIfAi</span><span class="ai-layer-item-desc">AI 玩家任务出牌（调用 LLM）</span></div>
+          <div class="ai-layer-item"><span class="ai-layer-item-name">autoProposeIfAiLeader</span><span class="ai-layer-item-desc">AI 队长选人（调用 LLM）</span></div>
+          <div class="ai-layer-item"><span class="ai-layer-item-name">autoAssassinateIfAi</span><span class="ai-layer-item-desc">AI 刺客刺杀（调用 LLM）</span></div>
+          <div class="ai-layer-item"><span class="ai-layer-item-name">triggerAutoplayActions</span><span class="ai-layer-item-desc">统一托管触发入口，阶段切换后调用</span></div>
+          <div class="ai-layer-item"><span class="ai-layer-item-name">autoplayPropose/Vote/Mission/Lady</span><span class="ai-layer-item-desc">真人托管：随机决策，1.5s 延迟执行</span></div>
+        </div>
+      </div>
+      <div class="ai-layer llm">
+        <div class="ai-layer-title">AI · LLM 决策层</div>
+        <div class="ai-layer-file">server/ai.js — 调用 DeepSeek API，含记忆与学习</div>
+        <div class="ai-layer-items">
+          <div class="ai-layer-item"><span class="ai-layer-item-name">decideSpeak</span><span class="ai-layer-item-desc">生成发言：含人格、信念状态、情绪、few-shot 例句</span></div>
+          <div class="ai-layer-item"><span class="ai-layer-item-name">decideTeam</span><span class="ai-layer-item-desc">队长选人：推理哪些席位可信</span></div>
+          <div class="ai-layer-item"><span class="ai-layer-item-name">decideVote</span><span class="ai-layer-item-desc">投票决策：综合公开信息和私有情报</span></div>
+          <div class="ai-layer-item"><span class="ai-layer-item-name">decideMission</span><span class="ai-layer-item-desc">任务出牌：好/坏人各有决策逻辑</span></div>
+          <div class="ai-layer-item"><span class="ai-layer-item-name">decideAssassinate</span><span class="ai-layer-item-desc">刺杀目标：推断谁是梅林</span></div>
+          <div class="ai-layer-item"><span class="ai-layer-item-name">decideRecap</span><span class="ai-layer-item-desc">生成复盘：每位玩家的行为分析</span></div>
+          <div class="ai-layer-item"><span class="ai-layer-item-name">evaluateGameSpeeches</span><span class="ai-layer-item-desc">对局结束后评分并存储优质发言</span></div>
+          <div class="ai-layer-item"><span class="ai-layer-item-name">generateAiJournals</span><span class="ai-layer-item-desc">AI 玩家对局后写日记，更新记忆</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑧ 阶段决策链 -->
+  <div class="section">
+    <div class="section-label">08 · 阶段 → 决策链</div>
+    <div class="card">
+      <div class="decision-chain">
+        <div class="dc-row">
+          <div class="dc-phase">组队阶段</div>
+          <div class="dc-arrow">→</div>
+          <div class="dc-fn">autoProposeIfAiLeader</div>
+          <div class="dc-arrow">→</div>
+          <div class="dc-llm">decideTeam</div>
+          <div class="dc-effect">→ 选出队员席位，提交 PROPOSE 动作</div>
+        </div>
+        <div class="dc-row">
+          <div class="dc-phase">发言阶段</div>
+          <div class="dc-arrow">→</div>
+          <div class="dc-fn">autoSpeakIfAi</div>
+          <div class="dc-arrow">→</div>
+          <div class="dc-llm">decideSpeak</div>
+          <div class="dc-effect">→ 生成发言文本，推进发言队列</div>
+        </div>
+        <div class="dc-row">
+          <div class="dc-phase">投票阶段</div>
+          <div class="dc-arrow">→</div>
+          <div class="dc-fn">autoVoteIfAi</div>
+          <div class="dc-arrow">→</div>
+          <div class="dc-llm">decideVote</div>
+          <div class="dc-effect">→ 返回 approve/reject，触发结算</div>
+        </div>
+        <div class="dc-row">
+          <div class="dc-phase">任务阶段</div>
+          <div class="dc-arrow">→</div>
+          <div class="dc-fn">autoMissionIfAi</div>
+          <div class="dc-arrow">→</div>
+          <div class="dc-llm">decideMission</div>
+          <div class="dc-effect">→ 返回 success/fail，触发任务结算</div>
+        </div>
+        <div class="dc-row">
+          <div class="dc-phase">刺杀阶段</div>
+          <div class="dc-arrow">→</div>
+          <div class="dc-fn">autoAssassinateIfAi</div>
+          <div class="dc-arrow">→</div>
+          <div class="dc-llm">decideAssassinate</div>
+          <div class="dc-effect">→ 推断梅林席位，执行刺杀</div>
+        </div>
+        <div class="dc-row">
+          <div class="dc-phase">验人阶段</div>
+          <div class="dc-arrow">→</div>
+          <div class="dc-fn">autoplayLady</div>
+          <div class="dc-arrow" style="opacity:0.3">→</div>
+          <div class="dc-llm" style="opacity:0.35">随机</div>
+          <div class="dc-effect">→ 托管时随机选择合法目标（1.5s 延迟）</div>
+        </div>
+        <div class="dc-row">
+          <div class="dc-phase">对局结束</div>
+          <div class="dc-arrow">→</div>
+          <div class="dc-fn">evaluateGameSpeeches</div>
+          <div class="dc-arrow">→</div>
+          <div class="dc-llm">generateAiJournals</div>
+          <div class="dc-effect">→ 评分存库、AI 写日记、更新记忆</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑨ AI 人格库 -->
+  <div class="section">
+    <div class="section-label">09 · AI 人格库（10 种）</div>
+    <div class="persona-grid">
+      <div class="persona-card">
+        <div class="persona-avatar">🦊</div>
+        <div class="persona-name">莫甘娜的微笑</div>
+        <div class="persona-style">逻辑严密，从不直接表态，让别人替自己下结论</div>
+        <div class="persona-bluff bluff-very-high">伪装 极高</div>
+      </div>
+      <div class="persona-card">
+        <div class="persona-avatar">🧙</div>
+        <div class="persona-name">梅林看穿你了</div>
+        <div class="persona-style">含沙射影，暗示多于明说，分析型独立判断</div>
+        <div class="persona-bluff bluff-medium">伪装 中</div>
+      </div>
+      <div class="persona-card">
+        <div class="persona-avatar">🐺</div>
+        <div class="persona-name">奥伯龙没朋友</div>
+        <div class="persona-style">极简发言，绝不跟风，沉默制造神秘感</div>
+        <div class="persona-bluff bluff-low">伪装 低</div>
+      </div>
+      <div class="persona-card">
+        <div class="persona-avatar">🦉</div>
+        <div class="persona-name">我知道你知道</div>
+        <div class="persona-style">信息战风格，盯特定玩家，暗示掌握内部情报</div>
+        <div class="persona-bluff bluff-high">伪装 高</div>
+      </div>
+      <div class="persona-card">
+        <div class="persona-avatar">🐍</div>
+        <div class="persona-name">背刺有理</div>
+        <div class="persona-style">前期低调，关键时刻翻脸，理由冠冕堂皇</div>
+        <div class="persona-bluff bluff-very-high">伪装 极高</div>
+      </div>
+      <div class="persona-card">
+        <div class="persona-avatar">🐱</div>
+        <div class="persona-name">沉默即答案</div>
+        <div class="persona-style">极简，一词一句，沉默制造压迫感</div>
+        <div class="persona-bluff bluff-low">伪装 低</div>
+      </div>
+      <div class="persona-card">
+        <div class="persona-avatar">🐧</div>
+        <div class="persona-name">任务失败不是我</div>
+        <div class="persona-style">第一个抢话洗白，条理清晰地把锅推给别人</div>
+        <div class="persona-bluff bluff-high">伪装 高</div>
+      </div>
+      <div class="persona-card">
+        <div class="persona-avatar">🦋</div>
+        <div class="persona-name">帕西法尔的直觉</div>
+        <div class="persona-style">靠感觉判断，情绪感染力强，容易被带节奏</div>
+        <div class="persona-bluff bluff-medium">伪装 中</div>
+      </div>
+      <div class="persona-card">
+        <div class="persona-avatar">🦅</div>
+        <div class="persona-name">三号位可疑</div>
+        <div class="persona-style">锁定目标，专注执着，旁人劝也没用</div>
+        <div class="persona-bluff bluff-medium">伪装 中</div>
+      </div>
+      <div class="persona-card">
+        <div class="persona-avatar">🐻</div>
+        <div class="persona-name">不解释</div>
+        <div class="persona-style">强硬派，从不辩护，"爱信不信"，制造神秘压迫</div>
+        <div class="persona-bluff bluff-low">伪装 低</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑩ AI 记忆与学习系统 -->
+  <div class="section">
+    <div class="section-label">10 · AI 记忆与学习系统</div>
+    <div class="memory-grid">
+      <div class="memory-card">
+        <div class="memory-table">ai_memory</div>
+        <div class="memory-title">AI 玩家记忆</div>
+        <div class="memory-desc">每场对局结束后 AI 角色写"日记"，下次发言时读取，形成跨局人格一致性</div>
+      </div>
+      <div class="memory-card">
+        <div class="memory-table">good_speeches</div>
+        <div class="memory-title">优质发言库</div>
+        <div class="memory-desc">对局结束后 LLM 评分，高分发言存入 SQLite，作为下次 few-shot 示例注入 prompt</div>
+      </div>
+      <div class="memory-card">
+        <div class="memory-table">strategy_patterns</div>
+        <div class="memory-title">策略模式库</div>
+        <div class="memory-desc">记录不同角色在不同局面下的决策模式与胜负结果，提升推理准确性</div>
+      </div>
+      <div class="memory-card">
+        <div class="memory-table">game_logs</div>
+        <div class="memory-title">对局摘要</div>
+        <div class="memory-desc">每局游戏总结存档，供 AI 复盘和玩家历史统计使用</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,137 @@
+.rv-page { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 9999; display: flex; flex-direction: column; }
+.rv-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+.rv-mask { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(8,12,22,0.78); }
+.rv-nav { position: relative; z-index: 1; display: flex; align-items: center; gap: 16rpx; padding-left: 36rpx; padding-right: 36rpx; padding-bottom: 0; background: rgba(10,14,24,0.6); border-bottom: 1rpx solid rgba(255,255,255,0.1); }
+.rv-nav-logo { font-size: 38rpx; font-weight: 900; color: #d9b36b; letter-spacing: 2rpx; }
+.rv-nav-tag { font-size: 22rpx; color: #d9b36b; background: rgba(217,179,107,0.15); border: 1rpx solid rgba(217,179,107,0.4); border-radius: 8rpx; padding: 4rpx 14rpx; font-weight: 600; }
+.rv-body { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 0 40rpx; box-sizing: border-box; z-index: 1; }
+.rv-banner { padding: 48rpx 36rpx 44rpx; border-bottom: 1rpx solid rgba(255,255,255,0.08); }
+.rv-banner-sub { display: block; font-size: 22rpx; color: rgba(217,179,107,0.8); letter-spacing: 3rpx; margin-bottom: 14rpx; }
+.rv-banner-title { display: block; font-size: 56rpx; font-weight: 900; color: #eef1f7; letter-spacing: 4rpx; margin-bottom: 8rpx; }
+.rv-banner-en { display: block; font-size: 22rpx; color: rgba(255,255,255,0.35); letter-spacing: 1rpx; margin-bottom: 24rpx; }
+.rv-banner-desc { display: block; font-size: 26rpx; color: rgba(238,241,247,0.8); line-height: 1.75; }
+.rv-section-title { font-size: 21rpx; font-weight: 700; color: rgba(217,179,107,0.75); letter-spacing: 4rpx; margin: 0; padding: 36rpx 36rpx 16rpx; }
+.rv-feature-list { padding: 0 24rpx; display: flex; flex-direction: column; gap: 12rpx; }
+.rv-feature-item { background: rgba(19,23,31,0.82); border: 1rpx solid rgba(255,255,255,0.1); border-radius: 16rpx; padding: 24rpx; display: flex; align-items: flex-start; gap: 20rpx; }
+.rv-feature-icon { font-size: 44rpx; flex-shrink: 0; width: 60rpx; text-align: center; }
+.rv-feature-body { flex: 1; }
+.rv-feature-name { display: block; font-size: 30rpx; font-weight: 700; color: #eef1f7; margin-bottom: 8rpx; }
+.rv-feature-desc { display: block; font-size: 25rpx; color: #aeb6c7; line-height: 1.65; }
+.rv-research-block { margin: 0 24rpx; background: rgba(19,23,31,0.82); border: 1rpx solid rgba(255,255,255,0.1); border-radius: 16rpx; padding: 28rpx; display: flex; flex-direction: column; gap: 16rpx; }
+.rv-research-text { display: block; font-size: 26rpx; color: #aeb6c7; line-height: 1.8; }
+.rv-faction-wrap { padding: 0 24rpx; }
+.rv-faction-label { font-size: 22rpx; font-weight: 700; letter-spacing: 2rpx; padding: 8rpx 16rpx; border-radius: 8rpx; margin-bottom: 14rpx; display: block; }
+.rv-faction-good-label { background: rgba(30,90,200,0.2); color: rgba(100,170,255,0.9); border: 1rpx solid rgba(80,160,255,0.3); }
+.rv-faction-evil-label { background: rgba(160,35,45,0.2); color: rgba(255,100,110,0.9); border: 1rpx solid rgba(220,80,90,0.3); margin-top: 24rpx; }
+.rv-role-row { display: flex; flex-wrap: wrap; gap: 14rpx; margin-bottom: 8rpx; }
+.rv-role-card { width: calc(50% - 7rpx); box-sizing: border-box; border-radius: 16rpx; padding: 20rpx 12rpx 18rpx; display: flex; flex-direction: column; align-items: center; gap: 8rpx; background: rgba(19,23,31,0.88); border: 1rpx solid rgba(255,255,255,0.1); }
+.rv-role-row-3 { gap: 12rpx; }
+.rv-role-card-3 { width: calc(33.33% - 8rpx); }
+.rv-role-row-4 { gap: 10rpx; }
+.rv-role-card-4 { width: calc(25% - 8rpx); padding: 16rpx 8rpx 14rpx; }
+.rv-role-good { border-top: 3rpx solid rgba(80,160,255,0.7); }
+.rv-role-evil { border-top: 3rpx solid rgba(220,80,90,0.7); }
+.rv-role-img { width: 80rpx; height: 80rpx; border-radius: 50%; }
+.rv-role-img-sm { width: 64rpx; height: 64rpx; }
+.rv-role-desc-sm { font-size: 19rpx; color: #aeb6c7; line-height: 1.45; text-align: center; }
+.rv-role-name { font-size: 26rpx; font-weight: 700; color: #eef1f7; }
+.rv-role-badge { font-size: 19rpx; padding: 4rpx 12rpx; border-radius: 20rpx; font-weight: 600; }
+.rv-badge-good { background: rgba(30,90,200,0.2); color: rgba(100,170,255,0.9); }
+.rv-badge-evil { background: rgba(160,35,45,0.2); color: rgba(255,100,110,0.9); }
+.rv-role-desc { font-size: 21rpx; color: #aeb6c7; line-height: 1.5; text-align: center; }
+.rv-info-table { margin: 0 24rpx; background: rgba(19,23,31,0.88); border: 1rpx solid rgba(255,255,255,0.1); border-radius: 16rpx; overflow: hidden; }
+.rv-info-row { display: flex; border-bottom: 1rpx solid rgba(255,255,255,0.07); }
+.rv-info-row:last-child { border-bottom: none; }
+.rv-info-header { background: rgba(10,14,28,0.8); }
+.rv-info-header .rv-info-cell { color: rgba(217,179,107,0.85); font-weight: 700; font-size: 21rpx; }
+.rv-info-cell { flex: 1; padding: 18rpx 6rpx; font-size: 23rpx; color: #aeb6c7; text-align: center; }
+.rv-info-role { flex: 1.4; text-align: left; padding-left: 18rpx; font-weight: 600; color: #eef1f7; }
+.rv-info-header .rv-info-role { color: rgba(217,179,107,0.85); }
+.rv-cell-yes { color: #5cd08a; font-weight: 700; }
+.rv-cell-no { color: rgba(255,255,255,0.3); }
+.rv-cell-good { color: rgba(100,170,255,0.9); font-weight: 700; }
+.rv-cell-evil { color: rgba(255,100,110,0.9); font-weight: 700; }
+.rv-paper-card { margin: 0 24rpx; background: rgba(19,23,31,0.88); border: 1rpx solid rgba(255,255,255,0.1); border-radius: 16rpx; overflow: hidden; }
+.rv-paper-img { width: 100%; display: block; }
+.rv-paper-caption { display: block; font-size: 22rpx; color: #aeb6c7; line-height: 1.65; padding: 16rpx 20rpx; border-top: 1rpx solid rgba(255,255,255,0.08); }
+.rv-bottom-space { height: 80rpx; }
+/* ── 随机发卡 ── */
+.rv-draw-wrap { margin: 0 20rpx 32rpx; display: flex; flex-direction: column; gap: 20rpx; }
+.rv-draw-btn {
+  display: flex; align-items: center; justify-content: center; gap: 12rpx;
+  padding: 24rpx 0;
+  background: rgba(217,179,107,0.12);
+  border: 1rpx solid rgba(217,179,107,0.45);
+  border-radius: 20rpx;
+}
+.rv-draw-btn-icon { font-size: 32rpx; }
+.rv-draw-btn-text { font-size: 28rpx; font-weight: 600; color: #d9b36b; letter-spacing: 1rpx; }
+
+.rv-card {
+  display: flex;
+  gap: 0;
+  border-radius: 20rpx;
+  overflow: hidden;
+  border: 1rpx solid rgba(255,255,255,0.15);
+}
+.rv-card-good { background: rgba(14,28,60,0.92); border-color: rgba(78,158,255,0.4); }
+.rv-card-evil { background: rgba(40,10,14,0.92); border-color: rgba(220,80,90,0.4); }
+
+.rv-card-img { width: 160rpx; height: 160rpx; flex-shrink: 0; }
+
+.rv-card-body {
+  flex: 1;
+  padding: 22rpx 22rpx 18rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+}
+.rv-card-head { display: flex; align-items: center; gap: 12rpx; }
+.rv-card-title { font-size: 28rpx; font-weight: 700; color: #eef1f7; }
+.rv-card-role-badge { font-size: 18rpx; padding: 2rpx 12rpx; border-radius: 999rpx; font-weight: 600; }
+.rv-card-badge-good { background: rgba(78,158,255,0.18); color: #7ac7ff; border: 1rpx solid rgba(78,158,255,0.4); }
+.rv-card-badge-evil { background: rgba(220,80,90,0.18); color: #ff9ea4; border: 1rpx solid rgba(220,80,90,0.4); }
+.rv-card-copy { font-size: 22rpx; color: rgba(200,215,235,0.8); line-height: 1.7; flex: 1; }
+.rv-card-hint { font-size: 19rpx; color: rgba(255,255,255,0.25); letter-spacing: 1rpx; }
+.rv-card-second { margin-top: 16rpx; }
+
+/* ── 办公 & 团队场景 ── */
+.rv-office-grid { display: flex; flex-wrap: wrap; gap: 16rpx; padding: 0 20rpx 8rpx; }
+.rv-office-card {
+  width: calc(50% - 8rpx);
+  background: rgba(20,28,48,0.85);
+  border: 1rpx solid rgba(255,255,255,0.18);
+  border-radius: 16rpx;
+  padding: 24rpx 20rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  box-sizing: border-box;
+}
+.rv-office-icon { font-size: 32rpx; }
+.rv-office-name { font-size: 26rpx; font-weight: 700; color: #eef1f7; }
+.rv-office-desc { font-size: 22rpx; color: rgba(180,195,220,0.7); line-height: 1.6; }
+
+/* ── 角色 · 职场映射 ── */
+.rv-map-list { margin: 0 20rpx; display: flex; flex-direction: column; gap: 12rpx; }
+.rv-map-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14rpx;
+  background: rgba(20,28,48,0.85);
+  border: 1rpx solid rgba(255,255,255,0.18);
+  border-radius: 14rpx;
+  padding: 20rpx 18rpx;
+}
+.rv-map-role {
+  font-size: 22rpx;
+  font-weight: 700;
+  padding: 4rpx 14rpx;
+  border-radius: 999rpx;
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+.rv-map-role-good { background: rgba(78,158,255,0.15); color: #7ac7ff; border: 1rpx solid rgba(78,158,255,0.3); }
+.rv-map-role-evil { background: rgba(255,95,95,0.15); color: #ff8a8a; border: 1rpx solid rgba(255,95,95,0.3); }
+.rv-map-arrow { font-size: 22rpx; color: rgba(255,255,255,0.25); flex-shrink: 0; padding-top: 4rpx; }
+.rv-map-skill { font-size: 23rpx; color: rgba(200,210,230,0.75); line-height: 1.65; flex: 1; }
