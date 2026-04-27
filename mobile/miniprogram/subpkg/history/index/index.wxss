@@ -1,8 +1,14 @@
 /* ─── PAGE ─── */
-.page { min-height: 100vh; position: relative; background: #06080f; }
+.page { min-height: 100vh; position: relative; background: var(--aw-bg); }
 .bg, .mask { position: fixed; inset: 0; }
 .bg { width: 100vw; height: 100vh; }
 .mask { background: linear-gradient(180deg, rgba(6,8,16,0.72) 0%, rgba(8,10,20,0.88) 40%, rgba(6,8,16,0.96) 100%); }
+
+/* light skins: hide dark bg image and remove dark overlay */
+.theme-celestial .bg,
+.theme-ink-wash .bg { display: none; }
+.theme-celestial .mask,
+.theme-ink-wash .mask { background: none; }
 
 
 /* ─── CONTENT ─── */

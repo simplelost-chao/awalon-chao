@@ -2,7 +2,7 @@
 .page {
   min-height: 100vh;
   position: relative;
-  background: #080b12;
+  background: var(--aw-bg);
 }
 
 .bg, .mask {
@@ -21,6 +21,12 @@
     rgba(8, 10, 20, 0.88) 40%,
     rgba(6, 8, 16, 0.96) 100%);
 }
+
+/* light skins: hide dark bg image and remove dark overlay */
+.theme-celestial .bg,
+.theme-ink-wash .bg { display: none; }
+.theme-celestial .mask,
+.theme-ink-wash .mask { background: none; }
 
 
 /* ─── CONTENT ───────────────────────────────────────── */

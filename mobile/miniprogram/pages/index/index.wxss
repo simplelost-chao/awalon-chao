@@ -146,6 +146,12 @@
   z-index: 1;
 }
 
+/* light skins: hide dark bg image and remove dark overlay */
+.theme-celestial .bg,
+.theme-ink-wash .bg { display: none; }
+.theme-celestial .mask,
+.theme-ink-wash .mask { background: none; }
+
 .content {
   position: relative;
   z-index: 2;
