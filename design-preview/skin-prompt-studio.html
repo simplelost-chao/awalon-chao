@@ -2,1210 +2,692 @@
 <html lang="zh">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Avalon · Skin Prompt Studio</title>
+<title>Avalon · Skin Studio</title>
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#090b11;--surface:#10131c;--card:#161b28;--border:rgba(255,255,255,.07);--border-hi:rgba(255,255,255,.14);
+  --text:#e8eaf0;--sub:#7a8aa0;--muted:#3a4555;
+  --good:#4ade80;--evil:#f87171;--accent:#d9b36b;
+  --r:10px;--font:-apple-system,'PingFang SC',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh;display:flex;flex-direction:column;overflow:hidden}
 
-:root {
-  --bg: #0b0d14;
-  --surface: #111520;
-  --card: #161b28;
-  --border: rgba(255,255,255,0.08);
-  --border-hi: rgba(255,255,255,0.16);
-  --text: #e8eaf0;
-  --sub: #8090aa;
-  --muted: #4a5568;
-  --good: #4ade80;
-  --good-bg: rgba(74,222,128,0.08);
-  --good-border: rgba(74,222,128,0.25);
-  --evil: #f87171;
-  --evil-bg: rgba(248,113,113,0.08);
-  --evil-border: rgba(248,113,113,0.25);
-  --bg-tag: #a78bfa;
-  --bg-tag-bg: rgba(167,139,250,0.08);
-  --bg-tag-border: rgba(167,139,250,0.25);
-  --table-tag: #fbbf24;
-  --table-tag-bg: rgba(251,191,36,0.08);
-  --table-tag-border: rgba(251,191,36,0.25);
-  --universal-tag: #38bdf8;
-  --universal-tag-bg: rgba(56,189,248,0.08);
-  --universal-tag-border: rgba(56,189,248,0.25);
-  --radius: 12px;
-  --font: -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
-  --mono: 'JetBrains Mono', 'Menlo', monospace;
-}
+/* ─── Header ─── */
+.hd{height:52px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;padding:0 16px;flex-shrink:0}
+.hd-title{font-size:13px;font-weight:700;letter-spacing:2px;color:var(--text)}
+.hd-dot{width:6px;height:6px;border-radius:50%;background:var(--good);box-shadow:0 0 8px var(--good)}
+.hd-sep{width:1px;height:20px;background:var(--border)}
+.hd-key-wrap{display:flex;align-items:center;gap:8px;margin-left:auto}
+.hd-key-label{font-size:11px;color:var(--sub)}
+.hd-key{background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;font-family:var(--mono);padding:5px 10px;width:260px;outline:none}
+.hd-key:focus{border-color:var(--border-hi)}
+.hd-key::placeholder{color:var(--muted)}
+.hd-key-status{width:8px;height:8px;border-radius:50%;background:var(--muted);flex-shrink:0}
+.hd-key-status.ok{background:var(--good);box-shadow:0 0 6px var(--good)}
 
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--font);
-  min-height: 100vh;
-  display: grid;
-  grid-template-columns: 220px 1fr;
-  grid-template-rows: 56px 1fr;
-}
+/* ─── Skin tabs ─── */
+.skin-tabs{height:44px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:2px;padding:0 12px;flex-shrink:0;overflow-x:auto}
+.skin-tabs::-webkit-scrollbar{display:none}
+.stab{display:flex;align-items:center;gap:7px;padding:6px 12px;border-radius:7px;border:1px solid transparent;cursor:pointer;white-space:nowrap;background:none;transition:all .15s}
+.stab:hover{background:rgba(255,255,255,.04);border-color:var(--border)}
+.stab.active{background:rgba(255,255,255,.07);border-color:var(--border-hi)}
+.stab-chip{width:18px;height:18px;border-radius:5px;flex-shrink:0;border:1px solid rgba(255,255,255,.15)}
+.stab-name{font-size:12px;font-weight:600;color:var(--text)}
+.stab-id{font-size:10px;color:var(--sub);font-family:var(--mono)}
 
-/* ── Header ── */
-.header {
-  grid-column: 1 / -1;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 0 24px;
-}
-.header-title { font-size: 15px; font-weight: 700; letter-spacing: 2px; color: var(--text); }
-.header-sub { font-size: 12px; color: var(--sub); }
-.header-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--good); box-shadow: 0 0 8px var(--good); }
+/* ─── Workspace ─── */
+.workspace{flex:1;display:grid;grid-template-columns:230px 1fr 360px;overflow:hidden}
 
-/* ── Sidebar ── */
-.sidebar {
-  background: var(--surface);
-  border-right: 1px solid var(--border);
-  padding: 16px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  overflow-y: auto;
-}
-.sidebar-label {
-  font-size: 10px;
-  letter-spacing: 2px;
-  color: var(--muted);
-  padding: 8px 8px 4px;
-  text-transform: uppercase;
-}
-.skin-btn {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid transparent;
-  background: none;
-  cursor: pointer;
-  text-align: left;
-  transition: all 0.15s;
-  width: 100%;
-}
-.skin-btn:hover { background: rgba(255,255,255,0.04); border-color: var(--border); }
-.skin-btn.active { background: rgba(255,255,255,0.07); border-color: var(--border-hi); }
-.skin-chip {
-  width: 28px; height: 28px;
-  border-radius: 8px;
-  flex-shrink: 0;
-  border: 1px solid rgba(255,255,255,0.15);
-}
-.skin-info { min-width: 0; }
-.skin-name { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1; margin-bottom: 3px; }
-.skin-id { font-size: 10px; color: var(--sub); font-family: var(--mono); }
-.skin-count { font-size: 10px; color: var(--muted); margin-top: 2px; }
+/* ─── Assets Panel ─── */
+.panel-assets{border-right:1px solid var(--border);overflow-y:auto;background:var(--surface)}
+.panel-assets::-webkit-scrollbar{width:4px}
+.panel-assets::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px}
+.asset-cat{padding:10px 12px 6px;font-size:10px;font-weight:700;letter-spacing:2px;color:var(--muted);text-transform:uppercase}
+.asset-item{display:flex;align-items:center;gap:10px;padding:7px 12px;cursor:pointer;transition:background .1s;border-left:2px solid transparent}
+.asset-item:hover{background:rgba(255,255,255,.03)}
+.asset-item.active{background:rgba(255,255,255,.06);border-left-color:var(--accent)}
+.asset-thumb{width:40px;height:40px;border-radius:6px;object-fit:cover;background:var(--card);border:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;overflow:hidden}
+.asset-thumb img{width:100%;height:100%;object-fit:cover}
+.asset-thumb.portrait{height:48px}
+.asset-info{min-width:0}
+.asset-name{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.asset-file{font-size:10px;color:var(--sub);font-family:var(--mono)}
+.asset-badge{width:8px;height:8px;border-radius:50%;background:var(--good);flex-shrink:0;margin-left:auto;box-shadow:0 0 5px var(--good)}
+.tag-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
 
-.sidebar-divider { height: 1px; background: var(--border); margin: 8px 4px; }
+/* ─── Prompt Panel ─── */
+.panel-prompt{display:flex;flex-direction:column;overflow:hidden;padding:0}
+.pp-top{padding:16px 20px 12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.pp-asset-label{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.pp-asset-name{font-size:15px;font-weight:700}
+.pp-spec{font-size:11px;color:var(--sub);font-family:var(--mono);padding:2px 8px;background:rgba(255,255,255,.05);border-radius:4px;border:1px solid var(--border)}
+.pp-prompt-wrap{position:relative;flex:1;overflow:hidden;display:flex;flex-direction:column}
+.pp-prompt{flex:1;background:var(--card);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-size:12px;font-family:var(--mono);line-height:1.65;padding:14px;resize:none;outline:none;min-height:0}
+.pp-prompt:focus{border-color:var(--border-hi)}
+.pp-actions{display:flex;gap:8px;padding:12px 20px;flex-shrink:0;border-top:1px solid var(--border)}
+.btn{padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer;border:1px solid var(--border);transition:all .15s;font-family:var(--font);display:flex;align-items:center;gap:6px}
+.btn-primary{background:var(--accent);color:#1a1200;border-color:var(--accent);font-weight:700}
+.btn-primary:hover{opacity:.9}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed}
+.btn-ghost{background:rgba(255,255,255,.04);color:var(--text)}
+.btn-ghost:hover{background:rgba(255,255,255,.08)}
+.btn-good{background:rgba(74,222,128,.12);color:var(--good);border-color:rgba(74,222,128,.3)}
+.btn-good:hover{background:rgba(74,222,128,.18)}
+.pp-result{flex-shrink:0;padding:0 20px 12px}
+.pp-result-img{width:100%;max-height:200px;border-radius:var(--r);object-fit:contain;background:var(--card);border:1px solid var(--border);display:none}
+.pp-result-img.visible{display:block}
+.pp-loading{display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;height:100px;color:var(--sub);font-size:12px}
+.pp-loading.visible{display:flex}
+.spinner{width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.pp-prompt-area{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:12px 20px;gap:10px;min-height:0}
 
-.universal-btn {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid transparent;
-  background: none;
-  cursor: pointer;
-  text-align: left;
-  transition: all 0.15s;
-  width: 100%;
-}
-.universal-btn:hover { background: rgba(255,255,255,0.04); border-color: var(--border); }
-.universal-btn.active { background: rgba(255,255,255,0.07); border-color: var(--border-hi); }
-.universal-icon { font-size: 18px; width: 28px; text-align: center; }
-.universal-name { font-size: 13px; font-weight: 600; color: var(--text); }
+/* ─── Phone Preview Panel ─── */
+.panel-preview{border-left:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;align-items:center;padding:16px 12px;overflow-y:auto}
+.panel-preview::-webkit-scrollbar{width:4px}
+.panel-preview::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08)}
+.preview-tabs{display:flex;gap:4px;margin-bottom:12px;background:var(--card);padding:3px;border-radius:8px;border:1px solid var(--border)}
+.preview-tab{padding:5px 14px;border-radius:6px;font-size:11px;cursor:pointer;color:var(--sub);transition:all .15s}
+.preview-tab.active{background:rgba(255,255,255,.08);color:var(--text)}
 
-/* ── Main ── */
-.main {
-  padding: 24px 28px 60px;
-  overflow-y: auto;
-}
+/* ─── Phone Frame ─── */
+.phone-frame{width:280px;height:560px;border-radius:36px;border:8px solid #1a1e2a;box-shadow:0 0 0 1px rgba(255,255,255,.06),0 20px 60px rgba(0,0,0,.6);overflow:hidden;position:relative;flex-shrink:0}
+.phone-screen{width:100%;height:100%;position:relative;overflow:hidden;display:flex;flex-direction:column}
+.ph-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+.ph-bg-color{position:absolute;inset:0;z-index:0}
+.ph-mask{position:absolute;inset:0;z-index:1;pointer-events:none}
 
-.section { display: none; }
-.section.active { display: block; }
+/* Phone UI elements using --aw-* vars */
+.ph-nav{position:relative;z-index:10;height:44px;display:flex;align-items:center;padding:0 12px;gap:8px;background:var(--aw-nav-bg,rgba(12,16,24,.88));border-bottom:1px solid var(--aw-nav-border,rgba(255,255,255,.08));backdrop-filter:blur(8px);flex-shrink:0}
+.ph-nav-back{font-size:11px;color:var(--aw-text,#eef1f7);display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:999px;border:1px solid var(--aw-panel-border,rgba(255,255,255,.1));background:var(--aw-input-bg,rgba(255,255,255,.06))}
+.ph-nav-title{font-size:13px;font-weight:700;color:var(--aw-text,#eef1f7);position:absolute;left:50%;transform:translateX(-50%);letter-spacing:2px}
+.ph-nav-right{margin-left:auto;font-size:18px}
 
-/* ── Skin header ── */
-.skin-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 20px;
-  padding: 20px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  margin-bottom: 24px;
-}
-.skin-header-chip {
-  width: 64px; height: 64px;
-  border-radius: 12px;
-  flex-shrink: 0;
-  border: 1px solid rgba(255,255,255,0.15);
-}
-.skin-header-info { flex: 1; }
-.skin-header-name { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
-.skin-header-id { font-family: var(--mono); font-size: 11px; color: var(--sub); margin-bottom: 10px; }
-.skin-header-mood { font-size: 12px; color: var(--sub); line-height: 1.6; }
-.skin-colors { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-.color-chip {
-  display: flex; align-items: center; gap: 6px;
-  padding: 3px 8px 3px 4px;
-  border-radius: 6px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid var(--border);
-  font-size: 11px; font-family: var(--mono);
-  color: var(--sub);
-}
-.color-dot { width: 14px; height: 14px; border-radius: 4px; flex-shrink: 0; }
+.ph-content{position:relative;z-index:5;flex:1;overflow:hidden;padding:10px 10px 0;display:flex;flex-direction:column;gap:8px}
+.ph-panel{background:var(--aw-panel,rgba(19,23,31,.82));border:1px solid var(--aw-panel-border,rgba(255,255,255,.1));border-radius:14px;padding:12px;backdrop-filter:blur(4px)}
+.ph-panel-title{font-size:10px;font-weight:700;color:var(--aw-subtext,#aeb6c7);letter-spacing:1px;margin-bottom:8px;text-transform:uppercase}
+.ph-input{background:var(--aw-input-bg,rgba(255,255,255,.06));border:1px solid var(--aw-input-border,rgba(255,255,255,.14));border-radius:8px;padding:7px 10px;font-size:11px;color:var(--aw-subtext,#aeb6c7);margin-bottom:7px}
+.ph-btn-row{display:flex;gap:6px}
+.ph-btn-primary{flex:1;background:var(--aw-accent,#d9b36b);color:var(--aw-accent-text,#1a1200);border-radius:8px;padding:7px;font-size:11px;font-weight:700;text-align:center}
+.ph-btn-ghost{flex:1;background:transparent;border:1px solid var(--aw-btn-ghost-border,rgba(255,255,255,.22));color:var(--aw-btn-ghost-text,#eef1f7);border-radius:8px;padding:7px;font-size:11px;text-align:center}
 
-/* ── Copy all btn ── */
-.copy-all-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid var(--border-hi);
-  border-radius: 8px;
-  color: var(--text);
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.15s;
-  white-space: nowrap;
-}
-.copy-all-btn:hover { background: rgba(255,255,255,0.09); }
+.ph-room-card{background:var(--aw-input-bg,rgba(255,255,255,.06));border:1px solid var(--aw-input-border,rgba(255,255,255,.1));border-radius:8px;padding:8px 10px;display:flex;align-items:center;justify-content:space-between}
+.ph-room-code{font-size:12px;font-weight:700;color:var(--aw-accent,#d9b36b);font-family:var(--mono)}
+.ph-room-meta{font-size:10px;color:var(--aw-subtext,#aeb6c7);margin-top:2px}
+.ph-room-join{font-size:10px;color:var(--aw-accent-text,#1a1200);background:var(--aw-accent,#d9b36b);padding:3px 8px;border-radius:6px;font-weight:700}
 
-/* ── Category section ── */
-.cat-section { margin-bottom: 32px; }
-.cat-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-.cat-title { font-size: 13px; font-weight: 700; letter-spacing: 1px; color: var(--sub); text-transform: uppercase; }
-.cat-count { font-size: 11px; color: var(--muted); }
+/* Round table */
+.ph-table-wrap{position:relative;width:160px;height:160px;margin:0 auto;flex-shrink:0}
+.ph-table-circle{width:100%;height:100%;border-radius:50%;border:2px solid var(--aw-accent,#d9b36b);background:var(--aw-panel,rgba(19,23,31,.82));overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--aw-subtext,#aeb6c7)}
+.ph-table-img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.ph-seat{position:absolute;width:26px;height:26px;border-radius:50%;background:var(--aw-panel,rgba(19,23,31,.82));border:1px solid var(--aw-panel-border,rgba(255,255,255,.1));display:flex;align-items:center;justify-content:center;font-size:10px}
 
-/* ── Prompt grid ── */
-.prompt-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(440px, 1fr));
-  gap: 14px;
-}
-.prompt-grid-2 {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-  gap: 12px;
-}
+/* Mission pills */
+.ph-pills{display:flex;gap:4px;padding:0 4px}
+.ph-pill{flex:1;height:32px;border-radius:7px;border:1px solid var(--aw-panel-border,rgba(255,255,255,.1));background:rgba(0,0,0,.22);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:9px;color:var(--aw-subtext,#aeb6c7)}
+.ph-pill.current{background:rgba(190,145,60,.18);border-color:rgba(220,180,90,.6)}
+.ph-pill.success{background:rgba(60,160,100,.18);border-color:rgba(100,220,150,.5);color:var(--good)}
+.ph-pill.fail{background:rgba(160,40,40,.18);border-color:rgba(230,90,90,.5);color:var(--evil)}
 
-/* ── Prompt card ── */
-.prompt-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  overflow: hidden;
-  transition: border-color 0.15s;
-}
-.prompt-card:hover { border-color: var(--border-hi); }
+/* Action panel */
+.ph-action{position:relative;z-index:10;background:var(--aw-panel,rgba(19,23,31,.82));border-top:1px solid var(--aw-nav-border,rgba(255,255,255,.08));padding:10px;flex-shrink:0;backdrop-filter:blur(8px)}
+.ph-action-title{font-size:10px;color:var(--aw-subtext,#aeb6c7);text-align:center;margin-bottom:7px}
+.ph-chip-row{display:flex;gap:5px;justify-content:center;margin-bottom:7px}
+.ph-chip{padding:4px 8px;border-radius:999px;font-size:9px;border:1px solid var(--aw-panel-border,rgba(255,255,255,.1));background:var(--aw-input-bg,rgba(255,255,255,.06));color:var(--aw-subtext,#aeb6c7);display:flex;align-items:center;gap:4px}
+.ph-chip-avatar{width:16px;height:16px;border-radius:50%;background:var(--aw-bg-2,#161b24);font-size:8px;display:flex;align-items:center;justify-content:center}
+.ph-confirm-btn{width:100%;background:var(--aw-accent,#d9b36b);color:var(--aw-accent-text,#1a1200);border-radius:10px;padding:8px;font-size:11px;font-weight:700;text-align:center}
 
-.prompt-card-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--border);
-  background: rgba(255,255,255,0.02);
-}
-.tag {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  padding: 2px 8px;
-  border-radius: 4px;
-  border: 1px solid;
-}
-.tag-good { color: var(--good); background: var(--good-bg); border-color: var(--good-border); }
-.tag-evil { color: var(--evil); background: var(--evil-bg); border-color: var(--evil-border); }
-.tag-bg { color: var(--bg-tag); background: var(--bg-tag-bg); border-color: var(--bg-tag-border); }
-.tag-table { color: var(--table-tag); background: var(--table-tag-bg); border-color: var(--table-tag-border); }
-.tag-universal { color: var(--universal-tag); background: var(--universal-tag-bg); border-color: var(--universal-tag-border); }
+/* Role card (for role detail view) */
+.ph-role-card{background:var(--aw-panel,rgba(19,23,31,.82));border:1px solid var(--aw-panel-border,rgba(255,255,255,.1));border-radius:12px;padding:10px;display:flex;gap:10px;align-items:center}
+.ph-role-img{width:52px;height:52px;border-radius:50%;object-fit:cover;background:var(--aw-bg-2,#161b24);border:2px solid var(--aw-accent,#d9b36b);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.ph-role-name{font-size:13px;font-weight:700;color:var(--aw-accent,#d9b36b)}
+.ph-role-desc{font-size:10px;color:var(--aw-subtext,#aeb6c7);line-height:1.5;margin-top:3px}
 
-.filename { font-family: var(--mono); font-size: 11px; color: var(--text); }
-.spec-badge {
-  margin-left: auto;
-  font-size: 10px;
-  font-family: var(--mono);
-  color: var(--muted);
-  padding: 2px 6px;
-  background: rgba(255,255,255,0.04);
-  border-radius: 4px;
-  border: 1px solid var(--border);
-  white-space: nowrap;
-}
-
-.prompt-body { padding: 12px 14px; position: relative; }
-.prompt-text {
-  font-size: 12px;
-  line-height: 1.65;
-  color: #c8d0e0;
-  font-family: var(--mono);
-  white-space: pre-wrap;
-  word-break: break-word;
-  user-select: text;
-}
-.copy-btn {
-  margin-top: 10px;
-  width: 100%;
-  padding: 7px 12px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid var(--border);
-  border-radius: 7px;
-  color: var(--sub);
-  font-size: 12px;
-  font-family: var(--font);
-  cursor: pointer;
-  transition: all 0.15s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-.copy-btn:hover { background: rgba(255,255,255,0.08); border-color: var(--border-hi); color: var(--text); }
-.copy-btn.copied { background: rgba(74,222,128,0.1); border-color: rgba(74,222,128,0.3); color: var(--good); }
-
-/* ── Roles grid (2-col on large) ── */
-.roles-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-  gap: 12px;
-}
-
-/* ── Universal section ── */
-.universal-section { margin-bottom: 28px; }
-.universal-title { font-size: 13px; font-weight: 700; color: var(--sub); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
-
-/* ── Empty ── */
-.note-box {
-  padding: 16px;
-  background: rgba(251,191,36,0.06);
-  border: 1px solid rgba(251,191,36,0.2);
-  border-radius: 10px;
-  font-size: 12px;
-  color: #fbbf24;
-  line-height: 1.6;
-  margin-bottom: 20px;
-}
-
-/* Scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px}
 </style>
 </head>
 <body>
 
-<header class="header">
-  <div class="header-dot"></div>
-  <span class="header-title">AVALON · SKIN PROMPT STUDIO</span>
-  <span class="header-sub">GPT 生成素材提示词库 — 直接复制粘贴即可</span>
-</header>
-
-<nav class="sidebar">
-  <div class="sidebar-label">皮肤主题</div>
-  <button class="skin-btn active" onclick="showSection('dark-gold', this)">
-    <div class="skin-chip" style="background:linear-gradient(135deg,#0f1115,#1a1520);border-color:rgba(217,179,107,0.4)"></div>
-    <div class="skin-info">
-      <div class="skin-name">暗夜金</div>
-      <div class="skin-id">dark-gold</div>
-      <div class="skin-count">已有素材 ✓</div>
-    </div>
-  </button>
-  <button class="skin-btn" onclick="showSection('celestial', this)">
-    <div class="skin-chip" style="background:linear-gradient(135deg,#ddeeff,#b8d8f8)"></div>
-    <div class="skin-info">
-      <div class="skin-name">仙境</div>
-      <div class="skin-id">celestial</div>
-      <div class="skin-count">13 条 prompt</div>
-    </div>
-  </button>
-  <button class="skin-btn" onclick="showSection('ink-wash', this)">
-    <div class="skin-chip" style="background:linear-gradient(135deg,#f4f0ea,#e0d8cc)"></div>
-    <div class="skin-info">
-      <div class="skin-name">水墨古风</div>
-      <div class="skin-id">ink-wash</div>
-      <div class="skin-count">13 条 prompt</div>
-    </div>
-  </button>
-  <button class="skin-btn" onclick="showSection('cyber-neon', this)">
-    <div class="skin-chip" style="background:linear-gradient(135deg,#0d0b16,#1a1030)"></div>
-    <div class="skin-info">
-      <div class="skin-name">赛博霓虹</div>
-      <div class="skin-id">cyber-neon</div>
-      <div class="skin-count">13 条 prompt</div>
-    </div>
-  </button>
-  <button class="skin-btn" onclick="showSection('dark-dungeon', this)">
-    <div class="skin-chip" style="background:linear-gradient(135deg,#0e0a07,#1a1008)"></div>
-    <div class="skin-info">
-      <div class="skin-name">暗黑地牢</div>
-      <div class="skin-id">dark-dungeon</div>
-      <div class="skin-count">13 条 prompt</div>
-    </div>
-  </button>
-  <button class="skin-btn" onclick="showSection('abyss', this)">
-    <div class="skin-chip" style="background:linear-gradient(135deg,#050507,#080818)"></div>
-    <div class="skin-info">
-      <div class="skin-name">深渊</div>
-      <div class="skin-id">abyss</div>
-      <div class="skin-count">13 条 prompt</div>
-    </div>
-  </button>
-
-  <div class="sidebar-divider"></div>
-  <div class="sidebar-label">通用素材</div>
-  <button class="universal-btn" onclick="showSection('universal', this)">
-    <div class="universal-icon">🎯</div>
-    <div class="universal-name">图标 & 任务</div>
-  </button>
-</nav>
-
-<main class="main">
-
-<!-- ══════════════════════════════════════════════════════ -->
-<!-- DARK-GOLD                                             -->
-<!-- ══════════════════════════════════════════════════════ -->
-<div id="section-dark-gold" class="section active">
-  <div class="skin-header">
-    <div class="skin-header-chip" style="background:linear-gradient(135deg,#0f1115,#1a1520);border-color:rgba(217,179,107,0.5)"></div>
-    <div class="skin-header-info">
-      <div class="skin-header-name">暗夜金 <span style="font-size:13px;color:var(--sub);font-weight:400">dark-gold</span></div>
-      <div class="skin-header-id">默认皮肤 — CDN 已有现成素材，无需重新生成</div>
-      <div class="skin-header-mood">中世纪黑暗奇幻 · 亚瑟王城堡 · 烛光石墙 · 暗金色调<br>参考风格：dark fantasy oil painting, Gothic illuminated manuscript</div>
-      <div class="skin-colors">
-        <div class="color-chip"><div class="color-dot" style="background:#0f1115"></div>#0f1115 bg</div>
-        <div class="color-chip"><div class="color-dot" style="background:#1a1d27"></div>#1a1d27 panel</div>
-        <div class="color-chip"><div class="color-dot" style="background:#d9b36b"></div>#d9b36b accent</div>
-      </div>
-    </div>
-  </div>
-  <div class="note-box">
-    ✅ 暗夜金是当前默认皮肤，所有素材已部署在 CDN。<br>
-    路径：<code>https://www.awalon.top/mp-assets/</code>（home-bg-optimized.jpg、in-game-bg-optimized.jpg、table.png、role-split/*.png）<br>
-    如需重新生成更高质量版本，下方提供参考 prompt。
-  </div>
-
-  <div class="cat-section">
-    <div class="cat-header">
-      <div class="cat-title">背景图</div><div class="cat-count">2 张</div>
-    </div>
-    <div class="prompt-grid">
-      <div class="prompt-card">
-        <div class="prompt-card-head">
-          <span class="tag tag-bg">背景</span>
-          <span class="filename">home-bg.jpg</span>
-          <span class="spec-badge">750×1334 · JPG</span>
-        </div>
-        <div class="prompt-body">
-          <div class="prompt-text">Dark fantasy medieval great hall at night, stone walls lit by golden candlelight, banners with sword emblems hanging from vaulted ceiling, misty atmospheric depth, warm amber and gold light against deep navy-charcoal stone, dramatic chiaroscuro shadows, Arthurian castle interior, oil painting style, cinematic composition, bottom third of image darker for UI overlay, no text, no UI elements, no people, vertical 9:16 portrait format</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head">
-          <span class="tag tag-bg">背景</span>
-          <span class="filename">in-game-bg.jpg</span>
-          <span class="spec-badge">750×1334 · JPG</span>
-        </div>
-        <div class="prompt-body">
-          <div class="prompt-text">Dark Arthurian throne room at night, round table silhouette in center obscured by dramatic shadow, iron sconces with flickering candlelight on stone pillars, arched windows showing stormy sky, deep navy and charcoal tones with gold and amber highlights, tense mysterious atmosphere, dark fantasy oil painting style, bottom third darker, no text, no UI, no people, vertical 9:16 portrait format</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-    </div>
+<div class="hd">
+  <div class="hd-dot"></div>
+  <span class="hd-title">AVALON · SKIN STUDIO</span>
+  <div class="hd-sep"></div>
+  <span style="font-size:11px;color:var(--sub)">左选素材 · 中间生成 · 右预览效果</span>
+  <div class="hd-key-wrap">
+    <span class="hd-key-label">OpenAI Key</span>
+    <div class="hd-key-status" id="keyStatus"></div>
+    <input class="hd-key" id="apiKey" type="password" placeholder="sk-..." oninput="onKeyInput()">
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════ -->
-<!-- CELESTIAL                                             -->
-<!-- ══════════════════════════════════════════════════════ -->
-<div id="section-celestial" class="section">
-  <div class="skin-header">
-    <div class="skin-header-chip" style="background:linear-gradient(135deg,#c8e8ff,#a0c8f0)"></div>
-    <div class="skin-header-info">
-      <div class="skin-header-name">仙境 <span style="font-size:13px;color:var(--sub);font-weight:400">celestial</span></div>
-      <div class="skin-header-id">Light skin · 不叠深色遮罩 · 背景需明亮</div>
-      <div class="skin-header-mood">空灵仙境 · 云端宫殿 · 光与雾气 · 轻盈纯净如梦如幻<br>参考风格：Studio Ghibli background art, ethereal Chinese fairy tale, soft watercolor</div>
-      <div class="skin-colors">
-        <div class="color-chip"><div class="color-dot" style="background:#ddeeff"></div>#ddeeff bg</div>
-        <div class="color-chip"><div class="color-dot" style="background:rgba(255,255,255,0.75)"></div>white panel</div>
-        <div class="color-chip"><div class="color-dot" style="background:#2e7fc8"></div>#2e7fc8 accent</div>
+<div class="skin-tabs" id="skinTabs"></div>
+
+<div class="workspace">
+  <!-- ── Left: Asset list ── -->
+  <div class="panel-assets" id="assetPanel"></div>
+
+  <!-- ── Middle: Prompt + Generate ── -->
+  <div class="panel-prompt">
+    <div class="pp-top">
+      <div class="pp-asset-label" id="ppLabel">
+        <span class="pp-asset-name" id="ppName">← 选择左侧素材</span>
+        <span class="pp-spec" id="ppSpec"></span>
       </div>
     </div>
-    <button class="copy-all-btn" onclick="copyAllSkin('celestial')">📋 复制全部 13 条</button>
-  </div>
-
-  <div class="cat-section">
-    <div class="cat-header"><div class="cat-title">背景图</div><div class="cat-count">2 张</div></div>
-    <div class="prompt-grid">
-      <div class="prompt-card">
-        <div class="prompt-card-head">
-          <span class="tag tag-bg">背景</span>
-          <span class="filename">celestial/home-bg.jpg</span>
-          <span class="spec-badge">750×1334 · JPG · BRIGHT</span>
-        </div>
-        <div class="prompt-body">
-          <div class="prompt-text">Ethereal celestial palace floating above clouds, soft luminous light filtering through misty waterfalls, delicate white and azure architecture with glowing lanterns, fairy wisps drifting in gentle breeze, dreamy watercolor style inspired by Studio Ghibli, light and airy color palette of pale blue, white, and soft gold, magical serene atmosphere, no dark shadows, NO dark overlay at bottom, keep entire image bright and luminous, no text, no UI, no people, vertical 9:16 portrait format</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
+    <div class="pp-prompt-area">
+      <textarea class="pp-prompt" id="ppPrompt" placeholder="点击左侧素材查看对应 Prompt…"></textarea>
+      <div class="pp-loading" id="ppLoading">
+        <div class="spinner"></div>
+        <span>正在生成…</span>
       </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head">
-          <span class="tag tag-bg">背景</span>
-          <span class="filename">celestial/in-game-bg.jpg</span>
-          <span class="spec-badge">750×1334 · JPG · BRIGHT</span>
-        </div>
-        <div class="prompt-body">
-          <div class="prompt-text">Enchanted celestial garden courtyard with circular stone platform, glowing fairy lights floating in gentle mist, cherry blossoms and silver-leafed trees, soft azure sky with luminous clouds, delicate carved railings overlooking endless sky, ethereal and dreamlike, Studio Ghibli inspired watercolor style, pale blue and white tones with soft warm gold accents, entire image bright and open, no dark areas, no text, no UI, no people, vertical 9:16 portrait format</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
+      <img class="pp-result-img" id="ppResultImg" alt="生成结果">
+    </div>
+    <div class="pp-actions">
+      <button class="btn btn-primary" id="btnGenerate" onclick="generate()" disabled>⚡ 生成图片</button>
+      <button class="btn btn-ghost" id="btnCopy" onclick="copyPrompt()">复制 Prompt</button>
+      <button class="btn btn-good" id="btnApply" onclick="applyToPreview()" style="display:none">✓ 应用到预览</button>
+      <button class="btn btn-ghost" id="btnDownload" onclick="downloadResult()" style="display:none">↓ 下载</button>
     </div>
   </div>
 
-  <div class="cat-section">
-    <div class="cat-header"><div class="cat-title">圆桌</div><div class="cat-count">1 张</div></div>
-    <div class="prompt-grid" style="grid-template-columns: 1fr;">
-      <div class="prompt-card" style="max-width:600px">
-        <div class="prompt-card-head">
-          <span class="tag tag-table">圆桌</span>
-          <span class="filename">celestial/table.png</span>
-          <span class="spec-badge">600×600 · PNG 透明</span>
-        </div>
-        <div class="prompt-body">
-          <div class="prompt-text">Top-down view of an ethereal round table made of luminous white crystal or polished white marble, delicate floral and cloud engravings in soft blue, gentle luminous glow emanating from the table surface, celestial fairy tale aesthetic, perfect circle shape, transparent PNG background with no floor or environment, only the table itself, no chairs no figures, square 1:1 format, isolated object on transparent background</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
+  <!-- ── Right: Phone Preview ── -->
+  <div class="panel-preview">
+    <div class="preview-tabs">
+      <div class="preview-tab active" onclick="setPreviewTab('home',this)">主页</div>
+      <div class="preview-tab" onclick="setPreviewTab('game',this)">游戏中</div>
+      <div class="preview-tab" onclick="setPreviewTab('role',this)">身份牌</div>
     </div>
-  </div>
-
-  <div class="cat-section">
-    <div class="cat-header"><div class="cat-title">角色卡图 · 正义阵营</div><div class="cat-count">4 张</div></div>
-    <div class="roles-grid">
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-good">正义</span><span class="filename">celestial/merlin.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Portrait of Merlin, wise elderly wizard with long silver hair and kind all-knowing eyes, wearing flowing robes of celestial blue and white with star and cloud embroidery, surrounded by gentle floating lights, ethereal fairy realm atmosphere, soft watercolor illustration style with luminous colors, half-body bust portrait, face and upper chest clearly visible in upper 50% of image, soft blue and white background with bokeh light, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-good">正义</span><span class="filename">celestial/percival.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Portrait of Percival, young noble knight with an earnest and loyal face, wearing silver armor decorated with celestial patterns and a white flowing cape, holding a glowing holy grail, ethereal fairy realm atmosphere, gentle warm light, soft watercolor illustration style, half-body bust portrait, face clearly visible in upper 50% of image, soft blue-white celestial background, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-good">正义</span><span class="filename">celestial/arthur_loyal.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Portrait of a loyal Knight of the Round Table, honest open face with determined eyes, wearing polished silver chainmail and a light blue tunic with Arthur's crest, dependable and steadfast expression, ethereal fairy realm atmosphere, soft watercolor illustration style, half-body bust portrait, face in upper 50% of image, soft luminous background, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-good">正义</span><span class="filename">celestial/lancelot_good.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Portrait of Lancelot the greatest knight in his noble form, confident and powerful with a handsome noble face, gleaming golden armor decorated with celestial motifs, warm heroic glow, ethereal fairy realm atmosphere, soft watercolor illustration style, half-body bust portrait, face in upper 50% of image, luminous blue-gold background, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
+    <div class="phone-frame" id="phoneFrame">
+      <!-- Filled by JS -->
     </div>
-  </div>
-
-  <div class="cat-section">
-    <div class="cat-header"><div class="cat-title">角色卡图 · 邪恶阵营</div><div class="cat-count">6 张</div></div>
-    <div class="roles-grid">
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-evil">邪恶</span><span class="filename">celestial/assassin.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Portrait of a deadly Assassin, wearing a dark midnight-blue hooded cloak contrasting the celestial realm, cold calculating pale eyes barely visible beneath hood, a concealed blade glinting with corrupted light, sinister presence in an otherwise luminous world, ethereal watercolor style but with darker shadow tones, half-body bust portrait, face in upper 50% of image, soft but ominous background, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-evil">邪恶</span><span class="filename">celestial/morgana.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Portrait of Morgana the dark sorceress, strikingly beautiful with long black hair and violet eyes, wearing an elegant gown of deep indigo that seems to absorb the celestial light around her, a subtle purple magical aura that mimics holy light, seductive and dangerous expression, ethereal watercolor style with deeper shadow tones, half-body bust portrait, face in upper 50% of image, ethereal blue-purple background, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-evil">邪恶</span><span class="filename">celestial/mordred.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Portrait of Mordred the treacherous knight, dark full armor with cracked celestial patterns revealing shadow beneath, scheming eyes behind a visor, an aura of corruption in the ethereal realm, the betrayer wearing the guise of light, ethereal watercolor style with corrupted shadow tones, half-body bust portrait, face in upper 50% of image, fractured light background, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-evil">邪恶</span><span class="filename">celestial/oberon.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Portrait of Oberon the lone wolf, wild untamed appearance with piercing suspicious eyes that trust no one, rough traveler's cloak stained from long journeys, an outsider even among allies, isolated dark figure against the bright celestial realm, ethereal watercolor style with muted tones, half-body bust portrait, face in upper 50% of image, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-evil">邪恶</span><span class="filename">celestial/minion.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Portrait of a shadowy Minion of Mordred, featureless dark hooded figure with only glowing eyes visible, wrapped in corrupted shadow cloak, menacing yet anonymous presence in the ethereal realm, ethereal watercolor style with dark shadow tones, half-body bust portrait, face area in upper 50% of image showing glowing eyes, ethereal background, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-evil">邪恶</span><span class="filename">celestial/lancelot_evil.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Portrait of Lancelot corrupted, once the greatest knight now fallen from grace, once-golden celestial armor now cracked with dark energy seeping through, handsome face twisted with inner torment and conflict, both light and darkness visible within him, ethereal watercolor style with split light and shadow tones, half-body bust portrait, face in upper 50% of image, half-bright half-dark background, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-    </div>
+    <div style="margin-top:10px;font-size:10px;color:var(--muted);text-align:center">生成图片后点「应用到预览」即时生效</div>
   </div>
 </div>
-
-<!-- ══════════════════════════════════════════════════════ -->
-<!-- INK-WASH                                              -->
-<!-- ══════════════════════════════════════════════════════ -->
-<div id="section-ink-wash" class="section">
-  <div class="skin-header">
-    <div class="skin-header-chip" style="background:linear-gradient(135deg,#f4f0ea,#d8d0c0)"></div>
-    <div class="skin-header-info">
-      <div class="skin-header-name">水墨古风 <span style="font-size:13px;color:var(--sub);font-weight:400">ink-wash</span></div>
-      <div class="skin-header-id">Light skin · 不叠深色遮罩 · 宣纸质感</div>
-      <div class="skin-header-mood">中国传统水墨画 · 山水意境 · 宣纸质感 · 笔墨留白<br>参考风格：传统水墨画（sumi-e）、范宽山水、陈洪绶人物</div>
-      <div class="skin-colors">
-        <div class="color-chip"><div class="color-dot" style="background:#f4f0ea"></div>#f4f0ea bg</div>
-        <div class="color-chip"><div class="color-dot" style="background:rgba(244,240,234,0.88)"></div>parchment panel</div>
-        <div class="color-chip"><div class="color-dot" style="background:#2d2520"></div>#2d2520 accent</div>
-      </div>
-    </div>
-    <button class="copy-all-btn" onclick="copyAllSkin('ink-wash')">📋 复制全部 13 条</button>
-  </div>
-
-  <div class="cat-section">
-    <div class="cat-header"><div class="cat-title">背景图</div><div class="cat-count">2 张</div></div>
-    <div class="prompt-grid">
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-bg">背景</span><span class="filename">ink-wash/home-bg.jpg</span><span class="spec-badge">750×1334 · JPG · LIGHT</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Traditional Chinese ink wash painting landscape, towering misty mountains with pine trees clinging to cliffs, vast empty sky with minimal ink wash clouds, a small pavilion visible in the distance, warm cream and parchment paper texture background, deep ink black brushstrokes with intentional empty space, classical Chinese sumi-e style with expressive brushwork, sense of vast serene silence, NO dark overlay keep entire image light and airy, no text no UI no people, vertical 9:16 portrait format</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-bg">背景</span><span class="filename">ink-wash/in-game-bg.jpg</span><span class="spec-badge">750×1334 · JPG · LIGHT</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Traditional Chinese ink painting of a scholarly pavilion interior overlooking misty mountain valley, bamboo forest glimpsed through open lattice windows, ink brushstroke screens and calligraphy scrolls on walls, warm parchment and off-white paper texture, deep ink black accents, refined and elegant atmosphere, classical East Asian art style, minimal color with expressive brushwork, NO dark overlay keep image light, no text no UI no people, vertical 9:16 portrait format</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="cat-section">
-    <div class="cat-header"><div class="cat-title">圆桌</div><div class="cat-count">1 张</div></div>
-    <div class="prompt-grid" style="grid-template-columns:1fr"><div class="prompt-card" style="max-width:600px">
-      <div class="prompt-card-head"><span class="tag tag-table">圆桌</span><span class="filename">ink-wash/table.png</span><span class="spec-badge">600×600 · PNG 透明</span></div>
-      <div class="prompt-body">
-        <div class="prompt-text">Top-down view of a traditional Chinese lacquered round table, dark polished rosewood or ebony wood surface with subtle grain, an ink-brushed dragon or phoenix medallion in the center painted in gold and black, delicate carved wooden border with cloud patterns, warm antique aesthetic, isolated object viewed from directly above, transparent PNG background with no floor, only the circular table surface, no objects on table no chairs no figures, square 1:1 format</div>
-        <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-      </div>
-    </div></div>
-  </div>
-
-  <div class="cat-section">
-    <div class="cat-header"><div class="cat-title">角色卡图 · 正义阵营</div><div class="cat-count">4 张</div></div>
-    <div class="roles-grid">
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-good">正义</span><span class="filename">ink-wash/merlin.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Traditional Chinese ink wash portrait of Merlin reimagined as a wise Taoist elder, long white beard and knowing eyes, wearing flowing Taoist robes with star and moon patterns, holding a gnarled wooden staff, sumi-e brushstroke style with warm parchment background, expressive ink painting technique, half-body bust portrait with face clearly in upper 50% of image, ink wash aesthetic with minimal color accents, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-good">正义</span><span class="filename">ink-wash/percival.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Traditional Chinese ink wash portrait of Percival reimagined as a loyal young general, earnest determined face, wearing ink-painted armor with phoenix crest, holding a jade-inlaid sword, sumi-e brushstroke style with warm parchment background, classical Chinese warrior aesthetic, half-body bust portrait face in upper 50% of image, ink wash painting with light blue and gold accents, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-good">正义</span><span class="filename">ink-wash/arthur_loyal.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Traditional Chinese ink wash portrait of a loyal soldier, honest straightforward face with simple ink-painted armor, plain but dependable, classical Chinese brush painting style with parchment background, sumi-e aesthetic, half-body bust portrait face in upper 50% of image, minimal ink wash style, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-good">正义</span><span class="filename">ink-wash/lancelot_good.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Traditional Chinese ink wash portrait of the greatest warrior knight, powerful confident face with gold-inlaid black armor and a dragon crest, commanding heroic presence, sumi-e brushstroke style with warm parchment tones and gold ink accents, classical Chinese military officer aesthetic, half-body bust portrait face in upper 50% of image, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="cat-section">
-    <div class="cat-header"><div class="cat-title">角色卡图 · 邪恶阵营</div><div class="cat-count">6 张</div></div>
-    <div class="roles-grid">
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-evil">邪恶</span><span class="filename">ink-wash/assassin.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Traditional Chinese ink wash portrait of an Assassin, dark robed figure with concealed face showing only sharp cold eyes, black ink brushstroke suggesting shadow and hidden danger, classical Chinese shadow warrior aesthetic, sumi-e style with predominantly dark ink tones on parchment, half-body bust portrait face area in upper 50% of image, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-evil">邪恶</span><span class="filename">ink-wash/morgana.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Traditional Chinese ink wash portrait of Morgana as a dark enchantress, beautiful and dangerous with black hair flowing like ink, wearing dark robes with serpent and lotus motifs, a subtle aura of dark magic, Chinese ink painting style with deep ink tones and subtle red accents, sumi-e brushwork on parchment, half-body bust portrait face in upper 50% of image, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-evil">邪恶</span><span class="filename">ink-wash/mordred.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Traditional Chinese ink wash portrait of Mordred as a treacherous general, dark heavy armor with broken clan crest, scheming calculating eyes, the traitor in disguise, classical Chinese ink painting with heavy dark brushstrokes and minimal detail suggesting hidden menace, sumi-e style, half-body bust portrait face in upper 50% of image, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-evil">邪恶</span><span class="filename">ink-wash/oberon.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Traditional Chinese ink wash portrait of Oberon as a wandering lone wolf, wild unkempt appearance, suspicious eyes that trust nobody, rough worn travel clothes with no allegiance markings, isolated and solitary figure, sumi-e brushwork style on parchment background, half-body bust portrait face in upper 50% of image, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-evil">邪恶</span><span class="filename">ink-wash/minion.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Traditional Chinese ink wash portrait of a shadowy Minion, dark hooded anonymous figure rendered in heavy ink brushstrokes, only glowing eyes visible, anonymous and menacing, sumi-e painting style with dominant dark ink tones, half-body bust portrait face area in upper 50% of image, parchment background with heavy ink, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-evil">邪恶</span><span class="filename">ink-wash/lancelot_evil.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Traditional Chinese ink wash portrait of Lancelot fallen from grace, once-great warrior now consumed by darkness, cracked black armor with fading gold patterns, tormented conflicted face showing inner war between honor and corruption, dramatic split brushwork of light and dark ink, sumi-e style, half-body bust portrait face in upper 50% of image, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════ -->
-<!-- CYBER-NEON                                            -->
-<!-- ══════════════════════════════════════════════════════ -->
-<div id="section-cyber-neon" class="section">
-  <div class="skin-header">
-    <div class="skin-header-chip" style="background:linear-gradient(135deg,#0d0b16,#1a1040);border-color:rgba(232,121,249,0.4)"></div>
-    <div class="skin-header-info">
-      <div class="skin-header-name">赛博霓虹 <span style="font-size:13px;color:var(--sub);font-weight:400">cyber-neon</span></div>
-      <div class="skin-header-id">Dark skin · 霓虹感强烈 · 雨夜氛围</div>
-      <div class="skin-header-mood">赛博朋克霓虹都市 · 雨夜反光 · 全息投影 · 躁动危险<br>参考风格：Blade Runner 2049, Ghost in the Shell, cyberpunk neon noir</div>
-      <div class="skin-colors">
-        <div class="color-chip"><div class="color-dot" style="background:#0d0b16"></div>#0d0b16 bg</div>
-        <div class="color-chip"><div class="color-dot" style="background:rgba(20,16,40,0.88)"></div>dark panel</div>
-        <div class="color-chip"><div class="color-dot" style="background:#e879f9"></div>#e879f9 neon pink</div>
-      </div>
-    </div>
-    <button class="copy-all-btn" onclick="copyAllSkin('cyber-neon')">📋 复制全部 13 条</button>
-  </div>
-
-  <div class="cat-section">
-    <div class="cat-header"><div class="cat-title">背景图</div><div class="cat-count">2 张</div></div>
-    <div class="prompt-grid">
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-bg">背景</span><span class="filename">cyber-neon/home-bg.jpg</span><span class="spec-badge">750×1334 · JPG</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Cyberpunk neon city rooftop at night, rain-slicked surfaces reflecting neon signs in magenta pink and electric cyan, towering megastructure skyscrapers with holographic advertisements, dark purple-black sky with neon light pollution, dramatic Blade Runner 2049 aesthetic, cinematic digital painting, deep contrast with vivid neon highlights, bottom third darker for UI overlay, no text no UI no people, vertical 9:16 portrait format</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-bg">背景</span><span class="filename">cyber-neon/in-game-bg.jpg</span><span class="spec-badge">750×1334 · JPG</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Cyberpunk underground club or secret meeting room, circular neon-lit table in center with holographic displays floating above, magenta and purple neon strip lighting on dark walls, rain visible outside floor-to-ceiling windows, electric atmosphere of danger and intrigue, Blade Runner 2049 style digital painting, deep purple-black palette with neon pink and cyan accents, bottom third darker, no text no UI no people, vertical 9:16 portrait format</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="cat-section">
-    <div class="cat-header"><div class="cat-title">圆桌</div><div class="cat-count">1 张</div></div>
-    <div class="prompt-grid" style="grid-template-columns:1fr"><div class="prompt-card" style="max-width:600px">
-      <div class="prompt-card-head"><span class="tag tag-table">圆桌</span><span class="filename">cyber-neon/table.png</span><span class="spec-badge">600×600 · PNG 透明</span></div>
-      <div class="prompt-body">
-        <div class="prompt-text">Top-down view of a futuristic cyberpunk round table, dark matte carbon-fiber or black metal surface, glowing neon pink circuit-board pattern etched into the surface with electric cyan edge lighting, holographic interface elements embedded in the rim, cyberpunk tech aesthetic, perfect circle viewed from directly above, transparent PNG background no floor no environment, only the table surface, no objects no chairs no figures, square 1:1 format</div>
-        <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-      </div>
-    </div></div>
-  </div>
-
-  <div class="cat-section">
-    <div class="cat-header"><div class="cat-title">角色卡图 · 正义阵营</div><div class="cat-count">4 张</div></div>
-    <div class="roles-grid">
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-good">正义</span><span class="filename">cyber-neon/merlin.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Cyberpunk portrait of Merlin reimagined as an elderly tech oracle, silver augmented reality implants around knowing eyes, wearing a dark hooded coat with glowing blue circuit patterns, the wise hacker who sees all data streams, neon-lit cyberpunk digital art style, magenta and cyan neon light on deep purple-black, half-body bust portrait face in upper 50% of image, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-good">正义</span><span class="filename">cyber-neon/percival.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Cyberpunk portrait of Percival reimagined as a loyal enforcement officer, earnest determined face with blue holographic visor, white tactical armor with cyan light accents, holding a glowing data grail device, neon-lit cyberpunk digital art style, blue and cyan neon on dark background, half-body bust portrait face in upper 50% of image, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-good">正义</span><span class="filename">cyber-neon/arthur_loyal.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Cyberpunk portrait of a loyal soldier, honest average face with standard-issue tactical gear and blue team insignia, dependable and professional, neon-lit cyberpunk style with cool blue tones, deep purple-black background with subtle cyan lighting, half-body bust portrait face in upper 50% of image, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-good">正义</span><span class="filename">cyber-neon/lancelot_good.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Cyberpunk portrait of Lancelot as an elite enhanced super-soldier, powerful build with gold-toned exosuit and blade implants, confident handsome face with golden eye implants, the ultimate warrior of the resistance, neon-lit cyberpunk digital art with gold and cyan highlights on dark, half-body bust portrait face in upper 50% of image, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="cat-section">
-    <div class="cat-header"><div class="cat-title">角色卡图 · 邪恶阵营</div><div class="cat-count">6 张</div></div>
-    <div class="roles-grid">
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-evil">邪恶</span><span class="filename">cyber-neon/assassin.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Cyberpunk portrait of an Assassin, sleek black stealth suit with active camouflage shimmer, face hidden behind a red-glowing mask with single camera lens, holding a monomolecular blade, lethal and invisible, neon-lit cyberpunk style with deep red and black tones against purple-black background, half-body bust portrait face area in upper 50% of image, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-evil">邪恶</span><span class="filename">cyber-neon/morgana.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Cyberpunk portrait of Morgana as a dangerous AI hacker or femme fatale, beautiful face with violet cybernetic eye implants, black bodysuit with neon pink neural-interface patterns, a master of digital deception who mimics ally signals, neon-lit cyberpunk style with magenta and violet, half-body bust portrait face in upper 50% of image, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-evil">邪恶</span><span class="filename">cyber-neon/mordred.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Cyberpunk portrait of Mordred as a corporate traitor, black tactical armor with hidden red identity marker underneath blue paint, scheming cold eyes, a mole inside the resistance, neon-lit cyberpunk style with red and black against dark purple, half-body bust portrait face in upper 50% of image, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-evil">邪恶</span><span class="filename">cyber-neon/oberon.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Cyberpunk portrait of Oberon as a rogue operative with no allegiances, independent dangerous mercenary, face scarred and suspicious behind cracked visor, ragged mix-matched gear from multiple factions, a lone wolf who trusts nobody, neon-lit cyberpunk style muted tones with dim orange glow, half-body bust portrait face in upper 50% of image, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-evil">邪恶</span><span class="filename">cyber-neon/minion.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Cyberpunk portrait of a generic corporate Minion, black helmet with red visor concealing all features, anonymous mass-produced enforcer uniform, menacing but faceless, neon-lit cyberpunk style with red and black, half-body bust portrait upper area showing only red glowing visor, deep purple-black background, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-evil">邪恶</span><span class="filename">cyber-neon/lancelot_evil.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Cyberpunk portrait of Lancelot corrupted, elite soldier who defected to the corporation, cracked golden exosuit leaking dark energy, face showing intense inner conflict between loyalty and betrayal, cyberpunk style with gold and dark energy split, half lit by blue team light half by red corporation glow, half-body bust portrait face in upper 50% of image, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════ -->
-<!-- DARK-DUNGEON                                          -->
-<!-- ══════════════════════════════════════════════════════ -->
-<div id="section-dark-dungeon" class="section">
-  <div class="skin-header">
-    <div class="skin-header-chip" style="background:linear-gradient(135deg,#0e0a07,#1a1008);border-color:rgba(200,144,42,0.4)"></div>
-    <div class="skin-header-info">
-      <div class="skin-header-name">暗黑地牢 <span style="font-size:13px;color:var(--sub);font-weight:400">dark-dungeon</span></div>
-      <div class="skin-header-id">Dark skin · 烛火骷髅 · 哥特压抑感</div>
-      <div class="skin-header-mood">哥特地牢 · 黑暗中世纪 · 火把照明 · 原始恐惧<br>参考风格：Diablo III art, grimdark medieval, Gothic dungeon illustration</div>
-      <div class="skin-colors">
-        <div class="color-chip"><div class="color-dot" style="background:#0e0a07"></div>#0e0a07 bg</div>
-        <div class="color-chip"><div class="color-dot" style="background:rgba(20,14,8,0.90)"></div>dark panel</div>
-        <div class="color-chip"><div class="color-dot" style="background:#c8902a"></div>#c8902a amber</div>
-      </div>
-    </div>
-    <button class="copy-all-btn" onclick="copyAllSkin('dark-dungeon')">📋 复制全部 13 条</button>
-  </div>
-
-  <div class="cat-section">
-    <div class="cat-header"><div class="cat-title">背景图</div><div class="cat-count">2 张</div></div>
-    <div class="prompt-grid">
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-bg">背景</span><span class="filename">dark-dungeon/home-bg.jpg</span><span class="spec-badge">750×1334 · JPG</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Dark Gothic dungeon hall, rough-hewn stone walls with iron wall torches burning amber, rusted chains and worn skulls as grim decoration, oppressive low vaulted ceiling, deep warm brown and near-black color palette with amber torchlight pools, grimdark medieval atmosphere, Diablo III inspired oil painting, dramatic shadows and flickers of flame, bottom third darker for UI overlay, no text no UI no people, vertical 9:16 portrait format</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-bg">背景</span><span class="filename">dark-dungeon/in-game-bg.jpg</span><span class="spec-badge">750×1334 · JPG</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Gothic dungeon chamber repurposed as a secret council room, torchlit stone alcoves with ancient weapons mounted on walls, bones and animal skulls as grim trophies, rough stone throne at far end, deep brown-black with amber and orange torch glow, sinister conspiratorial atmosphere, grimdark fantasy illustration style, bottom third darker, no text no UI no people, vertical 9:16 portrait format</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="cat-section">
-    <div class="cat-header"><div class="cat-title">圆桌</div><div class="cat-count">1 张</div></div>
-    <div class="prompt-grid" style="grid-template-columns:1fr"><div class="prompt-card" style="max-width:600px">
-      <div class="prompt-card-head"><span class="tag tag-table">圆桌</span><span class="filename">dark-dungeon/table.png</span><span class="spec-badge">600×600 · PNG 透明</span></div>
-      <div class="prompt-body">
-        <div class="prompt-text">Top-down view of a dungeon round table, rough-hewn dark stone surface with carved rune circle or skull pattern, iron bolts and chains embedded at the edges, amber torchlight reflected on the surface, grimdark fantasy aesthetic, perfect circle viewed from directly above, transparent PNG background no floor, only the circular stone table surface, no objects no chairs no figures, square 1:1 format</div>
-        <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-      </div>
-    </div></div>
-  </div>
-
-  <div class="cat-section">
-    <div class="cat-header"><div class="cat-title">角色卡图 · 正义阵营</div><div class="cat-count">4 张</div></div>
-    <div class="roles-grid">
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-good">正义</span><span class="filename">dark-dungeon/merlin.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Grimdark portrait of Merlin, battle-worn ancient wizard with deep-set knowing eyes, dark weathered robes covered in runes and ash, holding a cracked staff glowing with amber light, a survivor of countless dark battles, grimdark fantasy oil painting style, torchlit amber and shadow background, half-body bust portrait face in upper 50% of image, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-good">正义</span><span class="filename">dark-dungeon/percival.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Grimdark portrait of Percival, young battle-scarred knight with determined eyes, worn dented armor with holy symbol barely visible under grime, clutching a battered but glowing chalice, grim resolve in a hopeless dungeon, grimdark fantasy style, torchlit amber tones, half-body bust portrait face in upper 50% of image, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-good">正义</span><span class="filename">dark-dungeon/arthur_loyal.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Grimdark portrait of a loyal soldier, weary honest face, battered chainmail with simple crest, the common fighter who keeps going despite everything, grimdark fantasy illustration, warm amber torchlight on dark stone background, half-body bust portrait face in upper 50% of image, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-good">正义</span><span class="filename">dark-dungeon/lancelot_good.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Grimdark portrait of Lancelot the greatest warrior, imposing scarred face with cold determined eyes, heavy black and gold armor battle-worn but powerful, an unstoppable force for good in the darkness, grimdark fantasy oil painting, amber torchlight on dark stone, half-body bust portrait face in upper 50% of image, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="cat-section">
-    <div class="cat-header"><div class="cat-title">角色卡图 · 邪恶阵营</div><div class="cat-count">6 张</div></div>
-    <div class="roles-grid">
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-evil">邪恶</span><span class="filename">dark-dungeon/assassin.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Grimdark portrait of an Assassin, black leather and shadow wrappings with only cold merciless eyes visible above a mask, a curved dark blade dripping, skulking in dungeon shadows, grimdark fantasy illustration with dark brown-black and minimal amber highlight, half-body bust portrait face area in upper 50% of image, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-evil">邪恶</span><span class="filename">dark-dungeon/morgana.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Grimdark portrait of Morgana the dark witch, terrifying pale beauty with black hollow eyes, wearing torn dark robes with bone ornaments, surrounded by cursed black magic flame, dangerous and ancient evil presence, grimdark fantasy illustration style, dark amber and shadow tones, half-body bust portrait face in upper 50% of image, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-evil">邪恶</span><span class="filename">dark-dungeon/mordred.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Grimdark portrait of Mordred the traitor knight, massive dark armor with broken crest and red skull markings, face of cold hatred and ambition, the most dangerous enemy from within, grimdark dark fantasy illustration, deep shadow with amber rim light, half-body bust portrait face in upper 50% of image, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-evil">邪恶</span><span class="filename">dark-dungeon/oberon.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Grimdark portrait of Oberon the wild outsider, feral untamed appearance, eyes darting with suspicion, crude mismatched armor from fallen enemies, an outcast even in the dungeon, grimdark illustration style with dim amber torchlight barely illuminating his face, half-body bust portrait face in upper 50% of image, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-evil">邪恶</span><span class="filename">dark-dungeon/minion.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Grimdark portrait of a dungeon Minion, dark hooded executioner figure with iron skull mask, anonymous and terrifying, dungeon chains across heavy black plate, grimdark illustration with near-black and amber torchlight, half-body bust portrait face area in upper 50% showing only iron mask, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-evil">邪恶</span><span class="filename">dark-dungeon/lancelot_evil.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Grimdark portrait of Lancelot fallen and corrupted, once-great knight now consumed by dungeon darkness, battle-scarred face with haunted guilty eyes, blackened cracked armor with faded gold that once symbolized honor, grimdark illustration, amber light and deep shadow split, half-body bust portrait face in upper 50% of image, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════ -->
-<!-- ABYSS                                                 -->
-<!-- ══════════════════════════════════════════════════════ -->
-<div id="section-abyss" class="section">
-  <div class="skin-header">
-    <div class="skin-header-chip" style="background:linear-gradient(135deg,#050507,#080818);border-color:rgba(64,96,192,0.4)"></div>
-    <div class="skin-header-info">
-      <div class="skin-header-name">深渊 <span style="font-size:13px;color:var(--sub);font-weight:400">abyss</span></div>
-      <div class="skin-header-id">Dark skin · 极暗 · 克苏鲁 · 深海/宇宙虚空</div>
-      <div class="skin-header-mood">深渊深海或宇宙虚空 · 克苏鲁意味 · 古老而无法理解的存在<br>参考风格：H.P. Lovecraft cosmic horror, deep sea bioluminescence, dark sci-fi void</div>
-      <div class="skin-colors">
-        <div class="color-chip"><div class="color-dot" style="background:#050507"></div>#050507 bg</div>
-        <div class="color-chip"><div class="color-dot" style="background:rgba(8,8,16,0.92)"></div>void panel</div>
-        <div class="color-chip"><div class="color-dot" style="background:#4060c0"></div>#4060c0 cold blue</div>
-      </div>
-    </div>
-    <button class="copy-all-btn" onclick="copyAllSkin('abyss')">📋 复制全部 13 条</button>
-  </div>
-
-  <div class="cat-section">
-    <div class="cat-header"><div class="cat-title">背景图</div><div class="cat-count">2 张</div></div>
-    <div class="prompt-grid">
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-bg">背景</span><span class="filename">abyss/home-bg.jpg</span><span class="spec-badge">750×1334 · JPG</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Abyssal deep ocean or cosmic void, pitch black with faint bioluminescent blue and violet light from creatures barely visible in the depths, ancient unknowable structures looming below, oppressive vastness and silence, Lovecraftian scale and horror, cold blue and indigo on absolute black, no light source visible only diffused bioluminescence, bottom third darker for UI overlay, no text no UI no people, vertical 9:16 portrait format</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-bg">背景</span><span class="filename">abyss/in-game-bg.jpg</span><span class="spec-badge">750×1334 · JPG</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Ancient underwater stone chamber in absolute darkness, walls covered in unknowable glowing runes and impossible geometry, cold blue bioluminescent light revealing the edges of vast columns and archways, cosmic horror atmosphere, Lovecraftian elder architecture, a meeting place that should not exist, pitch black with cold blue and violet glow, bottom third darker, no text no UI no people, vertical 9:16 portrait format</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="cat-section">
-    <div class="cat-header"><div class="cat-title">圆桌</div><div class="cat-count">1 张</div></div>
-    <div class="prompt-grid" style="grid-template-columns:1fr"><div class="prompt-card" style="max-width:600px">
-      <div class="prompt-card-head"><span class="tag tag-table">圆桌</span><span class="filename">abyss/table.png</span><span class="spec-badge">600×600 · PNG 透明</span></div>
-      <div class="prompt-body">
-        <div class="prompt-text">Top-down view of an ancient cosmic round table made of void-black stone or crystallized darkness, cold blue glowing elder sign or tentacle motif engraved in the center, unknowable rune border pulsing with faint bioluminescent violet, Lovecraftian cosmic horror aesthetic, perfect circle viewed from directly above, transparent PNG background no floor, only the circular table surface, no objects no chairs no figures, square 1:1 format</div>
-        <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-      </div>
-    </div></div>
-  </div>
-
-  <div class="cat-section">
-    <div class="cat-header"><div class="cat-title">角色卡图 · 正义阵营</div><div class="cat-count">4 张</div></div>
-    <div class="roles-grid">
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-good">正义</span><span class="filename">abyss/merlin.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Cosmic horror portrait of Merlin, ancient beyond comprehension, eyes containing galaxies and vast knowledge no mortal should possess, wearing robes that seem made of woven starlight and void, a being of cosmic scale condensed into human form, digital painting in cold blue and deep black, bioluminescent accents, half-body bust portrait face in upper 50% of image, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-good">正义</span><span class="filename">abyss/percival.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Cosmic horror portrait of Percival, a brave soul in the abyss with determined face illuminated by cold blue light, wearing void-touched armor that seems to absorb surrounding darkness, holding a chalice of bioluminescent light in the depths, digital painting with cold blue on absolute black background, half-body bust portrait face in upper 50% of image, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-good">正义</span><span class="filename">abyss/arthur_loyal.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Cosmic horror portrait of a loyal soldier in the abyss, determined honest face illuminated by faint blue glow, dark void-touched armor, a small light of loyalty in the infinite darkness, digital painting style with cold blue accent on absolute black, half-body bust portrait face in upper 50% of image, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-good">正义</span><span class="filename">abyss/lancelot_good.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Cosmic horror portrait of Lancelot as champion of the abyss, powerful presence with cold blue glowing eyes, deep void armor crackling with contained cosmic energy, the greatest warrior even in the depths, digital painting with cold blue and deep black, half-body bust portrait face in upper 50% of image, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="cat-section">
-    <div class="cat-header"><div class="cat-title">角色卡图 · 邪恶阵营</div><div class="cat-count">6 张</div></div>
-    <div class="roles-grid">
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-evil">邪恶</span><span class="filename">abyss/assassin.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Cosmic horror portrait of an Assassin of the void, a being of pure shadow with eyes like dead stars, wearing darkness itself as a cloak, a blade made of crystallized void, Lovecraftian horror figure that exists between dimensions, digital painting with violet and cold blue against absolute black, half-body bust portrait face area in upper 50% showing only pale glowing eyes, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-evil">邪恶</span><span class="filename">abyss/morgana.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Cosmic horror portrait of Morgana as an entity from beyond, beautiful and terrible, with eyes that see through all deception, dark robes flowing like deep ocean currents, tentacle-like aura of dark magic barely contained in human form, Lovecraftian beauty horror, cold violet and blue on absolute black, half-body bust portrait face in upper 50% of image, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-evil">邪恶</span><span class="filename">abyss/mordred.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Cosmic horror portrait of Mordred as a void herald, dark armor that seems to be collapsing inward like a black hole, cold empty eyes that have seen the abyss and been consumed by it, the ultimate betrayer who serves the void, digital painting cold blue and absolute black, half-body bust portrait face in upper 50% of image, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-evil">邪恶</span><span class="filename">abyss/oberon.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Cosmic horror portrait of Oberon as a deep sea aberration, wild and unknowable, eyes like deep ocean trenches that reflect no light, form partially dissolving into the void around the edges, an entity that trusts and aligns with nothing, digital painting in cold blue-black bioluminescent style, half-body bust portrait face area in upper 50% of image, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-evil">邪恶</span><span class="filename">abyss/minion.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Cosmic horror portrait of a void Minion, a humanoid silhouette of pure darkness with two cold blue pinpoint eyes, its form blending into the surrounding abyss, impossible to tell where it ends and the void begins, digital painting absolute black with cold blue eye glow, half-body bust portrait upper area in upper 50% of image showing only the two cold light points, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-evil">邪恶</span><span class="filename">abyss/lancelot_evil.png</span><span class="spec-badge">400×480 · PNG · 面部居上</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Cosmic horror portrait of Lancelot consumed by the abyss, once a champion now an avatar of the void, his form half-dissolved into cold blue darkness, face a war between his last shred of humanity and the void claiming him, digital painting split between faint warm human glow and overwhelming cold void blue-black, half-body bust portrait face in upper 50% of image, no text, PNG 400x480</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════════════ -->
-<!-- UNIVERSAL                                             -->
-<!-- ══════════════════════════════════════════════════════ -->
-<div id="section-universal" class="section">
-  <div style="margin-bottom:24px">
-    <div style="font-size:18px;font-weight:700;margin-bottom:6px">通用素材</div>
-    <div style="font-size:12px;color:var(--sub)">这些素材不需要皮肤变体，全部皮肤共用一套</div>
-  </div>
-
-  <div class="universal-section">
-    <div class="universal-title">UI 图标（3 个）</div>
-    <div class="roles-grid">
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-universal">图标</span><span class="filename">ui-icons/history_scroll.png</span><span class="spec-badge">120×120 · PNG 透明</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Simple bold icon of an ancient scroll partially unrolled, thick outlined flat icon design style, white lines on transparent background, no fill no gradients single color stroke, clean legible at small size, 120x120 square, PNG transparent background</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-universal">图标</span><span class="filename">ui-icons/stats_bars.png</span><span class="spec-badge">120×120 · PNG 透明</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Simple bold icon of a bar chart with three ascending bars and a small sword or shield overlaid in corner, representing battle statistics, thick outlined flat icon design style, white lines on transparent background, no fill no gradients, clean legible at small size, 120x120 square, PNG transparent background</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-universal">图标</span><span class="filename">ui-icons/kill.png</span><span class="spec-badge">120×120 · PNG 透明</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Simple bold icon of a dagger or assassin's blade pointing downward at a dramatic angle, thick outlined flat icon design style, white lines on transparent background, no fill no gradients, sharp and dangerous feeling, clean legible at small size, 120x120 square, PNG transparent background</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="universal-section">
-    <div class="universal-title">任务结果图（2 张）</div>
-    <div class="prompt-grid">
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-universal">任务</span><span class="filename">quest-success-420x300.png</span><span class="spec-badge">420×300 · PNG</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Dramatic cinematic illustration of quest success, knights raising glowing shields triumphantly with golden light bursting through storm clouds, rays of divine light, heroic victorious moment, warm gold and white tones, oil painting style, horizontal landscape format, no text no UI, 420x300 landscape</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-      <div class="prompt-card">
-        <div class="prompt-card-head"><span class="tag tag-universal">任务</span><span class="filename">quest-failed-420x300.png</span><span class="spec-badge">420×300 · PNG</span></div>
-        <div class="prompt-body">
-          <div class="prompt-text">Dramatic cinematic illustration of mission failure and betrayal, a dark shadowy figure sabotaging from within, broken seal or burning scroll, sense of doom and treachery, red and dark crimson tones with smoke, oil painting style, horizontal landscape format, no text no UI, 420x300 landscape</div>
-          <button class="copy-btn" onclick="copyPrompt(this)">复制 Prompt</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-</main>
 
 <script>
-function showSection(id, btn) {
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.skin-btn, .universal-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById('section-' + id).classList.add('active');
-  btn.classList.add('active');
+// ══════════════════════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════════════════════
+
+const SKINS = {
+  'dark-gold':    { name:'暗夜金',    chip:'linear-gradient(135deg,#0f1115,#1a1520)', chipBorder:'rgba(217,179,107,.5)', isDark:true,
+    vars:{'--aw-bg':'#0f1115','--aw-bg-2':'#161b24','--aw-panel':'rgba(19,23,31,.82)','--aw-panel-border':'rgba(255,255,255,.10)','--aw-text':'#eef1f7','--aw-subtext':'#aeb6c7','--aw-accent':'#d9b36b','--aw-accent-text':'#1a1200','--aw-nav-bg':'rgba(12,16,24,.88)','--aw-nav-border':'rgba(255,255,255,.08)','--aw-input-bg':'rgba(255,255,255,.06)','--aw-input-border':'rgba(255,255,255,.14)','--aw-btn-ghost-border':'rgba(255,255,255,.22)','--aw-btn-ghost-text':'#eef1f7'}},
+  'celestial':    { name:'仙境',      chip:'linear-gradient(135deg,#c8e8ff,#a0c8f0)', chipBorder:'rgba(46,127,200,.4)', isDark:false,
+    vars:{'--aw-bg':'#ddeeff','--aw-bg-2':'#c8e0f8','--aw-panel':'rgba(255,255,255,.75)','--aw-panel-border':'rgba(100,160,220,.25)','--aw-text':'#1a2a3a','--aw-subtext':'#4a6a8a','--aw-accent':'#2e7fc8','--aw-accent-text':'#ffffff','--aw-nav-bg':'rgba(200,230,255,.90)','--aw-nav-border':'rgba(100,160,220,.20)','--aw-input-bg':'rgba(255,255,255,.60)','--aw-input-border':'rgba(100,160,220,.30)','--aw-btn-ghost-border':'rgba(46,127,200,.35)','--aw-btn-ghost-text':'#2e7fc8'}},
+  'ink-wash':     { name:'水墨古风',  chip:'linear-gradient(135deg,#f4f0ea,#d8d0c0)', chipBorder:'rgba(45,37,32,.3)', isDark:false,
+    vars:{'--aw-bg':'#f4f0ea','--aw-bg-2':'#e8e2d8','--aw-panel':'rgba(244,240,234,.88)','--aw-panel-border':'rgba(0,0,0,.12)','--aw-text':'#1a1612','--aw-subtext':'#6b5f54','--aw-accent':'#2d2520','--aw-accent-text':'#f4f0ea','--aw-nav-bg':'rgba(234,230,220,.92)','--aw-nav-border':'rgba(0,0,0,.08)','--aw-input-bg':'rgba(255,255,255,.70)','--aw-input-border':'rgba(0,0,0,.16)','--aw-btn-ghost-border':'rgba(0,0,0,.22)','--aw-btn-ghost-text':'#2d2520'}},
+  'cyber-neon':   { name:'赛博霓虹',  chip:'linear-gradient(135deg,#0d0b16,#1a1040)', chipBorder:'rgba(232,121,249,.5)', isDark:true,
+    vars:{'--aw-bg':'#0d0b16','--aw-bg-2':'#14102a','--aw-panel':'rgba(20,16,40,.88)','--aw-panel-border':'rgba(232,121,249,.15)','--aw-text':'#f0e8ff','--aw-subtext':'#b097d8','--aw-accent':'#e879f9','--aw-accent-text':'#1a0020','--aw-nav-bg':'rgba(10,6,22,.92)','--aw-nav-border':'rgba(232,121,249,.12)','--aw-input-bg':'rgba(255,255,255,.05)','--aw-input-border':'rgba(232,121,249,.20)','--aw-btn-ghost-border':'rgba(232,121,249,.30)','--aw-btn-ghost-text':'#f0e8ff'}},
+  'dark-dungeon': { name:'暗黑地牢',  chip:'linear-gradient(135deg,#0e0a07,#1a1008)', chipBorder:'rgba(200,144,42,.4)', isDark:true,
+    vars:{'--aw-bg':'#0e0a07','--aw-bg-2':'#1a1208','--aw-panel':'rgba(20,14,8,.90)','--aw-panel-border':'rgba(180,130,60,.15)','--aw-text':'#e8d8b8','--aw-subtext':'#9a8060','--aw-accent':'#c8902a','--aw-accent-text':'#0e0a07','--aw-nav-bg':'rgba(10,6,2,.92)','--aw-nav-border':'rgba(180,130,60,.10)','--aw-input-bg':'rgba(255,255,255,.04)','--aw-input-border':'rgba(180,130,60,.18)','--aw-btn-ghost-border':'rgba(200,144,42,.30)','--aw-btn-ghost-text':'#e8d8b8'}},
+  'abyss':        { name:'深渊',      chip:'linear-gradient(135deg,#050507,#080818)', chipBorder:'rgba(64,96,192,.4)', isDark:true,
+    vars:{'--aw-bg':'#050507','--aw-bg-2':'#0a0a12','--aw-panel':'rgba(8,8,16,.92)','--aw-panel-border':'rgba(100,120,180,.12)','--aw-text':'#d0d8f0','--aw-subtext':'#7080a8','--aw-accent':'#4060c0','--aw-accent-text':'#ffffff','--aw-nav-bg':'rgba(2,2,8,.95)','--aw-nav-border':'rgba(80,100,160,.10)','--aw-input-bg':'rgba(255,255,255,.04)','--aw-input-border':'rgba(80,100,160,.16)','--aw-btn-ghost-border':'rgba(80,100,160,.30)','--aw-btn-ghost-text':'#d0d8f0'}},
+};
+
+const CDN = 'https://www.awalon.top/mp-assets';
+const ASSETS = [
+  {id:'home-bg',    name:'主页背景',  file:'home-bg.jpg',       cdnFile:'home-bg-optimized.jpg', cat:'背景图', tag:'bg',    spec:'1024×1792 · JPG', dalleSize:'1024x1792', tagColor:'#a78bfa'},
+  {id:'in-game-bg', name:'游戏背景',  file:'in-game-bg.jpg',    cdnFile:'in-game-bg-optimized.jpg', cat:'背景图', tag:'bg', spec:'1024×1792 · JPG', dalleSize:'1024x1792', tagColor:'#a78bfa'},
+  {id:'table',      name:'圆桌',      file:'table.png',          cdnFile:'table.png',             cat:'圆桌',   tag:'table', spec:'1024×1024 · PNG', dalleSize:'1024x1024', tagColor:'#fbbf24'},
+  {id:'merlin',     name:'梅林',      file:'role-split/merlin.png',      cat:'角色·正义', tag:'good',  spec:'1024×1024 · PNG', dalleSize:'1024x1024', tagColor:'#4ade80'},
+  {id:'percival',   name:'派西维尔',  file:'role-split/percival.png',    cat:'角色·正义', tag:'good',  spec:'1024×1024 · PNG', dalleSize:'1024x1024', tagColor:'#4ade80'},
+  {id:'arthur_loyal',name:'忠臣',     file:'role-split/arthur_loyal.png',cat:'角色·正义', tag:'good',  spec:'1024×1024 · PNG', dalleSize:'1024x1024', tagColor:'#4ade80'},
+  {id:'lancelot_good',name:'兰斯洛特·正义',file:'role-split/lancelot_good.png',cat:'角色·正义',tag:'good',spec:'1024×1024 · PNG',dalleSize:'1024x1024',tagColor:'#4ade80'},
+  {id:'assassin',   name:'刺客',      file:'role-split/assassin.png',    cat:'角色·邪恶', tag:'evil',  spec:'1024×1024 · PNG', dalleSize:'1024x1024', tagColor:'#f87171'},
+  {id:'morgana',    name:'莫甘娜',    file:'role-split/morgana.png',     cat:'角色·邪恶', tag:'evil',  spec:'1024×1024 · PNG', dalleSize:'1024x1024', tagColor:'#f87171'},
+  {id:'mordred',    name:'莫德雷德',  file:'role-split/mordred.png',     cat:'角色·邪恶', tag:'evil',  spec:'1024×1024 · PNG', dalleSize:'1024x1024', tagColor:'#f87171'},
+  {id:'oberon',     name:'奥伯伦',    file:'role-split/oberon.png',      cat:'角色·邪恶', tag:'evil',  spec:'1024×1024 · PNG', dalleSize:'1024x1024', tagColor:'#f87171'},
+  {id:'minion',     name:'爪牙',      file:'role-split/minion.png',      cat:'角色·邪恶', tag:'evil',  spec:'1024×1024 · PNG', dalleSize:'1024x1024', tagColor:'#f87171'},
+  {id:'lancelot_evil',name:'兰斯洛特·邪恶',file:'role-split/lancelot_evil.png',cat:'角色·邪恶',tag:'evil',spec:'1024×1024 · PNG',dalleSize:'1024x1024',tagColor:'#f87171'},
+];
+
+const PROMPTS = {
+  'dark-gold':{
+    'home-bg':`Dark fantasy medieval great hall at night, stone walls lit by golden candlelight, banners with sword emblems hanging from vaulted ceiling, misty atmospheric depth, warm amber and gold light against deep navy-charcoal stone, dramatic chiaroscuro shadows, Arthurian castle interior, oil painting style, cinematic composition, bottom third of image darker for UI overlay, no text, no UI elements, no people, vertical 9:16 portrait format`,
+    'in-game-bg':`Dark Arthurian throne room at night, round table silhouette in center obscured by dramatic shadow, iron sconces with flickering candlelight on stone pillars, arched windows showing stormy sky, deep navy and charcoal tones with gold and amber highlights, tense mysterious atmosphere, dark fantasy oil painting style, bottom third darker, no text, no UI, no people, vertical 9:16 portrait format`,
+    'table':`Top-down view of a medieval round table, dark oak wood texture with carved sword-and-shield emblem in center, gold inlay decorative border, worn Arthurian aesthetic, perfect circle viewed from directly above, transparent PNG background no floor, only the circular table surface, no chairs no figures, square 1:1 format`,
+    'merlin':`Dark fantasy portrait of Merlin, wise elderly wizard with long silver beard and piercing knowing eyes, wearing deep blue star-patterned robes, holding a glowing golden staff, candlelit stone castle background, dramatic chiaroscuro oil painting, warm gold and navy tones, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'percival':`Dark fantasy portrait of Percival, young noble knight in polished silver armor with golden trim, earnest loyal expression, holding a glowing holy grail, candlelit stone castle, dark fantasy oil painting, warm gold and silver tones, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'arthur_loyal':`Dark fantasy portrait of a loyal Knight of the Round Table, honest dependable face, silver chainmail and blue tunic with Arthur's crest, determined expression, candlelit stone background, dark fantasy oil painting, warm amber and navy, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'lancelot_good':`Dark fantasy portrait of Lancelot the greatest knight, powerful confident, handsome noble face, gleaming gold-trimmed armor with lion crest, heroic warm light, dark fantasy oil painting, gold and deep blue, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'assassin':`Dark fantasy portrait of an Assassin, dark hooded cloak, face half-shadowed with cold calculating eyes, concealed dagger glinting in candlelight, dark fantasy oil painting, deep shadow with minimal gold rim light, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'morgana':`Dark fantasy portrait of Morgana the dark sorceress, beautiful with long black hair and piercing violet eyes, elegant dark gown with purple magical aura, seductive and dangerous, dark fantasy oil painting, deep shadow with cold purple light, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'mordred':`Dark fantasy portrait of Mordred the treacherous knight, black full armor with red skull accents, scheming cold eyes behind a visor, the ultimate betrayer, dark fantasy oil painting, deep shadow with red and dark gold, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'oberon':`Dark fantasy portrait of Oberon the lone wolf, wild untamed, suspicious eyes that trust no one, rough worn traveling cloak, no faction markings, dim candlelight barely illuminating face, dark fantasy oil painting, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'minion':`Dark fantasy portrait of a shadowy Minion of Mordred, dark hooded figure face completely hidden except two glowing eyes, anonymous menacing, heavy dark cloak, dark fantasy oil painting, deep shadow minimal gold rim, half-body bust portrait face area in upper 50%, no text, PNG square`,
+    'lancelot_evil':`Dark fantasy portrait of Lancelot corrupted and fallen, cracked gold armor with dark energy seeping through, handsome face with inner conflict and torment, split warm gold and cold dark tones, dark fantasy oil painting, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+  },
+  'celestial':{
+    'home-bg':`Ethereal celestial palace floating above clouds, soft luminous light filtering through misty waterfalls, delicate white and azure architecture with glowing lanterns, fairy wisps drifting in gentle breeze, Studio Ghibli inspired watercolor style, light and airy pale blue white and soft gold palette, magical serene atmosphere, NO dark overlay keep entire image bright and luminous, no text no UI no people, vertical 9:16 portrait format`,
+    'in-game-bg':`Enchanted celestial garden courtyard with circular stone platform, glowing fairy lights floating in gentle mist, cherry blossoms and silver-leafed trees, soft azure sky with luminous clouds, Studio Ghibli inspired watercolor style, pale blue and white tones with soft warm gold, entire image bright and open, no dark areas, no text no UI no people, vertical 9:16 portrait format`,
+    'table':`Top-down view of an ethereal round table made of luminous white crystal or polished white marble, delicate floral and cloud engravings in soft blue, gentle luminous glow from the surface, celestial fairy tale aesthetic, perfect circle viewed from directly above, transparent PNG background no floor, only the table surface, no chairs no figures, square 1:1 format`,
+    'merlin':`Ethereal watercolor portrait of Merlin reimagined as a wise celestial elder, long silver hair and kind all-knowing eyes, flowing robes of celestial blue and white with star embroidery, surrounded by gentle floating lights, soft luminous fairy realm background, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'percival':`Ethereal watercolor portrait of Percival as a noble celestial knight, earnest loyal face, silver armor decorated with cloud patterns and white flowing cape, holding a glowing holy grail, soft blue-white background, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'arthur_loyal':`Ethereal watercolor portrait of a loyal celestial knight, honest open face, polished armor with soft blue tunic, dependable and steadfast, soft luminous background, watercolor style, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'lancelot_good':`Ethereal watercolor portrait of Lancelot as the greatest celestial champion, confident powerful noble face, gleaming golden armor with celestial motifs, warm heroic glow, luminous blue-gold background, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'assassin':`Ethereal watercolor portrait of an Assassin in the celestial realm, dark midnight-blue hooded cloak contrasting the luminous realm, cold pale eyes barely visible, concealed blade glinting with corrupted light, watercolor style with darker shadow tones, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'morgana':`Ethereal watercolor portrait of Morgana as a dark celestial enchantress, strikingly beautiful with long black hair and violet eyes, deep indigo gown absorbing celestial light, subtle purple aura mimicking holy light, watercolor style with deeper shadows, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'mordred':`Ethereal watercolor portrait of Mordred as the celestial traitor, dark armor with cracked celestial patterns revealing shadow beneath, scheming eyes behind visor, corruption in the ethereal realm, watercolor style with fractured light, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'oberon':`Ethereal watercolor portrait of Oberon as a lone wanderer in the celestial realm, wild untamed appearance, suspicious eyes trusting nobody, rough travel cloak stained from long journeys, muted tones watercolor, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'minion':`Ethereal watercolor portrait of a shadowy celestial Minion, featureless dark hooded figure with glowing eyes, wrapped in corrupted shadow cloak, ethereal background, watercolor with dark shadow tones, half-body bust portrait showing only glowing eyes in upper 50%, no text, PNG square`,
+    'lancelot_evil':`Ethereal watercolor portrait of Lancelot fallen from celestial grace, once-golden armor cracked with dark energy, face showing inner torment and conflict, half-bright half-dark split, watercolor style, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+  },
+  'ink-wash':{
+    'home-bg':`Traditional Chinese ink wash painting landscape, towering misty mountains with pine trees on cliffs, vast empty sky with minimal cloud wash, small pavilion visible in distance, warm cream and parchment paper texture background, deep ink black brushstrokes with intentional empty space, classical sumi-e style, sense of vast serene silence, NO dark overlay keep entire image light and airy, no text no UI no people, vertical 9:16 portrait format`,
+    'in-game-bg':`Traditional Chinese ink painting of a scholarly pavilion interior overlooking misty mountain valley, bamboo forest through lattice windows, ink brushstroke screens on walls, warm parchment and off-white paper texture, deep ink black accents, refined elegant atmosphere, classical East Asian art style, NO dark overlay keep image light, no text no UI no people, vertical 9:16 portrait format`,
+    'table':`Top-down view of a traditional Chinese lacquered round table, dark polished rosewood surface with subtle grain, ink-brushed dragon medallion in center painted in gold and black, delicate carved wooden border with cloud patterns, warm antique aesthetic, isolated object from above, transparent PNG background no floor, only the circular table, no chairs no figures, square 1:1 format`,
+    'merlin':`Traditional Chinese ink wash portrait of Merlin as a wise Taoist elder, long white beard and knowing eyes, flowing Taoist robes with star and moon patterns, holding a gnarled wooden staff, sumi-e brushstroke style warm parchment background, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'percival':`Traditional Chinese ink wash portrait of Percival as a loyal young general, earnest determined face, ink-painted armor with phoenix crest, holding a jade-inlaid sword, sumi-e style warm parchment background, classical Chinese warrior aesthetic, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'arthur_loyal':`Traditional Chinese ink wash portrait of a loyal soldier, honest straightforward face, simple ink-painted armor, plain but dependable, classical Chinese brush painting style parchment background, sumi-e aesthetic, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'lancelot_good':`Traditional Chinese ink wash portrait of the greatest warrior, powerful confident face, gold-inlaid black armor with dragon crest, commanding heroic presence, sumi-e style warm parchment tones and gold ink, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'assassin':`Traditional Chinese ink wash portrait of an Assassin, dark robed figure with concealed face showing only sharp cold eyes, black ink brushstroke suggesting shadow and hidden danger, sumi-e style predominantly dark ink tones on parchment, half-body bust portrait face area in upper 50%, no text, PNG square`,
+    'morgana':`Traditional Chinese ink wash portrait of Morgana as a dark enchantress, beautiful and dangerous with black hair flowing like ink, dark robes with serpent motifs, subtle dark magic aura, Chinese ink painting style with deep ink tones and subtle red accents, sumi-e brushwork, half-body bust portrait face in upper 50%, no text, PNG square`,
+    'mordred':`Traditional Chinese ink wash portrait of Mordred as a treacherous general, dark heavy armor with broken clan crest, scheming calculating eyes, heavy dark brushstrokes suggesting hidden menace, sumi-e style, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'oberon':`Traditional Chinese ink wash portrait of Oberon as a wandering lone wolf, wild unkempt appearance, suspicious eyes trusting nobody, rough worn travel clothes with no allegiance markings, sumi-e brushwork on parchment, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'minion':`Traditional Chinese ink wash portrait of a shadowy Minion, dark hooded anonymous figure rendered in heavy ink brushstrokes, only glowing eyes visible, sumi-e painting style dominant dark ink tones, half-body bust portrait face area in upper 50%, no text, PNG square`,
+    'lancelot_evil':`Traditional Chinese ink wash portrait of Lancelot fallen from grace, cracked black armor with fading gold, tormented conflicted face showing inner war between honor and corruption, dramatic split brushwork light and dark ink, sumi-e style, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+  },
+  'cyber-neon':{
+    'home-bg':`Cyberpunk neon city rooftop at night, rain-slicked surfaces reflecting neon signs in magenta pink and electric cyan, towering megastructure skyscrapers with holographic advertisements, dark purple-black sky with neon light pollution, Blade Runner 2049 aesthetic, cinematic digital painting, bottom third darker for UI overlay, no text no UI no people, vertical 9:16 portrait format`,
+    'in-game-bg':`Cyberpunk underground club or secret meeting room, circular neon-lit table in center with holographic displays floating above, magenta and purple neon strip lighting on dark walls, rain visible outside floor-to-ceiling windows, electric atmosphere of danger and intrigue, Blade Runner 2049 style, deep purple-black with neon pink and cyan, bottom third darker, no text no UI no people, vertical 9:16 portrait format`,
+    'table':`Top-down view of a futuristic cyberpunk round table, dark matte carbon-fiber surface, glowing neon pink circuit-board pattern etched into surface with electric cyan edge lighting, holographic interface elements embedded in rim, cyberpunk tech aesthetic, perfect circle from directly above, transparent PNG background no floor, no objects no chairs no figures, square 1:1 format`,
+    'merlin':`Cyberpunk portrait of Merlin as an elderly tech oracle, silver AR implants around knowing eyes, dark hooded coat with glowing blue circuit patterns, the wise hacker who sees all data streams, neon-lit cyberpunk digital art, magenta and cyan neon on deep purple-black, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'percival':`Cyberpunk portrait of Percival as a loyal enforcement officer, earnest determined face with blue holographic visor, white tactical armor with cyan light accents, holding a glowing data grail device, blue and cyan neon on dark background, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'arthur_loyal':`Cyberpunk portrait of a loyal soldier, honest average face, standard-issue tactical gear and blue team insignia, dependable and professional, cool blue tones on deep purple-black background with subtle cyan lighting, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'lancelot_good':`Cyberpunk portrait of Lancelot as an elite enhanced super-soldier, powerful build with gold-toned exosuit and blade implants, confident handsome face with golden eye implants, the ultimate warrior of the resistance, gold and cyan highlights on dark background, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'assassin':`Cyberpunk portrait of an Assassin, sleek black stealth suit with active camouflage shimmer, face hidden behind a red-glowing camera-lens mask, holding a monomolecular blade, neon-lit cyberpunk style deep red and black against purple-black, half-body bust portrait face area in upper 50%, no text, PNG square`,
+    'morgana':`Cyberpunk portrait of Morgana as a dangerous AI hacker femme fatale, beautiful face with violet cybernetic eye implants, black bodysuit with neon pink neural-interface patterns, master of digital deception, magenta and violet neon style, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'mordred':`Cyberpunk portrait of Mordred as a corporate traitor, black tactical armor with hidden red identity marker under blue paint, scheming cold eyes, a mole inside the resistance, red and black against dark purple, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'oberon':`Cyberpunk portrait of Oberon as a rogue operative, independent dangerous mercenary, face scarred and suspicious behind cracked visor, ragged mix-matched gear from multiple factions, a lone wolf trusting nobody, muted tones with dim orange glow, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'minion':`Cyberpunk portrait of a generic corporate Minion, black helmet with red visor concealing all features, anonymous mass-produced enforcer uniform, menacing but faceless, red and black neon style, half-body bust portrait upper area showing only red glowing visor, no text, PNG square`,
+    'lancelot_evil':`Cyberpunk portrait of Lancelot defected elite soldier, cracked golden exosuit leaking dark energy, face showing intense conflict between loyalty and betrayal, half lit by blue team light half by red corporation glow, cyberpunk style, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+  },
+  'dark-dungeon':{
+    'home-bg':`Dark Gothic dungeon hall, rough-hewn stone walls with iron torches burning amber, rusted chains and worn skulls as decoration, oppressive low vaulted ceiling, deep warm brown and near-black palette with amber torchlight pools, grimdark medieval atmosphere, Diablo III inspired oil painting, dramatic shadows, bottom third darker for UI overlay, no text no UI no people, vertical 9:16 portrait format`,
+    'in-game-bg':`Gothic dungeon chamber repurposed as a secret council room, torchlit stone alcoves with ancient weapons mounted on walls, bones and animal skull trophies, rough stone throne at far end, deep brown-black with amber and orange torch glow, sinister conspiratorial atmosphere, grimdark fantasy illustration, bottom third darker, no text no UI no people, vertical 9:16 portrait format`,
+    'table':`Top-down view of a dungeon round table, rough-hewn dark stone surface with carved rune circle or skull pattern, iron bolts and chains embedded at the edges, amber torchlight reflected on the surface, grimdark fantasy aesthetic, perfect circle from directly above, transparent PNG background no floor, only the circular stone table, no objects no chairs no figures, square 1:1 format`,
+    'merlin':`Grimdark portrait of Merlin, battle-worn ancient wizard with deep-set knowing eyes, dark weathered robes covered in runes and ash, holding a cracked amber-glowing staff, a survivor of countless dark battles, grimdark fantasy oil painting style, torchlit amber and shadow background, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'percival':`Grimdark portrait of Percival, battle-scarred knight with determined eyes, worn dented armor with holy symbol under grime, clutching a battered glowing chalice, grim resolve in a hopeless dungeon, grimdark fantasy style, torchlit amber tones, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'arthur_loyal':`Grimdark portrait of a loyal soldier, weary honest face, battered chainmail with simple crest, the common fighter who keeps going despite everything, grimdark fantasy illustration, warm amber torchlight on dark stone, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'lancelot_good':`Grimdark portrait of Lancelot the greatest warrior, imposing scarred face with cold determined eyes, heavy black and gold armor battle-worn but powerful, unstoppable force for good in the darkness, grimdark fantasy oil painting, amber torchlight on dark stone, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'assassin':`Grimdark portrait of an Assassin, black leather and shadow wrappings with only cold merciless eyes visible above a mask, a curved dark blade dripping, skulking in dungeon shadows, grimdark illustration dark brown-black with minimal amber highlight, half-body bust portrait face area in upper 50%, no text, PNG square`,
+    'morgana':`Grimdark portrait of Morgana the dark witch, terrifying pale beauty with black hollow eyes, torn dark robes with bone ornaments, cursed black magic flame, dangerous and ancient evil presence, grimdark illustration style dark amber and shadow tones, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'mordred':`Grimdark portrait of Mordred the traitor knight, massive dark armor with broken crest and red skull markings, face of cold hatred and ambition, the most dangerous enemy from within, grimdark illustration deep shadow with amber rim light, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'oberon':`Grimdark portrait of Oberon the wild outsider, feral untamed appearance with darting suspicious eyes, crude mismatched armor from fallen enemies, an outcast even in the dungeon, dim amber torchlight barely illuminating face, grimdark illustration, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'minion':`Grimdark portrait of a dungeon Minion, dark hooded executioner figure with iron skull mask, anonymous and terrifying, dungeon chains across heavy black plate, near-black and amber torchlight, half-body bust portrait showing only iron mask in upper 50%, no text, PNG square`,
+    'lancelot_evil':`Grimdark portrait of Lancelot fallen and corrupted, once-great knight consumed by dungeon darkness, face with haunted guilty eyes, blackened cracked armor with faded gold, grimdark illustration amber light and deep shadow split, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+  },
+  'abyss':{
+    'home-bg':`Abyssal deep ocean or cosmic void, pitch black with faint bioluminescent blue and violet light from creatures barely visible in the depths, ancient unknowable structures looming below, oppressive vastness and silence, Lovecraftian scale and horror, cold blue and indigo on absolute black, no visible light source only diffused bioluminescence, bottom third darker for UI overlay, no text no UI no people, vertical 9:16 portrait format`,
+    'in-game-bg':`Ancient underwater stone chamber in absolute darkness, walls covered in unknowable glowing runes and impossible geometry, cold blue bioluminescent light revealing edges of vast columns and archways, cosmic horror atmosphere, Lovecraftian elder architecture, a meeting place that should not exist, pitch black with cold blue and violet glow, bottom third darker, no text no UI no people, vertical 9:16 portrait format`,
+    'table':`Top-down view of an ancient cosmic round table made of void-black stone or crystallized darkness, cold blue glowing elder sign or tentacle motif engraved in center, unknowable rune border pulsing with faint bioluminescent violet, Lovecraftian cosmic horror aesthetic, perfect circle from directly above, transparent PNG background no floor, only the circular table surface, no objects no chairs no figures, square 1:1 format`,
+    'merlin':`Cosmic horror portrait of Merlin, ancient beyond comprehension, eyes containing galaxies and vast knowledge no mortal should possess, wearing robes made of woven starlight and void, a being of cosmic scale condensed into human form, cold blue and deep black digital painting, bioluminescent accents, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'percival':`Cosmic horror portrait of Percival, a brave soul in the abyss with determined face illuminated by cold blue light, void-touched armor absorbing surrounding darkness, holding a chalice of bioluminescent light in the depths, cold blue on absolute black background, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'arthur_loyal':`Cosmic horror portrait of a loyal soldier in the abyss, determined honest face illuminated by faint blue glow, dark void-touched armor, a small light of loyalty in the infinite darkness, cold blue accent on absolute black digital painting, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'lancelot_good':`Cosmic horror portrait of Lancelot as champion of the abyss, powerful presence with cold blue glowing eyes, deep void armor crackling with contained cosmic energy, the greatest warrior even in the depths, cold blue and deep black digital painting, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'assassin':`Cosmic horror portrait of an Assassin of the void, pure shadow with eyes like dead stars, wearing darkness itself as cloak, a blade made of crystallized void, Lovecraftian horror figure existing between dimensions, violet and cold blue against absolute black, half-body bust portrait showing only pale glowing eyes in upper 50%, no text, PNG square`,
+    'morgana':`Cosmic horror portrait of Morgana as an entity from beyond, beautiful and terrible with eyes that see through all deception, dark robes flowing like deep ocean currents, tentacle-like aura barely contained in human form, Lovecraftian beauty horror, cold violet and blue on absolute black, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'mordred':`Cosmic horror portrait of Mordred as a void herald, dark armor collapsing inward like a black hole, cold empty eyes consumed by the abyss, the ultimate betrayer serving the void, digital painting cold blue and absolute black, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'oberon':`Cosmic horror portrait of Oberon as a deep sea aberration, wild and unknowable, eyes like deep ocean trenches reflecting no light, form partially dissolving into the void around edges, an entity trusting and aligning with nothing, cold blue-black bioluminescent style, half-body bust portrait face area in upper 50%, no text, PNG square`,
+    'minion':`Cosmic horror portrait of a void Minion, humanoid silhouette of pure darkness with two cold blue pinpoint eyes, form blending into the surrounding abyss, impossible to tell where it ends and the void begins, absolute black with cold blue eye glow, upper 50% showing only two cold light points, no text, PNG square`,
+    'lancelot_evil':`Cosmic horror portrait of Lancelot consumed by the abyss, once a champion now an avatar of the void, form half-dissolved into cold blue darkness, face a war between last shred of humanity and the void claiming him, split between faint warm human glow and overwhelming cold void blue-black, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+  },
+};
+
+// ══════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════
+let currentSkin = 'dark-gold';
+let currentAsset = null;
+let generatedAssets = {}; // 'skinId:assetId' -> dataURL
+let lastGeneratedUrl = null;
+let currentPreviewTab = 'home';
+
+// ══════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('openai_key');
+  if (saved) { document.getElementById('apiKey').value = saved; updateKeyStatus(); }
+  renderSkinTabs();
+  renderAssets();
+  selectAsset('home-bg');
+  renderPreview();
+});
+
+function onKeyInput() {
+  const k = document.getElementById('apiKey').value.trim();
+  if (k) localStorage.setItem('openai_key', k);
+  updateKeyStatus();
+}
+function updateKeyStatus() {
+  const k = document.getElementById('apiKey').value.trim();
+  const el = document.getElementById('keyStatus');
+  el.classList.toggle('ok', k.startsWith('sk-'));
+  document.getElementById('btnGenerate').disabled = !currentAsset || !k.startsWith('sk-');
 }
 
-function copyPrompt(btn) {
-  const text = btn.previousElementSibling.textContent.trim();
-  navigator.clipboard.writeText(text).then(() => {
+// ══════════════════════════════════════════════════════════════
+// SKIN TABS
+// ══════════════════════════════════════════════════════════════
+function renderSkinTabs() {
+  const container = document.getElementById('skinTabs');
+  container.innerHTML = Object.entries(SKINS).map(([id, s]) => `
+    <button class="stab ${id===currentSkin?'active':''}" onclick="selectSkin('${id}')">
+      <div class="stab-chip" style="background:${s.chip};border-color:${s.chipBorder}"></div>
+      <span class="stab-name">${s.name}</span>
+      <span class="stab-id">${id}</span>
+    </button>`).join('');
+}
+
+function selectSkin(id) {
+  currentSkin = id;
+  renderSkinTabs();
+  renderAssets();
+  if (currentAsset) selectAsset(currentAsset);
+  renderPreview();
+}
+
+// ══════════════════════════════════════════════════════════════
+// ASSET LIST
+// ══════════════════════════════════════════════════════════════
+function getAssetUrl(skinId, asset) {
+  const key = `${skinId}:${asset.id}`;
+  if (generatedAssets[key]) return generatedAssets[key];
+  if (skinId === 'dark-gold') return `${CDN}/${asset.cdnFile || asset.file}`;
+  return null;
+}
+
+function renderAssets() {
+  const container = document.getElementById('assetPanel');
+  const cats = [...new Set(ASSETS.map(a => a.cat))];
+  container.innerHTML = cats.map(cat => {
+    const items = ASSETS.filter(a => a.cat === cat);
+    return `<div class="asset-cat">${cat}</div>` + items.map(a => {
+      const url = getAssetUrl(currentSkin, a);
+      const key = `${currentSkin}:${a.id}`;
+      const hasGen = !!generatedAssets[key];
+      const thumbContent = url
+        ? `<img src="${url}" onerror="this.parentElement.textContent='${a.tag==='bg'?'🌄':a.tag==='table'?'🪵':a.tag==='good'?'⚔️':'🗡️'}'"/>`
+        : `<span style="font-size:16px">${a.tag==='bg'?'🌄':a.tag==='table'?'🪵':a.tag==='good'?'⚔️':'🗡️'}</span>`;
+      return `<div class="asset-item ${a.id===currentAsset?'active':''}" onclick="selectAsset('${a.id}')">
+        <div class="asset-thumb">${thumbContent}</div>
+        <div class="asset-info">
+          <div class="asset-name">${a.name}</div>
+          <div class="asset-file">${a.file.split('/').pop()}</div>
+        </div>
+        <div class="tag-dot" style="background:${a.tagColor}"></div>
+        ${hasGen ? '<div class="asset-badge"></div>' : ''}
+      </div>`;
+    }).join('');
+  }).join('');
+}
+
+function selectAsset(id) {
+  currentAsset = id;
+  const asset = ASSETS.find(a => a.id === id);
+  const prompt = PROMPTS[currentSkin]?.[id] || '';
+
+  document.getElementById('ppName').textContent = asset.name;
+  document.getElementById('ppSpec').textContent = asset.spec;
+  document.getElementById('ppPrompt').value = prompt;
+
+  // Show current generated result if any
+  const key = `${currentSkin}:${id}`;
+  const resultImg = document.getElementById('ppResultImg');
+  if (generatedAssets[key]) {
+    resultImg.src = generatedAssets[key];
+    resultImg.classList.add('visible');
+    lastGeneratedUrl = generatedAssets[key];
+    document.getElementById('btnApply').style.display = '';
+    document.getElementById('btnDownload').style.display = '';
+  } else {
+    resultImg.classList.remove('visible');
+    lastGeneratedUrl = null;
+    document.getElementById('btnApply').style.display = 'none';
+    document.getElementById('btnDownload').style.display = 'none';
+  }
+
+  const k = document.getElementById('apiKey').value.trim();
+  document.getElementById('btnGenerate').disabled = !k.startsWith('sk-');
+  renderAssets();
+}
+
+// ══════════════════════════════════════════════════════════════
+// GENERATION
+// ══════════════════════════════════════════════════════════════
+async function generate() {
+  const key = document.getElementById('apiKey').value.trim();
+  if (!key || !currentAsset) return;
+
+  const asset = ASSETS.find(a => a.id === currentAsset);
+  const prompt = document.getElementById('ppPrompt').value.trim();
+  if (!prompt) return;
+
+  document.getElementById('btnGenerate').disabled = true;
+  document.getElementById('ppLoading').classList.add('visible');
+  document.getElementById('ppResultImg').classList.remove('visible');
+  document.getElementById('btnApply').style.display = 'none';
+  document.getElementById('btnDownload').style.display = 'none';
+
+  try {
+    const res = await fetch('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+      body: JSON.stringify({
+        model: 'dall-e-3',
+        prompt,
+        n: 1,
+        size: asset.dalleSize,
+        quality: 'hd',
+        response_format: 'b64_json'
+      })
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      alert('API 错误: ' + (err.error?.message || res.status));
+      return;
+    }
+    const data = await res.json();
+    const b64 = data.data[0].b64_json;
+    const ext = asset.file.endsWith('.png') ? 'png' : 'jpeg';
+    const dataUrl = `data:image/${ext};base64,${b64}`;
+
+    const key2 = `${currentSkin}:${currentAsset}`;
+    generatedAssets[key2] = dataUrl;
+    lastGeneratedUrl = dataUrl;
+
+    const img = document.getElementById('ppResultImg');
+    img.src = dataUrl;
+    img.classList.add('visible');
+    document.getElementById('btnApply').style.display = '';
+    document.getElementById('btnDownload').style.display = '';
+    renderAssets();
+  } catch(e) {
+    alert('请求失败: ' + e.message);
+  } finally {
+    document.getElementById('ppLoading').classList.remove('visible');
+    const k = document.getElementById('apiKey').value.trim();
+    document.getElementById('btnGenerate').disabled = !k.startsWith('sk-');
+  }
+}
+
+function applyToPreview() {
+  renderPreview();
+}
+
+function downloadResult() {
+  if (!lastGeneratedUrl) return;
+  const asset = ASSETS.find(a => a.id === currentAsset);
+  const a = document.createElement('a');
+  a.href = lastGeneratedUrl;
+  a.download = `${currentSkin}-${asset.file.split('/').pop()}`;
+  a.click();
+}
+
+function copyPrompt() {
+  const t = document.getElementById('ppPrompt').value;
+  navigator.clipboard.writeText(t).then(() => {
+    const btn = document.getElementById('btnCopy');
     btn.textContent = '✓ 已复制';
-    btn.classList.add('copied');
-    setTimeout(() => {
-      btn.textContent = '复制 Prompt';
-      btn.classList.remove('copied');
-    }, 2000);
+    setTimeout(() => btn.textContent = '复制 Prompt', 2000);
   });
 }
 
-function copyAllSkin(skinId) {
-  const section = document.getElementById('section-' + skinId);
-  const prompts = [...section.querySelectorAll('.prompt-text')].map((el, i) => {
-    const head = el.closest('.prompt-card').querySelector('.filename').textContent;
-    return `=== ${head} ===\n${el.textContent.trim()}`;
-  });
-  const allText = prompts.join('\n\n');
-  navigator.clipboard.writeText(allText).then(() => {
-    const btn = section.querySelector('.copy-all-btn');
-    btn.textContent = '✓ 全部已复制';
-    setTimeout(() => {
-      const count = prompts.length;
-      btn.textContent = `📋 复制全部 ${count} 条`;
-    }, 2500);
-  });
+// ══════════════════════════════════════════════════════════════
+// PHONE PREVIEW
+// ══════════════════════════════════════════════════════════════
+function setPreviewTab(tab, el) {
+  currentPreviewTab = tab;
+  document.querySelectorAll('.preview-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderPreview();
+}
+
+function getSkinVar(skinId, v) {
+  return SKINS[skinId].vars[v] || '';
+}
+
+function getBgUrl(skinId, type) {
+  const assetId = type === 'home' ? 'home-bg' : 'in-game-bg';
+  return getAssetUrl(skinId, ASSETS.find(a => a.id === assetId));
+}
+
+function getTableUrl(skinId) {
+  return getAssetUrl(skinId, ASSETS.find(a => a.id === 'table'));
+}
+
+function getRoleUrl(skinId, roleId) {
+  return getAssetUrl(skinId, ASSETS.find(a => a.id === roleId));
+}
+
+function inlineVars(skinId) {
+  return Object.entries(SKINS[skinId].vars).map(([k,v]) => `${k}:${v}`).join(';');
+}
+
+function renderPreview() {
+  const frame = document.getElementById('phoneFrame');
+  const skin = SKINS[currentSkin];
+  const vars = inlineVars(currentSkin);
+  const bgUrl = getBgUrl(currentSkin, currentPreviewTab === 'home' ? 'home' : 'game');
+  const bgHtml = bgUrl
+    ? `<img class="ph-bg" src="${bgUrl}" onerror="this.style.display='none'">`
+    : `<div class="ph-bg-color" style="background:${skin.vars['--aw-bg']||'#000'}"></div>`;
+  const maskStyle = skin.isDark
+    ? 'background:linear-gradient(180deg,rgba(0,0,0,.4) 0%,rgba(0,0,0,.7) 100%)'
+    : 'background:none';
+
+  if (currentPreviewTab === 'home') {
+    frame.innerHTML = `
+    <div class="phone-screen" style="${vars}">
+      ${bgHtml}
+      <div class="ph-mask" style="${maskStyle}"></div>
+      <div class="ph-nav">
+        <div class="ph-nav-back">◂ 返回</div>
+        <div class="ph-nav-title">AVALON</div>
+        <div class="ph-nav-right">👤</div>
+      </div>
+      <div class="ph-content">
+        <div class="ph-panel">
+          <div class="ph-panel-title">创建或加入房间</div>
+          <div class="ph-input">输入房间号…</div>
+          <div class="ph-btn-row">
+            <div class="ph-btn-primary">创建房间</div>
+            <div class="ph-btn-ghost">加入房间</div>
+          </div>
+        </div>
+        <div class="ph-panel">
+          <div class="ph-panel-title">大厅 · 3 个房间</div>
+          <div class="ph-room-card">
+            <div><div class="ph-room-code">#8821</div><div class="ph-room-meta">7人 · 标准配置</div></div>
+            <div class="ph-room-join">加入</div>
+          </div>
+          <div style="height:6px"></div>
+          <div class="ph-room-card">
+            <div><div class="ph-room-code">#4413</div><div class="ph-room-meta">10人 · 全角色</div></div>
+            <div class="ph-room-join">加入</div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  } else if (currentPreviewTab === 'game') {
+    const tableUrl = getTableUrl(currentSkin);
+    const tableContent = tableUrl
+      ? `<img class="ph-table-img" src="${tableUrl}" onerror="this.textContent='圆桌'">`
+      : '<span style="font-size:9px;text-align:center;padding:4px">圆桌</span>';
+    const seats = [
+      [50,0],[92,14],[114,52],[100,92],[60,110],[18,92],[2,52],[24,14]
+    ].map(([x,y],i) => `<div class="ph-seat" style="left:${x}%;top:${y}%;transform:translate(-50%,-50%)">👤</div>`).join('');
+
+    frame.innerHTML = `
+    <div class="phone-screen" style="${vars}">
+      ${bgHtml}
+      <div class="ph-mask" style="${maskStyle}"></div>
+      <div class="ph-nav">
+        <div class="ph-nav-back">◂</div>
+        <div class="ph-nav-title">房间 #8821</div>
+        <div class="ph-nav-right" style="font-size:10px;margin-left:auto;color:var(--aw-accent)">● 在线</div>
+      </div>
+      <div class="ph-content" style="padding-top:8px;gap:6px">
+        <div class="ph-table-wrap">${tableContent}${seats}</div>
+        <div class="ph-pills">
+          <div class="ph-pill success">✓<span>R1</span></div>
+          <div class="ph-pill fail">✗<span>R2</span></div>
+          <div class="ph-pill current"><span>R3</span><span>3人</span></div>
+          <div class="ph-pill"><span>R4</span></div>
+          <div class="ph-pill"><span>R5</span></div>
+        </div>
+      </div>
+      <div class="ph-action">
+        <div class="ph-action-title">队长选择 3 名队员出任务</div>
+        <div class="ph-chip-row">
+          <div class="ph-chip"><div class="ph-chip-avatar">😊</div>2号</div>
+          <div class="ph-chip"><div class="ph-chip-avatar">😎</div>5号</div>
+          <div class="ph-chip" style="opacity:.4">+1</div>
+        </div>
+        <div class="ph-confirm-btn">确认组队</div>
+      </div>
+    </div>`;
+  } else {
+    // Role card view
+    const roleId = currentAsset && ASSETS.find(a=>a.id===currentAsset && (a.tag==='good'||a.tag==='evil')) ? currentAsset : 'merlin';
+    const roleAsset = ASSETS.find(a=>a.id===roleId) || ASSETS.find(a=>a.tag==='good');
+    const roleUrl = getRoleUrl(currentSkin, roleAsset.id);
+    const isEvil = roleAsset.tag === 'evil';
+    const factionColor = isEvil ? '#f87171' : '#4ade80';
+    const roleImgHtml = roleUrl
+      ? `<img src="${roleUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" onerror="this.parentElement.textContent='👤'">`
+      : '👤';
+    const bgUrl2 = getBgUrl(currentSkin, 'game');
+    const bgHtml2 = bgUrl2
+      ? `<img class="ph-bg" src="${bgUrl2}" onerror="this.style.display='none'">`
+      : `<div class="ph-bg-color" style="background:${skin.vars['--aw-bg']||'#000'}"></div>`;
+
+    frame.innerHTML = `
+    <div class="phone-screen" style="${vars}">
+      ${bgHtml2}
+      <div class="ph-mask" style="${maskStyle}"></div>
+      <div class="ph-nav">
+        <div class="ph-nav-back">◂</div>
+        <div class="ph-nav-title">我的身份</div>
+      </div>
+      <div class="ph-content" style="justify-content:center;align-items:center">
+        <div style="width:140px;height:140px;border-radius:50%;border:3px solid ${factionColor};overflow:hidden;box-shadow:0 0 20px ${factionColor}44;display:flex;align-items:center;justify-content:center;font-size:50px;background:var(--aw-bg-2)">${roleImgHtml}</div>
+        <div style="text-align:center;margin-top:12px">
+          <div style="font-size:18px;font-weight:700;color:var(--aw-accent)">${roleAsset.name}</div>
+          <div style="font-size:11px;color:${factionColor};margin-top:4px">${isEvil?'邪恶阵营':'正义阵营'}</div>
+          <div style="font-size:10px;color:var(--aw-subtext);margin-top:8px;line-height:1.5;max-width:180px">
+            ${roleAsset.id==='merlin'?'你知道所有邪恶玩家的身份，引导正义走向胜利，但不能暴露自己。':
+              roleAsset.id==='assassin'?'游戏结束时，你可以猜测谁是梅林，若猜对则邪恶获胜。':
+              '执行你的任务，不要暴露阵营。'}
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
 }
 </script>
 </body>
