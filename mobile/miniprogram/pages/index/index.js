@@ -486,7 +486,7 @@ Page({
     const playerText = room && room.maxPlayers ? `${room.maxPlayers}人局` : "";
     const title = roomCode
       ? `${playerText} · ${modeText}｜房间 ${roomCode}，点击直接加入`
-      : "来 Awalon 一起开一局";
+      : "来 Avalon 一起开一局";
     const path = roomCode ? `/pages/index/index?roomCode=${roomCode}` : "/pages/index/index";
     return {
       title,
@@ -715,12 +715,12 @@ Page({
       avatarFallbackTextX: 79,
       avatarFallbackTextY: 144,
       textBlocks: [
-        { text: `${this.data.nickname || "Awalon 玩家"} 邀请你加入`, x: 156, y: 128, color: "rgba(238,241,247,0.82)", font: "24px sans-serif" },
+        { text: `${this.data.nickname || "Avalon 玩家"} 邀请你加入`, x: 156, y: 128, color: "rgba(238,241,247,0.82)", font: "24px sans-serif" },
         { text: `${playerText} · ${modeText}`, x: 156, y: 160, color: "rgba(238,241,247,0.82)", font: "20px sans-serif" },
         { text: roomCode ? "房间号" : "立即开局", x: 60, y: 250, color: "#d7b06a", font: "22px sans-serif" },
         { text: roomCode || "AWALON", x: 60, y: 325, color: "#ffffff", font: "72px sans-serif" },
         {
-          text: roomCode ? "点击卡片后可直接加入该房间" : "点击卡片后可直接进入 Awalon",
+          text: roomCode ? "点击卡片后可直接加入该房间" : "点击卡片后可直接进入 Avalon",
           x: 60,
           y: 360,
           color: "rgba(238,241,247,0.72)",
@@ -751,7 +751,7 @@ Page({
       const height = 400;
       const modeText = room && room.ladyOfLakeEnabled ? "湖中仙女" : "标准局";
       const playerText = room && room.maxPlayers ? `${room.maxPlayers}人局` : "多人联机局";
-      const inviterText = `${this.data.nickname || "Awalon 玩家"} 邀请你加入`;
+      const inviterText = `${this.data.nickname || "Avalon 玩家"} 邀请你加入`;
       const tempFilePath = await this.drawShareInviteCard(room, {
         width,
         height,
@@ -834,7 +834,7 @@ Page({
           { text: roomCode ? "房间号" : "立即开局", x: 56, y: 264, color: "#d7b06a", font: "22px sans-serif" },
           { text: roomCode || "AWALON", x: 56, y: 330, color: "#ffffff", font: "68px sans-serif" },
           {
-            text: roomCode ? "微信打开后可直接加入该房间" : "微信打开后可直接进入 Awalon",
+            text: roomCode ? "微信打开后可直接加入该房间" : "微信打开后可直接进入 Avalon",
             x: 56,
             y: 362,
             color: "rgba(238,241,247,0.72)",

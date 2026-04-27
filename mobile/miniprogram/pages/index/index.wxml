@@ -17,12 +17,12 @@
   <!-- 首页 nav -->
   <view class="custom-nav" wx:if="{{!reviewMode && (!room || atHome)}}" style="padding-top: {{statusBarHeight}}px; height: {{navBarHeight}}px;">
     <view class="custom-nav-inner">
-      <text class="custom-nav-title">Awalon</text>
+      <text class="custom-nav-title">Avalon</text>
     </view>
   </view>
   <!-- 游戏内 nav -->
   <nav-header wx:elif="{{!reviewMode}}"
-    title="{{room && room.code ? room.code + ' 号房' : 'Awalon'}}"
+    title="{{room && room.code ? room.code + ' 号房' : 'Avalon'}}"
     statusBarHeight="{{statusBarHeight}}"
     navBarHeight="{{navBarHeight}}"
     showBack="{{true}}"

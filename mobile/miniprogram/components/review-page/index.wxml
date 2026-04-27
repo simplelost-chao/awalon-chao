@@ -2,7 +2,7 @@
   <image class="rv-bg" src="https://www.awalon.top/mp-assets/home-bg-optimized.jpg" mode="aspectFill" />
   <view class="rv-mask"></view>
   <view class="rv-nav" style="padding-top:{{statusBarHeight}}px; height:{{navBarHeight}}px;">
-    <text class="rv-nav-logo">Awalon</text>
+    <text class="rv-nav-logo">Avalon</text>
     <text class="rv-nav-tag">发牌小工具</text>
   </view>
   <scroll-view scroll-y class="rv-body" style="top:{{navTotalHeight}}px;">
@@ -29,6 +29,10 @@
             <text class="rv-card-role-badge rv-card-badge-{{currentCard.faction}}">{{currentCard.role}}</text>
           </view>
           <text class="rv-card-copy">{{currentCard.copy}}</text>
+          <view class="rv-voice-btn rv-voice-btn-{{voicePlaying ? 'playing' : 'idle'}}" bindtap="onPlayVoice">
+            <text class="rv-voice-btn-icon">{{voicePlaying ? '▶' : '🔊'}}</text>
+            <text class="rv-voice-btn-text">{{voicePlaying ? '播放中…' : '听 AI 说'}}</text>
+          </view>
         </view>
       </view>
     </view>
