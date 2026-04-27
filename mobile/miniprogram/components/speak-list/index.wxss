@@ -1,0 +1,153 @@
+.chat-list {
+  margin-top: 10rpx;
+  padding: 6rpx 0 2rpx;
+}
+
+.speak-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48rpx 0 40rpx;
+  gap: 16rpx;
+}
+.speak-empty-icon-wrap {
+  width: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.speak-empty-icon {
+  font-size: 40rpx;
+  opacity: 0.35;
+}
+.speak-empty-text {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 2rpx;
+}
+
+.chat-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14rpx;
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid var(--aw-input-bg);
+}
+
+.chat-row-me {
+  flex-direction: row-reverse;
+}
+
+.chat-row-system {
+  justify-content: center;
+}
+
+.chat-avatar-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6rpx;
+  flex-shrink: 0;
+}
+
+.chat-avatar-emoji {
+  width: 68rpx;
+  height: 68rpx;
+  border-radius: 50%;
+  background: var(--aw-input-bg);
+  border: 1rpx solid var(--aw-nav-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36rpx;
+}
+
+.mine-avatar {
+  border-color: rgba(74, 210, 149, 0.35);
+  background: rgba(74, 210, 149, 0.08);
+}
+
+.chat-seat-num {
+  font-size: 20rpx;
+  color: #4a6080;
+  font-weight: 600;
+}
+
+.chat-seat-num.gold {
+  color: #b8923a;
+}
+
+.chat-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.chat-content-me {
+  align-items: flex-end;
+}
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-bottom: 6rpx;
+}
+
+.chat-header-me {
+  flex-direction: row-reverse;
+}
+
+.chat-name {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: var(--aw-text);
+}
+
+.chat-name-mine {
+  color: #4ad295;
+}
+
+.ai-badge {
+  background: rgba(100, 140, 200, 0.15);
+  border-radius: 6rpx;
+  padding: 2rpx 10rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-badge-label {
+  font-size: 20rpx;
+  color: #7aaad8;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.chat-bubble {
+  border-radius: 0 12rpx 12rpx 12rpx;
+  padding: 12rpx 14rpx;
+  background: var(--aw-input-bg);
+  border: 1rpx solid var(--aw-input-bg);
+}
+
+.chat-bubble-me {
+  background: rgba(74, 210, 149, 0.07);
+  border-color: rgba(74, 210, 149, 0.15);
+  border-radius: 12rpx 0 12rpx 12rpx;
+}
+
+.chat-bubble-system {
+  max-width: 90%;
+  background: rgba(62, 50, 29, 0.92);
+  border: 1rpx solid rgba(228, 194, 129, 0.4);
+  border-radius: 12rpx;
+}
+
+.chat-text {
+  font-size: 26rpx;
+  line-height: 1.55;
+  color: var(--aw-subtext);
+}

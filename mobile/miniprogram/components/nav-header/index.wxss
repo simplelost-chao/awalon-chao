@@ -1,0 +1,63 @@
+.nav-header {
+  position: fixed;
+  left: 0; right: 0; top: 0;
+  z-index: 20;
+  background: var(--aw-nav-bg);
+  border-bottom: 1rpx solid var(--aw-nav-border);
+  backdrop-filter: blur(12px);
+}
+
+.nav-inner {
+  position: relative;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8rpx;
+}
+
+.nav-back {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 8rpx 18rpx 8rpx 10rpx;
+  border-radius: 999rpx;
+  border: 1rpx solid var(--aw-panel-border);
+  background: var(--aw-input-bg);
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.nav-back-chevron {
+  width: 14rpx;
+  height: 14rpx;
+  border-left: 2.5rpx solid var(--aw-text);
+  border-top: 2.5rpx solid var(--aw-text);
+  transform: rotate(-45deg);
+  flex-shrink: 0;
+  margin-left: 4rpx;
+}
+
+.nav-back-label {
+  font-size: 24rpx;
+  color: var(--aw-text);
+  line-height: 1;
+  letter-spacing: 1rpx;
+}
+
+.nav-title {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--aw-text);
+  font-size: 30rpx;
+  font-weight: 700;
+  letter-spacing: 4rpx;
+  pointer-events: none;
+}
+
+.nav-placeholder {
+  width: 100rpx;
+  flex-shrink: 0;
+}

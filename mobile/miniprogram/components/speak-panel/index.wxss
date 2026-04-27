@@ -1,0 +1,208 @@
+/* speak-panel 组件私有样式（公共 btn/vote-bottom-wrap 样式由页面 shared 继承） */
+
+.spk-card {
+  border-radius: 40rpx 40rpx 0 0;
+  border: 1rpx solid var(--aw-nav-border);
+  border-bottom: none;
+  background: var(--aw-panel);
+  overflow: hidden;
+  box-shadow: 0 -16rpx 64rpx rgba(0, 0, 0, 0.5);
+  pointer-events: auto;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 16rpx);
+}
+
+.spk-accent {
+  height: 4rpx;
+  background: linear-gradient(90deg, transparent, rgba(200, 160, 60, 0.5) 30%, rgba(140, 220, 170, 0.4) 70%, transparent);
+}
+
+.spk-progress-area {
+  padding: 16rpx 0 12rpx;
+  width: 100%;
+}
+
+.spk-track {
+  width: 100%;
+  height: 10rpx;
+  border-radius: 6rpx;
+  background: var(--aw-nav-border);
+  overflow: visible;
+  position: relative;
+}
+
+.spk-fill {
+  height: 100%;
+  border-radius: 6rpx;
+  transition: width 0.25s linear;
+  position: relative;
+}
+
+.spk-timer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16rpx;
+}
+
+.spk-timer-label {
+  font-size: 20rpx;
+  color: var(--aw-subtext);
+  letter-spacing: 2rpx;
+}
+
+.spk-timer-val {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--aw-accent);
+  letter-spacing: 1rpx;
+}
+
+.spk-urgent {
+  color: #f87171;
+  animation: spkPulse 0.8s ease-in-out infinite;
+}
+
+@keyframes spkPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.spk-divider {
+  height: 1rpx;
+  background: var(--aw-input-bg);
+  margin: 16rpx 0 0;
+  width: 100%;
+}
+
+.spk-watching {
+  padding: 20rpx 28rpx 24rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.spk-speaker-badge {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+}
+
+.spk-speaker-badge-center {
+  justify-content: center;
+}
+
+.spk-speaker-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.spk-my-turn-hint {
+  font-size: 20rpx;
+  color: rgba(201, 162, 39, 0.7);
+  letter-spacing: 2rpx;
+}
+
+.spk-av-wrap {
+  position: relative;
+  width: 72rpx;
+  height: 72rpx;
+  flex-shrink: 0;
+}
+
+.spk-av-img {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  border: 2rpx solid rgba(74, 222, 128, 0.5);
+}
+
+.spk-av-text {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  border: 2rpx solid rgba(74, 222, 128, 0.5);
+  background: rgba(15, 20, 30, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30rpx;
+  line-height: 1;
+}
+
+.spk-dot {
+  position: absolute;
+  right: -2rpx;
+  bottom: -2rpx;
+  width: 18rpx;
+  height: 18rpx;
+  border-radius: 50%;
+  background: #4ade80;
+  box-shadow: 0 0 10rpx rgba(74, 222, 128, 0.8);
+  animation: spkDot 1.2s ease-in-out infinite;
+  border: 2rpx solid var(--aw-panel);
+}
+
+@keyframes spkDot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.7; }
+}
+
+.spk-speaker-text {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #e8effb;
+  letter-spacing: 1rpx;
+}
+
+.spk-wait-text {
+  color: var(--aw-subtext);
+  font-weight: 400;
+}
+
+.spk-host-row {
+  width: 100%;
+}
+
+.spk-my-turn {
+  padding: 16rpx 28rpx 24rpx;
+}
+
+.spk-input-wrap {
+  position: relative;
+  margin-top: 16rpx;
+  margin-bottom: 16rpx;
+}
+
+.spk-input {
+  width: 100%;
+  box-sizing: border-box;
+  height: 88rpx;
+  background: var(--aw-input-bg);
+  border: 1rpx solid var(--aw-nav-border);
+  border-radius: 14rpx;
+  padding: 0 90rpx 0 24rpx;
+  font-size: 26rpx;
+  color: #e8effb;
+}
+
+.spk-input-ph {
+  color: var(--aw-subtext);
+}
+
+.spk-char-count {
+  position: absolute;
+  right: 20rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 20rpx;
+  color: var(--aw-subtext);
+}
+
+.spk-btn-row {
+  display: flex;
+  gap: 16rpx;
+  align-items: center;
+  width: 100%;
+}

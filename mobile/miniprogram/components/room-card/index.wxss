@@ -1,0 +1,76 @@
+.rl-card {
+  position: relative;
+  background: var(--aw-panel);
+  border: 1rpx solid var(--aw-nav-border);
+  border-radius: 24rpx;
+  padding: 22rpx 20rpx;
+  overflow: hidden;
+}
+
+.rl-stripe {
+  position: absolute;
+  left: 0; top: 20rpx; bottom: 20rpx;
+  width: 4rpx;
+  border-radius: 0 4rpx 4rpx 0;
+}
+.rl-stripe-lobby  { background: linear-gradient(180deg, var(--aw-accent), rgba(217,179,107,0.15)); }
+.rl-stripe-ingame { background: linear-gradient(180deg, #4ad295, rgba(74,210,149,0.15)); }
+
+.rl-card-main {
+  display: flex; align-items: center; gap: 18rpx;
+  padding-left: 12rpx;
+}
+
+.rl-avatar-wrap { position: relative; flex-shrink: 0; }
+.rl-avatar {
+  width: 88rpx; height: 88rpx;
+  border-radius: 50%;
+  background: var(--aw-bg-2);
+  border: 3rpx solid transparent;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.rl-avatar-lobby  { border-color: var(--aw-chip-on-border); box-shadow: 0 0 0 3rpx rgba(217,179,107,0.12); }
+.rl-avatar-ingame { border-color: rgba(74,210,149,0.45);  box-shadow: 0 0 0 3rpx rgba(74,210,149,0.12); }
+.rl-avatar-img   { width: 100%; height: 100%; }
+.rl-avatar-emoji { font-size: 44rpx; line-height: 1; }
+.rl-avatar-dot {
+  position: absolute; bottom: 2rpx; right: 2rpx;
+  width: 20rpx; height: 20rpx;
+  border-radius: 50%;
+  border: 3rpx solid var(--aw-panel);
+}
+.rl-dot-lobby  { background: #c9913a; }
+.rl-dot-ingame { background: #3dba72; }
+
+.rl-info { flex: 1; min-width: 0; }
+.rl-name-row { display: flex; align-items: center; gap: 10rpx; margin-bottom: 6rpx; }
+.rl-host-name { font-size: 28rpx; font-weight: 600; color: var(--aw-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rl-badge { font-size: 18rpx; padding: 2rpx 12rpx; border-radius: 999rpx; flex-shrink: 0; font-weight: 500; }
+.rl-badge-lobby  { background: var(--aw-chip-on-bg); color: var(--aw-accent); border: 1rpx solid var(--aw-chip-on-border); }
+.rl-badge-ingame { background: rgba(61,186,114,0.15);  color: #72e0a0; border: 1rpx solid rgba(61,186,114,0.3); }
+
+.rl-meta-row { display: flex; align-items: center; gap: 10rpx; margin-bottom: 12rpx; }
+.rl-code     { font-size: 22rpx; color: var(--aw-subtext); }
+.rl-code-num { color: var(--aw-subtext); }
+.rl-sep      { width: 4rpx; height: 4rpx; border-radius: 50%; background: var(--aw-panel-border); }
+.rl-count    { font-size: 22rpx; color: var(--aw-subtext); }
+
+.rl-missions { display: flex; gap: 6rpx; }
+.rl-mseg     { flex: 1; height: 5rpx; border-radius: 4rpx; }
+.rl-mseg-win     { background: #4ad295; box-shadow: 0 0 5rpx rgba(74,210,149,0.6); }
+.rl-mseg-lose    { background: #ff5f5f; box-shadow: 0 0 5rpx rgba(255,95,95,0.6); }
+.rl-mseg-pending { background: rgba(255,255,255,0.18); }
+
+.rl-action { flex-shrink: 0; }
+.rl-btn {
+  height: 60rpx; padding: 0 24rpx;
+  border-radius: 999rpx;
+  font-size: 24rpx; font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
+  white-space: nowrap;
+}
+.rl-btn-join   { background: var(--aw-chip-on-bg); border: 1rpx solid rgba(216,176,107,0.5); color: var(--aw-accent); }
+.rl-btn-resume { background: rgba(61,186,114,0.15);  border: 1rpx solid rgba(61,186,114,0.5);  color: #72e0a0; }
+.rl-btn-watch  { background: rgba(80,140,220,0.12);  border: 1rpx solid rgba(80,140,220,0.4);  color: #7ab0e8; }
+.rl-full-txt   { font-size: 22rpx; color: rgba(255,255,255,0.25); }

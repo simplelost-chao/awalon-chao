@@ -1,0 +1,57 @@
+.mc-row {
+  display: flex;
+  gap: 8rpx;
+  margin-top: 16rpx;
+}
+.mc-card {
+  flex: 1;
+  min-height: 110rpx;
+  border-radius: 16rpx;
+  border: 1rpx solid var(--aw-panel-border);
+  background: rgba(0,0,0,0.22);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12rpx 6rpx;
+  gap: 4rpx;
+}
+.mc-past.mc-success {
+  background: rgba(60,160,100,0.18);
+  border-color: rgba(100,220,150,0.55);
+}
+.mc-past.mc-fail {
+  background: rgba(160,40,40,0.18);
+  border-color: rgba(230,90,90,0.55);
+}
+.mc-current {
+  background: rgba(190,145,60,0.18);
+  border-color: rgba(220,180,90,0.7);
+  box-shadow: 0 0 0 2rpx rgba(220,180,90,0.15) inset;
+}
+.mc-future {
+  opacity: 0.6;
+}
+.mc-result-icon {
+  font-size: 36rpx;
+  font-weight: bold;
+  line-height: 1;
+}
+.mc-past.mc-success .mc-result-icon { color: #72e0a0; }
+.mc-past.mc-fail    .mc-result-icon { color: #f07070; }
+.mc-round-num  { font-size: 20rpx; color: var(--aw-subtext); margin-top: 2rpx; }
+.mc-size-dim   { font-size: 18rpx; color: var(--aw-subtext); }
+.mc-cur-label  { font-size: 20rpx; color: var(--aw-accent); font-weight: 600; }
+.mc-cur-size   { font-size: 40rpx; font-weight: bold; color: #f0e0a0; line-height: 1.1; }
+.mc-cur-unit   { font-size: 20rpx; color: var(--aw-accent); }
+.mc-future-round { font-size: 20rpx; color: #8090aa; }
+.mc-future-size  { font-size: 26rpx; color: var(--aw-subtext); font-weight: 500; }
+.mc-protect-badge {
+  font-size: 18rpx;
+  color: #a0c8ff;
+  background: rgba(80,120,220,0.22);
+  border: 1rpx solid rgba(100,150,240,0.4);
+  border-radius: 999rpx;
+  padding: 2rpx 8rpx;
+  margin-top: 4rpx;
+}
