@@ -15,7 +15,24 @@ App({
       navBarHeight,
       navTotalHeight: statusBarHeight + navBarHeight
     };
-    // 从服务端拉取角色配置，作为唯一配置来源
+
+    // 皮肤
+    const savedSkin = wx.getStorageSync('selectedSkin') || 'dark-gold';
+    this.globalData.skinId = savedSkin;
+
+    // 审核模式开关
+    wx.request({
+      url: this.globalData.apiBase + '/api/review-mode',
+      success: (res) => {
+        if (res.statusCode === 200 && res.data) {
+          this.globalData.reviewMode = !!res.data.reviewMode;
+          if (typeof this.globalData.reviewModeListener === 'function') {
+            this.globalData.reviewModeListener(this.globalData.reviewMode);
+          }
+        }
+      }
+    });
+    // 角色配置
     wx.request({
       url: this.globalData.apiBase + '/api/role-config',
       success: (res) => {
@@ -45,6 +62,10 @@ App({
       subText: "#aeb6c7",
       accent: "#d9b36b"
     },
+    skinId: 'dark-gold',
+    skinChangeListener: null,
+    reviewMode: false,
+    reviewModeListener: null,
     roleConfigListener: null,
     latestHistoryList: null,
     latestHistoryDetail: null,
