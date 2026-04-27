@@ -77,6 +77,7 @@ function getSkin(id) {
   return SKINS.find((s) => s.id === id) || SKINS[0];
 }
 
+// skinId is optional; omitting it or passing an unknown id falls back to SKINS[0] (dark-gold)
 function roleImageFor(role, skinId) {
   const file = ROLE_FILE_MAP[role];
   if (!file) return '';
