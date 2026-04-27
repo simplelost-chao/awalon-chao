@@ -87,8 +87,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 .panel-preview{border-left:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;align-items:center;padding:16px 12px;overflow-y:auto}
 .panel-preview::-webkit-scrollbar{width:4px}
 .panel-preview::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08)}
-.preview-tabs{display:flex;gap:4px;margin-bottom:12px;background:var(--card);padding:3px;border-radius:8px;border:1px solid var(--border)}
-.preview-tab{padding:5px 14px;border-radius:6px;font-size:11px;cursor:pointer;color:var(--sub);transition:all .15s}
+.preview-tabs{display:flex;gap:2px;margin-bottom:12px;background:var(--card);padding:3px;border-radius:8px;border:1px solid var(--border);overflow:hidden}
+.preview-tab{padding:5px 8px;border-radius:5px;font-size:10px;cursor:pointer;color:var(--sub);transition:all .15s;white-space:nowrap;flex:1;text-align:center}
 .preview-tab.active{background:rgba(255,255,255,.08);color:var(--text)}
 
 /* ─── Phone Frame ─── */
@@ -196,6 +196,106 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 .ph-known-role.evil{background:rgba(110,12,12,0.5);border:1px solid rgba(220,60,60,0.4);color:#fca5a5}
 .ph-known-role.good{background:rgba(7,50,120,0.4);border:1px solid rgba(78,158,255,0.4);color:#bfdbfe}
 
+/* ── Panel header (gold left-border + gradient) used across stats/history ── */
+.ph-panel-hd{display:flex;align-items:center;justify-content:space-between;padding:5px 7px;border-left:2px solid #d8b06b;background:linear-gradient(90deg,rgba(216,176,107,0.16),transparent);border-bottom:1px solid rgba(216,176,107,0.10);margin-bottom:0;border-radius:0}
+.ph-panel-title{color:#f2e5c8;font-size:8px;font-weight:700;letter-spacing:1px}
+.ph-panel-sub{color:rgba(216,176,107,0.5);font-size:6.5px}
+
+/* ── Stats overview ── */
+.ph-ov-nums{display:flex;align-items:center;padding:8px 8px 6px}
+.ph-ov-block{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px}
+.ph-ov-num{font-size:20px;font-weight:900;line-height:1;letter-spacing:-1px}
+.ph-ov-lbl{font-size:5.5px;color:rgba(255,255,255,0.3);letter-spacing:2px}
+.ph-ov-divider{width:1px;height:30px;background:rgba(216,176,107,0.15)}
+
+/* Faction bar */
+.ph-faction-wrap{padding:0 7px 8px}
+.ph-faction-bar-labels{display:flex;justify-content:space-between;margin-bottom:3px}
+.ph-faction-bar-track{height:4px;border-radius:999px;background:rgba(255,255,255,0.06);overflow:hidden;display:flex}
+.ph-faction-bar-good{height:100%;background:linear-gradient(90deg,#2a6ab0,#4e9eff)}
+.ph-faction-bar-evil{height:100%;background:linear-gradient(90deg,#c03030,#e05050)}
+.ph-faction-cards{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:5px}
+.ph-fc{border-radius:5px;padding:5px 6px}
+.ph-fc.good{background:rgba(78,158,255,0.07);border:1px solid rgba(78,158,255,0.22)}
+.ph-fc.evil{background:rgba(220,60,60,0.07);border:1px solid rgba(220,60,60,0.22)}
+.ph-fc-title{display:block;font-size:6.5px;font-weight:700;letter-spacing:1px;margin-bottom:2px}
+.ph-fc.good .ph-fc-title{color:#7ac7ff}.ph-fc.evil .ph-fc-title{color:#ff8080}
+.ph-fc-big{font-size:13px;font-weight:900;line-height:1}
+.ph-fc.good .ph-fc-big{color:#4e9eff}.ph-fc.evil .ph-fc-big{color:#e05050}
+.ph-fc-small{font-size:5.5px;color:rgba(255,255,255,0.3)}
+.ph-fc-rate{display:block;font-size:7px;font-weight:600;margin-top:1px}
+.ph-fc.good .ph-fc-rate{color:#6edea8}.ph-fc.evil .ph-fc-rate{color:#ff9898}
+
+/* Role grid */
+.ph-role-grid{display:grid;grid-template-columns:1fr 1fr}
+.ph-role-cell{padding:7px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;border-right:1px solid rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.05);position:relative}
+.ph-role-cell:nth-child(2n){border-right:none}
+.ph-role-cell:nth-last-child(1),.ph-role-cell:nth-last-child(2){border-bottom:none}
+.ph-role-cell-topbar{position:absolute;top:0;left:0;right:0;height:1.5px}
+.ph-role-cell-topbar.good{background:linear-gradient(90deg,transparent,rgba(78,158,255,0.7) 50%,transparent)}
+.ph-role-cell-topbar.evil{background:linear-gradient(90deg,transparent,rgba(220,80,80,0.7) 50%,transparent)}
+.ph-gauge{position:relative;width:36px;height:36px;margin-top:3px}
+.ph-gauge-ring{position:absolute;top:0;left:0;width:36px;height:36px;border-radius:50%}
+.ph-gauge-inner{position:absolute;top:4px;left:4px;width:28px;height:28px;border-radius:50%;background:rgba(14,18,28,0.96);overflow:hidden;display:flex;align-items:center;justify-content:center}
+.ph-gauge-inner img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.ph-rs-name{font-size:7px;font-weight:700;text-align:center}
+.ph-rs-name.good{color:#7ac7ff}.ph-rs-name.evil{color:#ff8a8a}
+.ph-rs-games{font-size:5.5px;color:rgba(255,255,255,0.3)}
+.ph-rs-rate{font-size:9px;font-weight:900;line-height:1}
+.ph-rs-rate.hi{color:#50dc8c}.ph-rs-rate.lo{color:#ff8080}.ph-rs-rate.na{color:rgba(255,255,255,.18);font-size:8px}
+
+/* Skin picker */
+.ph-skin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:5px 5px 6px}
+.ph-skin-card{border-radius:4px;border:1.5px solid rgba(255,255,255,0.1);padding:4px 2px;display:flex;flex-direction:column;align-items:center;gap:2px;position:relative;background:rgba(255,255,255,0.03)}
+.ph-skin-card.on{border-color:var(--aw-accent,#d9b36b);background:rgba(217,179,107,0.06)}
+.ph-skin-dots{display:flex;gap:2px;align-items:center;justify-content:center;height:12px}
+.ph-skin-dot{width:7px;height:7px;border-radius:50%;border:0.5px solid rgba(255,255,255,0.15)}
+.ph-skin-name{font-size:5.5px;color:rgba(220,210,190,0.75);text-align:center}
+.ph-skin-check{position:absolute;top:1px;right:2px;font-size:6px;color:var(--aw-accent,#d9b36b)}
+
+/* ── History cards ── */
+.ph-hc{position:relative;overflow:hidden;border-radius:9px;border:1px solid transparent;margin-bottom:4px}
+.ph-hc.win{background:linear-gradient(135deg,rgba(20,60,36,0.88),rgba(10,14,24,0.94) 55%);border-color:rgba(80,220,140,0.38)}
+.ph-hc.lose{background:linear-gradient(135deg,rgba(60,16,16,0.88),rgba(10,14,24,0.94) 55%);border-color:rgba(220,80,80,0.35)}
+.ph-hc.spec{background:linear-gradient(135deg,rgba(54,40,14,0.88),rgba(10,14,24,0.94) 55%);border-color:rgba(216,176,107,0.32)}
+.ph-hc::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px}
+.ph-hc.win::before{background:linear-gradient(180deg,rgba(80,220,140,0.9),rgba(80,220,140,0.15))}
+.ph-hc.lose::before{background:linear-gradient(180deg,rgba(220,80,80,0.9),rgba(220,80,80,0.15))}
+.ph-hc.spec::before{background:linear-gradient(180deg,rgba(216,176,107,0.8),rgba(216,176,107,0.12))}
+.ph-hc-body{padding:6px 7px 5px 9px;position:relative}
+.ph-hc-top{display:flex;align-items:flex-start;gap:5px}
+.ph-hc-av{width:28px;height:28px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;background:rgba(20,26,44,0.9);font-size:13px}
+.ph-hc-av.good{border-color:#4e9eff;box-shadow:0 0 6px rgba(78,158,255,0.3)}
+.ph-hc-av.evil{border-color:#e05050;box-shadow:0 0 6px rgba(220,80,80,0.3)}
+.ph-hc-av img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.ph-hc-info{flex:1;min-width:0}
+.ph-hc-headrow{display:flex;align-items:center;justify-content:space-between;gap:4px;margin-bottom:2px}
+.ph-hc-rolename{font-size:8px;font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ph-hc-rolename.good{color:#7ac7ff}.ph-hc-rolename.evil{color:#ff8a8a}
+.ph-hc-badge{display:flex;align-items:center;gap:2px;padding:2px 6px;border-radius:999px;border:1px solid transparent;flex-shrink:0}
+.ph-hc-badge.win{background:rgba(80,220,140,0.12);border-color:rgba(80,220,140,0.35)}
+.ph-hc-badge.lose{background:rgba(220,80,80,0.12);border-color:rgba(220,80,80,0.32)}
+.ph-hc-badge-dot{width:4px;height:4px;border-radius:50%}
+.ph-hc-badge.win .ph-hc-badge-dot{background:#50dc8c}
+.ph-hc-badge.lose .ph-hc-badge-dot{background:#ff6b6b}
+.ph-hc-badge-txt{font-size:6px;font-weight:700;letter-spacing:1px}
+.ph-hc-badge.win .ph-hc-badge-txt{color:#50dc8c}
+.ph-hc-badge.lose .ph-hc-badge-txt{color:#ff8080}
+.ph-hc-meta{display:flex;align-items:center;gap:3px;line-height:1}
+.ph-hc-metaitem{font-size:6px;color:rgba(200,210,230,0.42)}
+.ph-hc-metasep{width:3px;height:3px;border-radius:50%;background:rgba(255,255,255,0.18);flex-shrink:0}
+.ph-hc-bottom{display:flex;align-items:center;flex-wrap:wrap;gap:3px;margin-top:5px;padding-top:4px;border-top:1px solid rgba(255,255,255,0.055)}
+.ph-hc-medal{display:flex;align-items:center;gap:2px;padding:2px 5px;border-radius:999px;background:rgba(216,176,107,0.06);border:1px solid rgba(216,176,107,0.16)}
+.ph-hc-medal-txt{font-size:5.5px;color:rgba(216,176,107,0.72)}
+.ph-hc-time{margin-left:auto;font-size:5.5px;color:rgba(200,210,230,0.3);white-space:nowrap}
+
+/* pagination */
+.ph-pagination{position:absolute;bottom:0;left:0;right:0;z-index:10;padding:8px 14px 12px;background:linear-gradient(0deg,rgba(6,8,15,1) 55%,rgba(6,8,15,.6) 80%,transparent);display:flex;align-items:center;justify-content:center;gap:12px}
+.ph-pg-arrow{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,0.07);border:1px solid rgba(216,176,107,0.28);color:#d8b06b;font-size:12px;display:flex;align-items:center;justify-content:center}
+.ph-pg-indicator{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:22px}
+.ph-pg-num{font-size:11px;font-weight:700;line-height:1;color:#d8b06b}
+.ph-pg-lbl{font-size:5px;letter-spacing:2px;color:rgba(200,210,230,0.35)}
+
 ::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px}
@@ -250,6 +350,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
     <div class="preview-tabs">
       <div class="preview-tab active" onclick="setPreviewTab('home',this)">主页</div>
       <div class="preview-tab" onclick="setPreviewTab('game',this)">游戏中</div>
+      <div class="preview-tab" onclick="setPreviewTab('stats',this)">角色统计</div>
+      <div class="preview-tab" onclick="setPreviewTab('history',this)">历史对战</div>
       <div class="preview-tab" onclick="setPreviewTab('role',this)">身份牌</div>
     </div>
     <div class="phone-frame" id="phoneFrame">
@@ -670,8 +772,8 @@ function renderPreview() {
             <div class="ph-logout">登出</div>
           </div>
           <div class="ph-act-grid">
-            <div class="ph-act-btn"><span style="font-size:11px">📜</span><span style="font-size:6px;color:var(--aw-subtext)">历史对战</span></div>
-            <div class="ph-act-btn"><span style="font-size:11px">📊</span><span style="font-size:6px;color:var(--aw-subtext)">角色统计</span></div>
+            <div class="ph-act-btn"><img src="https://www.awalon.top/mp-assets/ui-icons/history_scroll.png" style="width:14px;height:14px;object-fit:contain" onerror="this.outerHTML='<span style=font-size:11px>📜</span>'"><span style="font-size:6px;color:var(--aw-subtext)">历史对战</span></div>
+            <div class="ph-act-btn"><img src="https://www.awalon.top/mp-assets/ui-icons/stats_bars.png" style="width:14px;height:14px;object-fit:contain" onerror="this.outerHTML='<span style=font-size:11px>📊</span>'"><span style="font-size:6px;color:var(--aw-subtext)">角色统计</span></div>
             <div class="ph-act-btn"><span style="font-size:11px">📖</span><span style="font-size:6px;color:var(--aw-subtext)">游戏规则</span></div>
           </div>
         </div>
@@ -800,6 +902,162 @@ function renderPreview() {
         </div>
         <div class="ph-vote-divider"></div>
         <div class="ph-vote-btns"><div class="ph-vote-yes">同意</div><div class="ph-vote-no">反对</div></div>
+      </div>
+    </div>`;
+
+  // ── ROLE STATS SCREEN ───────────────────────────────────────
+  } else if (currentPreviewTab === 'stats') {
+    const skinDots = Object.entries(SKINS).map(([id,s]) => {
+      const isActive = id === currentSkin;
+      const bg    = s.vars['--aw-bg']   || '#111';
+      const panel = s.vars['--aw-panel']|| 'rgba(20,24,32,.8)';
+      const acc   = s.vars['--aw-accent']|| '#d9b36b';
+      return `<div class="ph-skin-card${isActive?' on':''}">
+        ${isActive ? '<div class="ph-skin-check">✓</div>' : ''}
+        <div class="ph-skin-dots">
+          <div class="ph-skin-dot" style="background:${bg}"></div>
+          <div class="ph-skin-dot" style="background:${panel}"></div>
+          <div class="ph-skin-dot" style="background:${acc}"></div>
+        </div>
+        <div class="ph-skin-name">${s.name}</div>
+      </div>`;
+    }).join('');
+
+    // Role cells: merlin, percival, arthur_loyal, lancelot_good, assassin, morgana, mordred, oberon
+    const roleData = [
+      {id:'merlin',      name:'梅林',    faction:'good', total:8,  wins:6,  rate:75},
+      {id:'percival',    name:'派西',    faction:'good', total:6,  wins:4,  rate:67},
+      {id:'arthur_loyal',name:'忠臣',    faction:'good', total:14, wins:8,  rate:57},
+      {id:'lancelot_good',name:'兰斯洛特',faction:'good',total:3,  wins:2,  rate:67},
+      {id:'assassin',    name:'刺客',    faction:'evil', total:9,  wins:4,  rate:44},
+      {id:'morgana',     name:'莫甘娜',  faction:'evil', total:7,  wins:3,  rate:43},
+      {id:'mordred',     name:'莫德雷德',faction:'evil', total:3,  wins:1,  rate:33},
+      {id:'oberon',      name:'奥伯伦',  faction:'evil', total:0,  wins:0,  rate:0},
+    ];
+    const roleCellsHtml = roleData.map(r => {
+      const deg = (r.total > 0 ? r.rate / 100 * 360 : 0).toFixed(0);
+      const ringClr = r.faction === 'good' ? 'rgba(78,158,255,0.88)' : 'rgba(220,80,80,0.88)';
+      const ringBg  = r.faction === 'good' ? 'rgba(78,158,255,0.10)' : 'rgba(220,80,80,0.10)';
+      const rUrl = roleImgUrl(r.id);
+      const imgHtml = rUrl
+        ? `<img src="${rUrl}" onerror="this.style.display='none'">`
+        : `<span style="font-size:12px">${r.faction==='good'?'✦':'⚔'}</span>`;
+      const rateClass = r.total === 0 ? 'na' : r.rate >= 50 ? 'hi' : 'lo';
+      const rateText  = r.total === 0 ? '—' : r.rate + '%';
+      return `<div class="ph-role-cell">
+        <div class="ph-role-cell-topbar ${r.faction}"></div>
+        <div class="ph-gauge">
+          <div class="ph-gauge-ring" style="background:conic-gradient(${ringClr} ${deg}deg,${ringBg} 0deg)"></div>
+          <div class="ph-gauge-inner">${imgHtml}</div>
+        </div>
+        <div class="ph-rs-name ${r.faction}">${r.name}</div>
+        <div class="ph-rs-games">${r.total > 0 ? r.total+'局/'+r.wins+'胜' : '未出场'}</div>
+        <div class="ph-rs-rate ${rateClass}">${rateText}</div>
+      </div>`;
+    }).join('');
+
+    frame.innerHTML = `
+    <div class="phone-screen" style="${vars};position:relative;display:flex;flex-direction:column">
+      ${bgLayer('game')}${maskDiv}
+      <div class="ph-nav">
+        <div class="ph-nav-back">← 返回</div>
+        <div class="ph-nav-title">我的主页</div>
+      </div>
+      <div class="ph-content">
+        <!-- Skin picker -->
+        <div class="ph-panel" style="padding:0;overflow:hidden">
+          <div class="ph-panel-hd"><span class="ph-panel-title">外观皮肤</span></div>
+          <div class="ph-skin-grid">${skinDots}</div>
+        </div>
+        <!-- Overview -->
+        <div class="ph-panel" style="padding:0;overflow:hidden">
+          <div class="ph-panel-hd"><span class="ph-panel-title">总览</span><span class="ph-panel-sub">近期战绩</span></div>
+          <div class="ph-ov-nums">
+            <div class="ph-ov-block"><div class="ph-ov-num" style="color:#4e9eff">47</div><div class="ph-ov-lbl">总对局</div></div>
+            <div class="ph-ov-divider"></div>
+            <div class="ph-ov-block"><div class="ph-ov-num" style="color:#50dc8c">55%</div><div class="ph-ov-lbl">总胜率</div></div>
+          </div>
+          <div class="ph-faction-wrap">
+            <div class="ph-faction-bar-labels">
+              <span style="font-size:6px;font-weight:700;color:#4e9eff">正义阵营 · 31局</span>
+              <span style="font-size:6px;font-weight:700;color:#e05050">邪恶阵营 · 19局</span>
+            </div>
+            <div class="ph-faction-bar-track">
+              <div class="ph-faction-bar-good" style="width:62%"></div>
+              <div class="ph-faction-bar-evil" style="width:38%"></div>
+            </div>
+            <div class="ph-faction-cards">
+              <div class="ph-fc good"><span class="ph-fc-title">正义阵营</span><div style="display:flex;align-items:baseline;gap:3px"><span class="ph-fc-big">20</span><span class="ph-fc-small">/ 31 胜</span></div><span class="ph-fc-rate">胜率 65%</span></div>
+              <div class="ph-fc evil"><span class="ph-fc-title">邪恶阵营</span><div style="display:flex;align-items:baseline;gap:3px"><span class="ph-fc-big">7</span><span class="ph-fc-small">/ 19 胜</span></div><span class="ph-fc-rate">胜率 37%</span></div>
+            </div>
+          </div>
+        </div>
+        <!-- Role grid -->
+        <div class="ph-panel" style="padding:0;overflow:hidden">
+          <div class="ph-panel-hd"><span class="ph-panel-title">按角色统计</span></div>
+          <div class="ph-role-grid">${roleCellsHtml}</div>
+        </div>
+      </div>
+    </div>`;
+
+  // ── HISTORY SCREEN ───────────────────────────────────────────
+  } else if (currentPreviewTab === 'history') {
+    const historyData = [
+      {result:'win',  faction:'good', role:'梅林',    roleId:'merlin',    room:'8821', players:7,  seat:2, medals:[{icon:'🌟',name:'先知先觉'}], time:'2小时前'},
+      {result:'lose', faction:'evil', role:'莫甘娜',  roleId:'morgana',   room:'7743', players:7,  seat:5, medals:[], time:'昨天'},
+      {result:'win',  faction:'good', role:'忠臣',    roleId:'arthur_loyal',room:'6291',players:10,seat:3, medals:[{icon:'🏅',name:'众志成城'}], time:'前天'},
+      {result:'lose', faction:'evil', role:'刺客',    roleId:'assassin',  room:'5882', players:7,  seat:1, medals:[{icon:'🎯',name:'刺客失手'}], time:'3天前'},
+    ];
+    const cardsHtml = historyData.map(h => {
+      const rUrl = roleImgUrl(h.roleId);
+      const avHtml = rUrl
+        ? `<img src="${rUrl}" onerror="this.textContent='${h.role[0]}'">`
+        : h.role[0];
+      const medalsHtml = h.medals.map(m => `<div class="ph-hc-medal"><span style="font-size:8px">${m.icon}</span><span class="ph-hc-medal-txt">${m.name}</span></div>`).join('');
+      return `<div class="ph-hc ${h.result}">
+        <div class="ph-hc-body">
+          <div class="ph-hc-top">
+            <div class="ph-hc-av ${h.faction}">${avHtml}</div>
+            <div class="ph-hc-info">
+              <div class="ph-hc-headrow">
+                <span class="ph-hc-rolename ${h.faction}">${h.role}</span>
+                <div class="ph-hc-badge ${h.result}">
+                  <div class="ph-hc-badge-dot"></div>
+                  <span class="ph-hc-badge-txt">${h.result==='win'?'胜利':'失败'}</span>
+                </div>
+              </div>
+              <div class="ph-hc-meta">
+                <span class="ph-hc-metaitem">${h.room} 号房</span>
+                <div class="ph-hc-metasep"></div>
+                <span class="ph-hc-metaitem">${h.players}人</span>
+                <div class="ph-hc-metasep"></div>
+                <span class="ph-hc-metaitem">座位${h.seat}</span>
+              </div>
+            </div>
+          </div>
+          <div class="ph-hc-bottom">
+            ${medalsHtml}
+            <span class="ph-hc-time">${h.time}</span>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    frame.innerHTML = `
+    <div class="phone-screen" style="${vars};position:relative;display:flex;flex-direction:column">
+      ${bgLayer('game')}${maskDiv}
+      <div class="ph-nav">
+        <div class="ph-nav-back">← 返回</div>
+        <div class="ph-nav-title">历史对战</div>
+      </div>
+      <div class="ph-content" style="padding-bottom:44px">
+        <div class="record-list">${cardsHtml}</div>
+      </div>
+      <!-- Pagination -->
+      <div class="ph-pagination">
+        <div class="ph-pg-arrow" style="opacity:0.2">‹</div>
+        <div class="ph-pg-indicator"><div class="ph-pg-num">1</div><div class="ph-pg-lbl">当前页</div></div>
+        <div class="ph-pg-arrow">›</div>
       </div>
     </div>`;
 
