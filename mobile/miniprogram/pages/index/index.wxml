@@ -1,17 +1,35 @@
-<view class="page">
+<view class="page theme-{{skinId}}">
   <canvas id="avatarCropCanvas" type="2d" canvas-id="avatarCropCanvas" class="avatar-crop-canvas"></canvas>
   <canvas id="shareInviteCanvas" type="2d" canvas-id="shareInviteCanvas" class="share-invite-canvas"></canvas>
-  <image class="bg" src="{{room && !atHome ? 'https://www.awalon.top/mp-assets/in-game-bg-optimized.jpg' : 'https://www.awalon.top/mp-assets/home-bg-optimized.jpg'}}" mode="aspectFill" />
-  <view class="mask"></view>
 
-  <view class="custom-nav" style="padding-top: {{statusBarHeight}}px; height: {{navBarHeight}}px;">
+  <!-- ===== 审核模式：阿瓦隆发牌工具介绍 ===== -->
+  <review-page wx:if="{{reviewMode}}"
+    statusBarHeight="{{statusBarHeight}}"
+    navBarHeight="{{navBarHeight}}"
+    navTotalHeight="{{navTotalHeight}}"
+    bind:exitreview="onExitReviewMode">
+  </review-page>
+  <!-- ===== 审核模式结束 ===== -->
+
+  <image class="bg" wx:if="{{!reviewMode}}" src="{{room && !atHome ? 'https://www.awalon.top/mp-assets/in-game-bg-optimized.jpg' : 'https://www.awalon.top/mp-assets/home-bg-optimized.jpg'}}" mode="aspectFill" />
+  <view class="mask" wx:if="{{!reviewMode}}"></view>
+
+  <!-- 首页 nav -->
+  <view class="custom-nav" wx:if="{{!reviewMode && (!room || atHome)}}" style="padding-top: {{statusBarHeight}}px; height: {{navBarHeight}}px;">
     <view class="custom-nav-inner">
-      <view class="nav-back-btn" wx:if="{{room && !atHome}}" bindtap="onBackHome"><text class="nav-back-txt">返回</text></view>
       <text class="custom-nav-title">Awalon</text>
     </view>
   </view>
+  <!-- 游戏内 nav -->
+  <nav-header wx:elif="{{!reviewMode}}"
+    title="{{room && room.code ? room.code + ' 号房' : 'Awalon'}}"
+    statusBarHeight="{{statusBarHeight}}"
+    navBarHeight="{{navBarHeight}}"
+    showBack="{{true}}"
+    bind:back="onBackHome">
+  </nav-header>
 
-  <view class="content {{room && !atHome ? 'content-game' : 'content-home'}}" style="padding-top: {{navTotalHeight + 20}}px;">
+  <view wx:if="{{!reviewMode}}" class="content {{room && !atHome ? 'content-game' : 'content-home'}}" style="padding-top: {{navTotalHeight + 20}}px;">
     <view class="panel" wx:if="{{!room || atHome}}">
       <!-- 未登录时显示轻提示条，不强制弹窗 -->
       <view class="guest-login-bar" wx:if="{{!loggedIn}}" bindtap="onWxLogin">
@@ -33,6 +51,7 @@
             <text class="user-title">你好：{{nickname || '未设置昵称'}}</text>
             <text class="profile-tip">点击头像或用户名即可修改</text>
           </view>
+          <view class="logout-btn" bindtap="onLogout">登出</view>
         </view>
       </view>
       <view class="home-action-grid" wx:if="{{loggedIn}}">
@@ -44,17 +63,15 @@
           <image class="home-action-icon" src="https://www.awalon.top/mp-assets/ui-icons/stats_bars.png" mode="aspectFill" />
           <text class="home-action-text">角色统计</text>
         </button>
+        <button class="btn ghost home-action-btn" bindtap="openRules">
+          <text class="home-action-emoji">📖</text>
+          <text class="home-action-text">游戏规则</text>
+        </button>
       </view>
     </view>
 
-    <view class="panel" wx:if="{{loggedIn && room && atHome}}">
-      <view class="btn-row">
-        <button class="btn primary half" bindtap="onResumeRoom">重新进入 {{room.code}}</button>
-        <button class="btn ghost half" bindtap="onLeaveRoom">退出房间</button>
-      </view>
-    </view>
 
-    <view class="panel" wx:if="{{!room}}">
+    <view class="panel" wx:if="{{atHome && !room}}">
       <view class="count-options-row">
         <view
           class="count-option {{maxPlayersIndex===index ? 'count-option-on' : ''}}"
@@ -86,85 +103,71 @@
         <text class="advanced-toggle-title">高级设置</text>
         <text class="advanced-toggle-value">{{showAdvancedSettings ? '收起' : '展开'}}</text>
       </view>
-      <view class="advanced-panel" wx:if="{{showAdvancedSettings}}">
-        <text class="advanced-section-label">角色配置</text>
-        <text class="meta">{{advancedRoleSummary || '未设置'}}</text>
-        <text class="meta">{{advancedQuotaText}}</text>
-        <view class="advanced-selected-grid">
-          <view
-            class="advanced-selected-chip"
-            wx:for="{{selectedRoles}}"
-            wx:key="index"
-            data-idx="{{index}}"
-            bindtap="onRemoveAdvancedRole"
-          >
-            {{item}}
-          </view>
-        </view>
-        <view class="host-role-grid advanced-role-grid">
-          <view
-            class="host-role-item"
-            wx:for="{{allRoleOptions}}"
-            wx:key="role"
-            data-role="{{item.role}}"
-            bindtap="onAddAdvancedRole"
-          >
-            <image class="host-role-icon" src="{{item.image}}" mode="aspectFill" />
-            <text class="host-role-text">{{item.role}}</text>
-          </view>
-        </view>
-        <button class="btn ghost" bindtap="onResetAdvancedRoles">恢复默认配置</button>
+      <advanced-settings wx:if="{{showAdvancedSettings}}"
+        selectedRoles="{{selectedRoles}}"
+        allRoleOptions="{{allRoleOptions}}"
+        ladyOfLakeEnabled="{{ladyOfLakeEnabled}}"
+        forceRoundMode="{{forceRoundMode}}"
+        forceRoundOptions="{{forceRoundOptions}}"
+        evilRoleVisibleEnabled="{{evilRoleVisibleEnabled}}"
+        oberonVisibleEnabled="{{oberonVisibleEnabled}}"
+        aiVoiceEnabled="{{aiVoiceEnabled}}"
+        speakingSeconds="{{speakingSeconds}}"
+        speakingSecondsOptions="{{speakingSecondsOptions}}"
+        maxPlayersIndex="{{maxPlayersIndex}}"
+        advancedRoleSummary="{{advancedRoleSummary}}"
+        advancedQuotaText="{{advancedQuotaText}}"
+        bind:addrole="onAddAdvancedRole"
+        bind:removerole="onRemoveAdvancedRole"
+        bind:resetroles="onResetAdvancedRoles"
+        bind:togglelady="onToggleLadyMode"
+        bind:pickforceround="onPickForceRoundMode"
+        bind:pickevilvision="onPickEvilRoleVisible"
+        bind:pickoberonvisible="onPickOberonVisible"
+        bind:pickseconds="onPickSpeakingSeconds"
+        bind:toggleaivoice="onToggleAiVoice">
+      </advanced-settings>
 
-        <text class="advanced-section-label">湖中仙女</text>
-        <view class="role-mode-row">
-          <view class="role-mode-chip {{!ladyOfLakeEnabled ? 'role-mode-on' : ''}}" data-enabled="0" bindtap="onToggleLadyMode">标准局</view>
-          <view class="role-mode-chip {{ladyOfLakeEnabled ? 'role-mode-on' : ''}}" data-enabled="1" bindtap="onToggleLadyMode">湖中仙女</view>
-        </view>
-        <text class="meta">{{maxPlayersIndex >= 3 ? '8人及以上可开启湖中仙女' : '湖中仙女仅支持8人及以上对局'}}</text>
-
-        <text class="advanced-section-label">组队判负</text>
-        <view class="role-mode-row">
-          <view
-            class="role-mode-chip {{forceRoundMode===item.value ? 'role-mode-on' : ''}}"
-            wx:for="{{forceRoundOptions}}"
-            wx:key="value"
-            data-mode="{{item.value}}"
-            bindtap="onPickForceRoundMode"
-          >
-            {{item.label}}
-          </view>
-        </view>
-        <text class="meta">到强制组队次数后仍未发车，好人直接判负。</text>
-
-        <text class="advanced-section-label">坏人互认</text>
-        <view class="role-mode-row">
-          <view class="role-mode-chip {{!evilRoleVisibleEnabled ? 'role-mode-on' : ''}}" data-enabled="0" bindtap="onPickEvilRoleVisible">仅看队友座位</view>
-          <view class="role-mode-chip {{evilRoleVisibleEnabled ? 'role-mode-on' : ''}}" data-enabled="1" bindtap="onPickEvilRoleVisible">显示具体身份</view>
-        </view>
-        <text class="meta">坏人互认时，可选择只看队友座位，或直接看到具体坏人身份。</text>
-
-        <text class="advanced-section-label">发言时长</text>
-        <view class="role-mode-row">
-          <view
-            class="role-mode-chip {{speakingSeconds===item ? 'role-mode-on' : ''}}"
-            wx:for="{{speakingSecondsOptions}}"
-            wx:key="*this"
-            data-seconds="{{item}}"
-            bindtap="onPickSpeakingSeconds"
-          >
-            {{item}}s
-          </view>
-        </view>
-        <text class="meta">发言时间默认 120s，可按房间节奏调整。</text>
-      </view>
-
-      <view class="btn-row">
+      <view class="btn-row" wx:if="{{!room}}">
         <button class="btn primary half" bindtap="onCreateRoom">创建房间</button>
         <button class="btn ghost half" bindtap="onJoinRoomPrompt">加入房间</button>
       </view>
+
     </view>
 
-    <view class="panel room-panel" wx:if="{{room && !atHome}}">
+
+    <view class="panel" wx:if="{{atHome && room}}">
+      <view class="btn-row">
+        <button class="btn primary half" bindtap="onResumeRoom">重新进入：{{room.code}}</button>
+        <button class="btn ghost half" bindtap="onLeaveRoomFromList">退出房间</button>
+      </view>
+    </view>
+
+    <!-- 当前活跃房间列表：首页始终显示 -->
+    <view class="rl-wrap" wx:if="{{atHome}}">
+      <view class="section-title-row rl-header">
+        <text class="section-title section-title-small">当前房间</text>
+        <view class="speak-inline-btn {{activeRoomsLoading ? 'speak-inline-disabled' : ''}}" bindtap="onRefreshRooms">
+          <text class="rl-refresh-icon {{activeRoomsLoading ? 'rl-spinning' : ''}}">↻</text>
+        </view>
+      </view>
+
+      <view class="rl-cards" wx:if="{{activeRooms.length}}">
+        <room-card wx:for="{{activeRooms}}" wx:key="code"
+          roomData="{{item}}"
+          isCurrentRoom="{{room && item.code === room.code}}"
+          bind:resume="onResumeRoom"
+          bind:join="onJoinPublicRoom">
+        </room-card>
+      </view>
+
+      <view wx:else class="rl-empty">
+        <text class="rl-empty-title">暂无房间</text>
+        <text class="rl-empty-sub">快去创建一局吧</text>
+      </view>
+    </view>
+
+    <view class="panel room-panel" wx:if="{{room && !atHome}}" style="{{phase==='speaking' && !isSpectator ? 'padding-bottom:420rpx;' : ((['team','voting','mission'].indexOf(phase)>=0 && !isSpectator) ? 'padding-bottom:240rpx;' : '')}}">
 
       <view class="control-wrap">
         <view class="btn-row">
@@ -172,254 +175,106 @@
             <text>{{showPlayerList ? ('收起 · ' + room.code) : ('房间 ' + room.code)}}</text>
             <text class="toggle-arrow">{{showPlayerList ? '▲' : '▼'}}</text>
           </button>
-          <button class="btn ghost half role-toggle-btn {{!room.started ? 'btn-disabled' : ''}} {{showRolePanel ? 'role-toggle-open' : ''}}" bindtap="toggleRolePanel" disabled="{{!room.started}}">
-            <text>{{showRolePanel ? '收起身份' : '查看身份'}}</text>
-            <text class="toggle-arrow" wx:if="{{room.started}}">{{showRolePanel ? '▲' : '▼'}}</text>
+          <button class="btn ghost half role-toggle-btn {{!room.started ? 'btn-disabled' : ''}} {{identityMode ? 'role-toggle-open' : ''}}" bindtap="toggleRolePanel" disabled="{{!room.started}}">
+            <text>{{identityMode ? '收起身份' : '查看身份'}}</text>
+            <text class="toggle-arrow" wx:if="{{room.started}}">{{identityMode ? '▲' : '▼'}}</text>
           </button>
         </view>
       </view>
 
-      <view class="control-wrap" wx:if="{{showRolePanel}}">
-        <text class="section-title section-title-small section-chip">身份卡</text>
-        <view class="role-info-loading" wx:if="{{roleInfoLoading && !roleInfo}}">
-          <text class="role-info-loading-text">正在获取身份...</text>
-        </view>
-        <view wx:if="{{roleInfo}}">
-          <view class="role-assassin-tip" wx:if="{{isAssassin && phase==='assassination'}}">
-            <text class="role-assassin-tip-text">刺杀阶段：点击圆桌目标，再在圆桌中心执行刺杀</text>
-          </view>
-          <view class="role-seat-list">
-            <view class="role-seat-row {{item.rowClass}} {{item.isSelf ? 'role-seat-row-self' : ''}}"
-              wx:for="{{roleVisibleSeats}}" wx:key="seat">
-              <view class="role-seat-badge"><text>{{item.seat}}</text></view>
-              <image wx:if="{{item.roleImage}}" src="{{item.roleImage}}" mode="aspectFill" class="role-seat-thumb" />
-              <image wx:elif="{{item.avatarImage}}" src="{{item.avatarImage}}" mode="aspectFill" class="role-seat-thumb" />
-              <view wx:else class="role-seat-thumb role-seat-thumb-avatar"><text class="role-seat-thumb-text">{{item.avatarText}}</text></view>
-              <view class="role-seat-info">
-                <text class="role-seat-name">{{item.nickname}}</text>
-                <text wx:if="{{item.role}}" class="role-seat-role {{item.roleClass}}">{{item.role}}</text>
-              </view>
-              <text wx:if="{{item.isSelf && isAssassin && phase!=='assassination' && phase!=='end'}}"
-                class="role-action-link" bindtap="onStartAssassination">发起刺杀</text>
-            </view>
-          </view>
-        </view>
-      </view>
+      <identity-panel wx:if="{{showRolePanel}}"
+        roleInfo="{{roleInfo}}"
+        roleInfoLoading="{{roleInfoLoading}}"
+        roleVisibleSeats="{{roleVisibleSeats}}"
+        isAssassin="{{isAssassin}}"
+        assassinSeatNo="{{assassinSeatNo}}"
+        phase="{{phase}}"
+        bind:startassassination="onStartAssassination">
+      </identity-panel>
 
-      <view class="control-wrap" wx:if="{{showPlayerList}}">
-        <view class="section-title-row" wx:if="{{roomRoleCards.length}}">
-          <text class="section-title section-title-small section-chip">当前角色</text>
-          <view class="resend-role-btn" wx:if="{{isHost && room && room.started}}" bindtap="onRedealIdentities">重发身份</view>
-        </view>
-        <view class="current-role-chips" wx:if="{{roomRoleCards.length}}">
-          <view
-            class="role-chip {{item.roleClass === 'role-evil' ? 'role-chip-evil' : 'role-chip-good'}}"
-            wx:for="{{roomRoleCards}}"
-            wx:key="role"
-            data-role="{{item.role}}"
-            data-description="{{item.description}}"
-            bindtap="onTapRoomRoleCard"
-          >
-            <image class="role-chip-img" wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFill" />
-            <view class="role-chip-label">
-              <text class="role-chip-name">{{item.role}}</text>
-              <text class="role-chip-count" wx:if="{{item.count > 1}}">×{{item.count}}</text>
-            </view>
-          </view>
-        </view>
-        <text class="section-title section-title-small section-chip">房间配置</text>
-        <view class="config-list" wx:if="{{roomConfigLines.length}}">
-          <view class="config-item" wx:for="{{roomConfigLines}}" wx:key="label">
-            <text class="config-label">{{item.label}}</text>
-            <text class="config-value">{{item.value}}</text>
-          </view>
-        </view>
-        <text class="section-title section-title-small section-chip">玩家列表</text>
-        <view class="player-list">
-          <view class="player-item-compact" wx:for="{{playerCards}}" wx:key="id">
-            <view class="player-item-compact-inner">
-              <view
-                class="player-compact-main"
-                data-id="{{item.id}}"
-                data-seat="{{item.seat}}"
-                bindtouchstart="onPlayerNamePressStart"
-                bindtouchend="onPlayerNamePressEnd"
-                bindtouchcancel="onPlayerNamePressEnd"
-              >
-                <text class="player-seat-badge {{item.spectator ? 'player-seat-badge-spectator' : ''}}">{{item.seatText}}</text>
-                <image class="player-avatar-img" wx:if="{{item.avatarImage}}" src="{{item.avatarImage}}" mode="aspectFill" />
-                <text class="player-avatar-fallback" wx:else>{{item.avatarText}}</text>
-                <text class="player-compact-name">{{item.nickname}}</text>
-              </view>
-              <text class="player-host-text" wx:if="{{item.isHost}}">房主</text>
-              <text class="player-kick-text" wx:if="{{isHost && !item.isMe}}" data-id="{{item.id}}" data-name="{{item.nickname}}" catchtap="onKickFromList">踢</text>
-              <view class="cheat-role-pill role-evil" wx:if="{{isHost && cheatRevealPlayerId===item.id && cheatRoles[item.id]}}">
-                <image class="role-pill-img" src="{{item.roleImage || 'https://www.awalon.top/mp-assets/icon.png'}}" mode="aspectFill" />
-                <text class="role-pill-text">底牌：{{cheatRoles[item.id]}}</text>
-              </view>
-            </view>
-          </view>
-        </view>
-      </view>
+      <room-players-panel wx:if="{{showPlayerList}}"
+        roomRoleCards="{{roomRoleCards}}"
+        playerCards="{{playerCards}}"
+        roomConfigLines="{{roomConfigLines}}"
+        isHost="{{isHost}}"
+        isAssassin="{{isAssassin}}"
+        myAutoplay="{{myAutoplay}}"
+        autoplayAssassinTarget="{{autoplayAssassinTarget}}"
+        roomStarted="{{room.started}}"
+        phase="{{phase}}"
+        cheatRevealPlayerId="{{cheatRevealPlayerId}}"
+        cheatRoles="{{cheatRoles}}"
+        bind:redeal="onRedealIdentities"
+        bind:toggleautoplay="onAutoplayToggle"
+        bind:taprolecard="onTapRoomRoleCard"
+        bind:kickplayer="onKickFromList"
+        bind:playerpressstart="onPlayerNamePressStart"
+        bind:playerpressend="onPlayerNamePressEnd">
+      </room-players-panel>
 
-      <view class="table-wrap">
-        <image class="table-bg-img" src="/assets/table.png" mode="aspectFill" />
-        <view class="table-ring"></view>
-        <view
-          class="seat-round {{item.selectedTeam ? 'seat-team' : ''}} {{item.selectedAssassinate ? 'seat-kill' : ''}} {{item.isMe ? 'seat-me' : ''}} {{item.isAssassinated ? 'seat-assassinated' : ''}}"
-          wx:for="{{roundSeats}}"
-          wx:key="seat"
-          bindtap="onChooseSeat"
-          bindtouchstart="onSeatTouchStart"
-          bindtouchend="onSeatTouchEnd"
-          bindtouchmove="onSeatTouchCancel"
-          data-index="{{item.index}}"
-          style="{{item.leftStyle}}"
-        >
-          <text class="seat-crown" wx:if="{{item.isLeader}}">👑</text>
-          <view class="seat-avatar-wrap">
-            <view class="seat-avatar {{!item.playerId ? 'seat-avatar-empty' : ''}} {{item.isLadyHolder ? 'seat-avatar-lady' : ''}}">
-              <image class="seat-avatar-img" wx:if="{{item.avatarImage}}" src="{{item.avatarImage}}" mode="aspectFill" />
-              <text class="seat-avatar-text" wx:elif="{{item.avatarText}}">{{item.avatarText}}</text>
-              <text class="seat-avatar-empty-text" wx:else>空</text>
-            </view>
-            <view class="seat-lady-ring" wx:if="{{item.isLadyHolder}}">
-              <view class="seat-lady-ring-base"></view>
-              <view class="seat-lady-flower seat-lady-flower-top"></view>
-              <view class="seat-lady-flower seat-lady-flower-top-left"></view>
-              <view class="seat-lady-flower seat-lady-flower-top-right"></view>
-              <view class="seat-lady-flower seat-lady-flower-left"></view>
-              <view class="seat-lady-flower seat-lady-flower-right"></view>
-              <view class="seat-lady-flower seat-lady-flower-bottom-left"></view>
-              <view class="seat-lady-flower seat-lady-flower-bottom-right"></view>
-              <view class="seat-lady-leaf seat-lady-leaf-top-left"></view>
-              <view class="seat-lady-leaf seat-lady-leaf-top-right"></view>
-              <view class="seat-lady-leaf seat-lady-leaf-left"></view>
-              <view class="seat-lady-leaf seat-lady-leaf-right"></view>
-            </view>
-          </view>
-          <text class="seat-name">{{item.name}}</text>
-          <view class="seat-role-pill {{item.roleClass}}" wx:if="{{item.roleLabel}}">
-            <image class="seat-role-img" wx:if="{{item.roleImage}}" src="{{item.roleImage}}" mode="aspectFill" />
-            <text class="seat-role">{{item.roleLabel}}</text>
-          </view>
-          <image class="seat-killed-icon" wx:if="{{item.isAssassinated}}" src="https://www.awalon.top/mp-assets/ui-icons/kill.png" mode="aspectFit" />
-          <text class="seat-action {{item.actionDone ? 'seat-action-done' : 'seat-action-pending'}}" wx:if="{{!item.offline && item.action}}">{{item.action}}</text>
-          <text class="seat-offline" wx:if="{{item.offline}}">离线</text>
-          <text class="seat-no">{{item.seat}}</text>
-          <view class="seat-note-badge" wx:if="{{seatNotes[item.index]}}" style="{{seatNotes[item.index].badgeStyle}}">
-            <text class="seat-note-badge-text" style="{{seatNotes[item.index].textStyle}}">{{seatNotes[item.index].label || '·'}}</text>
-          </view>
-        </view>
-        <view class="center-result" wx:if="{{showCenterResult}}">
-          <text class="center-result-title">{{centerResultText}}</text>
-          <text class="center-result-sub">{{centerResultSub}}</text>
-          <view class="end-medal-wrap" wx:if="{{endMedals && endMedals.length}}">
-            <text class="end-medal-title">本局获得勋章</text>
-            <view class="end-medal-row">
-              <view class="end-medal-chip {{item.faction==='evil' ? 'end-medal-evil' : 'end-medal-good'}}" wx:for="{{endMedals}}" wx:key="code" catchtap="onTapMedal" data-name="{{item.name}}" data-description="{{item.description}}">
-                <image class="end-medal-image" wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFit" />
-                <text class="end-medal-icon" wx:else>🏅</text>
-                <text class="end-medal-name">{{item.name}}</text>
-              </view>
-            </view>
-          </view>
-          <button class="btn primary center-leader-btn" wx:if="{{isHost && phase==='end'}}" bindtap="onRedealIdentities">重新开始</button>
-        </view>
-        <view class="center-leader-panel" wx:if="{{isLeader && (phase==='team' || phase==='speaking') && !showCenterResult}}">
-          <button class="btn primary center-leader-btn {{leaderActionClass}}" bindtap="onLeaderTeamAction" disabled="{{leaderActionDisabled}}">
-            {{leaderActionText}}
-          </button>
-        </view>
-        <view class="center-leader-panel" wx:if="{{isAssassin && phase==='assassination' && !showCenterResult}}">
-          <button class="btn primary center-leader-btn" bindtap="onConfirmAssassinate" disabled="{{!selectedAssassinate}}">
-            执行刺杀
-          </button>
-        </view>
-      </view>
+      <round-table
+        seats="{{roundSeats}}"
+        identityMode="{{identityMode}}"
+        seatNotes="{{seatNotes}}"
+        showCenterResult="{{showCenterResult}}"
+        centerResultText="{{centerResultText}}"
+        centerResultSub="{{centerResultSub}}"
+        endMedals="{{endMedals}}"
+        isHost="{{isHost}}"
+        roomStarted="{{room.started}}"
+        isLeader="{{isLeader}}"
+        isAssassin="{{isAssassin}}"
+        phase="{{phase}}"
+        leaderActionText="{{leaderActionText}}"
+        leaderActionClass="{{leaderActionClass}}"
+        leaderActionDisabled="{{leaderActionDisabled}}"
+        selectedAssassinate="{{selectedAssassinate}}"
+        bind:chooseseat="onChooseSeat"
+        bind:seattouchstart="onSeatTouchStart"
+        bind:seattouchend="onSeatTouchEnd"
+        bind:seattouchcancel="onSeatTouchCancel"
+        bind:tapmedal="onTapMedal"
+        bind:redeal="onRedealIdentities"
+        bind:leaderaction="onLeaderTeamAction"
+        bind:startassassination="onStartAssassination"
+        bind:confirmassassinate="onConfirmAssassinate"
+        bind:startgame="onStartGame">
+      </round-table>
 
-      <view class="control-wrap">
-        <view class="btn-row" wx:if="{{isHost && !room.started}}">
-          <button class="btn primary" bindtap="onStartGame">开始游戏</button>
-        </view>
-      </view>
-
-      <view class="recap-btn-wrap" wx:if="{{phase==='end'}}">
-        <button class="btn ghost recap-entry-btn {{recapReady ? '' : 'recap-btn-pending'}}" bindtap="onOpenRecap" disabled="{{!recapReady}}">{{recapReady ? '查看 AI 复盘' : '正在复盘中...'}}</button>
-      </view>
-
-      <view class="control-wrap" wx:if="{{phase==='end' && endVoteResultGroups.length}}">
-        <text class="section-title section-title-small section-chip">互评结果</text>
-        <view class="end-vote-result-list">
-          <view class="end-vote-result-item" wx:for="{{endVoteResultGroups}}" wx:key="key">
-            <view class="end-vote-result-head">
-              <image class="end-vote-result-icon" src="{{item.icon}}" mode="aspectFit" />
-              <text class="end-vote-result-name">{{item.label}}</text>
-            </view>
-            <view class="end-vote-result-tags">
-              <text class="end-vote-result-tag" wx:for="{{item.entries}}" wx:key="id">{{item.text}}</text>
-            </view>
-          </view>
-        </view>
-      </view>
 
       <view class="control-wrap" wx:if="{{room.game}}">
         <text class="section-title section-title-small section-chip">任务进度</text>
-        <view class="mission-pill-row">
-        <view
-          wx:for="{{missionPills}}"
-          wx:key="round"
-          class="mission-pill {{item.cls}}"
-        >
-            <text class="mission-pill-size">{{item.size}}</text>
-            <text class="mission-pill-strong" wx:if="{{item.isForcedRound}}">强</text>
-            <text class="mission-pill-sub" wx:if="{{item.failReq===2}}">x2</text>
-          </view>
-        </view>
+        <mission-pills pills="{{missionPills}}" />
       </view>
 
       <view class="force-round-banner force-round-banner-block" wx:if="{{isCurrentForcedAttempt && !showCenterResult}}">
         <text class="force-round-banner-main">强制组队轮</text>
-        <text class="force-round-banner-sub">本次未发车则好人直接判负</text>
+        <text class="force-round-banner-sub">本次未发车则正义直接判负</text>
       </view>
 
       <view class="control-wrap" wx:if="{{room.game && phase==='lady'}}">
         <text class="section-title section-title-small section-chip">验人阶段</text>
-        <text class="meta">当前操作玩家：{{ladyHolderName || '未知玩家'}}</text>
-        <text class="meta">当前操作玩家要查看 1 名玩家是好人还是坏人。验完后，下一轮由被查看的人继续验人。</text>
+        <view class="lady-current-player">
+          <text class="lady-current-label">当前验人</text>
+          <text class="lady-current-name">{{ladyHolderName || '未知玩家'}}</text>
+        </view>
         <view class="lady-history-list" wx:if="{{ladyHistory.length}}">
           <view class="lady-history-item" wx:for="{{ladyHistory}}" wx:key="key">
-            <text class="lady-history-text">第{{item.round}}轮：{{item.holderName}} 验了 {{item.targetName}}</text>
+            <text class="lady-history-round">第{{item.round}}轮</text>
+            <text class="lady-history-text">{{item.holderName}} 验了 {{item.targetName}}</text>
           </view>
         </view>
-        <view wx:if="{{isLadyHolder}}">
-          <text class="meta">请直接点击圆桌上的目标玩家进行验人。</text>
+        <view class="lady-action-hint lady-action-mine" wx:if="{{isLadyHolder}}">
+          <text class="lady-action-text">点击圆桌上的目标玩家进行验人</text>
         </view>
-        <text class="meta" wx:else>等待当前操作玩家选择目标</text>
+        <view class="lady-action-hint" wx:else>
+          <text class="lady-action-text">等待 {{ladyHolderName}} 选择目标…</text>
+        </view>
       </view>
 
       <view class="control-wrap" wx:if="{{missionRows.length}}">
         <text class="section-title section-title-small section-chip">任务详情</text>
-        <view class="table-head">
-          <text class="col col-round">轮次</text>
-          <text class="col col-leader">队长</text>
-          <text class="col col-team">队伍</text>
-          <text class="col col-vote">同意/反对</text>
-          <text class="col col-res">结果</text>
-        </view>
-        <view class="table-row" wx:for="{{missionRows}}" wx:key="key">
-          <view class="col col-round round-cell">
-            <text>{{item.round}}</text>
-          </view>
-          <text class="col col-leader">{{item.leader}}</text>
-          <text class="col col-team">{{item.team}}</text>
-          <view class="col col-vote vote-combo">
-            <text class="vote-part">{{item.approve}}</text>
-            <text class="vote-sep"> / </text>
-            <text class="vote-part col-reject">{{item.reject}}</text>
-          </view>
-          <text class="col col-res {{item.resClass}}">{{item.result}}</text>
-        </view>
+        <mission-table rows="{{missionRows}}" />
       </view>
 
       <view class="control-wrap" wx:if="{{room.game}}">
@@ -431,146 +286,124 @@
             <view class="speak-inline-btn {{!speakKeys.length || speakRoundView===speakKeys[speakKeys.length-1] ? 'speak-inline-disabled' : ''}}" bindtap="nextSpeakRound">›</view>
           </view>
         </view>
-        <view>
-          <view class="chat-list" wx:if="{{speakRoundView}}">
-            <view class="meta" wx:if="{{!speakMessages.length}}">本轮暂无发言</view>
-            <view
-              wx:for="{{speakMessages}}"
-              wx:key="key"
-              class="chat-row {{item.mine ? 'chat-row-me' : ''}} {{item.system ? 'chat-row-system' : ''}}"
-            >
-              <view class="chat-avatar" wx:if="{{!item.mine && !item.system}}">
-                <text class="chat-seat">#{{item.seat}}</text>
-                <text class="chat-name">{{item.from}}</text>
-              </view>
-              <view class="chat-bubble {{item.mine ? 'chat-bubble-me' : ''}} {{item.system ? 'chat-bubble-system' : ''}}">
-                <text class="chat-text">{{item.text}}</text>
-              </view>
-              <view class="chat-avatar chat-avatar-me" wx:if="{{item.mine}}">
-                <text class="chat-seat">#{{item.seat}}</text>
-                <text class="chat-name">{{item.from}}</text>
-              </view>
-            </view>
-          </view>
+        <view wx:if="{{speakRoundView}}">
+          <speak-list messages="{{speakMessages}}" />
         </view>
       </view>
 
-      <view class="bottom-spacer" wx:if="{{phase==='speaking' || (phase==='voting' && !myVoted) || (phase==='mission' && inTeam && !myMissionDone) || (phase==='end' && !(room.game && room.game.endVotes && room.game.endVotes[clientId]))}}"></view>
+      <view class="bottom-spacer" wx:if="{{phase==='speaking' || (phase==='voting' && !myVoted) || (phase==='mission' && inTeam && !myMissionDone)}}"></view>
 
     </view>
 
   </view>
 
-  <view class="vote-bottom-wrap" wx:if="{{room && !atHome && phase==='voting' && !myVoted}}">
-    <view class="vote-bottom-card">
-      <text class="vote-bottom-title">请对当前提名队伍投票</text>
-      <view class="vote-team-row" wx:if="{{currentVoteTeam.length}}">
-        <view class="vote-team-chip" wx:for="{{currentVoteTeam}}" wx:key="id">
-          <view class="vote-team-avatar">
-            <image class="vote-team-avatar-img" wx:if="{{item.avatarImage}}" src="{{item.avatarImage}}" mode="aspectFill" />
-            <text class="vote-team-avatar-text" wx:else>{{item.avatarText}}</text>
-          </view>
-          <text class="vote-team-seat-badge">{{item.seat}}</text>
-        </view>
-      </view>
-      <view class="btn-row vote-action-row">
-        <button class="btn primary half vote-action-btn" bindtap="onVoteApprove">同意</button>
-        <button class="btn ghost half vote-action-btn" bindtap="onVoteReject">反对</button>
-      </view>
-    </view>
-  </view>
+  <action-panel
+    wx:if="{{room && !atHome && !isSpectator && (phase==='voting' && !myVoted)}}"
+    mode="vote"
+    team="{{currentVoteTeam}}"
+    bind:approve="onVoteApprove"
+    bind:reject="onVoteReject">
+  </action-panel>
 
-  <view class="vote-bottom-wrap" wx:if="{{room && !atHome && phase==='mission' && inTeam && !myMissionDone}}">
-    <view class="vote-bottom-card">
-      <text class="vote-bottom-title">你在任务队伍中，请提交任务结果</text>
-      <view class="vote-team-row" wx:if="{{currentVoteTeam.length}}">
-        <view class="vote-team-chip" wx:for="{{currentVoteTeam}}" wx:key="id">
-          <view class="vote-team-avatar">
-            <image class="vote-team-avatar-img" wx:if="{{item.avatarImage}}" src="{{item.avatarImage}}" mode="aspectFill" />
-            <text class="vote-team-avatar-text" wx:else>{{item.avatarText}}</text>
-          </view>
-          <text class="vote-team-seat-badge">{{item.seat}}</text>
-        </view>
-      </view>
-      <view class="btn-row vote-action-row">
-        <button class="btn primary half vote-action-btn" bindtap="onMissionSuccess">任务成功</button>
-        <button class="btn ghost half vote-action-btn" bindtap="onMissionFail">任务失败</button>
-      </view>
-    </view>
-  </view>
+  <action-panel
+    wx:if="{{room && !atHome && !isSpectator && phase==='mission' && inTeam && !myMissionDone}}"
+    mode="mission"
+    team="{{currentVoteTeam}}"
+    bind:success="onMissionSuccess"
+    bind:fail="onMissionFail">
+  </action-panel>
 
-  <view class="vote-bottom-wrap" wx:if="{{room && !atHome && phase==='speaking'}}">
-    <view class="vote-bottom-card">
-      <view class="speak-progress-wrap">
-        <view class="speak-progress-track">
-          <view class="speak-progress-fill" style="width: {{speakingProgress}}%;"></view>
-        </view>
-        <text class="meta speak-countdown">剩余 {{speakingRemainingSec}}s</text>
-      </view>
-      <text class="vote-bottom-title" wx:if="{{!isMyTurn && speakingSeat}}">{{speakingSeat}}号发言中</text>
-      <text class="vote-bottom-title" wx:if="{{!isMyTurn && !speakingSeat}}">等待发言开始</text>
-      <view class="btn-row speak-admin-row" wx:if="{{!isMyTurn && isHost && speakingSeat}}">
-        <button class="btn primary half vote-action-btn" bindtap="onHostSkipSpeak">跳过发言</button>
-        <button class="btn ghost half vote-action-btn" bindtap="onHostDirectVote">直接投票</button>
-      </view>
-      <block wx:if="{{isMyTurn}}">
-        <input
-          class="input"
-          placeholder="输入发言内容（120字内）"
-          placeholder-class="input-placeholder"
-          value="{{speakText}}"
-          bindinput="onSpeakInput"
-          maxlength="120"
-        />
-        <view class="btn-row vote-action-row">
-          <button class="btn primary half vote-action-btn" bindtap="onSendSpeak">发送发言</button>
-          <button class="btn ghost half vote-action-btn" wx:if="{{!isLeader}}" bindtap="onEndSpeak">结束发言</button>
-        </view>
-      </block>
-    </view>
-  </view>
+  <speak-panel
+    wx:if="{{room && !atHome && !isSpectator && phase==='speaking'}}"
+    isMyTurn="{{isMyTurn}}"
+    isHost="{{isHost}}"
+    isLeader="{{isLeader}}"
+    speakingSeat="{{speakingSeat}}"
+    speakingAvatarImage="{{speakingAvatarImage}}"
+    speakingAvatarText="{{speakingAvatarText}}"
+    speakingProgress="{{speakingProgress}}"
+    speakingUrgent="{{speakingUrgent}}"
+    speakingTimerText="{{speakingTimerText}}"
+    speakText="{{speakText}}"
+    speakTextLen="{{speakTextLen}}"
+    bind:input="onSpeakInput"
+    bind:send="onSendSpeak"
+    bind:end="onEndSpeak"
+    bind:skipspeak="onHostSkipSpeak"
+    bind:directvote="onHostDirectVote">
+  </speak-panel>
 
-  <view class="vote-bottom-wrap" wx:if="{{room && !atHome && phase==='end' && !(room.game && room.game.endVotes && room.game.endVotes[clientId])}}">
-    <view class="vote-bottom-card">
-      <text class="vote-bottom-title">进入互评环节，选择后点击玩家，只能送出一个评价</text>
-      <view class="end-vote-tag-row">
-        <view
-          class="end-vote-tag {{selectedEndVoteType===item.value ? 'end-vote-tag-on' : ''}}"
-          wx:for="{{endVoteOptions}}"
-          wx:key="value"
-          data-type="{{item.value}}"
-          bindtap="onPickEndVoteType"
-        >
-          <image class="end-vote-tag-icon" src="{{item.icon}}" mode="aspectFit" />
-          <text class="end-vote-tag-text">{{item.label}}</text>
-        </view>
-      </view>
-    </view>
-
-  </view>
 </view>
 
 <!-- 断线重连横幅 -->
 
 <!-- 座位标注弹窗 -->
 <view class="note-modal-mask" wx:if="{{noteModal.show}}" bindtap="onCloseNoteModal">
-  <view class="note-modal" catchtap="noteModalNoop">
-    <text class="note-modal-title">{{noteModal.name}}（{{noteModal.seat}}号位）</text>
-    <text class="note-modal-hint">点击标签即保存</text>
-    <view class="note-label-row">
-      <view
-        class="note-label-chip {{item === noteModal.label ? 'note-label-chip-on' : ''}}"
-        wx:for="{{noteLabels}}"
-        wx:key="*this"
-        data-label="{{item}}"
-        bindtap="onPickNoteLabel"
-      >{{item}}</view>
-      <view class="note-label-chip note-label-clear" data-label="" bindtap="onPickNoteLabel">✕ 清除</view>
+  <view class="note-sheet" catchtap="noteModalNoop">
+    <view class="note-sheet-accent"></view>
+    <view class="note-drag-handle"></view>
+
+    <!-- 玩家信息 -->
+    <view class="note-player-row">
+      <view class="note-avatar-ring" style="{{noteModal.ringStyle}}">
+        <text class="note-avatar-seat">{{noteModal.seat}}</text>
+      </view>
+      <view class="note-player-info">
+        <text class="note-player-name">{{noteModal.name}}</text>
+        <text class="note-player-sub">{{noteModal.seat}} 号位 · 长按修改标注</text>
+        <view class="note-current-label" wx:if="{{noteModal.label}}" style="background:{{noteModal.labelBg}};border-color:{{noteModal.labelBorder}};">
+          <view class="note-current-dot" style="background:{{noteModal.labelColor}};box-shadow:0 0 6rpx {{noteModal.labelColor}};"></view>
+          <text class="note-current-text" style="color:{{noteModal.labelColor}};">{{noteModal.label}}</text>
+        </view>
+      </view>
     </view>
+
+    <view class="note-divider"></view>
+
+    <!-- 正义组 -->
+    <view class="note-section">
+      <text class="note-section-title">倾向正义</text>
+      <view class="note-chip-grid">
+        <view
+          wx:for="{{noteChipsGood}}"
+          wx:key="label"
+          class="note-chip {{item.on ? 'note-chip-on' : ''}}"
+          style="{{item.on ? 'background:' + item.bg + ';border-color:' + item.border + ';' : ''}}"
+          data-label="{{item.label}}"
+          bindtap="onPickNoteLabel"
+        >
+          <text class="note-chip-icon">{{item.icon}}</text>
+          <text class="note-chip-text" style="{{item.on ? 'color:' + item.color + ';font-weight:600;' : ''}}">{{item.label}}</text>
+          <text class="note-chip-check" wx:if="{{item.on}}">✓</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 邪恶组 -->
+    <view class="note-section">
+      <text class="note-section-title">倾向邪恶</text>
+      <view class="note-chip-grid">
+        <view
+          wx:for="{{noteChipsEvil}}"
+          wx:key="label"
+          class="note-chip {{item.on ? 'note-chip-on' : ''}}"
+          style="{{item.on ? 'background:' + item.bg + ';border-color:' + item.border + ';' : ''}}"
+          data-label="{{item.label}}"
+          bindtap="onPickNoteLabel"
+        >
+          <text class="note-chip-icon">{{item.icon}}</text>
+          <text class="note-chip-text" style="{{item.on ? 'color:' + item.color + ';font-weight:600;' : ''}}">{{item.label}}</text>
+          <text class="note-chip-check" wx:if="{{item.on}}">✓</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 清除 -->
+    <view class="note-clear-btn" data-label="" bindtap="onPickNoteLabel">✕  清除标注</view>
   </view>
 </view>
 
-<view class="mp-overlay" wx:if="{{showMissionProgress}}">
+<view class="mp-overlay" wx:if="{{showMissionProgress}}" bindtap="onCloseMissionProgress">
   <view class="mp-card">
     <text class="mp-round-label">第 {{missionProgressRound}} 轮任务</text>
     <text class="mp-heading">出  征  中</text>
@@ -580,7 +413,7 @@
         <image class="mp-av-img" wx:if="{{item.avatarImage}}" src="{{item.avatarImage}}" mode="aspectFill" />
         <text class="mp-av-emoji" wx:else>{{item.avatarText}}</text>
         <view class="mp-av-check" wx:if="{{item.voted}}">✓</view>
-        <text class="mp-av-name">{{item.nickname}}</text>
+        <text class="mp-av-name"><text class="mp-av-seat">{{item.seat}}·</text>{{item.nickname}}</text>
       </view>
     </view>
     <view class="mp-pips">
@@ -588,6 +421,7 @@
     </view>
     <text class="mp-status-text">{{missionVotedCount}} / {{missionProgressTeam.length}} 已提交</text>
   </view>
+  <text class="mp-close-hint">点击任意处关闭</text>
 </view>
 
 <view class="mission-overlay {{missionAnimClass}}" wx:if="{{showMissionAnim}}" bindtap="onCloseMissionAnim">
@@ -599,6 +433,24 @@
       <view class="mission-fail-pip {{missionAnimSuccess ? 'pip-zero' : 'pip-red'}}" wx:for="{{missionAnimFails}}" wx:key="*this"></view>
       <text class="mission-fails-text">{{missionAnimFailsText}}</text>
     </view>
+  </view>
+  <text class="mp-close-hint">点击任意处关闭</text>
+</view>
+
+<!-- 刺客托管选人面板 -->
+<view class="ap-mask" wx:if="{{showAutoplayPicker}}" bindtap="onAutoplayPickerCancel">
+  <view class="ap-sheet" catchtap="onNoop">
+    <text class="ap-title">选择预定刺杀目标</text>
+    <text class="ap-sub">托管后进入刺杀阶段将自动刺杀此人</text>
+    <view class="ap-list">
+      <view class="ap-item" wx:for="{{autoplayPickerSlots}}" wx:key="playerId" data-idx="{{index}}" bindtap="onAutoplayPickerSelect">
+        <text class="ap-seat">{{item.seat}}号</text>
+        <image wx:if="{{item.avatarImage}}" class="ap-avatar" src="{{item.avatarImage}}" mode="aspectFill"/>
+        <text wx:else class="ap-avatar-text">{{item.avatarText}}</text>
+        <text class="ap-name">{{item.name}}</text>
+      </view>
+    </view>
+    <view class="ap-cancel" bindtap="onAutoplayPickerCancel">取消</view>
   </view>
 </view>
 
@@ -657,4 +509,21 @@
     </view>
   </view>
   <text class="assassin-close-hint">点击任意处关闭</text>
+</view>
+
+<!-- ===== 新手引导提示卡片 ===== -->
+<view class="hint-overlay" wx:if="{{hintVisible}}" bindtap="onDismissHint">
+  <view class="hint-card">
+    <view class="hint-header">
+      <text class="hint-icon">💡</text>
+      <text class="hint-title">{{hintTitle}}</text>
+    </view>
+    <text class="hint-text">{{hintText}}</text>
+    <view class="hint-footer">
+      <text class="hint-step-tip">新手引导 · 只出现一次</text>
+      <view class="hint-dismiss-btn" bindtap="onDismissHint">
+        <text class="hint-dismiss-text">知道了</text>
+      </view>
+    </view>
+  </view>
 </view>

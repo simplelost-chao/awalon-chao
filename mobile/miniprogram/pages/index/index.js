@@ -1,38 +1,43 @@
 const socket = require("../../utils/socket");
 const { decorateMedals } = require("../../utils/medals");
+const {
+  ROLE_IMAGE_MAP, EVIL_ROLES, roleImageFor, roleClassFor,
+  missionMetaByCount, forcedRoundForRoom, isCurrentForcedAttempt,
+  getLatestMissionRecord, buildMissionPills, formatRecapEntry,
+} = require("../../utils/gameUtils");
 const app = getApp();
-
-const ROLE_IMAGE_MAP = {
-  梅林: "https://www.awalon.top/mp-assets/role-split/merlin.png",
-  派西维尔: "https://www.awalon.top/mp-assets/role-split/percival.png",
-  忠臣: "https://www.awalon.top/mp-assets/role-split/arthur_loyal.png",
-  "亚瑟的忠臣": "https://www.awalon.top/mp-assets/role-split/arthur_loyal.png",
-  "兰斯洛特（正义）": "https://www.awalon.top/mp-assets/role-split/lancelot_good.png",
-  莫甘娜: "https://www.awalon.top/mp-assets/role-split/morgana.png",
-  刺客: "https://www.awalon.top/mp-assets/role-split/assassin.png",
-  莫德雷德: "https://www.awalon.top/mp-assets/role-split/mordred.png",
-  奥伯伦: "https://www.awalon.top/mp-assets/role-split/oberon.png",
-  爪牙: "https://www.awalon.top/mp-assets/role-split/minion.png",
-  "兰斯洛特（邪恶）": "https://www.awalon.top/mp-assets/role-split/lancelot_evil.png"
+const NOTE_LABELS_GOOD = ["梅林", "派西", "偏好", "正义", "排水"];
+const NOTE_LABELS_EVIL = ["偏坏", "狼人", "奥伯伦"];
+const NOTE_LABELS = [...NOTE_LABELS_GOOD, ...NOTE_LABELS_EVIL];
+const NOTE_CHIP_CONFIG = {
+  "梅林":  { icon: "✨", color: "#a78bfa", bg: "rgba(109,40,217,0.25)",  border: "rgba(167,139,250,0.55)" },
+  "派西":  { icon: "👁️", color: "#a5b4fc", bg: "rgba(99,102,241,0.22)",  border: "rgba(165,180,252,0.5)"  },
+  "偏好":  { icon: "💚", color: "#86efac", bg: "rgba(21,128,61,0.18)",   border: "rgba(134,239,172,0.45)" },
+  "正义":  { icon: "✅", color: "#4ade80", bg: "rgba(21,128,61,0.22)",   border: "rgba(74,222,128,0.5)"   },
+  "排水":  { icon: "💧", color: "#38bdf8", bg: "rgba(7,89,133,0.25)",    border: "rgba(56,189,248,0.5)"   },
+  "偏坏":  { icon: "⚠️", color: "#fb923c", bg: "rgba(194,65,12,0.22)",   border: "rgba(251,146,60,0.5)"   },
+  "狼人":  { icon: "🐺", color: "#f87171", bg: "rgba(153,27,27,0.28)",   border: "rgba(248,113,113,0.55)" },
+  "奥伯伦":{ icon: "🌑", color: "#c084fc", bg: "rgba(88,28,135,0.25)",   border: "rgba(192,132,252,0.5)"  },
 };
-
-const EVIL_ROLES = new Set(["刺客", "莫甘娜", "莫德雷德", "奥伯伦", "爪牙", "兰斯洛特（邪恶）"]);
-const NOTE_LABELS = ["梅林", "偏坏", "偏好", "狼人", "好人", "排水"];
 const NOTE_BADGE_STYLE = {
-  "梅林": "background:rgba(70,25,130,0.88);border-color:rgba(180,120,255,0.65);",
-  "偏坏":    "background:rgba(120,18,18,0.88);border-color:rgba(255,80,80,0.6);",
-  "偏好":    "background:rgba(18,90,40,0.88);border-color:rgba(80,210,120,0.6);",
-  "狼人":    "background:rgba(140,10,10,0.92);border-color:rgba(220,40,40,0.7);",
-  "好人":    "background:rgba(18,100,50,0.88);border-color:rgba(60,220,130,0.6);",
-  "排水":    "background:rgba(12,85,105,0.88);border-color:rgba(60,210,230,0.6);",
+  "梅林":  "background:rgba(109,40,217,0.85);border-color:rgba(167,139,250,0.65);",
+  "派西":  "background:rgba(99,102,241,0.85);border-color:rgba(165,180,252,0.6);",
+  "偏好":  "background:rgba(21,128,61,0.8);border-color:rgba(134,239,172,0.55);",
+  "正义":  "background:rgba(18,100,50,0.88);border-color:rgba(74,222,128,0.6);",
+  "排水":  "background:rgba(7,89,133,0.85);border-color:rgba(56,189,248,0.6);",
+  "偏坏":  "background:rgba(194,65,12,0.85);border-color:rgba(251,146,60,0.6);",
+  "狼人":  "background:rgba(153,27,27,0.9);border-color:rgba(248,113,113,0.65);",
+  "奥伯伦":"background:rgba(88,28,135,0.88);border-color:rgba(192,132,252,0.6);",
 };
 const NOTE_TEXT_STYLE = {
-  "梅林": "color:#d4aaff;",
-  "偏坏":    "color:#ff9898;",
-  "偏好":    "color:#90e8a8;",
-  "狼人":    "color:#ff7070;",
-  "好人":    "color:#70e8a0;",
-  "排水":    "color:#70d8ea;",
+  "梅林":  "color:#d4aaff;",
+  "派西":  "color:#c7d2fe;",
+  "偏好":  "color:#bbf7d0;",
+  "正义":  "color:#86efac;",
+  "排水":  "color:#7dd3fc;",
+  "偏坏":  "color:#fdba74;",
+  "狼人":  "color:#fca5a5;",
+  "奥伯伦":"color:#e9d5ff;",
 };
 const ROLE_ORDER = ["梅林", "派西维尔", "忠臣", "刺客", "莫甘娜", "莫德雷德", "奥伯伦", "爪牙"];
 const FORCE_ROUND_OPTIONS = [
@@ -40,33 +45,33 @@ const FORCE_ROUND_OPTIONS = [
   { value: "evil_plus_one", label: "第(匪徒数+1)次组队判负" }
 ];
 const SPEAKING_SECONDS_OPTIONS = [60, 90, 120, 180];
-const END_VOTE_OPTIONS = [
-  { value: "c_le", label: "C麻了", icon: "/assets/comments/c.png" },
-  { value: "blame", label: "背锅侠", icon: "/assets/comments/guo.png" },
-  { value: "effort", label: "尽力位", icon: "/assets/comments/try.png" }
-];
 const ROLE_DESCRIPTION_MAP = {
-  梅林: "知道大部分坏人身份，但必须隐藏自己，避免在终局被刺客识破。",
-  派西维尔: "能看到梅林与莫甘娜，但无法区分谁是真梅林，职责是保护关键好人位。",
-  忠臣: "没有额外信息，依靠发言、投票和任务结果帮助好人阵营推进。",
-  "亚瑟的忠臣": "没有额外信息，依靠发言、投票和任务结果帮助好人阵营推进。",
+  梅林: "知道大部分邪恶身份，但必须隐藏自己，避免在终局被刺客识破。",
+  派西维尔: "能看到梅林与莫甘娜，但无法区分谁是真梅林，职责是保护关键正义位。",
+  忠臣: "没有额外信息，依靠发言、投票和任务结果帮助正义阵营推进。",
+  "亚瑟的忠臣": "没有额外信息，依靠发言、投票和任务结果帮助正义阵营推进。",
   "兰斯洛特（正义）": "特殊规则角色，可能带来阵营扰动，需要结合局势判断信息真伪。",
-  刺客: "坏人核心角色。若好人先完成三次任务成功，刺客仍可通过刺杀梅林翻盘。",
+  刺客: "邪恶核心角色。若正义先完成三次任务成功，刺客仍可通过刺杀梅林翻盘。",
   莫甘娜: "会被派西维尔误认为可能的梅林，适合伪装和带偏判断。",
   莫德雷德: "通常不会被梅林看到，隐蔽性强，适合潜伏带队或控场。",
-  奥伯伦: "属于坏人阵营，但通常不与其他坏人互通信息，容易形成信息断层。",
-  爪牙: "标准坏人位，没有额外能力，主要负责配合队友制造失败任务和混淆视角。",
+  奥伯伦: "属于邪恶阵营，但通常不与其他邪恶互通信息，容易形成信息断层。",
+  爪牙: "标准邪恶位，没有额外能力，主要负责配合队友制造失败任务和混淆视角。",
   "兰斯洛特（邪恶）": "特殊规则角色，阵营关系更复杂，需要结合对局规则和信息变化判断。"
 };
 
+
 Page({
   data: {
+    activeRooms: [],
+    activeRoomsLoading: false,
+    reviewMode: false,
     connected: false,
     hasWelcomed: false,
     statusBarHeight: 20,
     navBarHeight: 44,
     navTotalHeight: 64,
     wsUrl: "",
+    skinId: 'dark-gold',
     clientId: "",
     authToken: "",
     loggedIn: false,
@@ -89,9 +94,10 @@ Page({
     speakingSeconds: 120,
     speakingSecondsOptions: SPEAKING_SECONDS_OPTIONS,
     evilRoleVisibleEnabled: false,
+    oberonVisibleEnabled: false,
+    aiVoiceEnabled: false,
     forceRoundMode: "fixed5",
     forceRoundOptions: FORCE_ROUND_OPTIONS,
-    endVoteOptions: END_VOTE_OPTIONS,
     showAdvancedSettings: false,
     room: null,
     teamPhaseKey: "",
@@ -99,11 +105,15 @@ Page({
     roundSeats: [],
     seatNotes: {},
     noteLabels: NOTE_LABELS,
-    noteModal: { show: false, seatIndex: -1, seat: 0, name: "", label: "" },
+    noteModal: { show: false, seatIndex: -1, seat: 0, name: "", label: "", ringStyle: "", labelColor: "", labelBg: "", labelBorder: "" },
+    noteChipsGood: [],
+    noteChipsEvil: [],
     assassinAnim: null,
     roleInfo: null,
     roleInfoLoading: false,
+    assassinSeatNo: 0,
     showRolePanel: false,
+    identityMode: false,
     roleVisibleSeats: [],
     roleInfoImage: "",
     roleInfoClass: "",
@@ -117,13 +127,16 @@ Page({
     teamCandidates: [],
     currentVoteTeam: [],
     selectedAssassinate: "",
-    selectedEndVoteType: "",
-    endVoteResultGroups: [],
     speakText: "",
+    speakTextLen: 0,
     speakingSeat: 0,
+    speakingAvatarImage: '',
+    speakingAvatarText: '🙂',
     speakingRemainingSec: 0,
     speakingTotalSec: 180,
     speakingProgress: 0,
+    speakingUrgent: false,
+    speakingTimerText: "0:00",
     isMyTurn: false,
     speakMessages: [],
     speakKeys: [],
@@ -145,6 +158,14 @@ Page({
     inTeam: false,
     myMissionDone: false,
     isAssassin: false,
+    myAutoplay: false,
+    autoplayAssassinTarget: null,
+    showAutoplayPicker: false,
+    autoplayPickerSlots: [],
+    hintVisible: false,
+    hintKey: "",
+    hintTitle: "",
+    hintText: "",
     isLadyHolder: false,
     ladyHolderName: "",
     ladyHistory: [],
@@ -178,6 +199,8 @@ Page({
     roomTip: "登录后可创建或加入房间。",
     showRecapModal: false,
     recapReady: false,
+    recapGenerating: false,
+    recapRequested: false,
     recapList: [],
     recapIndex: 0,
     showMissionProgress: false,
@@ -191,6 +214,17 @@ Page({
     const app = getApp();
     const wsUrl = app.globalData.wsUrl;
     const nav = app.globalData.nav || {};
+    // Load skin and register change listener
+    this.setData({ skinId: app.globalData.skinId || 'dark-gold' });
+    app.globalData.skinChangeListener = (newSkinId) => {
+      this.setData({ skinId: newSkinId });
+    };
+    // 审核模式：已加载则直接用，否则等回调
+    if (app.globalData.reviewMode) {
+      this.setData({ reviewMode: true });
+    } else {
+      app.globalData.reviewModeListener = (on) => this.setData({ reviewMode: on });
+    }
     const token = wx.getStorageSync("awalonAuthToken") || "";
     const nickname = wx.getStorageSync("awalonNickname") || "";
     const avatar = wx.getStorageSync("awalonAvatar") || "🐺";
@@ -210,7 +244,7 @@ Page({
       pendingShareRoomCode: sharedRoomCode || "",
       allRoleOptions: ROLE_ORDER.map((role) => ({
         role,
-        image: this.roleImageFor(role)
+        image: roleImageFor(role)
       })),
       selectedRoles: this.defaultRolesForCount(7),
       hostRoleOptions: this.withRoleImages(this.uniqueRoles(this.defaultRolesForCount(7))),
@@ -230,6 +264,7 @@ Page({
       app.globalData.roleConfigListener = () => { this._rebuildRoleChips(); };
     }
     this.connect(wsUrl);
+    this.fetchActiveRooms();
     this._speakTicker = setInterval(() => {
       if (this.data.room && this.data.phase === "speaking") {
         this.refreshSpeakingProgress(this.data.room);
@@ -243,12 +278,142 @@ Page({
       // 切回前台时如果断连，立即重连（不等重连定时器）
       this._reconnectDelay = 1000;
       this.connect(this.data.wsUrl);
+    } else {
+      this.requestRoomRecovery();
+    }
+    this.startRoomsPolling();
+  },
+
+  onHide() {
+    this.stopRoomsPolling();
+  },
+
+  startRoomsPolling() {
+    this.stopRoomsPolling();
+    this.fetchActiveRooms();
+    this._roomsPoller = setInterval(() => {
+      if (this.data.atHome) this.fetchActiveRooms();
+    }, 10000);
+  },
+
+  stopRoomsPolling() {
+    if (this._roomsPoller) {
+      clearInterval(this._roomsPoller);
+      this._roomsPoller = null;
+    }
+  },
+
+  _handleAiVoiceRequest(personaKey, text, playerId, audioBase64) {
+    const done = () => this.send('VOICE_DONE', {});
+    const playFile = (tmpPath) => {
+      if (this._aiAudioCtx) {
+        try { this._aiAudioCtx.destroy(); } catch (e) {}
+        this._aiAudioCtx = null;
+      }
+      const fs = wx.getFileSystemManager();
+      const ctx = wx.createInnerAudioContext();
+      ctx.src = tmpPath;
+      ctx.onEnded(() => { ctx.destroy(); fs.unlink({ filePath: tmpPath, fail: () => {} }); done(); });
+      ctx.onError((e) => { console.log('[voice] audio error', e); ctx.destroy(); fs.unlink({ filePath: tmpPath, fail: () => {} }); done(); });
+      ctx.play();
+      this._aiAudioCtx = ctx;
+    };
+    const saveAndPlay = (arrayBuffer) => {
+      const fs = wx.getFileSystemManager();
+      const tmpPath = `${wx.env.USER_DATA_PATH}/ai_voice_${Date.now()}.wav`;
+      fs.writeFile({ filePath: tmpPath, data: arrayBuffer, success: () => playFile(tmpPath), fail: () => done() });
+    };
+
+    // 服务端已合成：直接解码播放，无需再调 voice service
+    if (audioBase64) {
+      console.log('[voice] server audio received, playing directly');
+      try {
+        const buf = wx.base64ToArrayBuffer(audioBase64);
+        saveAndPlay(buf);
+      } catch (e) {
+        console.warn('[voice] base64 decode fail', e);
+        done();
+      }
       return;
     }
-    this.requestRoomRecovery();
+
+    // 兜底：服务端未合成时客户端自行合成（保留旧逻辑）
+    console.log('[voice] no server audio, client synthesizing', personaKey);
+    wx.request({
+      url: 'https://voice.zhuchao.life/synthesize_cached',
+      method: 'POST',
+      header: { 'Content-Type': 'application/json' },
+      data: { tts_text: text, contact_id: personaKey },
+      responseType: 'arraybuffer',
+      timeout: 60000,
+      success: (res) => {
+        if (res.statusCode !== 200) { done(); return; }
+        saveAndPlay(res.data);
+      },
+      fail: (e) => { console.log('[voice] request fail', e); done(); },
+    });
+  },
+
+  _prefetchAiVoice(personaKey, text, playerId) {
+    if (!this._voiceCache) this._voiceCache = {};
+    const cacheKey = playerId || personaKey;
+    if (this._voiceCache[cacheKey]) return; // already prefetching
+    console.log('[voice] prefetching', personaKey);
+    const entry = { ready: false, path: null, onReady: null };
+    this._voiceCache[cacheKey] = entry;
+    const synText = text.slice(0, 40);
+    wx.request({
+      url: 'https://voice.zhuchao.life/synthesize_cached',
+      method: 'POST',
+      header: { 'Content-Type': 'application/json' },
+      data: { tts_text: synText, contact_id: personaKey },
+      responseType: 'arraybuffer',
+      timeout: 60000,
+      success: (res) => {
+        if (res.statusCode !== 200) {
+          entry.ready = true;
+          if (entry.onReady) entry.onReady(null);
+          return;
+        }
+        const fs = wx.getFileSystemManager();
+        const tmpPath = `${wx.env.USER_DATA_PATH}/ai_voice_pre_${Date.now()}.wav`;
+        fs.writeFile({
+          filePath: tmpPath,
+          data: res.data,
+          success: () => {
+            entry.path = tmpPath;
+            entry.ready = true;
+            console.log('[voice] prefetch ready', personaKey);
+            if (entry.onReady) entry.onReady(tmpPath);
+          },
+          fail: () => {
+            entry.ready = true;
+            if (entry.onReady) entry.onReady(null);
+          },
+        });
+      },
+      fail: (e) => {
+        console.log('[voice] prefetch fail', e);
+        entry.ready = true;
+        if (entry.onReady) entry.onReady(null);
+      },
+    });
+  },
+
+  _clearVoiceCache() {
+    if (!this._voiceCache) return;
+    const fs = wx.getFileSystemManager();
+    for (const entry of Object.values(this._voiceCache)) {
+      if (entry.ready && entry.path) {
+        fs.unlink({ filePath: entry.path, fail: () => {} });
+      }
+    }
+    this._voiceCache = {};
   },
 
   onUnload() {
+    this._clearVoiceCache();
+    this.stopRoomsPolling();
     if (this._missionAnimTimer) {
       clearTimeout(this._missionAnimTimer);
       this._missionAnimTimer = null;
@@ -299,10 +464,6 @@ Page({
     if (player.spectator) return true;
     const seat = Number.isFinite(player.seat) ? player.seat + 1 : this.getSeatNo(room, playerId, null);
     return !seat || seat <= 0 || player.avatar === "👀";
-  },
-
-  getEndVoteOption(voteType) {
-    return END_VOTE_OPTIONS.find((item) => item.value === voteType) || null;
   },
 
   tryJoinPendingSharedRoom() {
@@ -709,8 +870,19 @@ Page({
           socket.send({ type: "AUTH", payload: { token } });
         }
       },
-      onClose: () => {
+      onClose: (code) => {
         this.setData({ connected: false });
+        // 被其他设备顶掉，不重连，提示用户
+        if (code === 4001) {
+          wx.removeStorageSync('awalonAuthToken');
+          this.setData({ atHome: true, room: null, loggedIn: false, loginTip: '账号已在其他设备登录' });
+          wx.showModal({
+            title: '已被顶替下线',
+            content: '你的账号已在另一台设备登录，当前设备已退出。',
+            showCancel: false,
+          });
+          return;
+        }
         // 自动重连：指数退避，最长 16s
         const delay = this._reconnectDelay || 1000;
         this._reconnectDelay = Math.min(delay * 2, 16000);
@@ -775,11 +947,11 @@ Page({
           const prevRoom = this.data.room;
           // clear notes when game resets (started → not started)
           if (prevRoom && prevRoom.started && !room.started) {
-            this.setData({ seatNotes: {} });
+            this.setData({ seatNotes: {}, myAutoplay: false, autoplayAssassinTarget: null });
           }
           // clear cached role info when a new game starts (not started → started)
           if (prevRoom && !prevRoom.started && room.started) {
-            this.setData({ roleInfo: null, roleInfoImage: "", roleInfoClass: "", roleVisibleSeats: [], roleInfoLoading: false });
+            this.setData({ roleInfo: null, roleInfoImage: "", roleInfoClass: "", roleVisibleSeats: [], roleInfoLoading: false, assassinSeatNo: 0, isAssassin: false });
           }
           const currentPhase = room.phase || "";
           const nextTeamPhaseKey =
@@ -811,32 +983,26 @@ Page({
             currentPhase === "assassination" && !(room.game && room.game.assassination)
               ? this.keepValidTarget(room, this.data.selectedAssassinate)
               : "";
-          const endVotes = (room && room.game && room.game.endVotes) || {};
-          const selectedEndVoteType =
-            currentPhase === "end" && !endVotes[this.data.clientId]
-              ? this.data.selectedEndVoteType || END_VOTE_OPTIONS[0].value
-              : "";
-          const isCurrentForcedAttempt = this.isCurrentForcedAttempt(room);
+          const isForcedAttempt = isCurrentForcedAttempt(room);
           const seatSlots = this.buildSeatSlots(room, selectedTeam, selectedAssassinate);
           const isSpectator = this.isSpectatorInRoom(room, this.data.clientId);
           const playerCards = this.buildPlayerCards(room);
-          const endVoteResultGroups = this.buildEndVoteResultGroups(playerCards, endVotes);
           this.setData({
             room,
             ladyOfLakeEnabled: !!room.ladyOfLakeEnabled,
+            aiVoiceEnabled: !!room.aiVoiceEnabled,
             teamPhaseKey: nextTeamPhaseKey || this.data.teamPhaseKey,
             selectedTeam,
             teamConfirmed,
             ...leaderAction,
             selectedAssassinate,
-            selectedEndVoteType,
-            isCurrentForcedAttempt,
+            isCurrentForcedAttempt: isForcedAttempt,
             seatSlots,
             roundSeats: this.buildRoundSeats(seatSlots, room.maxPlayers || 7),
             teamCandidates: this.buildTeamCandidates(room, selectedTeam),
             playerCards,
-            endVoteResultGroups,
             ...this.buildSpeakViewState(room, this.data.speakRoundView),
+            isSpectator,
             roomTip: isSpectator ? `正在观战房间 ${room.code}` : `已进入房间 ${room.code}`
           }, () => {
             this.ensureShareInviteImage(room);
@@ -893,6 +1059,13 @@ Page({
           }
           return;
         }
+        if (msg.type === "HISTORY_RECAP_GENERATING") {
+          const app = getApp();
+          if (typeof app.globalData.historyRecapGeneratingListener === "function") {
+            app.globalData.historyRecapGeneratingListener(msg.data && msg.data.gameId);
+          }
+          return;
+        }
         if (msg.type === "ROLE_STATS") {
           const stats = msg.data || null;
           this.setData({ roleStats: stats });
@@ -905,24 +1078,32 @@ Page({
         }
         if (msg.type === "ROLE_INFO") {
           const info = (msg.data || {});
-          const roleVisibleSeats = this.buildRoleVisibleSeats(info);
+          const assassinSeatNo = Number(info.assassinSeatNo) || 0;
+          const roleVisibleSeats = this.buildRoleVisibleSeats(info, assassinSeatNo);
           this.setData({
             roleInfo: info,
             roleInfoLoading: false,
             roleVisibleSeats,
+            assassinSeatNo,
             showRolePanel: this.data.showRolePanel,
-            roleInfoImage: this.roleImageFor(info.role),
-            roleInfoClass: this.roleClassFor(info.role),
+            roleInfoImage: roleImageFor(info.role),
+            roleInfoClass: roleClassFor(info.role),
             myRole: info.role || this.data.myRole,
-            isAssassin: (info.role || this.data.myRole) === "刺客",
+            isAssassin: !!info.isAssassin,
             gameTip: `身份：${info.role || "未知"}`
           });
+          // 用最新的 roleVisibleSeats 重建圆桌座位，使 identityClass 生效
+          const room = this.data.room;
+          if (room) {
+            const seatSlots = this.buildSeatSlots(room, this.data.selectedTeam, this.data.selectedAssassinate, roleVisibleSeats);
+            this.setData({ roundSeats: this.buildRoundSeats(seatSlots, room.maxPlayers || 7) });
+          }
           return;
         }
         if (msg.type === "LADY_OF_LAKE_RESULT") {
           const data = msg.data || {};
           const targetName = data.targetNickname || "未知玩家";
-          const alignment = data.alignment === "evil" ? "坏人" : "好人";
+          const alignment = data.alignment === "evil" ? "邪恶" : "正义";
           wx.showModal({
             title: "验人结果",
             content: `${targetName} 的阵营是：${alignment}`,
@@ -953,8 +1134,22 @@ Page({
           return;
         }
         if (msg.type === "KICKED") {
-          this.setData({ room: null, seatNotes: {} });
-          wx.showToast({ title: "你已被房主踢出房间", icon: "none", duration: 2000 });
+          this.setData({ room: null, atHome: true, seatNotes: {}, showMissionProgress: false, showMissionAnim: false });
+          wx.showModal({ title: "已被踢出", content: "房主已将你移出房间", showCancel: false, confirmText: "好的" });
+          return;
+        }
+        if (msg.type === "AI_VOICE_REQUEST") {
+          this._handleAiVoiceRequest(msg.personaKey, msg.text, msg.playerId, msg.audioBase64);
+          return;
+        }
+        if (msg.type === "AI_VOICE_PREFETCH") {
+          this._prefetchAiVoice(msg.personaKey, msg.text, msg.playerId);
+          return;
+        }
+        if (msg.type === "ROOM_DISSOLVED") {
+          const reason = (msg.payload && msg.payload.reason) || "房间已解散";
+          this.setData({ room: null, atHome: true, seatNotes: {}, showMissionProgress: false, showMissionAnim: false });
+          wx.showToast({ title: reason, icon: "none", duration: 2000 });
           return;
         }
         if (msg.type === "ERROR") {
@@ -971,11 +1166,24 @@ Page({
           }
           // 服务器重启导致 session 失效 → 自动退出登录状态，让用户重新登录
           if (code === "INVALID_TOKEN") {
-            this.setData({ loggedIn: false, room: null, loginTip: "服务已重启，请重新登录", roomTip: "" });
+            this.setData({ loggedIn: false, room: null, atHome: true, loginTip: "服务已重启，请重新登录", roomTip: "" });
             wx.removeStorageSync("awalonAuthToken");
             return;
           }
           this.setData({ loginTip: tip, roomTip: tip });
+          if (code === "HISTORY_NOT_FOUND" || code === "INVALID_GAME_ID") {
+            const app = getApp();
+            if (typeof app.globalData.historyDetailListener === "function") {
+              app.globalData.historyDetailListener(null);
+            }
+            return;
+          }
+          if (code === "ROOM_NOT_FOUND") {
+            // 服务重启后房间已不存在，清空本地房间状态避免重连死循环
+            this.setData({ room: null });
+            wx.showToast({ title: "房间已不存在", icon: "none", duration: 2000 });
+            return;
+          }
           if (code === "NOT_YOUR_TURN" || code === "NOT_SPEAKING_PHASE" || code === "ROOM_FULL") {
             this.requestRoomRecovery();
           }
@@ -1057,10 +1265,11 @@ Page({
     const myVoted = !!(game && game.votes && game.votes[clientId] !== undefined);
     const inTeam = !!(game && Array.isArray(game.team) && game.team.includes(clientId));
     const myMissionDone = !!(game && game.missionVotes && game.missionVotes[clientId] !== undefined);
-    const currentRole = (this.data.roleInfo && this.data.roleInfo.role) || this.data.myRole || "";
-    const isAssassin = currentRole === "刺客";
+    const isAssassin = !!this.data.isAssassin;
+    const myPlayer = room && Array.isArray(room.players) ? room.players.find((p) => p.id === clientId) : null;
+    const myAutoplay = myPlayer ? !!myPlayer.autoplay : this.data.myAutoplay;
     const missionRows = this.buildMissionRows(room);
-    const missionPills = this.buildMissionPills(room);
+    const missionPills = buildMissionPills(room);
     const resultInfo = this.buildCenterResult(room);
     const endMedals = this.buildEndMedals(room, clientId);
     const lady = game && game.ladyOfLake ? game.ladyOfLake : null;
@@ -1078,6 +1287,12 @@ Page({
       speakingRemainingSec = Math.max(0, Math.floor((Number(room.speaking.endAt) - Date.now()) / 1000));
     }
     const speakingProgress = phase === "speaking" ? Math.max(0, Math.min(100, Math.floor((speakingRemainingSec / Math.max(1, speakingTotalSec)) * 100))) : 0;
+    const speakingUrgent = speakingRemainingSec > 0 && speakingRemainingSec <= 15;
+    const speakingTimerText = (() => { const s = speakingRemainingSec; return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); })();
+    const speakingPlayer = speakingPlayerId && Array.isArray(room.players) ? room.players.find(p => p.id === speakingPlayerId) : null;
+    const speakingAvatarMeta = speakingPlayer ? this.avatarMeta(speakingPlayer.avatar || '🙂') : null;
+    const speakingAvatarImage = speakingAvatarMeta ? speakingAvatarMeta.image : '';
+    const speakingAvatarText = speakingAvatarMeta ? (speakingAvatarMeta.text || '🙂') : '🙂';
     const selectedTeam = this.data.selectedTeam || [];
     const serverTeam = game && Array.isArray(game.team) ? this.keepValidSelectedTeam(room, game.team) : [];
     const teamConfirmed = !!(isLeader && phase === "speaking" && serverTeam.length === teamSize && this.sameTeam(selectedTeam, serverTeam));
@@ -1094,6 +1309,7 @@ Page({
       inTeam,
       myMissionDone,
       isAssassin,
+      myAutoplay,
       isLadyHolder,
       ladyHolderName: ladyHolder ? `${ladySeat}号 · ${ladyHolder.nickname}` : "",
       ladyTargets,
@@ -1105,9 +1321,13 @@ Page({
       centerResultSub: resultInfo.sub,
       endMedals,
       speakingSeat,
+      speakingAvatarImage,
+      speakingAvatarText,
       speakingRemainingSec,
       speakingTotalSec,
       speakingProgress,
+      speakingUrgent,
+      speakingTimerText,
       isMyTurn,
       teamConfirmed,
       ...leaderAction,
@@ -1115,8 +1335,9 @@ Page({
       currentVoteTeam: this.buildCurrentVoteTeam(room),
       ...(() => {
         const mp = this.buildMissionProgress(room);
+        const dismissed = this._missionProgressDismissedRound === mp.round;
         return {
-          showMissionProgress: mp.show && !inTeam,
+          showMissionProgress: mp.show && !inTeam && !dismissed,
           missionProgressTeam: mp.team,
           missionVotedCount: mp.votedCount,
           missionProgressRound: mp.round,
@@ -1133,6 +1354,26 @@ Page({
       this.setData({ roleRequested: true });
       this.send("VIEW_ROLE");
     }
+    this.maybeShowGameHint(room, { phase, isLeader, isMyTurn, inTeam, myPlayer });
+    this.maybeVibrate({ phase, isLeader, isMyTurn, inTeam, myMissionDone, myVoted, isAssassin, isLadyHolder, myPlayer });
+  },
+
+  maybeVibrate({ phase, isLeader, isMyTurn, inTeam, myMissionDone, myVoted, isAssassin, isLadyHolder, myPlayer }) {
+    if (!myPlayer || myPlayer.spectator || myPlayer.isAI) return;
+    // 当前需要我操作的 key
+    let actionKey = null;
+    if (phase === 'team' && isLeader) actionKey = `team-lead-${this.data.room && this.data.room.game && this.data.room.game.round}-${this.data.room && this.data.room.game && this.data.room.game.attempt}`;
+    else if (phase === 'speaking' && isMyTurn) actionKey = `speak-${this.data.speakingSeat}`;
+    else if (phase === 'vote' && !myVoted) actionKey = `vote-${this.data.room && this.data.room.game && this.data.room.game.round}-${this.data.room && this.data.room.game && this.data.room.game.attempt}`;
+    else if (phase === 'mission' && inTeam && !myMissionDone) actionKey = `mission-${this.data.room && this.data.room.game && this.data.room.game.round}`;
+    else if (phase === 'assassination' && isAssassin) actionKey = 'assassination';
+    else if (phase === 'lady' && isLadyHolder) actionKey = `lady-${this.data.room && this.data.room.game && this.data.room.game.ladyOfLake && this.data.room.game.ladyOfLake.round}`;
+
+    if (actionKey && actionKey !== this._lastVibrateKey) {
+      this._lastVibrateKey = actionKey;
+      wx.vibrateShort({ type: 'heavy' });
+    }
+    if (!actionKey) this._lastVibrateKey = null;
   },
 
   refreshSpeakingProgress(roomArg) {
@@ -1147,26 +1388,10 @@ Page({
     this.setData({
       speakingRemainingSec: remaining,
       speakingTotalSec: total,
-      speakingProgress: progress
+      speakingProgress: progress,
+      speakingUrgent: remaining > 0 && remaining <= 15,
+      speakingTimerText: Math.floor(remaining / 60) + ':' + String(remaining % 60).padStart(2, '0'),
     });
-  },
-
-  getLatestMissionRecord(room) {
-    if (!room || !room.game || !Array.isArray(room.game.missionHistory) || !room.game.missionHistory.length) return null;
-    const latest = room.game.missionHistory
-      .slice()
-      .sort((a, b) => Number(a.round || 0) - Number(b.round || 0))
-      .pop();
-    if (!latest) return null;
-    const round = Number(latest.round || 0);
-    const success = !!latest.success;
-    const fails = Number(latest.fails || 0);
-    return {
-      key: `${round}-${success ? 1 : 0}-${fails}`,
-      round,
-      success,
-      fails
-    };
   },
 
   maybeShowAssassinAnim(room, prevRoom) {
@@ -1187,12 +1412,17 @@ Page({
         targetAvatar: targetMeta.image,
         targetAvatarText: targetMeta.text,
         targetRole,
-        targetRoleImage: this.roleImageFor(targetRole),
+        targetRoleImage: roleImageFor(targetRole),
         assassinName: assassin ? assassin.nickname : '刺客',
-        resultText: anim.hit ? '刺中梅林！坏人阵营胜利' : '刺杀失败！好人阵营胜利',
+        resultText: anim.hit ? '刺中梅林！邪恶阵营胜利' : '刺杀失败！正义阵营胜利',
         resultClass: anim.hit ? 'assassin-result-evil' : 'assassin-result-good',
       }
     });
+  },
+
+  onCloseMissionProgress() {
+    this._missionProgressDismissedRound = this.data.missionProgressRound;
+    this.setData({ showMissionProgress: false });
   },
 
   onCloseMissionAnim() {
@@ -1211,75 +1441,37 @@ Page({
     // When transitioning away from 'end' (new game started), clear stale recap state
     if (room.phase !== "end") {
       if (this.data.recapReady || this.data._recapFingerprint) {
-        this.setData({ recapReady: false, recapList: [], _recapFingerprint: "" });
+        this.setData({ recapReady: false, recapGenerating: false, recapRequested: false, recapList: [], _recapFingerprint: "" });
       }
       return;
     }
+    const recapGenerating = !!(room.game && room.game.recapGenerating);
     const recap = room && room.game && Array.isArray(room.game.recap) ? room.game.recap : [];
     // Build a fingerprint from player IDs + count to detect genuinely new recap data
     const fingerprint = recap.map(r => (r.id || "") + ":" + (r.role || "")).join("|");
-    if (!fingerprint) return;
-    if (fingerprint === this.data._recapFingerprint) return;
-    const recapList = recap.map(r => this.formatRecapEntry(r));
-    if (!recapList.length) return;
-    this.setData({ recapReady: true, recapList, recapIndex: 0, _recapFingerprint: fingerprint });
+    if (fingerprint && fingerprint !== this.data._recapFingerprint) {
+      const recapList = recap.map(r => formatRecapEntry(r));
+      if (recapList.length) {
+        this.setData({ recapReady: true, recapGenerating: false, recapRequested: false, recapList, recapIndex: 0, _recapFingerprint: fingerprint });
+        return;
+      }
+    }
+    // 服务端确认开始生成，清除本地 pending 标记
+    if (recapGenerating) this.setData({ recapGenerating: true, recapRequested: false });
+    // 只有服务端明确说"没在生成"且本地没有 pending 请求时才重置
+    else if (!this.data.recapRequested && this.data.recapGenerating) {
+      this.setData({ recapGenerating: false });
+    }
   },
 
   onOpenRecap() {
     this.setData({ showRecapModal: true });
   },
 
-  formatRecapEntry(r) {
-    if (!r) return null;
-    const review = r.review || {};
-    const sections = [];
-
-    if (review.overview) {
-      sections.push({ label: "总体复盘", text: review.overview });
-    }
-    // 关键转折点
-    if (Array.isArray(review.keyMoments) && review.keyMoments.length) {
-      const text = review.keyMoments.map(m =>
-        `第${m.round}轮：${m.decision} → ${m.outcome}\n${m.assessment}`
-      ).join('\n\n');
-      sections.push({ label: "关键节点", text });
-    }
-    // 读人分析
-    if (Array.isArray(review.playerAnalysis) && review.playerAnalysis.length) {
-      const text = review.playerAnalysis.map(p => `${p.seat}号：${p.assessment}`).join('\n');
-      sections.push({ label: "读人分析", text });
-    }
-    if (review.speak && review.speak.summary) {
-      const lines = [review.speak.summary];
-      if (review.speak.bestMove) lines.push(`✓ ${review.speak.bestMove}`);
-      if (review.speak.mistake) lines.push(`✗ ${review.speak.mistake}`);
-      sections.push({ label: "发言复盘", text: lines.join('\n') });
-    }
-    if (review.vote && review.vote.summary) {
-      const lines = [review.vote.summary];
-      if (review.vote.keyVote) lines.push(`关键一票：${review.vote.keyVote}`);
-      sections.push({ label: "投票复盘", text: lines.join('\n') });
-    }
-    if (review.mission && review.mission.summary) {
-      sections.push({ label: "任务复盘", text: review.mission.summary });
-    }
-    if (review.nextGamePlan) {
-      sections.push({ label: "下局计划", text: review.nextGamePlan });
-    }
-
-    const knownInfo = r.knownInfo || "";
-    const think = r.think || "";
-
-    return {
-      nickname: r.nickname || "",
-      seat: r.seat || 0,
-      role: r.role || "",
-      reason: "",
-      think,
-      showThink: false,
-      knownInfo,
-      sections,
-    };
+  onRequestRecap() {
+    if (this.data.recapRequested || this.data.recapGenerating) return;
+    this.setData({ recapRequested: true });
+    this.send("REQUEST_RECAP");
   },
 
   onRecapPrev() {
@@ -1307,7 +1499,7 @@ Page({
 
   maybeShowMissionResultAnim(room) {
     const roomCode = room && room.code ? room.code : "";
-    const latest = this.getLatestMissionRecord(room);
+    const latest = getLatestMissionRecord(room);
     const latestKey = latest ? latest.key : "";
 
     if (!this.data.missionAnimBootstrapped || this.data.missionAnimRoomCode !== roomCode) {
@@ -1341,69 +1533,6 @@ Page({
       this.setData({ showMissionAnim: false });
       this._missionAnimTimer = null;
     }, 2800);
-  },
-
-  missionMetaByCount(count) {
-    const sizes =
-      {
-        5: [2, 3, 2, 3, 3],
-        6: [2, 3, 4, 3, 4],
-        7: [2, 3, 3, 4, 4],
-        8: [3, 4, 4, 5, 5],
-        9: [3, 4, 4, 5, 5],
-        10: [3, 4, 4, 5, 5]
-      }[count] || [2, 3, 3, 4, 4];
-    const fails =
-      {
-        5: [1, 1, 1, 1, 1],
-        6: [1, 1, 1, 1, 1],
-        7: [1, 1, 1, 2, 1],
-        8: [1, 1, 1, 2, 1],
-        9: [1, 1, 1, 2, 1],
-        10: [1, 1, 1, 2, 1]
-      }[count] || [1, 1, 1, 2, 1];
-    return { sizes, fails };
-  },
-
-  forcedRoundForRoom(room) {
-    if (!room) return 5;
-    const forcedRound = Number(room.forceRound || 0);
-    return forcedRound >= 1 ? forcedRound : 5;
-  },
-
-  isCurrentForcedAttempt(room) {
-    if (!room || !room.game) return false;
-    const phase = String(room.phase || "");
-    if (!["team", "speaking", "voting"].includes(phase)) return false;
-    return Number(room.game.attempt || 0) === this.forcedRoundForRoom(room);
-  },
-
-  buildMissionPills(room) {
-    if (!room || !room.game) return [];
-    const maxPlayers = Number(room.maxPlayers || 7);
-    const meta = this.missionMetaByCount(maxPlayers);
-    const map = {};
-    (room.game.missionHistory || []).forEach((m) => {
-      map[m.round] = m;
-    });
-    return meta.sizes.map((size, i) => {
-      const round = i + 1;
-      const rec = map[round] || null;
-      const success = rec ? !!rec.success : null;
-      const isCurrent = Number(room.game.round || 0) === round && room.phase !== "end";
-      const cls = `${success === true ? "pill-success" : ""} ${success === false ? "pill-fail" : ""} ${
-        isCurrent ? "pill-current" : ""
-      }`.trim();
-      return {
-        round,
-        size,
-        failReq: meta.fails[i],
-        success,
-        isCurrent,
-        isForcedRound: false,
-        cls
-      };
-    });
   },
 
   buildMissionRows(room) {
@@ -1447,29 +1576,33 @@ Page({
           .map(([id]) => id),
         snapshot
       );
-      let resultText = "-";
+      let resText = "";
       let resClass = "";
+      let approved = !!(v && v.approved);
       if (mission) {
-        resultText = mission.success ? `成功(${mission.fails || 0})` : `失败(${mission.fails || 0})`;
-        resClass = mission.success ? "res-ok" : "res-fail";
+        const fails = mission.fails || 0;
+        resText = mission.success ? (fails > 0 ? `✓ ${fails}` : "✓") : `✗ ${fails}`;
+        resClass = mission.success ? "pill-ok" : "pill-ng";
       } else if (phase === "voting" && game && Number(game.round || 0) === Number(v.round || 0) && Number(game.attempt || 0) === Number(v.attempt || 0)) {
-        resultText = "投票中";
-        resClass = "res-pending";
+        resText = "···";
+        resClass = "pill-wait";
+        approved = true;
       } else if (phase === "mission" && game && Number(game.round || 0) === Number(v.round || 0) && Number(game.attempt || 0) === Number(v.attempt || 0)) {
-        resultText = "出征中";
-        resClass = "res-pending";
+        resText = "···";
+        resClass = "pill-wait";
+        approved = true;
       }
       const roundNum = Number(v.round || 0);
       const attemptNum = Number(v.attempt || 0);
       return {
         key: `${v.round || 0}-${v.attempt || idx + 1}`,
-        round: `${v.round || 0}-${v.attempt || idx + 1}`,
-        isForcedRound: roundNum > 0 && attemptNum > 0 && attemptNum === this.forcedRoundForRoom(room),
-        leader: `${leaderSeat}号`,
+        isForcedRound: roundNum > 0 && attemptNum > 0 && attemptNum === forcedRoundForRoom(room),
+        leader: `${leaderSeat}`,
         team: teamSeats || "-",
         approve: approves || "-",
         reject: rejects || "-",
-        result: resultText,
+        approved,
+        resText,
         resClass
       };
     });
@@ -1479,9 +1612,20 @@ Page({
     if (!room || !room.game) return { show: false, title: "", sub: "" };
     const winner = room.game.winner || "";
     if (!winner && room.phase !== "end") return { show: false, title: "", sub: "" };
-    const title = winner === "good" ? "好人胜利" : winner === "evil" ? "坏人胜利" : "对局结束";
+    const title = winner === "good" ? "正义胜利" : winner === "evil" ? "邪恶胜利" : "对局结束";
     const ass = room.game.assassination || null;
-    const sub = ass && ass.targetSeat ? `刺杀目标：${ass.targetSeat}号位` : "本局已结束";
+    const endReason = room.game.endReason || null;
+    let sub = "本局已结束";
+    if (ass && ass.targetSeat) {
+      sub = `刺杀目标：${ass.targetSeat}号位`;
+    } else if (endReason === "force_round") {
+      sub = "强制轮发车失败";
+    } else if (endReason === "missions_failed") {
+      const failCount = Array.isArray(room.game.missionHistory) ? room.game.missionHistory.filter(m => !m.success).length : 3;
+      sub = `${failCount} 轮任务失败`;
+    } else if (endReason === "rounds_exhausted") {
+      sub = "任务轮次已耗尽";
+    }
     return { show: true, title, sub };
   },
 
@@ -1492,10 +1636,14 @@ Page({
     return decorateMedals(list);
   },
 
-  buildSeatSlots(room, selectedTeam = [], selectedAssassinate = "") {
+  buildSeatSlots(room, selectedTeam = [], selectedAssassinate = "", roleVisibleSeats = null) {
     const max = Number(room.maxPlayers || 0);
     const seats = Array.isArray(room.seats) ? room.seats : [];
     const players = Array.isArray(room.players) ? room.players : [];
+    // 圆桌身份模式：建立座位号 → identityFaction 的查找表
+    const rvs = roleVisibleSeats !== null ? roleVisibleSeats : (this.data.roleVisibleSeats || []);
+    const idMap = {};
+    rvs.forEach(vs => { idMap[vs.seat] = vs; });
     const game = room && room.game ? room.game : null;
     const endVotes = game && game.endVotes ? game.endVotes : {};
     const phase = room && room.phase ? room.phase : "";
@@ -1506,13 +1654,13 @@ Page({
     for (let i = 0; i < max; i += 1) {
       const pid = seats[i] || null;
       const p = pid ? players.find((it) => it.id === pid) : null;
-      const avatarMeta = this.avatarMeta(p && p.avatar ? p.avatar : (p ? "🙂" : ""));
+      const avatarMeta = p ? this.avatarMeta(p.avatar || "🙂") : { image: "", text: "" };
       let action = "";
       let actionDone = false;
       if (pid && game) {
         if (phase === "team" || phase === "speaking") {
           const tags = [];
-          if (pid === leaderId) tags.push("队长");
+          // 队长已有皇冠图标，不再显示文字
           if (phase === "speaking" && room.speaking && room.seats[room.speaking.index] === pid) tags.push("发言中");
           action = tags.join(" · ");
           actionDone = false;
@@ -1532,8 +1680,9 @@ Page({
         name: p ? p.nickname : "空位",
         playerId: pid,
         avatarImage: avatarMeta.image,
-        avatarText: avatarMeta.text || (p ? "🙂" : ""),
+        avatarText: p ? (avatarMeta.text || "🙂") : "",
         offline: !!(p && p.offline),
+        autoplay: !!(p && p.autoplay),
         isMe: !!(pid && pid === this.data.clientId),
         isLeader: !!(pid && pid === leaderId),
         isLadyHolder: !!(game && game.ladyOfLake && game.ladyOfLake.holderId === pid),
@@ -1547,11 +1696,31 @@ Page({
         selectedAssassinate: !!(pid && selectedAssassinate && selectedAssassinate === pid),
         isAssassinated: !!(pid && assTargetId && pid === assTargetId),
         roleLabel: this.getRevealedRoleLabel(room, pid),
-        roleImage: this.roleImageFor(this.getRevealedRoleLabel(room, pid)),
-        roleClass: this.roleClassFor(this.getRevealedRoleLabel(room, pid)),
-        endVoteSummaryText: pid && phase === "end" ? this.formatEndVoteSummary(this.summarizeEndVotes(endVotes, pid)) : "",
+        roleImage: roleImageFor(this.getRevealedRoleLabel(room, pid)),
+        roleClass: roleClassFor(this.getRevealedRoleLabel(room, pid)),
+        factionClass: (() => {
+          const rl = this.getRevealedRoleLabel(room, pid);
+          if (!rl) return '';
+          if (rl === '梅林') return 'rev-merlin';
+          return EVIL_ROLES.has(rl) ? 'rev-evil' : 'rev-good';
+        })(),
         action,
-        actionDone
+        actionDone,
+        badgeType: (() => {
+          if (p && p.autoplay) return 'autoplay';
+          if (!action) return '';
+          if (action.includes('发言中')) return 'speak';
+          if (action === '投票中') return 'voting';
+          if (action === '已投票') return 'voted';
+          if (action === '出征中') return 'mission';
+          if (action === '出征完毕') return 'mission-done';
+          return '';
+        })(),
+        identityClass: idMap[i + 1] ? `id-${idMap[i + 1].identityFaction}` : 'id-unknown',
+        identityLabel: idMap[i + 1]
+          ? (idMap[i + 1].role || (idMap[i + 1].isSelf ? '' : '未知'))
+          : '',
+        identityRoleImage: idMap[i + 1] && idMap[i + 1].role ? roleImageFor(idMap[i + 1].role) : '',
       });
     }
     return out;
@@ -1573,7 +1742,7 @@ Page({
     });
   },
 
-  buildRoleVisibleSeats(info) {
+  buildRoleVisibleSeats(info, assassinSeatNo) {
     const visibleSeatNos = Array.isArray(info && info.seats) ? info.seats.map(Number) : [];
     const room = this.data.room;
     const clientId = this.data.clientId;
@@ -1600,13 +1769,17 @@ Page({
         const p = room.players.find((it) => it.id === pid);
         const isSelf = pid === clientId;
         const role = isSelf ? currentRole : (pid && roleDetails[pid] ? roleDetails[pid] : "");
-        const roleImage = role ? this.roleImageFor(role) : "";
-        // 坏人视角下 info.seats 都是坏人队友；其他情况靠 roleDetails 里的角色判断
+        const roleImage = role ? roleImageFor(role) : "";
+        // 邪恶视角下 info.seats 都是邪恶队友；其他情况靠 roleDetails 里的角色判断
         const isEvil = isSelf ? EVIL_ROLES.has(currentRole) : (role ? EVIL_ROLES.has(role) : (!isSelf && (isEvilViewer || visibleAreEvil)));
         const isKnown = isSelf || !!role || isEvilViewer || visibleAreEvil;
         const rowClass = isEvil ? "role-seat-row-evil" : isKnown ? "role-seat-row-good" : "role-seat-row-unknown";
         const roleClass = isEvil ? "role-seat-role-evil" : isSelf ? "role-seat-role-self" : "role-seat-role-other";
         const avatarMeta = this.avatarMeta(p && p.avatar ? p.avatar : "🙂");
+        // 圆桌身份模式用：每个可见座位的阵营颜色
+        const identityFaction = isSelf
+          ? (EVIL_ROLES.has(currentRole) ? 'evil' : 'good')
+          : (isEvil ? 'evil' : 'good');
         return {
           seat: seatNo,
           nickname: p ? p.nickname : "未知",
@@ -1617,24 +1790,17 @@ Page({
           avatarText: avatarMeta.text || "🙂",
           rowClass,
           roleClass,
+          identityFaction,
+          isAssassinSeat: assassinSeatNo && seatNo === assassinSeatNo,
         };
       })
       .filter(Boolean);
   },
 
-  roleImageFor(role) {
-    return ROLE_IMAGE_MAP[role] || "";
-  },
-
-  roleClassFor(role) {
-    if (!role) return "";
-    return EVIL_ROLES.has(role) ? "role-evil" : "role-good";
-  },
 
   buildPlayerCards(room) {
     if (!room || !Array.isArray(room.players)) return [];
     const seats = Array.isArray(room.seats) ? room.seats : [];
-    const endVotes = room && room.game ? room.game.endVotes || {} : {};
     const bySeat = {};
     seats.forEach((pid, idx) => {
       if (pid) bySeat[pid] = idx + 1;
@@ -1662,7 +1828,6 @@ Page({
           statusClass = "status-ended";
         }
         const avatarMeta = this.avatarMeta(p.avatar || "🙂");
-        const endVoteSummary = this.summarizeEndVotes(endVotes, p.id);
         return {
           id: p.id,
           seat,
@@ -1678,9 +1843,8 @@ Page({
           status,
           statusClass,
           role,
-          roleImage: this.roleImageFor(role),
-          roleClass: this.roleClassFor(role),
-          endVoteSummaryText: this.formatEndVoteSummary(endVoteSummary)
+          roleImage: roleImageFor(role),
+          roleClass: roleClassFor(role),
         };
       })
       .sort((a, b) => {
@@ -1689,30 +1853,6 @@ Page({
         if (sa !== sb) return sa - sb;
         return a.nickname.localeCompare(b.nickname);
       });
-  },
-
-  buildEndVoteResultGroups(playerCards = [], endVotes = {}) {
-    return END_VOTE_OPTIONS.map((option) => {
-      const entries = playerCards
-        .map((item) => {
-          const summary = this.summarizeEndVotes(endVotes, item.id);
-          const count = Number(summary[option.value] || 0);
-          if (!count) return null;
-          return {
-            id: item.id,
-            text: `${item.seatText} ${item.nickname} x${count}`,
-            count
-          };
-        })
-        .filter(Boolean)
-        .sort((a, b) => b.count - a.count || a.text.localeCompare(b.text, "zh-Hans-CN"));
-      return {
-        key: option.value,
-        label: option.label,
-        icon: option.icon,
-        entries
-      };
-    }).filter((group) => group.entries.length);
   },
 
   buildRoomConfig(room, leaderSeat) {
@@ -1729,10 +1869,11 @@ Page({
     };
     const phaseText = phaseMap[room.phase] || (room.started ? "进行中" : "未开始");
     const roleSummary = this.summarizeRoomRoles(room.roles);
-    const forcedRound = this.forcedRoundForRoom(room);
+    const forcedRound = forcedRoundForRoom(room);
     return [
       { label: "扩展", value: room.ladyOfLakeEnabled ? "湖中仙女" : "标准局" },
-      { label: "坏人互认", value: room.evilRoleVisibleEnabled ? "显示具体身份" : "仅显示队友座位" },
+      { label: "邪恶互认", value: room.evilRoleVisibleEnabled ? "显示具体身份" : "仅显示队友座位" },
+      { label: "奥伯伦", value: room.oberonVisibleEnabled ? "纳入阵营" : "孤狼" },
       { label: "强制轮", value: `第${forcedRound}次组队` },
       { label: "发言时长", value: `${room.speakingSeconds || 120}s` }
     ];
@@ -1759,8 +1900,8 @@ Page({
       .map(([role, count]) => ({
         role,
         count,
-        image: this.roleImageFor(role),
-        roleClass: this.roleClassFor(role),
+        image: roleImageFor(role),
+        roleClass: roleClassFor(role),
         description: ROLE_DESCRIPTION_MAP[role] || "暂无角色说明"
       }));
   },
@@ -1871,11 +2012,18 @@ Page({
       const p = (m && m.playerId && byId[m.playerId]) || byName[m.from];
       const seat = p ? room.seats.findIndex((id) => id === p.id) + 1 : 0;
       const mine = !!(p && p.id === this.data.clientId);
+      const isAI = !!(p && p.isAI);
+      const text = m.text || "";
+      const key = `${m.ts || 0}-${idx}`;
+      const avatarMeta = this.avatarMeta((p && p.avatar) || "🙂");
       return {
-        key: `${m.ts || 0}-${idx}`,
+        key,
         from: m.from || "系统",
-        text: m.text || "",
+        text,
         seat: seat > 0 ? seat : "",
+        avatarImage: avatarMeta.image,
+        avatarText: avatarMeta.text || "🙂",
+        isAI,
         mine,
         system: !p
       };
@@ -1921,7 +2069,7 @@ Page({
   },
 
   onPickSpeakingSeconds(e) {
-    const seconds = Number(e.currentTarget.dataset.seconds || 120);
+    const seconds = Number(e.detail.seconds || 120);
     if (!SPEAKING_SECONDS_OPTIONS.includes(seconds)) return;
     this.setData({ speakingSeconds: seconds });
   },
@@ -1937,17 +2085,27 @@ Page({
   },
 
   onPickForceRoundMode(e) {
-    const mode = String(e.currentTarget.dataset.mode || "fixed5");
+    const mode = String(e.detail.mode || "fixed5");
     this.setData({ forceRoundMode: mode === "evil_plus_one" ? "evil_plus_one" : "fixed5" });
   },
 
   onPickEvilRoleVisible(e) {
-    const enabled = !!Number(e.currentTarget.dataset.enabled);
+    const enabled = !!Number(e.detail.enabled);
     this.setData({ evilRoleVisibleEnabled: enabled });
   },
 
+  onPickOberonVisible(e) {
+    const enabled = !!Number(e.detail.enabled);
+    this.setData({ oberonVisibleEnabled: enabled });
+  },
+
+  onToggleAiVoice(e) {
+    const enabled = !!Number(e.detail.enabled);
+    this.setData({ aiVoiceEnabled: enabled });
+  },
+
   onAddAdvancedRole(e) {
-    const role = String(e.currentTarget.dataset.role || "");
+    const role = String(e.detail.role || "");
     if (!role) return;
     const maxPlayers = 5 + Number(this.data.maxPlayersIndex || 0);
     const selectedRoles = Array.isArray(this.data.selectedRoles) ? this.data.selectedRoles.slice() : [];
@@ -1958,11 +2116,11 @@ Page({
     const { good, evil } = this.countRolesByFaction(selectedRoles);
     if (EVIL_ROLES.has(role)) {
       if (evil >= this.expectedEvilCount(maxPlayers)) {
-        wx.showToast({ title: "坏人数量已满", icon: "none" });
+        wx.showToast({ title: "邪恶数量已满", icon: "none" });
         return;
       }
     } else if (good >= this.expectedGoodCount(maxPlayers)) {
-      wx.showToast({ title: "好人数量已满", icon: "none" });
+      wx.showToast({ title: "正义数量已满", icon: "none" });
       return;
     }
     selectedRoles.push(role);
@@ -1981,7 +2139,7 @@ Page({
   },
 
   onRemoveAdvancedRole(e) {
-    const idx = Number(e.currentTarget.dataset.idx);
+    const idx = Number(e.detail.idx);
     const selectedRoles = Array.isArray(this.data.selectedRoles) ? this.data.selectedRoles.slice() : [];
     if (!Number.isInteger(idx) || idx < 0 || idx >= selectedRoles.length) return;
     selectedRoles.splice(idx, 1);
@@ -2026,7 +2184,7 @@ Page({
   withRoleImages(roles = []) {
     return (roles || []).map((role) => ({
       role,
-      image: this.roleImageFor(role)
+      image: roleImageFor(role)
     }));
   },
 
@@ -2049,7 +2207,7 @@ Page({
       .filter((r) => counts[r])
       .map((r) => ({
         role: r,
-        image: this.roleImageFor(r),
+        image: roleImageFor(r),
         isEvil: EVIL_ROLES.has(r),
         count: counts[r]
       }));
@@ -2109,24 +2267,7 @@ Page({
   },
 
   formatAdvancedQuotaText(maxPlayers) {
-    return `本局需配置 ${this.expectedGoodCount(maxPlayers)} 个好人、${this.expectedEvilCount(maxPlayers)} 个坏人，且必须包含梅林与刺客。`;
-  },
-
-  summarizeEndVotes(endVotes = {}, targetId = "") {
-    const summary = { c_le: 0, blame: 0, effort: 0 };
-    Object.values(endVotes || {}).forEach((vote) => {
-      if (!vote || vote.targetId !== targetId) return;
-      if (summary[vote.voteType] !== undefined) summary[vote.voteType] += 1;
-    });
-    return summary;
-  },
-
-  formatEndVoteSummary(summary = {}) {
-    const parts = [];
-    if (summary.c_le) parts.push(`C麻了 ${summary.c_le}`);
-    if (summary.blame) parts.push(`背锅侠 ${summary.blame}`);
-    if (summary.effort) parts.push(`尽力 ${summary.effort}`);
-    return parts.join(" · ");
+    return `本局需配置 ${this.expectedGoodCount(maxPlayers)} 个正义、${this.expectedEvilCount(maxPlayers)} 个邪恶，且必须包含梅林与刺客。`;
   },
 
   validateSelectedRoles(maxPlayers, roles) {
@@ -2135,8 +2276,8 @@ Page({
     if (selected.length !== maxPlayers) return `角色数量需为${maxPlayers}个`;
     if (!selected.includes("梅林")) return "高级配置必须包含梅林";
     if (!selected.includes("刺客")) return "高级配置必须包含刺客";
-    if (evil !== this.expectedEvilCount(maxPlayers)) return `坏人数量需为${this.expectedEvilCount(maxPlayers)}个`;
-    if (good !== this.expectedGoodCount(maxPlayers)) return `好人数量需为${this.expectedGoodCount(maxPlayers)}个`;
+    if (evil !== this.expectedEvilCount(maxPlayers)) return `邪恶数量需为${this.expectedEvilCount(maxPlayers)}个`;
+    if (good !== this.expectedGoodCount(maxPlayers)) return `正义数量需为${this.expectedGoodCount(maxPlayers)}个`;
     return "";
   },
 
@@ -2146,8 +2287,8 @@ Page({
   },
 
   onTapMedal(e) {
-    const name = String(e.currentTarget.dataset.name || "勋章");
-    const description = String(e.currentTarget.dataset.description || "暂无说明");
+    const name = String(e.detail.name || "勋章");
+    const description = String(e.detail.description || "暂无说明");
     wx.showModal({
       title: name,
       content: description,
@@ -2157,8 +2298,8 @@ Page({
   },
 
   onTapRoomRoleCard(e) {
-    const role = String(e.currentTarget.dataset.role || "角色");
-    const description = String(e.currentTarget.dataset.description || "暂无角色说明");
+    const role = String(e.detail.role || "角色");
+    const description = String(e.detail.description || "暂无角色说明");
     wx.showModal({
       title: role,
       content: description,
@@ -2247,6 +2388,8 @@ Page({
       roles,
       speakingSeconds: Number(this.data.speakingSeconds || 120) || 120,
       evilRoleVisibleEnabled: !!this.data.evilRoleVisibleEnabled,
+      oberonVisibleEnabled: !!this.data.oberonVisibleEnabled,
+      aiVoiceEnabled: !!this.data.aiVoiceEnabled,
       forceRoundMode: this.data.forceRoundMode || "fixed5"
     };
     const hostRole = this.data.hostRole || "随机";
@@ -2263,7 +2406,7 @@ Page({
   },
 
   onToggleLadyMode(e) {
-    const enabled = !!Number(e.currentTarget.dataset.enabled);
+    const enabled = !!Number(e.detail.enabled);
     const maxPlayers = 5 + Number(this.data.maxPlayersIndex || 0);
     if (enabled && maxPlayers < 8) {
       wx.showToast({ title: "仅支持8人及以上", icon: "none" });
@@ -2337,6 +2480,7 @@ Page({
       success: (res) => {
         if (!res || !res.confirm) return;
         this.send("LEAVE_ROOM");
+        this._missionProgressDismissedRound = undefined;
         this.setData({
           room: null,
           atHome: true,
@@ -2345,7 +2489,10 @@ Page({
           roundSeats: [],
           seatNotes: {},
           roleInfo: null,
+          assassinSeatNo: 0,
+          isAssassin: false,
           showRolePanel: false,
+          identityMode: false,
           roleVisibleSeats: [],
           roleInfoImage: "",
           roleInfoClass: "",
@@ -2358,7 +2505,6 @@ Page({
           leaderActionClass: "",
           teamCandidates: [],
           currentVoteTeam: [],
-          selectedEndVoteType: "",
           isLadyHolder: false,
           ladyHolderName: "",
           ladyHistory: [],
@@ -2373,7 +2519,6 @@ Page({
           showSpeakPanel: true,
           showPlayerList: false,
           playerCards: [],
-          endVoteResultGroups: [],
           cheatRevealPlayerId: "",
           cheatRoles: {},
           roomConfigLines: [],
@@ -2381,6 +2526,7 @@ Page({
           missionAnimBootstrapped: false,
           missionAnimRoomCode: "",
           missionAnimLastKey: "",
+          showMissionProgress: false,
           showMissionAnim: false,
           missionAnimText: "",
           missionAnimRound: 0,
@@ -2400,9 +2546,70 @@ Page({
     this.setData({ atHome: true, cheatRevealPlayerId: "" });
   },
 
+  onLogout() {
+    wx.showModal({
+      title: '确认登出',
+      content: '登出后需要重新登录，当前房间数据不会丢失。',
+      confirmText: '登出',
+      confirmColor: '#c0392b',
+      cancelText: '取消',
+      success: (res) => {
+        if (!res.confirm) return;
+        wx.removeStorageSync('awalonAuthToken');
+        this.send('LEAVE_ROOM');
+        if (this._reconnectTimer) { clearTimeout(this._reconnectTimer); this._reconnectTimer = null; }
+        const { close } = require('../../utils/socket');
+        close();
+        this.setData({ loggedIn: false, room: null, atHome: true, loginTip: '', authToken: '' });
+      },
+    });
+  },
+
   onResumeRoom() {
     if (!this.data.room) return;
     this.setData({ atHome: false });
+  },
+
+  onLeaveRoomFromList() {
+    this.onLeaveRoom();
+  },
+
+  // ─── 新手引导 ──────────────────────────────────────────────
+  maybeShowHint(key, title, text) {
+    const seen = wx.getStorageSync('seenHints') || {};
+    if (seen[key]) return;
+    if (this.data.hintVisible) return;
+    this.setData({ hintVisible: true, hintKey: key, hintTitle: title, hintText: text });
+  },
+
+  onDismissHint() {
+    const key = this.data.hintKey;
+    if (!key) return;
+    const seen = wx.getStorageSync('seenHints') || {};
+    seen[key] = true;
+    wx.setStorageSync('seenHints', seen);
+    this.setData({ hintVisible: false, hintKey: '', hintTitle: '', hintText: '' });
+  },
+
+  maybeShowGameHint(room, { phase, isLeader, isMyTurn, inTeam, myPlayer }) {
+    if (!room) return;
+    if (!room.started) {
+      if (myPlayer && myPlayer.seat === null && !myPlayer.spectator) {
+        this.maybeShowHint('hint_seat', '找个位置坐下', '点击圆桌上的空位落座，等大家就位后由房主开始游戏。');
+      }
+      return;
+    }
+    if (phase === 'team' && isLeader) {
+      this.maybeShowHint('hint_leader', '你是本轮队长', '点击圆桌上的玩家头像选择出征队员，选满人数后点击下方按钮提交队伍。');
+    } else if (phase === 'voting') {
+      this.maybeShowHint('hint_vote', '全员投票', '对当前提名的队伍表态。同意票过半队伍出发，否则轮换队长重新提名。连续 5 次否决邪恶直接获胜。');
+    } else if (phase === 'mission' && inTeam) {
+      this.maybeShowHint('hint_mission', '你在出征队伍里', '提交任务牌：正义只能出「成功」，邪恶可选「成功」或「失败」。结果匿名统计，谨慎选择。');
+    } else if (phase === 'speaking' && isMyTurn) {
+      this.maybeShowHint('hint_speak', '轮到你发言了', '输入你的判断和推理。发言会被保存，AI 复盘时会分析你的策略，别随便说话。');
+    } else if (phase === 'assassination') {
+      this.maybeShowHint('hint_assassin', '刺杀阶段', '正义完成了 3 次任务！刺客现在要指定一名玩家刺杀——若刺中梅林，邪恶翻盘获胜。');
+    }
   },
 
   maybeShowPhasePrompt(roomArg) {
@@ -2447,6 +2654,7 @@ Page({
     });
   },
 
+
   togglePlayerList() {
     const next = !this.data.showPlayerList;
     this.setData({ showPlayerList: next, showRolePanel: next ? false : this.data.showRolePanel });
@@ -2454,8 +2662,8 @@ Page({
 
   onPlayerNamePressStart(e) {
     if (!this.data.isHost) return;
-    const playerId = String(e.currentTarget.dataset.id || "");
-    const seatNo = Number(e.currentTarget.dataset.seat || 0);
+    const playerId = String(e.detail.id || "");
+    const seatNo = Number(e.detail.seat || 0);
     if (!playerId) return;
     if (!seatNo) return;
     this.setData({ cheatPressingPlayerId: playerId });
@@ -2493,7 +2701,7 @@ Page({
   onChooseSeat(e) {
     const room = this.data.room;
     if (!room) return;
-    const idx = Number(e.currentTarget.dataset.index);
+    const idx = Number(e.detail.index);
     if (!Number.isFinite(idx)) return;
     if (!room.started) {
       const seats = Array.isArray(room.seats) ? room.seats : [];
@@ -2515,32 +2723,6 @@ Page({
     const pid = slot && slot.playerId;
     if (!pid) return;
     if (this.data.phase === "end") {
-      if (pid === this.data.clientId) {
-        wx.showToast({ title: "不能给自己投票", icon: "none" });
-        return;
-      }
-      const endVotes = (room.game && room.game.endVotes) || {};
-      if (endVotes[this.data.clientId]) {
-        wx.showToast({ title: "本局已投过票", icon: "none" });
-        return;
-      }
-      const picked = this.getEndVoteOption(this.data.selectedEndVoteType || "");
-      if (!picked) {
-        wx.showToast({ title: "先选择一个评价", icon: "none" });
-        return;
-      }
-      wx.showModal({
-        title: "确认互评",
-        content: `确认将“${picked.label}”投给 ${slot.seat}号位 ${slot.name} 吗？`,
-        confirmText: "确认提交",
-        cancelText: "取消",
-        success: (res) => {
-          if (!res.confirm) return;
-          this.send("END_PLAYER_VOTE", { targetId: pid, voteType: picked.value });
-          this.setData({ gameTip: `已评价 ${slot.name}：${picked.label}` });
-          wx.showToast({ title: "评价已提交", icon: "none" });
-        }
-      });
       return;
     }
     if ((this.data.phase === "team" || this.data.phase === "speaking") && this.data.isLeader) {
@@ -2552,6 +2734,17 @@ Page({
       return;
     }
     if (this.data.phase === "assassination" && this.data.isAssassin) {
+      if (pid === this.data.clientId) {
+        wx.showToast({ title: "不能刺杀自己", icon: "none" });
+        return;
+      }
+      const knownEvil = (this.data.roleVisibleSeats || []).some(
+        vs => vs.identityFaction === "evil" && vs.seat === slot.seat
+      );
+      if (knownEvil) {
+        wx.showToast({ title: "不能刺杀邪恶队友", icon: "none" });
+        return;
+      }
       this.setData({
         selectedAssassinate: pid,
         seatSlots: this.buildSeatSlots(room, this.data.selectedTeam, pid),
@@ -2566,13 +2759,13 @@ Page({
   },
 
   toggleRolePanel() {
-    if (this.data.showRolePanel) {
-      this.setData({ showRolePanel: false });
+    if (this.data.identityMode) {
+      this.setData({ identityMode: false });
       return;
     }
     const room = this.data.room;
     if (!room || !room.started) return;
-    this.setData({ showRolePanel: true, showPlayerList: false, roleInfoLoading: !this.data.roleInfo });
+    this.setData({ identityMode: true, showPlayerList: false, roleInfoLoading: !this.data.roleInfo });
     this.send("VIEW_ROLE");
   },
 
@@ -2580,25 +2773,31 @@ Page({
     this.setData({ showRolePanel: false });
   },
 
-  noop() {},
-
   onSeatTouchStart(e) {
-    const idx = Number(e.currentTarget.dataset.index);
+    const idx = Number(e.detail.index);
     this._seatLongPressTimer = setTimeout(() => {
       this._seatLongPressTimer = null;
       const room = this.data.room;
       const pid = room && Array.isArray(room.seats) ? room.seats[idx] : null;
       const player = pid && Array.isArray(room.players) ? room.players.find((p) => p.id === pid) : null;
       const existing = this.data.seatNotes[idx] || {};
+      const currentLabel = existing.label || "";
+      const cfg = NOTE_CHIP_CONFIG[currentLabel] || null;
       this.setData({
         noteModal: {
           show: true,
           seatIndex: idx,
           seat: idx + 1,
           name: player ? player.nickname : `${idx + 1}号位`,
-          label: existing.label || "",
-          targetId: pid || ""
-        }
+          label: currentLabel,
+          targetId: pid || "",
+          ringStyle: cfg ? `border-color:${cfg.border};background:${cfg.bg};box-shadow:0 0 24rpx ${cfg.bg};` : "",
+          labelColor: cfg ? cfg.color : "",
+          labelBg: cfg ? cfg.bg : "",
+          labelBorder: cfg ? cfg.border : "",
+        },
+        noteChipsGood: NOTE_LABELS_GOOD.map(l => ({ label: l, icon: NOTE_CHIP_CONFIG[l].icon, color: NOTE_CHIP_CONFIG[l].color, bg: NOTE_CHIP_CONFIG[l].bg, border: NOTE_CHIP_CONFIG[l].border, on: l === currentLabel })),
+        noteChipsEvil: NOTE_LABELS_EVIL.map(l => ({ label: l, icon: NOTE_CHIP_CONFIG[l].icon, color: NOTE_CHIP_CONFIG[l].color, bg: NOTE_CHIP_CONFIG[l].bg, border: NOTE_CHIP_CONFIG[l].border, on: l === currentLabel })),
       });
     }, 400);
   },
@@ -2628,7 +2827,16 @@ Page({
     } else {
       notes[seatIndex] = { label: newLabel, badgeStyle: NOTE_BADGE_STYLE[newLabel] || '', textStyle: NOTE_TEXT_STYLE[newLabel] || '' };
     }
-    this.setData({ seatNotes: notes, "noteModal.show": false });
+    const cfg = NOTE_CHIP_CONFIG[newLabel] || null;
+    this.setData({
+      seatNotes: notes,
+      "noteModal.show": false,
+      "noteModal.label": newLabel,
+      "noteModal.ringStyle": cfg ? `border-color:${cfg.border};background:${cfg.bg};box-shadow:0 0 24rpx ${cfg.bg};` : "",
+      "noteModal.labelColor": cfg ? cfg.color : "",
+      "noteModal.labelBg": cfg ? cfg.bg : "",
+      "noteModal.labelBorder": cfg ? cfg.border : "",
+    });
   },
 
   onCloseNoteModal() {
@@ -2638,8 +2846,8 @@ Page({
   noteModalNoop() {},
 
   onKickFromList(e) {
-    const targetId = String(e.currentTarget.dataset.id || "");
-    const name = String(e.currentTarget.dataset.name || "该玩家");
+    const targetId = String(e.detail.id || "");
+    const name = String(e.detail.name || "该玩家");
     if (!targetId) return;
     wx.showModal({
       title: "踢出玩家",
@@ -2810,7 +3018,9 @@ Page({
   },
 
   onSpeakInput(e) {
-    this.setData({ speakText: (e.detail.value || "").slice(0, 120) });
+    // 直接 input 事件：e.detail.value；组件 triggerEvent：e.detail.value（通过 detail 透传）
+    const text = (e.detail.value || "").slice(0, 120);
+    this.setData({ speakText: text, speakTextLen: text.length });
   },
 
   onSendSpeak() {
@@ -2851,6 +3061,35 @@ Page({
     wx.showToast({ title: "已请求直接投票", icon: "none", duration: 900 });
   },
 
+  onAutoplayToggle() {
+    const on = !this.data.myAutoplay;
+    if (!on) {
+      this.send("AUTOPLAY_OFF");
+      this.setData({ myAutoplay: false, autoplayAssassinTarget: null });
+      return;
+    }
+    if (this.data.isAssassin) {
+      const myId = this.data.clientId;
+      const slots = (this.data.seatSlots || []).filter(s => s && s.playerId && s.playerId !== myId);
+      this.setData({ showAutoplayPicker: true, autoplayPickerSlots: slots });
+    } else {
+      this.send("AUTOPLAY_ON");
+      this.setData({ myAutoplay: true });
+    }
+  },
+
+  onAutoplayPickerSelect(e) {
+    const idx = Number(e.currentTarget.dataset.idx);
+    const target = this.data.autoplayPickerSlots[idx];
+    if (!target) return;
+    this.send("AUTOPLAY_ON", { assassinTarget: target.playerId });
+    this.setData({ myAutoplay: true, autoplayAssassinTarget: { seat: target.seat, name: target.name }, showAutoplayPicker: false, autoplayPickerSlots: [] });
+  },
+
+  onAutoplayPickerCancel() {
+    this.setData({ showAutoplayPicker: false, autoplayPickerSlots: [] });
+  },
+
   onVoteApprove() {
     this.send("VOTE_TEAM", { approve: true });
     this.setData({ gameTip: "你已投：同意" });
@@ -2859,15 +3098,6 @@ Page({
   onVoteReject() {
     this.send("VOTE_TEAM", { approve: false });
     this.setData({ gameTip: "你已投：反对" });
-  },
-
-  onPickEndVoteType(e) {
-    const voteType = String((e.currentTarget.dataset && e.currentTarget.dataset.type) || "");
-    if (!this.getEndVoteOption(voteType)) return;
-    this.setData({
-      selectedEndVoteType: voteType,
-      gameTip: "已选择评价，点击桌面上的玩家提交"
-    });
   },
 
   onMissionSuccess() {
@@ -2889,7 +3119,7 @@ Page({
       success: (res) => {
         if (!res.confirm) return;
         this.send("START_ASSASSINATION");
-        this.setData({ gameTip: "已请求进入刺杀阶段" });
+        this.setData({ gameTip: "已请求进入刺杀阶段", identityMode: false });
       }
     });
   },
@@ -2937,7 +3167,7 @@ Page({
     const targetText = target ? `${target.seat}号位 ${target.nickname}` : "该玩家";
     wx.showModal({
       title: "确认验人",
-      content: `确认查看 ${targetText} 是好人还是坏人吗？`,
+      content: `确认查看 ${targetText} 是正义还是邪恶吗？`,
       confirmText: "确认查看",
       cancelText: "取消",
       success: (res) => {
@@ -2949,7 +3179,7 @@ Page({
   },
 
   openHistory(arg = 1) {
-    wx.navigateTo({ url: "/pages/history/index/index" });
+    wx.navigateTo({ url: "/subpkg/history/index/index" });
   },
 
   openHistoryDetail(e) {
@@ -2959,11 +3189,50 @@ Page({
   },
 
   openRoleStats() {
-    wx.navigateTo({ url: "/pages/role-stats/index/index" });
+    wx.navigateTo({ url: "/subpkg/role-stats/index/index" });
   },
 
   openRules() {
-    wx.navigateTo({ url: "/pages/rules/index/index" });
+    wx.navigateTo({ url: "/subpkg/rules/index/index" });
+  },
+
+  fetchActiveRooms(showLoading = false) {
+    const apiBase = getApp().globalData.apiBase;
+    if (showLoading) this.setData({ activeRoomsLoading: true });
+    const done = () => { if (showLoading) this.setData({ activeRoomsLoading: false }); };
+    wx.request({
+      url: `${apiBase}/api/rooms`,
+      timeout: 8000,
+      success: (res) => {
+        if (res.statusCode === 200 && res.data && Array.isArray(res.data.rooms)) {
+          const next = JSON.stringify(res.data.rooms);
+          if (next !== JSON.stringify(this.data.activeRooms)) {
+            this.setData({ activeRooms: res.data.rooms });
+          }
+        }
+        done();
+      },
+      fail: done,
+    });
+  },
+
+  onJoinPublicRoom(e) {
+    const code = (e.detail && e.detail.code) || (e.currentTarget && e.currentTarget.dataset && e.currentTarget.dataset.code);
+    if (!code) return;
+    if (!this.data.loggedIn) {
+      wx.showToast({ title: '请先登录', icon: 'none' });
+      return;
+    }
+    this.send('JOIN_ROOM', { roomCode: code, nickname: this.data.nickname, avatar: this.data.avatar });
+    this.setData({ atHome: false, roomTip: `正在加入房间 ${code}...` });
+  },
+
+  onRefreshRooms() {
+    this.fetchActiveRooms(true);
+  },
+
+  onExitReviewMode() {
+    this.setData({ reviewMode: false });
   },
 
   avatarMeta(avatar) {
@@ -3072,7 +3341,7 @@ Page({
       if (!filePath) return;
       wx.setStorageSync("awalonAvatarCropSource", filePath);
       wx.navigateTo({
-        url: "/pages/avatarcrop/index",
+        url: "/subpkg/avatarcrop/index",
         success: (res) => {
           const eventChannel = res && res.eventChannel;
           if (!eventChannel) {
@@ -3116,6 +3385,12 @@ Page({
     const id = Number(gameId);
     if (!Number.isFinite(id)) return;
     this.send("GET_GAME_HISTORY_DETAIL", { gameId: id });
+  },
+
+  requestHistoryRecap(gameId) {
+    const id = Number(gameId);
+    if (!Number.isFinite(id)) return;
+    this.send("REQUEST_HISTORY_RECAP", { gameId: id });
   },
 
   requestRoleStats() {
