@@ -1,0 +1,72 @@
+<view class="page theme-{{skinId}}">
+  <image class="bg" src="https://www.awalon.top/mp-assets/in-game-bg-optimized.jpg" mode="aspectFill" />
+  <view class="mask"></view>
+
+  <nav-header title="历史对战" statusBarHeight="{{statusBarHeight}}" navBarHeight="{{navBarHeight}}" bind:back="onBackHome"></nav-header>
+
+  <view class="content" style="padding-top: {{navTotalHeight + 8}}px;">
+
+    <view wx:if="{{loading}}" class="state-tip">加载中...</view>
+    <view wx:if="{{!loading && !list.length}}" class="state-tip">暂无历史记录</view>
+
+    <view class="record-list" wx:if="{{list.length}}">
+      <view
+        class="hc hc-{{item.cardClass}}"
+        wx:for="{{list}}" wx:key="gameId"
+        bindtap="onOpenDetail" data-gameid="{{item.gameId}}"
+      >
+        <text class="hc-watermark">#{{item.gameId}}</text>
+        <view class="hc-body">
+          <!-- 顶行 -->
+          <view class="hc-top">
+            <view class="hc-avatar hc-avatar-{{item.factionClass}}">
+              <image wx:if="{{item.roleImage}}" class="hc-avatar-img" src="{{item.roleImage}}" mode="aspectFill" />
+              <text wx:elif="{{item.spectatorAvatar}}" class="hc-avatar-emoji">{{item.spectatorAvatar}}</text>
+              <text wx:else class="hc-avatar-emoji">🎭</text>
+            </view>
+            <view class="hc-info">
+              <view class="hc-head-row">
+                <text class="hc-role-name hc-role-name-{{item.factionClass}}">{{item.role}}</text>
+                <view class="hc-badge hc-badge-{{item.cardClass}}">
+                  <view class="hc-badge-dot"></view>
+                  <text class="hc-badge-txt">{{item.cardClass==='win'?'胜利':item.cardClass==='spec'?'观战':'失败'}}</text>
+                </view>
+              </view>
+              <view class="hc-meta-row">
+                <text class="hc-meta">{{item.roomCode}}</text>
+                <view class="hc-meta-sep"></view>
+                <text class="hc-meta">{{item.maxPlayers}}人</text>
+                <view class="hc-meta-sep" wx:if="{{item.seat}}"></view>
+                <text class="hc-meta" wx:if="{{item.seat}}">座位{{item.seat}}</text>
+              </view>
+            </view>
+          </view>
+
+          <!-- 底行 -->
+          <view class="hc-bottom">
+            <block wx:for="{{item.medals}}" wx:key="code" wx:for-item="medal" wx:for-index="mi">
+              <view class="hc-medal" catchtap="onTapMedal" data-name="{{medal.name}}" data-description="{{medal.description}}">
+                <image wx:if="{{medal.image}}" class="hc-medal-img" src="{{medal.image}}" mode="aspectFit" />
+                <text wx:else class="hc-medal-icon">🏅</text>
+                <text class="hc-medal-name">{{medal.name}}</text>
+              </view>
+            </block>
+            <text class="hc-time">{{item.friendlyTime}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+  </view>
+
+  <!-- 分页 -->
+  <view class="pagination" wx:if="{{list.length || page > 1}}">
+    <view class="page-arrow {{page<=1||loading?'page-arrow-disabled':''}}" bindtap="onPrev">‹</view>
+    <view class="page-indicator">
+      <text class="page-num">{{pageDisplay}}</text>
+      <text class="page-label">当前页</text>
+    </view>
+    <view class="page-arrow {{!hasMore||loading?'page-arrow-disabled':''}}" bindtap="onNext">›</view>
+  </view>
+
+</view>

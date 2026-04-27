@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "历史对战",
+  "usingComponents": {
+    "nav-header": "/subpkg/components/nav-header/index"
+  }
+}

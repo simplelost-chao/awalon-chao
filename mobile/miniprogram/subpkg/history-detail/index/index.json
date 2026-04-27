@@ -1,0 +1,9 @@
+{
+  "navigationBarTitleText": "对战详情",
+  "usingComponents": {
+    "nav-header": "/subpkg/components/nav-header/index",
+    "mission-pills": "/components/mission-pills/index",
+    "mission-table": "/components/mission-table/index",
+    "speak-list": "/components/speak-list/index"
+  }
+}

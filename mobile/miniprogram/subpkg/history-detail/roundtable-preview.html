@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=390px, initial-scale=1">
+<title>圆桌回放 设计稿 — 三种结局</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #080b12;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 16px 40px;
+    font-family: -apple-system, 'PingFang SC', sans-serif;
+    gap: 20px;
+  }
+
+  .page-title {
+    color: rgba(216,176,107,0.5);
+    font-size: 12px;
+    letter-spacing: 3px;
+    margin-bottom: 4px;
+  }
+
+  .phone-frame {
+    width: 375px;
+  }
+
+  /* Panel */
+  .panel {
+    background: rgba(14, 18, 28, 0.95);
+    border: 1px solid rgba(216, 176, 107, 0.14);
+    border-radius: 20px;
+    overflow: hidden;
+  }
+
+  /* Section header */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 11px 18px;
+    border-left: 6px solid #d8b06b;
+    background: linear-gradient(90deg, rgba(216,176,107,0.18), rgba(216,176,107,0.03));
+    border-bottom: 1px solid rgba(216,176,107,0.10);
+  }
+  .section-title {
+    color: #f2e5c8;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 2px;
+  }
+  .section-sub {
+    font-size: 11px;
+    color: rgba(216,176,107,0.5);
+    letter-spacing: 1px;
+  }
+
+  /* Round table container */
+  .table-wrap {
+    position: relative;
+    width: 100%;
+    height: 340px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+  }
+
+  /* Wood table bg */
+  .table-bg {
+    position: absolute;
+    width: 280px;
+    height: 280px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 38% 32%,
+      rgba(90,55,20,0.60),
+      rgba(28,16,6,0.85) 70%);
+    border: 4px solid rgba(150,100,42,0.32);
+    box-shadow:
+      0 0 0 10px rgba(216,176,107,0.04),
+      0 0 70px rgba(0,0,0,0.7) inset;
+  }
+
+  .table-ring-outer {
+    position: absolute;
+    width: 272px;
+    height: 272px;
+    border-radius: 50%;
+    border: 1px solid rgba(216,176,107,0.22);
+    pointer-events: none;
+  }
+  .table-ring-inner {
+    position: absolute;
+    width: 155px;
+    height: 155px;
+    border-radius: 50%;
+    border: 1px solid rgba(216,176,107,0.10);
+    pointer-events: none;
+  }
+
+  /* Center badge */
+  .center-badge {
+    position: absolute;
+    padding: 10px 22px;
+    border-radius: 13px;
+    text-align: center;
+    z-index: 10;
+    min-width: 110px;
+  }
+  .center-badge.good {
+    background: rgba(16,55,140,0.85);
+    border: 1px solid rgba(78,158,255,0.38);
+    box-shadow: 0 0 28px rgba(40,100,240,0.22);
+  }
+  .center-badge.evil {
+    background: rgba(110,18,24,0.88);
+    border: 1px solid rgba(220,60,60,0.38);
+    box-shadow: 0 0 28px rgba(200,30,30,0.22);
+  }
+  .center-title {
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    display: block;
+  }
+  .center-sub {
+    display: block;
+    color: rgba(255,255,255,0.6);
+    font-size: 10px;
+    margin-top: 5px;
+    letter-spacing: 1px;
+  }
+
+  /* Seat */
+  .seat {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    width: 58px;
+  }
+
+  .seat-crown {
+    font-size: 11px;
+    line-height: 1;
+    margin-bottom: -1px;
+  }
+
+  .seat-avatar-wrap {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+  }
+
+  .seat-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.18);
+    background: rgba(15,11,8,0.72);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Good — blue glow */
+  .seat.good .seat-avatar {
+    border-color: rgba(78,158,255,0.85);
+    box-shadow: 0 0 0 3px rgba(78,158,255,0.14), 0 0 14px rgba(78,158,255,0.38);
+    background: rgba(7,50,120,0.42);
+  }
+
+  /* Evil — red glow */
+  .seat.evil .seat-avatar {
+    border-color: rgba(220,60,60,0.85);
+    box-shadow: 0 0 0 3px rgba(220,60,60,0.14), 0 0 14px rgba(220,60,60,0.38);
+    background: rgba(70,10,10,0.52);
+  }
+
+  /* Assassinated — dim + red highlight */
+  .seat.assassinated .seat-avatar {
+    border-color: rgba(255,60,60,0.9);
+    box-shadow: 0 0 0 3px rgba(220,20,20,0.22), 0 0 20px rgba(220,20,20,0.5);
+    opacity: 0.72;
+  }
+
+  /* Seat number badge — bottom-right of avatar */
+  .seat-no {
+    position: absolute;
+    right: -7px;
+    bottom: -2px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: #e6c17d;
+    background: rgba(8, 6, 18, 0.96);
+    border: 1px solid rgba(180,140,60,0.52);
+    z-index: 5;
+    line-height: 1;
+  }
+
+  /* Kill mark overlay */
+  .seat-kill-mark {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-18%, -62%) rotate(-15deg);
+    font-size: 22px;
+    z-index: 5;
+    filter: drop-shadow(0 0 4px rgba(255,30,30,0.7));
+  }
+
+  .seat-name {
+    font-size: 10px;
+    color: #b8c8dc;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 56px;
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  .seat-role-pill {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 7px;
+    border-radius: 999px;
+  }
+  .seat.good .seat-role-pill {
+    background: rgba(7,50,120,0.62);
+    border: 1px solid rgba(78,158,255,0.38);
+  }
+  .seat.evil .seat-role-pill {
+    background: rgba(80,10,10,0.68);
+    border: 1px solid rgba(220,60,60,0.38);
+  }
+  .seat.assassinated .seat-role-pill {
+    background: rgba(80,10,10,0.62);
+    border: 1px solid rgba(220,60,60,0.38);
+  }
+  .seat-role-text {
+    font-size: 9px;
+    font-weight: 600;
+    color: #fff;
+  }
+  .seat.good .seat-role-text { color: #bfdbfe; }
+  .seat.evil .seat-role-text { color: #fca5a5; }
+  .seat.assassinated .seat-role-text { color: #fca5a5; }
+
+  /* Scenario label under each table */
+  .scenario-label {
+    text-align: center;
+    padding: 10px 0 14px;
+    font-size: 11px;
+    color: rgba(200,180,140,0.45);
+    letter-spacing: 1px;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+
+<span class="page-title">圆桌回放 · 三种结局设计稿</span>
+
+<!-- ══════════════════════════════════════════
+     场景一：好人胜利（三轮任务成功）
+══════════════════════════════════════════ -->
+<div class="phone-frame">
+  <div class="panel">
+    <div class="section-header">
+      <span class="section-title">圆桌回放</span>
+      <span class="section-sub">场景一</span>
+    </div>
+    <div class="table-wrap">
+      <div class="table-bg"></div>
+      <div class="table-ring-outer"></div>
+      <div class="table-ring-inner"></div>
+
+      <div class="center-badge good">
+        <span class="center-title">好人胜利</span>
+        <span class="center-sub">三轮任务成功</span>
+      </div>
+
+      <div class="seat good" style="left:50%;top:10%;">
+        <span class="seat-crown">👑</span>
+        <div class="seat-avatar-wrap">
+          <div class="seat-avatar">🐺</div>
+          <span class="seat-no">1</span>
+        </div>
+        <span class="seat-name">CHAO</span>
+        <div class="seat-role-pill"><span class="seat-role-text">梅林</span></div>
+      </div>
+
+      <div class="seat good" style="left:76%;top:20%;">
+        <div class="seat-avatar-wrap">
+          <div class="seat-avatar">🦊</div>
+          <span class="seat-no">2</span>
+        </div>
+        <span class="seat-name">帕西维尔</span>
+        <div class="seat-role-pill"><span class="seat-role-text">派西维</span></div>
+      </div>
+
+      <div class="seat evil" style="left:88%;top:48%;">
+        <div class="seat-avatar-wrap">
+          <div class="seat-avatar">🐉</div>
+          <span class="seat-no">3</span>
+        </div>
+        <span class="seat-name">不解释</span>
+        <div class="seat-role-pill"><span class="seat-role-text">爪牙</span></div>
+      </div>
+
+      <div class="seat evil" style="left:76%;top:76%;">
+        <div class="seat-avatar-wrap">
+          <div class="seat-avatar">🐯</div>
+          <span class="seat-no">4</span>
+        </div>
+        <span class="seat-name">奥伯龙</span>
+        <div class="seat-role-pill"><span class="seat-role-text">奥伯伦</span></div>
+      </div>
+
+      <div class="seat good" style="left:50%;top:87%;">
+        <div class="seat-avatar-wrap">
+          <div class="seat-avatar">🐻</div>
+          <span class="seat-no">5</span>
+        </div>
+        <span class="seat-name">莫甘娜微</span>
+        <div class="seat-role-pill"><span class="seat-role-text">忠臣</span></div>
+      </div>
+
+      <div class="seat evil" style="left:24%;top:76%;">
+        <div class="seat-avatar-wrap">
+          <div class="seat-avatar">🗡️</div>
+          <span class="seat-no">6</span>
+        </div>
+        <span class="seat-name">梅林穿你</span>
+        <div class="seat-role-pill"><span class="seat-role-text">刺客</span></div>
+      </div>
+
+      <div class="seat good" style="left:12%;top:48%;">
+        <div class="seat-avatar-wrap">
+          <div class="seat-avatar">🦁</div>
+          <span class="seat-no">7</span>
+        </div>
+        <span class="seat-name">智利有理</span>
+        <div class="seat-role-pill"><span class="seat-role-text">忠臣</span></div>
+      </div>
+
+      <div class="seat good" style="left:24%;top:20%;">
+        <div class="seat-avatar-wrap">
+          <div class="seat-avatar">🐼</div>
+          <span class="seat-no">8</span>
+        </div>
+        <span class="seat-name">我知道你</span>
+        <div class="seat-role-pill"><span class="seat-role-text">忠臣</span></div>
+      </div>
+    </div>
+    <div class="scenario-label">好人阵营蓝色光晕 · 坏人阵营红色光晕</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     场景二：坏人胜利（三轮任务失败）
+══════════════════════════════════════════ -->
+<div class="phone-frame">
+  <div class="panel">
+    <div class="section-header">
+      <span class="section-title">圆桌回放</span>
+      <span class="section-sub">场景二</span>
+    </div>
+    <div class="table-wrap">
+      <div class="table-bg"></div>
+      <div class="table-ring-outer"></div>
+      <div class="table-ring-inner"></div>
+
+      <div class="center-badge evil">
+        <span class="center-title">坏人胜利</span>
+        <span class="center-sub">三轮任务失败</span>
+      </div>
+
+      <div class="seat good" style="left:50%;top:10%;">
+        <span class="seat-crown">👑</span>
+        <div class="seat-avatar-wrap">
+          <div class="seat-avatar">🐺</div>
+          <span class="seat-no">1</span>
+        </div>
+        <span class="seat-name">CHAO</span>
+        <div class="seat-role-pill"><span class="seat-role-text">梅林</span></div>
+      </div>
+
+      <div class="seat good" style="left:76%;top:20%;">
+        <div class="seat-avatar-wrap">
+          <div class="seat-avatar">🦊</div>
+          <span class="seat-no">2</span>
+        </div>
+        <span class="seat-name">帕西维尔</span>
+        <div class="seat-role-pill"><span class="seat-role-text">派西维</span></div>
+      </div>
+
+      <div class="seat evil" style="left:88%;top:48%;">
+        <div class="seat-avatar-wrap">
+          <div class="seat-avatar">🐉</div>
+          <span class="seat-no">3</span>
+        </div>
+        <span class="seat-name">不解释</span>
+        <div class="seat-role-pill"><span class="seat-role-text">莫德雷德</span></div>
+      </div>
+
+      <div class="seat evil" style="left:76%;top:76%;">
+        <div class="seat-avatar-wrap">
+          <div class="seat-avatar">🐯</div>
+          <span class="seat-no">4</span>
+        </div>
+        <span class="seat-name">奥伯龙</span>
+        <div class="seat-role-pill"><span class="seat-role-text">莫甘娜</span></div>
+      </div>
+
+      <div class="seat good" style="left:50%;top:87%;">
+        <div class="seat-avatar-wrap">
+          <div class="seat-avatar">🐻</div>
+          <span class="seat-no">5</span>
+        </div>
+        <span class="seat-name">莫甘娜微</span>
+        <div class="seat-role-pill"><span class="seat-role-text">忠臣</span></div>
+      </div>
+
+      <div class="seat evil" style="left:24%;top:76%;">
+        <div class="seat-avatar-wrap">
+          <div class="seat-avatar">🗡️</div>
+          <span class="seat-no">6</span>
+        </div>
+        <span class="seat-name">梅林穿你</span>
+        <div class="seat-role-pill"><span class="seat-role-text">刺客</span></div>
+      </div>
+
+      <div class="seat good" style="left:12%;top:48%;">
+        <div class="seat-avatar-wrap">
+          <div class="seat-avatar">🦁</div>
+          <span class="seat-no">7</span>
+        </div>
+        <span class="seat-name">智利有理</span>
+        <div class="seat-role-pill"><span class="seat-role-text">忠臣</span></div>
+      </div>
+
+      <div class="seat good" style="left:24%;top:20%;">
+        <div class="seat-avatar-wrap">
+          <div class="seat-avatar">🐼</div>
+          <span class="seat-no">8</span>
+        </div>
+        <span class="seat-name">我知道你</span>
+        <div class="seat-role-pill"><span class="seat-role-text">忠臣</span></div>
+      </div>
+    </div>
+    <div class="scenario-label">无刺杀 · 任务票数失败决出胜负</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     场景三：坏人胜利（梅林被刺杀）
+══════════════════════════════════════════ -->
+<div class="phone-frame">
+  <div class="panel">
+    <div class="section-header">
+      <span class="section-title">圆桌回放</span>
+      <span class="section-sub">场景三</span>
+    </div>
+    <div class="table-wrap">
+      <div class="table-bg"></div>
+      <div class="table-ring-outer"></div>
+      <div class="table-ring-inner"></div>
+
+      <div class="center-badge evil">
+        <span class="center-title">坏人胜利</span>
+        <span class="center-sub">刺杀梅林成功</span>
+      </div>
+
+      <!-- Seat 1 — assassinated (Merlin) -->
+      <div class="seat assassinated" style="left:50%;top:10%;">
+        <div class="seat-avatar-wrap">
+          <div class="seat-avatar">
+            🐺
+            <span class="seat-kill-mark">🗡</span>
+          </div>
+          <span class="seat-no">1</span>
+        </div>
+        <span class="seat-name">CHAO</span>
+        <div class="seat-role-pill"><span class="seat-role-text">梅林</span></div>
+      </div>
+
+      <div class="seat good" style="left:76%;top:20%;">
+        <div class="seat-avatar-wrap">
+          <div class="seat-avatar">🦊</div>
+          <span class="seat-no">2</span>
+        </div>
+        <span class="seat-name">帕西维尔</span>
+        <div class="seat-role-pill"><span class="seat-role-text">派西维</span></div>
+      </div>
+
+      <div class="seat evil" style="left:88%;top:48%;">
+        <div class="seat-avatar-wrap">
+          <div class="seat-avatar">🐉</div>
+          <span class="seat-no">3</span>
+        </div>
+        <span class="seat-name">不解释</span>
+        <div class="seat-role-pill"><span class="seat-role-text">爪牙</span></div>
+      </div>
+
+      <div class="seat evil" style="left:76%;top:76%;">
+        <div class="seat-avatar-wrap">
+          <div class="seat-avatar">🐯</div>
+          <span class="seat-no">4</span>
+        </div>
+        <span class="seat-name">奥伯龙</span>
+        <div class="seat-role-pill"><span class="seat-role-text">奥伯伦</span></div>
+      </div>
+
+      <div class="seat good" style="left:50%;top:87%;">
+        <div class="seat-avatar-wrap">
+          <div class="seat-avatar">🐻</div>
+          <span class="seat-no">5</span>
+        </div>
+        <span class="seat-name">莫甘娜微</span>
+        <div class="seat-role-pill"><span class="seat-role-text">忠臣</span></div>
+      </div>
+
+      <!-- Seat 6 — assassin (highlighted) -->
+      <div class="seat evil" style="left:24%;top:76%;">
+        <div class="seat-avatar-wrap">
+          <div class="seat-avatar">🗡️</div>
+          <span class="seat-no">6</span>
+        </div>
+        <span class="seat-name">梅林穿你</span>
+        <div class="seat-role-pill"><span class="seat-role-text">刺客</span></div>
+      </div>
+
+      <div class="seat good" style="left:12%;top:48%;">
+        <div class="seat-avatar-wrap">
+          <div class="seat-avatar">🦁</div>
+          <span class="seat-no">7</span>
+        </div>
+        <span class="seat-name">智利有理</span>
+        <div class="seat-role-pill"><span class="seat-role-text">忠臣</span></div>
+      </div>
+
+      <div class="seat good" style="left:24%;top:20%;">
+        <div class="seat-avatar-wrap">
+          <div class="seat-avatar">🐼</div>
+          <span class="seat-no">8</span>
+        </div>
+        <span class="seat-name">我知道你</span>
+        <div class="seat-role-pill"><span class="seat-role-text">忠臣</span></div>
+      </div>
+    </div>
+    <div class="scenario-label">被刺杀座位：红色高亮 + 匕首标记 · 透明度降低</div>
+  </div>
+</div>
+
+</body>
+</html>

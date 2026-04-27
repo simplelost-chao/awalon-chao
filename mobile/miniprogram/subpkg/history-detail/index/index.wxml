@@ -1,0 +1,173 @@
+<view class="page theme-{{skinId}}">
+  <image class="bg" src="https://www.awalon.top/mp-assets/in-game-bg-optimized.jpg" mode="aspectFill" />
+  <view class="mask"></view>
+
+  <nav-header title="对战详情" statusBarHeight="{{statusBarHeight}}" navBarHeight="{{navBarHeight}}" bind:back="onBackHome"></nav-header>
+
+  <view class="content" style="padding-top: {{navTotalHeight + 8}}px;">
+    <view class="panel" wx:if="{{loading}}">
+      <text class="meta">加载中...</text>
+    </view>
+
+    <block wx:if="{{!loading && historyDetail}}">
+
+      <!-- ── 游戏头部 ── -->
+      <view class="ghc {{myFactionClass}} {{myResultClass}}">
+        <view class="ghc-top-bar"></view>
+        <text class="ghc-watermark">{{historyDetail.myResult==='win'?'胜利':historyDetail.myResult==='lose'?'失败':'观战'}}</text>
+
+        <view class="ghc-body">
+          <!-- 顶行：对局号 + 结果标签 -->
+          <view class="ghc-top-row">
+            <view class="ghc-game-id-wrap">
+              <text class="ghc-game-id">对局 </text><text class="ghc-game-id-num">#{{historyDetail.gameId}}</text>
+            </view>
+            <view class="ghc-result-tag">
+              <view class="ghc-result-dot"></view>
+              <text class="ghc-result-text">{{historyDetail.myResult==='win'?'胜利':historyDetail.myResult==='lose'?'失败':'观战'}}</text>
+            </view>
+          </view>
+
+          <!-- 主体：头像 + 信息 -->
+          <view class="ghc-hero-row">
+            <view class="ghc-portrait-wrap">
+              <view class="ghc-ring-outer">
+                <view class="ghc-ring-inner">
+                  <image class="ghc-portrait-img" wx:if="{{myRoleImage}}" src="{{myRoleImage}}" mode="aspectFill" />
+                  <text wx:else class="ghc-portrait-emoji">{{historyDetail.myResult==='spectator'?'👁️':'🎭'}}</text>
+                </view>
+              </view>
+              <text class="ghc-role-pill">{{historyDetail.myResult==='spectator'?'观战':historyDetail.myRole}}</text>
+            </view>
+
+            <view class="ghc-info-block">
+              <text class="ghc-player-name" wx:if="{{historyDetail.myResult!=='spectator'}}">{{myNickname || historyDetail.myRole}}</text>
+              <text class="ghc-player-name ghc-spectator-name" wx:else>观战记录</text>
+              <view class="ghc-meta-grid">
+                <view class="ghc-meta-item">
+                  <text class="ghc-meta-icon">🏠</text>
+                  <text class="ghc-meta-val">房间 {{historyDetail.detail.roomCode}}</text>
+                </view>
+                <view class="ghc-meta-item">
+                  <text class="ghc-meta-icon">👥</text>
+                  <text class="ghc-meta-val">{{historyDetail.detail.maxPlayers}} 人局</text>
+                </view>
+                <view class="ghc-meta-item" wx:if="{{historyDetail.myResult!=='spectator'}}">
+                  <text class="ghc-meta-icon">🪑</text>
+                  <text class="ghc-meta-val">{{historyDetail.mySeat}} 号座位</text>
+                </view>
+                <view class="ghc-meta-item">
+                  <text class="ghc-meta-icon">⚔️</text>
+                  <text class="ghc-meta-val ghc-winner-val ghc-winner-{{winnerClass}}">{{winnerText}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <view class="ghc-divider"></view>
+          <text class="ghc-vote-text" wx:if="{{myVoteText}}">{{myVoteText}}</text>
+        </view>
+
+        <!-- 勋章 -->
+        <view class="medal-row" wx:if="{{historyDetail.medals && historyDetail.medals.length}}">
+          <view class="medal-chip" wx:for="{{historyDetail.medals}}" wx:key="code" catchtap="onTapMedal" data-name="{{item.name}}" data-description="{{item.description}}">
+            <image class="medal-chip-image" wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFit" />
+            <text class="medal-chip-icon" wx:else>🏅</text>
+            <text class="medal-chip-name">{{item.name}}</text>
+          </view>
+        </view>
+        <view class="ghc-bottom-bar"></view>
+      </view>
+
+      <!-- ── 圆桌回放 ── -->
+      <view class="panel" style="overflow:visible;">
+        <view class="section-header">
+          <text class="section-title">圆桌回放</text>
+        </view>
+        <view class="table-wrap">
+          <image class="table-bg-img" src="https://awalon.top/mp-assets/table.png" mode="aspectFill" />
+          <view class="center-result {{winnerClass}}">
+            <text class="center-title">{{winnerText}}</text>
+            <text class="center-reason" wx:if="{{winnerReason}}">{{winnerReason}}</text>
+          </view>
+          <view
+            class="seat-card {{item.roleClass}} {{item.isAssassinated ? 'seat-assassinated' : ''}}"
+            wx:for="{{roundSeats}}"
+            wx:key="seat"
+            style="{{item.leftStyle}}"
+          >
+            <view class="seat-avatar-wrap">
+              <view class="seat-avatar">
+                <image class="seat-role-avatar" wx:if="{{item.avatarImage}}" src="{{item.avatarImage}}" mode="aspectFill" />
+                <text wx:else class="seat-avatar-text">{{item.avatarText}}</text>
+              </view>
+              <text class="seat-no">{{item.seat}}</text>
+              <image class="seat-killed-icon" wx:if="{{item.isAssassinated}}" src="https://www.awalon.top/mp-assets/ui-icons/kill.png" mode="aspectFit" />
+            </view>
+            <text class="seat-name">{{item.nickname}}</text>
+            <view class="seat-role-pill" wx:if="{{item.role}}">
+              <text class="seat-role">{{item.role}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- ── 任务进度 ── -->
+      <view class="panel" wx:if="{{missionPills.length}}">
+        <view class="section-header">
+          <text class="section-title">任务进度</text>
+        </view>
+        <mission-pills pills="{{missionPills}}" />
+      </view>
+
+      <!-- ── 任务详情 ── -->
+      <view class="panel">
+        <view class="section-header">
+          <text class="section-title">任务详情</text>
+        </view>
+        <mission-table rows="{{missionRows}}" />
+      </view>
+
+      <!-- ── 发言记录 ── -->
+      <view class="panel" wx:if="{{speakRows.length}}">
+        <view class="section-header">
+          <view class="speak-title-wrap">
+            <text class="section-title">发言记录</text>
+            <view class="speak-inline-pager">
+              <view class="speak-inline-btn {{speakPageIdx <= 0 ? 'speak-inline-disabled' : ''}}" bindtap="onSpeakPrev">‹</view>
+              <text class="speak-title-round" wx:if="{{currentSpeakRow}}">{{currentSpeakRow.label}}</text>
+              <view class="speak-inline-btn {{speakPageIdx >= speakRows.length - 1 ? 'speak-inline-disabled' : ''}}" bindtap="onSpeakNext">›</view>
+            </view>
+          </view>
+        </view>
+        <view class="section-body">
+          <speak-list messages="{{currentSpeakRow.messages}}" />
+        </view>
+      </view>
+
+      <!-- ── AI 复盘 ── -->
+      <view class="panel" wx:if="{{recapRows.length || recapGenerating || !loading}}">
+        <view class="section-header">
+          <text class="section-title">AI 复盘</text>
+        </view>
+        <button wx:if="{{!recapRows.length && !recapGenerating}}" class="btn ghost recap-gen-btn" bindtap="onRequestHistoryRecap">生成复盘</button>
+        <button wx:elif="{{recapGenerating}}" class="btn ghost recap-gen-btn recap-gen-pending" disabled>正在复盘中...</button>
+        <view class="recap-card" wx:for="{{recapRows}}" wx:key="key" bindtap="onToggleRecap" data-key="{{item.key}}">
+          <view class="recap-header">
+            <text class="recap-seat">{{item.seat}}号</text>
+            <text class="recap-role">{{item.role}}</text>
+            <text class="recap-nick">{{item.nickname}}</text>
+            <text class="recap-toggle">{{recapExpanded[item.key] ? '收起 ▲' : '展开 ▼'}}</text>
+          </view>
+          <block wx:if="{{recapExpanded[item.key]}}">
+            <view wx:for="{{item.sections}}" wx:key="label" wx:for-item="sec" class="recap-section">
+              <text class="recap-section-title">{{sec.label}}</text>
+              <text class="recap-body">{{sec.text}}</text>
+            </view>
+          </block>
+        </view>
+      </view>
+
+    </block>
+  </view>
+</view>
