@@ -1,14 +1,138 @@
-:root {
-  --aw-bg: #0f1115;
-  --aw-panel: rgba(19, 23, 31, 0.82);
-  --aw-border: rgba(255, 255, 255, 0.1);
-  --aw-text: #eef1f7;
-  --aw-subtext: #aeb6c7;
-  --aw-accent: #d9b36b;
-}
+/* mobile/miniprogram/app.wxss */
 
+/* ── Default theme: dark-gold ─────────────────────────── */
 page {
+  /* Chrome variables – replaced per theme */
+  --aw-bg:               #0f1115;
+  --aw-bg-2:             #161b24;
+  --aw-panel:            rgba(19,23,31,0.82);
+  --aw-panel-border:     rgba(255,255,255,0.10);
+  --aw-text:             #eef1f7;
+  --aw-subtext:          #aeb6c7;
+  --aw-accent:           #d9b36b;
+  --aw-accent-text:      #1a1200;
+  --aw-nav-bg:           rgba(12,16,24,0.88);
+  --aw-nav-border:       rgba(255,255,255,0.08);
+  --aw-chip-on-bg:       rgba(217,179,107,0.18);
+  --aw-chip-on-border:   rgba(217,179,107,0.45);
+  --aw-chip-on-text:     #d9b36b;
+  --aw-btn-ghost-border: rgba(255,255,255,0.22);
+  --aw-btn-ghost-text:   #eef1f7;
+  --aw-input-bg:         rgba(255,255,255,0.06);
+  --aw-input-border:     rgba(255,255,255,0.14);
+  --aw-bg-image:         none;
+
   background: var(--aw-bg);
   color: var(--aw-text);
   font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
+}
+
+/* ── 仙境 (light blue watercolor) ──────────────────────── */
+.theme-celestial {
+  --aw-bg:               #ddeeff;
+  --aw-bg-2:             #c8e0f8;
+  --aw-panel:            rgba(255,255,255,0.75);
+  --aw-panel-border:     rgba(100,160,220,0.25);
+  --aw-text:             #1a2a3a;
+  --aw-subtext:          #4a6a8a;
+  --aw-accent:           #2e7fc8;
+  --aw-accent-text:      #ffffff;
+  --aw-nav-bg:           rgba(200,230,255,0.90);
+  --aw-nav-border:       rgba(100,160,220,0.20);
+  --aw-chip-on-bg:       rgba(46,127,200,0.15);
+  --aw-chip-on-border:   rgba(46,127,200,0.50);
+  --aw-chip-on-text:     #1a5a9a;
+  --aw-btn-ghost-border: rgba(46,127,200,0.35);
+  --aw-btn-ghost-text:   #2e7fc8;
+  --aw-input-bg:         rgba(255,255,255,0.60);
+  --aw-input-border:     rgba(100,160,220,0.30);
+  --aw-bg-image:         none;
+}
+
+/* ── 水墨古风 (ink wash, near-monochrome) ──────────────── */
+.theme-ink-wash {
+  --aw-bg:               #f4f0ea;
+  --aw-bg-2:             #e8e2d8;
+  --aw-panel:            rgba(244,240,234,0.88);
+  --aw-panel-border:     rgba(0,0,0,0.12);
+  --aw-text:             #1a1612;
+  --aw-subtext:          #6b5f54;
+  --aw-accent:           #2d2520;
+  --aw-accent-text:      #f4f0ea;
+  --aw-nav-bg:           rgba(234,230,220,0.92);
+  --aw-nav-border:       rgba(0,0,0,0.08);
+  --aw-chip-on-bg:       rgba(45,37,32,0.12);
+  --aw-chip-on-border:   rgba(45,37,32,0.40);
+  --aw-chip-on-text:     #2d2520;
+  --aw-btn-ghost-border: rgba(0,0,0,0.22);
+  --aw-btn-ghost-text:   #2d2520;
+  --aw-input-bg:         rgba(255,255,255,0.70);
+  --aw-input-border:     rgba(0,0,0,0.16);
+  --aw-bg-image:         none;
+}
+
+/* ── 赛博霓虹 (cyberpunk neon purple) ──────────────────── */
+.theme-cyber-neon {
+  --aw-bg:               #0d0b16;
+  --aw-bg-2:             #14102a;
+  --aw-panel:            rgba(20,16,40,0.88);
+  --aw-panel-border:     rgba(232,121,249,0.15);
+  --aw-text:             #f0e8ff;
+  --aw-subtext:          #b097d8;
+  --aw-accent:           #e879f9;
+  --aw-accent-text:      #1a0020;
+  --aw-nav-bg:           rgba(10,6,22,0.92);
+  --aw-nav-border:       rgba(232,121,249,0.12);
+  --aw-chip-on-bg:       rgba(232,121,249,0.15);
+  --aw-chip-on-border:   rgba(232,121,249,0.45);
+  --aw-chip-on-text:     #e879f9;
+  --aw-btn-ghost-border: rgba(232,121,249,0.30);
+  --aw-btn-ghost-text:   #f0e8ff;
+  --aw-input-bg:         rgba(255,255,255,0.05);
+  --aw-input-border:     rgba(232,121,249,0.20);
+  --aw-bg-image:         none;
+}
+
+/* ── 暗黑地牢 (gothic dark brown) ─────────────────────── */
+.theme-dark-dungeon {
+  --aw-bg:               #0e0a07;
+  --aw-bg-2:             #1a1208;
+  --aw-panel:            rgba(20,14,8,0.90);
+  --aw-panel-border:     rgba(180,130,60,0.15);
+  --aw-text:             #e8d8b8;
+  --aw-subtext:          #9a8060;
+  --aw-accent:           #c8902a;
+  --aw-accent-text:      #0e0a07;
+  --aw-nav-bg:           rgba(10,6,2,0.92);
+  --aw-nav-border:       rgba(180,130,60,0.10);
+  --aw-chip-on-bg:       rgba(200,144,42,0.18);
+  --aw-chip-on-border:   rgba(200,144,42,0.45);
+  --aw-chip-on-text:     #c8902a;
+  --aw-btn-ghost-border: rgba(200,144,42,0.30);
+  --aw-btn-ghost-text:   #e8d8b8;
+  --aw-input-bg:         rgba(255,255,255,0.04);
+  --aw-input-border:     rgba(180,130,60,0.18);
+  --aw-bg-image:         none;
+}
+
+/* ── 深渊 (near-black deep space) ─────────────────────── */
+.theme-abyss {
+  --aw-bg:               #050507;
+  --aw-bg-2:             #0a0a12;
+  --aw-panel:            rgba(8,8,16,0.92);
+  --aw-panel-border:     rgba(100,120,180,0.12);
+  --aw-text:             #d0d8f0;
+  --aw-subtext:          #7080a8;
+  --aw-accent:           #4060c0;
+  --aw-accent-text:      #ffffff;
+  --aw-nav-bg:           rgba(2,2,8,0.95);
+  --aw-nav-border:       rgba(80,100,160,0.10);
+  --aw-chip-on-bg:       rgba(64,96,192,0.18);
+  --aw-chip-on-border:   rgba(64,96,192,0.45);
+  --aw-chip-on-text:     #4060c0;
+  --aw-btn-ghost-border: rgba(80,100,160,0.30);
+  --aw-btn-ghost-text:   #d0d8f0;
+  --aw-input-bg:         rgba(255,255,255,0.04);
+  --aw-input-border:     rgba(80,100,160,0.16);
+  --aw-bg-image:         none;
 }
