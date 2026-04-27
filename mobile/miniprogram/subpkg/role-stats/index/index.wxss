@@ -1,0 +1,257 @@
+/* ─── PAGE ─── */
+.page { min-height: 100vh; position: relative; background: #080b12; }
+.bg, .mask { position: fixed; inset: 0; }
+.bg { width: 100vw; height: 100vh; }
+.mask { background: linear-gradient(180deg, rgba(6,8,16,0.72) 0%, rgba(8,10,20,0.88) 40%, rgba(6,8,16,0.96) 100%); }
+
+
+/* ─── CONTENT ─── */
+.content { position: relative; z-index: 2; max-width: 760rpx; margin: 0 auto; padding: 0 20rpx 60rpx; }
+
+/* ─── PANEL ─── */
+.panel {
+  margin-top: 18rpx;
+  border-radius: 20rpx;
+  background: var(--aw-panel);
+  border: 1rpx solid var(--aw-panel-border);
+  overflow: hidden;
+}
+
+.meta { display: block; margin: 16rpx; color: #cfd8ea; font-size: 22rpx; }
+
+/* panel header — gold chip style */
+.panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14rpx 18rpx;
+  border-left: 6rpx solid #d8b06b;
+  background: linear-gradient(90deg, rgba(216,176,107,0.18), rgba(216,176,107,0.03));
+  border-bottom: 1rpx solid rgba(216,176,107,0.10);
+}
+.panel-title { color: #f2e5c8; font-size: 26rpx; font-weight: 700; letter-spacing: 2rpx; }
+.panel-subtitle { color: rgba(216,176,107,0.5); font-size: 22rpx; }
+
+/* ─── OVERVIEW ─── */
+.overview-numbers {
+  display: flex; align-items: center;
+  padding: 24rpx 18rpx 18rpx;
+}
+.stat-block { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6rpx; }
+.stat-divider { width: 1rpx; height: 60rpx; background: rgba(216,176,107,0.15); }
+.stat-num { font-size: 72rpx; font-weight: 900; line-height: 1; letter-spacing: -2rpx; }
+.stat-num.stat-blue { color: #4e9eff; text-shadow: 0 0 30rpx rgba(78,158,255,0.3); }
+.stat-num.stat-green { color: #50dc8c; text-shadow: 0 0 30rpx rgba(80,220,140,0.3); }
+.stat-label { font-size: 20rpx; color: rgba(255,255,255,0.3); letter-spacing: 4rpx; }
+
+/* ─── FACTION BAR ─── */
+.faction-wrap { padding: 0 18rpx 20rpx; }
+.faction-bar-labels { display: flex; justify-content: space-between; margin-bottom: 8rpx; }
+.faction-bar-tag { font-size: 20rpx; font-weight: 700; letter-spacing: 1rpx; }
+.faction-bar-tag.good { color: #4e9eff; }
+.faction-bar-tag.evil { color: #e05050; }
+.faction-bar-track {
+  height: 10rpx; border-radius: 999rpx;
+  background: rgba(255,255,255,0.06);
+  overflow: hidden; display: flex;
+}
+.faction-bar-good {
+  height: 100%; border-radius: 999rpx 0 0 999rpx;
+  background: linear-gradient(90deg, #2a6ab0, #4e9eff);
+}
+.faction-bar-evil {
+  height: 100%; border-radius: 0 999rpx 999rpx 0;
+  background: linear-gradient(90deg, #c03030, #e05050);
+}
+
+.faction-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10rpx; margin-top: 12rpx; }
+.faction-card { border-radius: 14rpx; padding: 14rpx 16rpx; }
+.faction-card-good {
+  background: rgba(78,158,255,0.07);
+  border: 1rpx solid rgba(78,158,255,0.22);
+}
+.faction-card-evil {
+  background: rgba(220,60,60,0.07);
+  border: 1rpx solid rgba(220,60,60,0.22);
+}
+.faction-card-title { display: block; font-size: 20rpx; font-weight: 700; letter-spacing: 2rpx; margin-bottom: 8rpx; }
+.faction-card-title.good { color: #7ac7ff; }
+.faction-card-title.evil { color: #ff8080; }
+.faction-stat-row { display: flex; align-items: baseline; gap: 8rpx; }
+.faction-stat-big { font-size: 40rpx; font-weight: 900; line-height: 1; }
+.faction-stat-big.good { color: #4e9eff; }
+.faction-stat-big.evil { color: #e05050; }
+.faction-stat-small { font-size: 20rpx; color: rgba(255,255,255,0.3); }
+.faction-win-rate { display: block; font-size: 22rpx; font-weight: 600; margin-top: 4rpx; }
+.faction-win-rate.good { color: #6edea8; }
+.faction-win-rate.evil { color: #ff9898; }
+
+/* ─── VOTE TAGS ─── */
+.vote-tags {
+  display: flex; gap: 8rpx;
+  padding: 0 18rpx 18rpx;
+}
+.vote-tag {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  gap: 6rpx; padding: 10rpx 8rpx;
+  border-radius: 999rpx;
+  background: rgba(216,176,107,0.06);
+  border: 1rpx solid rgba(216,176,107,0.2);
+}
+.vote-tag-img { width: 36rpx; height: 36rpx; flex-shrink: 0; }
+.vote-tag-label { font-size: 20rpx; color: rgba(216,176,107,0.65); }
+.vote-tag-count { font-size: 24rpx; font-weight: 800; color: #d8b06b; }
+
+/* ─── ROLE GRID ─── */
+.rs-panel { padding: 0; }
+
+.role-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.role-card {
+  padding: 16rpx 10rpx 18rpx;
+  display: flex; flex-direction: column; align-items: center; gap: 8rpx;
+  border-right: 1rpx solid rgba(255,255,255,0.05);
+  border-bottom: 1rpx solid rgba(255,255,255,0.05);
+  position: relative;
+}
+.role-card:nth-child(2n) { border-right: none; }
+.role-card:nth-last-child(1),
+.role-card:nth-last-child(2) { border-bottom: none; }
+
+/* Version B: 顶部细色条 */
+.role-card-topbar {
+  position: absolute; top: 0; left: 0; right: 0; height: 3rpx;
+}
+.role-card-topbar.good {
+  background: linear-gradient(90deg, transparent, rgba(78,158,255,0.7) 50%, transparent);
+}
+.role-card-topbar.evil {
+  background: linear-gradient(90deg, transparent, rgba(220,80,80,0.7) 50%, transparent);
+}
+
+/* 圆形胜率环 */
+.gauge-wrap { position: relative; width: 130rpx; height: 130rpx; margin-top: 8rpx; }
+.gauge-ring {
+  position: absolute; top: 0; left: 0;
+  width: 130rpx; height: 130rpx; border-radius: 50%;
+}
+.gauge-inner {
+  position: absolute;
+  top: 12rpx; left: 12rpx;
+  width: 106rpx; height: 106rpx;
+  border-radius: 50%;
+  background: rgba(14,18,28,0.96);
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+}
+.gauge-img { width: 100rpx; height: 100rpx; border-radius: 50%; }
+.gauge-emoji { font-size: 56rpx; line-height: 1; }
+
+.rs-role-name { font-size: 22rpx; font-weight: 700; letter-spacing: 1rpx; text-align: center; }
+.rs-role-name.good { color: #7ac7ff; }
+.rs-role-name.evil { color: #ff8a8a; }
+
+.rs-role-games { font-size: 19rpx; color: rgba(255,255,255,0.3); }
+
+.rs-role-rate { font-size: 30rpx; font-weight: 900; line-height: 1; }
+.rs-role-rate.rate-hi { color: #50dc8c; }
+.rs-role-rate.rate-lo { color: #ff8080; }
+.rs-role-rate.rate-zero { color: rgba(255,255,255,0.18); font-size: 24rpx; }
+
+/* ─── MEDALS ─── */
+.medal-section { padding: 16rpx 18rpx; }
+.medal-section-sep { border-top: 1rpx solid rgba(255,255,255,0.06); }
+
+.medal-section-title {
+  display: block; font-size: 22rpx; font-weight: 700;
+  letter-spacing: 2rpx; margin-bottom: 12rpx;
+  padding-left: 10rpx;
+}
+.medal-section-title.good {
+  color: #7ac7ff;
+  border-left: 4rpx solid rgba(78,158,255,0.6);
+}
+.medal-section-title.evil {
+  color: #ff8a8a;
+  border-left: 4rpx solid rgba(220,80,80,0.6);
+}
+
+.medal-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8rpx;
+}
+.medal-card {
+  display: flex; flex-direction: column; align-items: center; gap: 4rpx;
+  padding: 14rpx 6rpx;
+  border-radius: 14rpx;
+  background: rgba(216,176,107,0.05);
+  border: 1rpx solid rgba(216,176,107,0.14);
+  text-align: center;
+}
+.medal-card.medal-zero { opacity: 0.32; }
+
+.medal-img { width: 56rpx; height: 56rpx; }
+.medal-emoji { font-size: 40rpx; line-height: 1; }
+.medal-name { font-size: 19rpx; color: rgba(242,229,200,0.75); line-height: 1.3; }
+.medal-count { font-size: 24rpx; font-weight: 800; color: #d8b06b; }
+
+/* ─── SKIN PICKER ─── */
+.skin-picker-panel { padding: 0; }
+
+.skin-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10rpx;
+  padding: 14rpx 14rpx 16rpx;
+}
+
+.skin-card {
+  border-radius: 12rpx;
+  border: 2rpx solid rgba(255,255,255,0.1);
+  padding: 10rpx 8rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6rpx;
+  position: relative;
+  background: rgba(255,255,255,0.03);
+}
+
+.skin-card-active {
+  border-color: var(--aw-accent, #d9b36b);
+  background: rgba(217,179,107,0.06);
+}
+
+.skin-preview {
+  display: flex;
+  gap: 5rpx;
+  align-items: center;
+  justify-content: center;
+  height: 32rpx;
+}
+
+.skin-dot {
+  width: 18rpx;
+  height: 18rpx;
+  border-radius: 50%;
+  border: 1rpx solid rgba(255,255,255,0.15);
+  flex-shrink: 0;
+}
+
+.skin-name {
+  font-size: 18rpx;
+  color: rgba(255,255,255,0.55);
+  text-align: center;
+  line-height: 1.3;
+}
+
+.skin-card-active .skin-name {
+  color: var(--aw-accent, #d9b36b);
+}
+
+.skin-check {
+  font-size: 16rpx;
+  color: var(--aw-accent, #d9b36b);
+  font-weight: 700;
+}

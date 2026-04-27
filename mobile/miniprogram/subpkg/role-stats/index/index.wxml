@@ -1,0 +1,142 @@
+<view class="page theme-{{skinId}}">
+  <image class="bg" src="https://www.awalon.top/mp-assets/in-game-bg-optimized.jpg" mode="aspectFill" />
+  <view class="mask"></view>
+
+  <nav-header title="我的主页" statusBarHeight="{{statusBarHeight}}" navBarHeight="{{navBarHeight}}" bind:back="onBackHome"></nav-header>
+
+  <view class="content" style="padding-top: {{navTotalHeight + 8}}px;">
+
+    <!-- ── 外观皮肤 ── -->
+    <view class="panel skin-picker-panel">
+      <view class="panel-header">
+        <text class="panel-title">外观皮肤</text>
+      </view>
+      <view class="skin-grid">
+        <view
+          class="skin-card {{item.id === skinId ? 'skin-card-active' : ''}}"
+          wx:for="{{skins}}"
+          wx:key="id"
+          data-id="{{item.id}}"
+          bindtap="onPickSkin"
+        >
+          <view class="skin-preview">
+            <view class="skin-dot" style="background:{{item.bg}}"></view>
+            <view class="skin-dot" style="background:{{item.panel}}"></view>
+            <view class="skin-dot" style="background:{{item.accent}}"></view>
+          </view>
+          <text class="skin-name">{{item.name}}</text>
+          <view wx:if="{{item.id === skinId}}" class="skin-check">✓</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="panel" wx:if="{{loading}}">
+      <text class="meta">加载中...</text>
+    </view>
+
+    <block wx:if="{{!loading && roleStats}}">
+
+      <!-- ── 总览 ── -->
+      <view class="panel">
+        <view class="panel-header">
+          <text class="panel-title">总览</text>
+          <text class="panel-subtitle">近期战绩</text>
+        </view>
+
+        <view class="overview-numbers">
+          <view class="stat-block">
+            <text class="stat-num stat-blue">{{roleStats.totalGames}}</text>
+            <text class="stat-label">总对局</text>
+          </view>
+          <view class="stat-divider"></view>
+          <view class="stat-block">
+            <text class="stat-num stat-green">{{roleStats.overallWinRate}}%</text>
+            <text class="stat-label">总胜率</text>
+          </view>
+        </view>
+
+        <view class="faction-wrap">
+          <view class="faction-bar-labels">
+            <text class="faction-bar-tag good">正义阵营 · {{goodSummary.total}}局</text>
+            <text class="faction-bar-tag evil">邪恶阵营 · {{evilSummary.total}}局</text>
+          </view>
+          <view class="faction-bar-track">
+            <view class="faction-bar-good" style="width: {{factionBarGoodPct}}%"></view>
+            <view class="faction-bar-evil" style="width: {{factionBarEvilPct}}%"></view>
+          </view>
+          <view class="faction-cards">
+            <view class="faction-card faction-card-good">
+              <text class="faction-card-title good">正义阵营</text>
+              <view class="faction-stat-row">
+                <text class="faction-stat-big good">{{goodSummary.wins}}</text>
+                <text class="faction-stat-small">/ {{goodSummary.total}} 胜</text>
+              </view>
+              <text class="faction-win-rate good">胜率 {{goodSummary.winRate}}%</text>
+            </view>
+            <view class="faction-card faction-card-evil">
+              <text class="faction-card-title evil">邪恶阵营</text>
+              <view class="faction-stat-row">
+                <text class="faction-stat-big evil">{{evilSummary.wins}}</text>
+                <text class="faction-stat-small">/ {{evilSummary.total}} 胜</text>
+              </view>
+              <text class="faction-win-rate evil">胜率 {{evilSummary.winRate}}%</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- ── 角色统计 ── -->
+      <view class="panel rs-panel">
+        <view class="panel-header">
+          <text class="panel-title">按角色统计</text>
+        </view>
+        <view class="role-grid">
+          <view class="role-card" wx:for="{{statsList}}" wx:key="role">
+            <view class="role-card-topbar {{item.faction}}"></view>
+            <view class="gauge-wrap">
+              <view class="gauge-ring" style="background: conic-gradient({{item.faction==='good'?'rgba(78,158,255,0.88)':'rgba(220,80,80,0.88)'}} {{item.rateDeg}}deg, {{item.faction==='good'?'rgba(78,158,255,0.10)':'rgba(220,80,80,0.10)'}} 0deg)"></view>
+              <view class="gauge-inner">
+                <image class="gauge-img" wx:if="{{item.roleImage}}" src="{{item.roleImage}}" mode="aspectFill" />
+                <text class="gauge-emoji" wx:else>🎭</text>
+              </view>
+            </view>
+            <text class="rs-role-name {{item.faction}}">{{item.role}}</text>
+            <text class="rs-role-games">{{item.total > 0 ? item.total+'局 / '+item.wins+'胜' : '未出场'}}</text>
+            <text class="rs-role-rate {{item.total > 0 ? (item.winRate >= 50 ? 'rate-hi' : 'rate-lo') : 'rate-zero'}}">{{item.total > 0 ? item.winRate+'%' : '—'}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- ── 勋章统计 ── -->
+      <view class="panel" wx:if="{{goodMedals.length || evilMedals.length}}">
+        <view class="panel-header">
+          <text class="panel-title">勋章统计</text>
+          <text class="panel-subtitle">共 {{medalTotal}} 枚</text>
+        </view>
+        <view class="medal-section">
+          <text class="medal-section-title good">正义勋章</text>
+          <view class="medal-grid">
+            <view class="medal-card {{item.total > 0 ? '' : 'medal-zero'}}" wx:for="{{goodMedals}}" wx:key="code" catchtap="onTapMedal" data-name="{{item.name}}" data-description="{{item.description}}">
+              <image class="medal-img" wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFit" />
+              <text class="medal-emoji" wx:else>🏅</text>
+              <text class="medal-name">{{item.name}}</text>
+              <text class="medal-count">{{item.total}}</text>
+            </view>
+          </view>
+        </view>
+        <view class="medal-section medal-section-sep">
+          <text class="medal-section-title evil">邪恶勋章</text>
+          <view class="medal-grid">
+            <view class="medal-card {{item.total > 0 ? '' : 'medal-zero'}}" wx:for="{{evilMedals}}" wx:key="code" catchtap="onTapMedal" data-name="{{item.name}}" data-description="{{item.description}}">
+              <image class="medal-img" wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFit" />
+              <text class="medal-emoji" wx:else>🏅</text>
+              <text class="medal-name">{{item.name}}</text>
+              <text class="medal-count">{{item.total}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+    </block>
+  </view>
+</view>

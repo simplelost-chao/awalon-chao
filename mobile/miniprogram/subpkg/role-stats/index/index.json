@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "角色统计",
+  "usingComponents": {
+    "nav-header": "/subpkg/components/nav-header/index"
+  }
+}
