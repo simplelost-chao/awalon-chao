@@ -1,5 +1,5 @@
 const { ALL_MEDALS, decorateMedals } = require("../../../utils/medals");
-const { SKINS } = require("../../../skins");
+const { SKINS, getSkin } = require("../../../skins");
 
 const ROLE_IMAGE_MAP = {
   梅林: "https://www.awalon.top/mp-assets/role-split/merlin.png",
@@ -37,6 +37,7 @@ Page({
     navTotalHeight: 64,
     skinId: 'dark-gold',
     skins: [],
+    skinInGameBg: 'https://www.awalon.top/mp-assets/in-game-bg-optimized.jpg',
     loading: true,
     roleStats: null,
     statsList: [],
@@ -53,27 +54,34 @@ Page({
     const app = getApp();
     const nav = (app.globalData && app.globalData.nav) || {};
     const skinId = (app.globalData && app.globalData.skinId) || 'dark-gold';
-    const skins = SKINS.map((s) => ({
-      id: s.id,
-      name: s.name,
-      bg: s.colors.bg,
-      panel: s.colors.panel,
-      accent: s.colors.accent,
-    }));
+    const publishedIds = (app.globalData && app.globalData.publishedSkinIds) || ['dark-gold'];
+    const skins = SKINS
+      .filter((s) => publishedIds.includes(s.id))
+      .map((s) => ({ id: s.id, name: s.name, bg: s.colors.bg, panel: s.colors.panel, accent: s.colors.accent }));
+    const skinInGameBg = getSkin(skinId).inGameBg;
     this.setData({
       statusBarHeight: nav.statusBarHeight || 20,
       navBarHeight: nav.navBarHeight || 44,
       navTotalHeight: nav.navTotalHeight || 64,
       skinId,
       skins,
+      skinInGameBg,
     });
+    // Re-filter when API response arrives after page load
+    app.globalData.skinsLoadedListener = (published) => {
+      const filtered = SKINS
+        .filter((s) => published.includes(s.id))
+        .map((s) => ({ id: s.id, name: s.name, bg: s.colors.bg, panel: s.colors.panel, accent: s.colors.accent }));
+      this.setData({ skins: filtered });
+    };
   },
 
   onShow() {
     const app = getApp();
     // Sync skinId in case it changed
     const skinId = (app.globalData && app.globalData.skinId) || 'dark-gold';
-    this.setData({ skinId });
+    const skinInGameBg = getSkin(skinId).inGameBg;
+    this.setData({ skinId, skinInGameBg });
 
     app.globalData.roleStatsListener = (stats) => {
       const roleStats = stats || null;
@@ -145,6 +153,7 @@ Page({
   onUnload() {
     const app = getApp();
     if (app.globalData.roleStatsListener) app.globalData.roleStatsListener = null;
+    if (app.globalData.skinsLoadedListener) app.globalData.skinsLoadedListener = null;
   },
 
   onPickSkin(e) {
