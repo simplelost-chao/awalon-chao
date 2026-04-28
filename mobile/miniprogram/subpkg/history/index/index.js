@@ -72,6 +72,9 @@ Page({
 
   onShow() {
     const app = getApp();
+    // Sync skin in case it changed while away
+    const _skinId = (app.globalData && app.globalData.skinId) || 'dark-gold';
+    this.setData({ skinId: _skinId, skinInGameBg: getSkin(_skinId).inGameBg });
     app.globalData.historyListListener = (payload) => {
       const rawList = Array.isArray(payload && payload.list) ? payload.list : [];
       const userAvatar = (app.globalData.userInfo && app.globalData.userInfo.avatar) || '';

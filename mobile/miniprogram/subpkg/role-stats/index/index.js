@@ -161,7 +161,8 @@ Page({
     const app = getApp();
     wx.setStorageSync('selectedSkin', skinId);
     app.globalData.skinId = skinId;
-    this.setData({ skinId });
+    const skin = getSkin(skinId);
+    this.setData({ skinId, skinInGameBg: skin.inGameBg });
     // Notify index page
     if (typeof app.globalData.skinChangeListener === 'function') {
       app.globalData.skinChangeListener(skinId);
