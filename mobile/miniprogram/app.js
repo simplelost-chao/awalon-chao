@@ -44,6 +44,21 @@ App({
         }
       }
     });
+    // 已发布皮肤列表
+    wx.request({
+      url: this.globalData.apiBase + '/api/skins',
+      success: (res) => {
+        if (res.statusCode === 200 && res.data && res.data.skins) {
+          const published = res.data.skins
+            .filter((s) => s.status === 'published')
+            .map((s) => s.id);
+          this.globalData.publishedSkinIds = published;
+          if (typeof this.globalData.skinsLoadedListener === 'function') {
+            this.globalData.skinsLoadedListener(published);
+          }
+        }
+      }
+    });
   },
   globalData: {
     wsUrl: "wss://www.awalon.top/ws",
@@ -64,6 +79,8 @@ App({
     },
     skinId: 'dark-gold',
     skinChangeListener: null,
+    publishedSkinIds: ['dark-gold'],
+    skinsLoadedListener: null,
     reviewMode: false,
     reviewModeListener: null,
     roleConfigListener: null,
