@@ -1,5 +1,6 @@
 const { decorateMedals } = require("../../../utils/medals");
 const { buildMissionPills } = require("../../../utils/gameUtils");
+const { getSkin, roleImageFor: skinRoleImageFor } = require("../../../skins");
 
 const ROLE_IMAGE_MAP = {
   梅林: "https://www.awalon.top/mp-assets/role-split/merlin.png",
@@ -31,6 +32,7 @@ Page({
     navBarHeight: 44,
     navTotalHeight: 64,
     skinId: 'dark-gold',
+    skinInGameBg: 'https://www.awalon.top/mp-assets/in-game-bg-optimized.jpg',
     gameId: 0,
     loading: true,
     historyDetail: null,
@@ -63,11 +65,13 @@ Page({
   onLoad(query) {
     const app = getApp();
     const nav = (app.globalData && app.globalData.nav) || {};
+    const _skinId = (app.globalData && app.globalData.skinId) || 'dark-gold';
     this.setData({
       statusBarHeight: nav.statusBarHeight || 20,
       navBarHeight: nav.navBarHeight || 44,
       navTotalHeight: nav.navTotalHeight || 64,
-      skinId: (app.globalData && app.globalData.skinId) || 'dark-gold',
+      skinId: _skinId,
+      skinInGameBg: getSkin(_skinId).inGameBg,
       gameId: Number(query && query.gameId) || 0
     });
   },
@@ -194,7 +198,7 @@ Page({
   },
 
   roleImageFor(role) {
-    return ROLE_IMAGE_MAP[role] || "";
+    return skinRoleImageFor(role, this.data.skinId) || "";
   },
 
   roleClassFor(role) {

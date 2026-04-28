@@ -1,4 +1,5 @@
 const { decorateMedals } = require("../../../utils/medals");
+const { getSkin } = require("../../../skins");
 
 const EVIL_ROLES = new Set(['莫甘娜','刺客','莫德雷德','奥伯伦','爪牙','兰斯洛特（邪恶）']);
 
@@ -49,6 +50,7 @@ Page({
     navBarHeight: 44,
     navTotalHeight: 64,
     skinId: 'dark-gold',
+    skinInGameBg: 'https://www.awalon.top/mp-assets/in-game-bg-optimized.jpg',
     list: [],
     page: 1,
     pageDisplay: '01',
@@ -63,7 +65,8 @@ Page({
       statusBarHeight: nav.statusBarHeight || 20,
       navBarHeight: nav.navBarHeight || 44,
       navTotalHeight: nav.navTotalHeight || 64,
-      skinId: (app.globalData && app.globalData.skinId) || 'dark-gold'
+      skinId: (app.globalData && app.globalData.skinId) || 'dark-gold',
+      skinInGameBg: getSkin((app.globalData && app.globalData.skinId) || 'dark-gold').inGameBg
     });
   },
 

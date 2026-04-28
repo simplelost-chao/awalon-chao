@@ -1,5 +1,5 @@
 <view class="page theme-{{skinId}}">
-  <image class="bg" src="https://www.awalon.top/mp-assets/in-game-bg-optimized.jpg" mode="aspectFill" />
+  <image class="bg" src="{{skinInGameBg}}" mode="aspectFill" />
   <view class="mask"></view>
 
   <nav-header title="历史对战" statusBarHeight="{{statusBarHeight}}" navBarHeight="{{navBarHeight}}" bind:back="onBackHome"></nav-header>
