@@ -5,15 +5,205 @@ const WebSocket = require('ws');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
-const Database = require('better-sqlite3');
 const { defaultRolesForCount, DEFAULT_ROLE_CONFIG } = require('./default-role-config');
 const { MEDAL_DEFS, evaluateMedalsForPayload } = require('./medals');
+const {
+  MAX_ROUNDS, FORCE_ROUND_MODE_FIXED_5, FORCE_ROUND_MODE_EVIL_PLUS_ONE,
+  TEAM_SIZES, FAIL_REQUIREMENT, ROLE_FACTIONS, EVIL_COUNT_BY_PLAYERS,
+  now, shuffle, makeId, isValidPhone, makeToken,
+  expectedEvilCount, countEvilRoles, normalizeForceRoundMode, deriveForcedRound, isValidRoleConfig,
+  seatNumber, getTeamSize, getFailRequirement,
+} = require('./constants');
+const {
+  userDb,
+  deleteActiveRoomPlayerByPhoneStmt, getActiveRoomPlayerByPhoneStmt,
+  getActiveRoomSnapshotStmt, getAllActiveRoomSnapshotsStmt,
+  persistActiveRoomTx, deleteActiveRoomTx,
+  getOrCreateUser, updateUserProfile,
+} = require('./db');
+const {
+  summarizePeerVotes, getHistoryListForPhone, getHistoryDetailForPhone,
+  getRoleStatsForPhone, savePeerVoteForHistory,
+} = require('./history');
+const {
+  init: initGameAi,
+  assassinAutoplayTimers,
+  fillAiPlayers, autoSeatHumans,
+  autoSpeakIfAi, aiSpeak, pushSpeak, canSpeak,
+  autoVoteIfAi, aiVote, normalizeAiVote,
+  autoMissionIfAi, aiMissionVote, normalizeAiMission,
+  autoProposeIfAiLeader, aiPickTeam,
+  autoAssassinateIfAi, aiAssassinate, scheduleAutoAssassinIfAutoplay,
+  triggerAutoplayActions, autoplayPropose, autoplaySkipSpeak, autoplayVote, autoplayMission, autoplayLady,
+  generateRecaps, roleInfoForRecap,
+  gatherEvilIntel, revealAll, revealEvilToEvil, revealEvilToAll,
+  inferAiKnowledge, inferSpeechClaimedEvilIds, inferMissionHardKnowledge, inferPublicSuspicion,
+  getMerlinKnownEvilIds, extractVoteClaim, hasMerlinReasonContradiction, buildMerlinReason,
+  resolveVoiceDone,
+} = require('./game-ai');
+const {
+  init: initPresence,
+  RECONNECT_GRACE_MS,
+  reconnectEntries,
+  autoplayTimers,
+  clearReconnectEntry,
+  removePlayerById,
+  scheduleReconnectOfflineMark,
+  rebindClientId,
+  detachSocketClient,
+  takeOverRoomPlayer,
+  recoverClientPresence,
+  handleSocketClose,
+} = require('./presence');
+const {
+  init: initRoom,
+  defaultRoles,
+  padRoles,
+  isSpectatorPlayer,
+  countSeatedPlayers,
+  buildActiveRoomSnapshot,
+  deleteActiveRoom,
+  persistActiveRoom,
+  hydrateRoomFromSnapshot,
+  createRoom,
+  joinRoom,
+  kickPlayer,
+  leaveRoom,
+} = require('./room');
+const {
+  init: initGame,
+  send, ok, error, broadcastRoom, publicRoom, publicGame,
+  resolveVote, resolveMission, resolveAssassination,
+  advanceSpeaker, scheduleSpeakTimeout, setSpeakingStart, updateGameHistoryPayload,
+  startGame, resetGame, redealIdentities,
+  proposeTeam, updateTeam, voteTeam, executeMission, speak, endSpeak,
+  nextSpeaker, hostSkipSpeaker, hostSkipToVote, startMissionPhase,
+  startAssassination, assassinate, useLadyOfLake, resolveLadyOfLake, getLadyOfLakeEligibleTargets,
+  chooseSeat, updateSettings, setProfile, cheatReveal, viewRole,
+  fetchHistoryList, fetchHistoryDetail, generateHistoryRecap, fetchRoleStats,
+} = require('./game');
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '8mb' }));
-app.get('/health', (req, res) => res.json({ ok: true }));
+app.get('/health', (req, res) => res.json({ ok: true, token: 'awalon-ok' }));
+let runtimeReviewMode = process.env.REVIEW_MODE === 'true';
+const ADMIN_KEY = process.env.ADMIN_KEY || '';
+
+app.get('/api/review-mode', (req, res) => res.json({ reviewMode: runtimeReviewMode }));
+
+// Skin catalogue — edit statuses here to publish/unpublish skins
+const SKIN_CATALOGUE = [
+  { id: 'dark-gold',    name: '暗夜金',   status: 'published' },
+  { id: 'celestial',   name: '仙境',     status: 'draft' },
+  { id: 'ink-wash',    name: '水墨古风', status: 'draft' },
+  { id: 'cyber-neon',  name: '赛博霓虹', status: 'draft' },
+  { id: 'dark-dungeon',name: '暗黑地牢', status: 'draft' },
+  { id: 'abyss',       name: '深渊',     status: 'draft' },
+];
+
+app.get('/api/skins', (req, res) => {
+  res.json({ skins: SKIN_CATALOGUE });
+});
+
+app.post('/api/admin/set-mode', (req, res) => {
+  if (!ADMIN_KEY || req.query.key !== ADMIN_KEY) return res.status(403).json({ error: 'forbidden' });
+  const mode = req.body && req.body.mode;
+  if (mode !== 'review' && mode !== 'game') return res.status(400).json({ error: 'invalid mode' });
+  runtimeReviewMode = (mode === 'review');
+  console.log(`[Admin] 切换至${runtimeReviewMode ? '审核' : '游戏'}模式`);
+  res.json({ ok: true, reviewMode: runtimeReviewMode });
+});
+
+app.get('/admin', (req, res) => {
+  if (!ADMIN_KEY || req.query.key !== ADMIN_KEY) return res.status(403).send('forbidden');
+  const mode = runtimeReviewMode ? 'review' : 'game';
+  const key = req.query.key;
+  res.send(`<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Awalon 管理</title>
+<style>
+  body{font-family:-apple-system,sans-serif;background:#0d1117;color:#e6edf3;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;margin:0;gap:24px}
+  h2{margin:0;font-size:20px;color:#8b949e}
+  .badge{padding:8px 22px;border-radius:999px;font-size:18px;font-weight:700}
+  .badge.review{background:#3d1a00;color:#f0883e;border:1px solid #f0883e55}
+  .badge.game{background:#0d2d0d;color:#3fb950;border:1px solid #3fb95055}
+  .btns{display:flex;gap:16px}
+  button{padding:12px 32px;border-radius:10px;border:none;font-size:16px;font-weight:600;cursor:pointer;transition:.15s}
+  .btn-review{background:#f0883e;color:#0d1117}
+  .btn-game{background:#3fb950;color:#0d1117}
+  button:hover{opacity:.85}
+  .hint{font-size:13px;color:#484f58;margin-top:8px}
+</style>
+</head>
+<body>
+<h2>Awalon 模式控制</h2>
+<div class="badge ${mode}">${mode === 'review' ? '🔒 审核模式' : '🎮 游戏模式'}</div>
+<div class="btns">
+  <button class="btn-review" onclick="setMode('review')">切换为审核模式</button>
+  <button class="btn-game" onclick="setMode('game')">切换为游戏模式</button>
+</div>
+<div class="hint">切换立即生效，无需重启服务</div>
+<script>
+async function setMode(mode){
+  const r=await fetch('/api/admin/set-mode?key=${key}',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode})});
+  if(r.ok) location.reload();
+}
+</script>
+</body>
+</html>`);
+});
+app.get('/api/admin/ai-stats', (req, res) => {
+  if (!ADMIN_KEY || req.query.key !== ADMIN_KEY) return res.status(403).json({ error: 'forbidden' });
+  try { res.json(getAiLearningStats()); } catch (e) { res.status(500).json({ error: e.message }); }
+});
+app.get('/admin/ai', (req, res) => {
+  if (!ADMIN_KEY || req.query.key !== ADMIN_KEY) return res.status(403).send('forbidden');
+  res.sendFile(path.join(__dirname, 'ai-dashboard.html'));
+});
+app.post('/api/admin/trigger-meta', (req, res) => {
+  if (!ADMIN_KEY || req.query.key !== ADMIN_KEY) return res.status(403).json({ error: 'forbidden' });
+  maybeRunMetaAnalysis(true).then(() => res.json({ ok: true })).catch(e => res.status(500).json({ error: e.message }));
+});
+
 app.get('/api/role-config', (req, res) => res.json(DEFAULT_ROLE_CONFIG));
+app.get('/api/rooms', (req, res) => {
+  const list = [];
+  for (const room of rooms.values()) {
+    if (room._historyMode) continue;
+    if (!room.hostId || String(room.code).startsWith('hist')) continue;
+    if (room.phase === 'end') continue;
+    const host = room.players.get(room.hostId);
+    if (!host) continue; // 无有效房主的房间不展示
+    const humanPlayers = Array.from(room.players.values()).filter(p => !p.isAI && !p.spectator);
+    const seatedCount = (room.seats || []).filter(Boolean).length;
+    const joinable = !room.started && seatedCount < room.maxPlayers;
+    const avatarRaw = host.avatar || '🐺';
+    const avatarIsImage = avatarRaw.startsWith('http');
+    const missionMap = {};
+    ((room.game && room.game.missionHistory) || []).forEach((m) => { missionMap[m.round] = m.success; });
+    const missionSegs = [1, 2, 3, 4, 5].map((r) =>
+      missionMap[r] === true ? 'win' : missionMap[r] === false ? 'lose' : 'pending'
+    );
+    list.push({
+      code: room.code,
+      hostName: host.nickname || '玩家',
+      hostAvatarText: avatarIsImage ? '' : avatarRaw,
+      hostAvatarImage: avatarIsImage ? avatarRaw : '',
+      playerCount: humanPlayers.length,
+      seatedCount,
+      maxPlayers: room.maxPlayers,
+      started: !!room.started,
+      joinable,
+      missionSegs,
+    });
+  }
+  list.sort((a, b) => (b.joinable ? 1 : 0) - (a.joinable ? 1 : 0));
+  res.json({ rooms: list });
+});
 const uploadRoot = path.join(__dirname, 'uploads');
 const avatarUploadDir = path.join(uploadRoot, 'avatars');
 fs.mkdirSync(avatarUploadDir, { recursive: true });
@@ -180,194 +370,9 @@ app.post('/api/wx/phone-login', async (req, res) => {
 
 // In-memory state
 const rooms = new Map();
-const MAX_ROUNDS = 5;
-const FORCE_ROUND_MODE_FIXED_5 = 'fixed5';
-const FORCE_ROUND_MODE_EVIL_PLUS_ONE = 'evil_plus_one';
 const sessions = new Map();
-const parsedReconnectGraceMs = Number(process.env.RECONNECT_GRACE_MS || '');
-const RECONNECT_GRACE_MS =
-  Number.isFinite(parsedReconnectGraceMs) && parsedReconnectGraceMs > 0 ? parsedReconnectGraceMs : 30 * 60 * 1000;
-const reconnectEntries = new Map();
+const phoneClients = new Map(); // phone → clientId，用于单设备登录踢出
 
-const userDb = new Database(path.join(__dirname, 'users.sqlite'));
-userDb.pragma('journal_mode = WAL');
-userDb.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    phone TEXT PRIMARY KEY,
-    nickname TEXT NOT NULL,
-    avatar TEXT NOT NULL,
-    created_at INTEGER NOT NULL,
-    updated_at INTEGER NOT NULL
-  );
-  CREATE TABLE IF NOT EXISTS game_records (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    room_code TEXT NOT NULL,
-    started_at INTEGER NOT NULL,
-    ended_at INTEGER NOT NULL,
-    max_players INTEGER NOT NULL,
-    winner TEXT NOT NULL,
-    payload TEXT NOT NULL
-  );
-  CREATE TABLE IF NOT EXISTS game_participants (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    game_id INTEGER NOT NULL,
-    phone TEXT,
-    client_id TEXT NOT NULL,
-    nickname TEXT NOT NULL,
-    seat INTEGER NOT NULL,
-    role TEXT NOT NULL,
-    faction TEXT NOT NULL,
-    result TEXT NOT NULL,
-    is_host INTEGER NOT NULL,
-    is_ai INTEGER NOT NULL,
-    created_at INTEGER NOT NULL
-  );
-  CREATE INDEX IF NOT EXISTS idx_game_participants_phone ON game_participants(phone);
-  CREATE INDEX IF NOT EXISTS idx_game_participants_game_id ON game_participants(game_id);
-  CREATE INDEX IF NOT EXISTS idx_game_records_ended_at ON game_records(ended_at DESC);
-  CREATE TABLE IF NOT EXISTS participant_medals (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    game_id INTEGER NOT NULL,
-    phone TEXT,
-    client_id TEXT NOT NULL,
-    medal_code TEXT NOT NULL,
-    medal_name TEXT NOT NULL,
-    created_at INTEGER NOT NULL
-  );
-  CREATE INDEX IF NOT EXISTS idx_participant_medals_phone ON participant_medals(phone);
-  CREATE INDEX IF NOT EXISTS idx_participant_medals_game_id ON participant_medals(game_id);
-  CREATE TABLE IF NOT EXISTS participant_peer_votes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    game_id INTEGER NOT NULL,
-    voter_phone TEXT,
-    voter_client_id TEXT NOT NULL,
-    target_phone TEXT,
-    target_client_id TEXT NOT NULL,
-    vote_type TEXT NOT NULL,
-    created_at INTEGER NOT NULL,
-    UNIQUE(game_id, voter_client_id)
-  );
-  CREATE INDEX IF NOT EXISTS idx_participant_peer_votes_target_phone ON participant_peer_votes(target_phone);
-  CREATE INDEX IF NOT EXISTS idx_participant_peer_votes_game_id ON participant_peer_votes(game_id);
-  CREATE TABLE IF NOT EXISTS active_rooms (
-    room_code TEXT PRIMARY KEY,
-    snapshot TEXT NOT NULL,
-    updated_at INTEGER NOT NULL
-  );
-  CREATE TABLE IF NOT EXISTS active_room_players (
-    phone TEXT PRIMARY KEY,
-    room_code TEXT NOT NULL,
-    player_id TEXT NOT NULL,
-    updated_at INTEGER NOT NULL
-  );
-  CREATE INDEX IF NOT EXISTS idx_active_room_players_room_code ON active_room_players(room_code);
-`);
-
-const upsertActiveRoomStmt = userDb.prepare(`
-  INSERT INTO active_rooms(room_code, snapshot, updated_at)
-  VALUES(?,?,?)
-  ON CONFLICT(room_code) DO UPDATE SET
-    snapshot = excluded.snapshot,
-    updated_at = excluded.updated_at
-`);
-const deleteActiveRoomStmt = userDb.prepare('DELETE FROM active_rooms WHERE room_code = ?');
-const deleteActiveRoomPlayersByRoomStmt = userDb.prepare('DELETE FROM active_room_players WHERE room_code = ?');
-const deleteActiveRoomPlayerByPhoneStmt = userDb.prepare('DELETE FROM active_room_players WHERE phone = ?');
-const getActiveRoomPlayerByPhoneStmt = userDb.prepare(
-  'SELECT phone, room_code AS roomCode, player_id AS playerId FROM active_room_players WHERE phone = ?'
-);
-const getActiveRoomSnapshotStmt = userDb.prepare(
-  'SELECT room_code AS roomCode, snapshot FROM active_rooms WHERE room_code = ?'
-);
-const getAllActiveRoomSnapshotsStmt = userDb.prepare(
-  'SELECT room_code AS roomCode, snapshot FROM active_rooms ORDER BY updated_at DESC'
-);
-const upsertActiveRoomPlayerStmt = userDb.prepare(`
-  INSERT INTO active_room_players(phone, room_code, player_id, updated_at)
-  VALUES(?,?,?,?)
-  ON CONFLICT(phone) DO UPDATE SET
-    room_code = excluded.room_code,
-    player_id = excluded.player_id,
-    updated_at = excluded.updated_at
-`);
-const persistActiveRoomTx = userDb.transaction((roomCode, snapshot, players, updatedAt) => {
-  upsertActiveRoomStmt.run(roomCode, snapshot, updatedAt);
-  deleteActiveRoomPlayersByRoomStmt.run(roomCode);
-  for (const player of players) {
-    upsertActiveRoomPlayerStmt.run(player.phone, roomCode, player.id, updatedAt);
-  }
-});
-const deleteActiveRoomTx = userDb.transaction((roomCode) => {
-  deleteActiveRoomPlayersByRoomStmt.run(roomCode);
-  deleteActiveRoomStmt.run(roomCode);
-});
-
-const TEAM_SIZES = {
-  5: [2, 3, 2, 3, 3],
-  6: [2, 3, 4, 3, 4],
-  7: [2, 3, 3, 4, 4],
-  8: [3, 4, 4, 5, 5],
-  9: [3, 4, 4, 5, 5],
-  10: [3, 4, 4, 5, 5],
-};
-
-const FAIL_REQUIREMENT = {
-  5: [1, 1, 1, 1, 1],
-  6: [1, 1, 1, 1, 1],
-  7: [1, 1, 1, 2, 1],
-  8: [1, 1, 1, 2, 1],
-  9: [1, 1, 1, 2, 1],
-  10: [1, 1, 1, 2, 1],
-};
-
-const ROLE_FACTIONS = {
-  梅林: 'good',
-  派西维尔: 'good',
-  忠臣: 'good',
-  莫甘娜: 'evil',
-  刺客: 'evil',
-  莫德雷德: 'evil',
-  奥伯伦: 'evil',
-  爪牙: 'evil',
-};
-
-const EVIL_COUNT_BY_PLAYERS = {
-  5: 2,
-  6: 2,
-  7: 3,
-  8: 3,
-  9: 3,
-  10: 4,
-};
-
-function expectedEvilCount(maxPlayers) {
-  return EVIL_COUNT_BY_PLAYERS[Number(maxPlayers)] || 3;
-}
-
-function countEvilRoles(roles) {
-  return (Array.isArray(roles) ? roles : []).filter((role) => ROLE_FACTIONS[role] === 'evil').length;
-}
-
-function normalizeForceRoundMode(mode) {
-  return mode === FORCE_ROUND_MODE_EVIL_PLUS_ONE ? FORCE_ROUND_MODE_EVIL_PLUS_ONE : FORCE_ROUND_MODE_FIXED_5;
-}
-
-function deriveForcedRound(maxPlayers, roles, mode) {
-  const normalized = normalizeForceRoundMode(mode);
-  if (normalized === FORCE_ROUND_MODE_EVIL_PLUS_ONE) {
-    const evilCount = Array.isArray(roles) && roles.length ? countEvilRoles(roles) : expectedEvilCount(maxPlayers);
-    return Math.max(1, Math.min(MAX_ROUNDS, evilCount + 1));
-  }
-  return MAX_ROUNDS;
-}
-
-function isValidRoleConfig(maxPlayers, roles) {
-  const count = Number(maxPlayers) || 0;
-  if (!Array.isArray(roles) || roles.length !== count) return false;
-  if (!roles.every((role) => typeof role === 'string' && ROLE_FACTIONS[role])) return false;
-  if (!roles.includes('梅林') || !roles.includes('刺客')) return false;
-  return countEvilRoles(roles) === expectedEvilCount(count);
-}
 
 
 const {
@@ -383,149 +388,27 @@ const {
   decideAssassinate,
   decideRecap,
   decideEvilIntel,
+  getAiLearningStats,
+  maybeRunMetaAnalysis,
 } = require('./ai');
 
 // AI 角色库：名字即人设，每个角色有独特发言风格与博弈习惯
-const AI_CHARACTERS = {
-  '莫甘娜的微笑': {
-    style: '擅长伪装好人，发言滴水不漏，逻辑自洽',
-    speakTone: '逻辑严密，从不直接表态，善用反问和"逻辑上讲"，让别人替自己下结论',
-    catchphrase: '逻辑上讲……|大家可以想想。|我只是觉得，合理的人不需要解释。',
-    voteHabits: '跟随主流，避免出头，偶尔在关键局意外倒戈',
-    bluffHint: '坏人时构造无懈可击的洗白逻辑，完美扮演理性好人',
-    bluffFreq: 'very_high',
-    trustThreshold: 'high',
-  },
-  '梅林看穿你了': {
-    style: '分析型，喜欢点破别人，暗示多于明说',
-    speakTone: '发言含沙射影，"某些人心里应该很清楚"，从不明点名但暗示强烈',
-    catchphrase: '某些人心里应该很清楚。|我不说，但懂的人懂。|有些事不用我点破吧。',
-    voteHabits: '基于信息优势独立判断，不轻易跟风',
-    bluffHint: '坏人时模仿梅林风格，故意用暗示把锅甩给真正的好人',
-    bluffFreq: 'medium',
-    trustThreshold: 'high',
-  },
-  '奥伯龙没朋友': {
-    style: '沉默寡言，独立判断，不跟风投票',
-    speakTone: '极简发言，一两句话点到即止，从不给完整理由，制造神秘感',
-    catchphrase: '我有自己的判断。|不必解释。|结果会说明一切。',
-    voteHabits: '完全独立，无论多大压力绝不跟风，行动代替言语',
-    bluffHint: '坏人时用沉默迷惑对手，关键票意外翻局',
-    bluffFreq: 'low',
-    trustThreshold: 'high',
-  },
-  '我知道你知道': {
-    style: '博弈感强，喜欢和别人打信息战',
-    speakTone: '盯特定玩家制造心理压力，"你知道我在看你"，暗示自己掌握内部信息',
-    catchphrase: '你我之间心知肚明。|你知道我在看你。|信息战，开始了。',
-    voteHabits: '通过投票发信号，喜欢在关键轮次传递元信息',
-    bluffHint: '坏人时假装掌握核心情报，把真实信息搅混',
-    bluffFreq: 'high',
-    trustThreshold: 'medium',
-  },
-  '背刺有理': {
-    style: '激进坏人风，关键时刻翻脸，擅长甩锅',
-    speakTone: '前期低调表忠心，后期突然翻脸攻击昔日盟友，理由冠冕堂皇',
-    catchphrase: '不好意思了。|到这里我必须说实话了。|对不起，但逻辑不允许我护着你。',
-    voteHabits: '前期顺势通过，后期在关键局突然否决翻盘',
-    bluffHint: '坏人时等好人建立互信后精准背刺，配合队友翻局',
-    bluffFreq: 'very_high',
-    trustThreshold: 'low',
-  },
-  '沉默即答案': {
-    style: '极简发言，让别人猜，神秘感拉满',
-    speakTone: '只说一句话甚至一个词，在沉默里制造压迫感，让对方自行脑补',
-    catchphrase: '懂的自然懂。|我选择沉默。|.',
-    voteHabits: '投票就是表态，不需要语言辅助，行动胜过千言',
-    bluffHint: '坏人时用极简发言降低暴露风险，神秘感天然洗白',
-    bluffFreq: 'low',
-    trustThreshold: 'high',
-  },
-  '任务失败不是我': {
-    style: '擅长甩锅，第一个跳出来洗白自己',
-    speakTone: '任务一失败立刻抢话，条理清晰地把锅推给别人，声音最响理由最多',
-    catchphrase: '肯定是X的问题。|我早就说了不该带他。|反正不是我，证据我都列出来了。',
-    voteHabits: '倾向通过以显得积极，但失败后立刻转向甩锅',
-    bluffHint: '坏人时第一个开始洗白，抢占话语权，主动指控无辜玩家',
-    bluffFreq: 'high',
-    trustThreshold: 'low',
-  },
-  '帕西法尔的直觉': {
-    style: '靠感觉判断，发言感性，容易被带节奏',
-    speakTone: '大量"我感觉""直觉上""说不出来但就觉得有问题"，充满情绪感染力',
-    catchphrase: '我感觉……就是感觉啦。|直觉告诉我。|说不清楚，但就是有种感觉。',
-    voteHabits: '跟随直觉，容易被最后发言的人影响，感性驱动',
-    bluffHint: '坏人时用情绪感染力带跑好人判断，把怀疑引向无辜者',
-    bluffFreq: 'medium',
-    trustThreshold: 'low',
-  },
-  '三号位可疑': {
-    style: '喜欢盯人，专注怀疑特定玩家',
-    speakTone: '锁定目标后每轮必提，专注、执着、不轻易松口，旁人劝也没用',
-    catchphrase: 'X号一直很奇怪。|我锁定了。|不管你们怎么想，我就认准这个人。',
-    voteHabits: '拒绝包含目标玩家的队伍，即使全场只有自己否决',
-    bluffHint: '坏人时把执着怀疑引向真正的好人，用专注洗白自己',
-    bluffFreq: 'medium',
-    trustThreshold: 'medium',
-  },
-  '不解释': {
-    style: '强硬派，从不为自己辩护，让对手猜',
-    speakTone: '别人质疑一律不辩护，只说"随便"或"爱信不信"，反而制造神秘压迫感',
-    catchphrase: '随便。|爱信不信。|我不解释，结果会说话。',
-    voteHabits: '想法坚定，不受任何舆论影响，投票前不打招呼',
-    bluffHint: '坏人时用强硬沉默代替解释，让对方自行揣测从而放松警惕',
-    bluffFreq: 'low',
-    trustThreshold: 'high',
-  },
-};
-
-function shuffle(arr) {
-  const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
+function kickOldSession(phone, newClient) {
+  const oldClientId = phoneClients.get(phone);
+  if (oldClientId && oldClientId !== newClient.id) {
+    const oldWs = clients.get(oldClientId);
+    if (oldWs) {
+      // 踢出前先持久化旧连接所在的房间，让新设备登录后能恢复
+      const oldClient = oldWs._clientRef;
+      if (oldClient && oldClient.roomCode) {
+        const oldRoom = rooms.get(oldClient.roomCode);
+        if (oldRoom) persistActiveRoom(oldRoom);
+      }
+      detachSocketClient(oldWs);
+      try { oldWs.close(4001, 'SESSION_TAKEN_OVER'); } catch (e) {}
+    }
   }
-  return a;
-}
-
-function makeId(len = 6) {
-  const chars = '0123456789';
-  let out = '';
-  for (let i = 0; i < len; i++) {
-    out += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return out;
-}
-
-function now() {
-  return Date.now();
-}
-
-function isValidPhone(phone) {
-  return typeof phone === 'string' && /^1\d{10}$/.test(phone);
-}
-
-function makeToken() {
-  return `${now()}_${Math.random().toString(36).slice(2, 12)}`;
-}
-
-function getOrCreateUser(phone) {
-  const row = userDb.prepare('SELECT phone, nickname, avatar FROM users WHERE phone = ?').get(phone);
-  if (row) return row;
-  const ts = now();
-  const nickname = `玩家${phone.slice(-4)}`;
-  const avatar = '🐺';
-  userDb
-    .prepare('INSERT INTO users(phone, nickname, avatar, created_at, updated_at) VALUES(?,?,?,?,?)')
-    .run(phone, nickname, avatar, ts, ts);
-  return { phone, nickname, avatar };
-}
-
-function updateUserProfile(phone, nickname, avatar) {
-  const ts = now();
-  userDb
-    .prepare('UPDATE users SET nickname = ?, avatar = ?, updated_at = ? WHERE phone = ?')
-    .run(nickname, avatar, ts, phone);
+  phoneClients.set(phone, newClient.id);
 }
 
 function login(client, payload) {
@@ -536,7 +419,9 @@ function login(client, payload) {
   sessions.set(token, phone);
   client.userPhone = phone;
   client.authToken = token;
+  kickOldSession(phone, client);
   const recovered = recoverClientPresence(client);
+  phoneClients.set(phone, client.id); // rebindClientId 可能改变了 client.id，更新映射
   send(client, {
     type: 'LOGIN_OK',
     data: {
@@ -559,7 +444,9 @@ function auth(client, payload) {
   const user = getOrCreateUser(phone);
   client.userPhone = phone;
   client.authToken = token;
+  kickOldSession(phone, client);
   const recovered = recoverClientPresence(client);
+  phoneClients.set(phone, client.id); // rebindClientId 可能改变了 client.id，更新映射
   send(client, {
     type: 'AUTH_OK',
     data: {
@@ -579,49 +466,6 @@ function requireAuth(client) {
   return !!client.userPhone;
 }
 
-function createRoom(hostClient, payload) {
-  if (!requireAuth(hostClient)) return error(hostClient, 'NEED_LOGIN');
-  let roomCode = '';
-  if (payload.roomCode !== undefined && payload.roomCode !== null && String(payload.roomCode).trim() !== '') {
-    const requested = String(payload.roomCode).trim();
-    if (!/^\d{5}$/.test(requested)) return error(hostClient, 'INVALID_ROOM_CODE');
-    if (rooms.has(requested)) return error(hostClient, 'ROOM_EXISTS');
-    roomCode = requested;
-  } else {
-    roomCode = makeId(5);
-    while (rooms.has(roomCode)) roomCode = makeId(5);
-  }
-
-  const maxPlayers = Number(payload.maxPlayers || 7);
-  const roles = Array.isArray(payload.roles) && payload.roles.length ? payload.roles : defaultRoles(maxPlayers);
-  if (!isValidRoleConfig(maxPlayers, roles)) return error(hostClient, 'INVALID_ROLE_CONFIG');
-  const forceRoundMode = normalizeForceRoundMode(payload.forceRoundMode);
-  const room = {
-    code: roomCode,
-    hostId: hostClient.id,
-    createdAt: now(),
-    maxPlayers,
-    speakingSeconds: Number(payload.speakingSeconds) >= 10 ? Number(payload.speakingSeconds) : 120,
-    roles,
-    hostRole: payload.hostRole || null,
-    ladyOfLakeEnabled: !!payload.ladyOfLakeEnabled && maxPlayers >= 8,
-    evilRoleVisibleEnabled: !!payload.evilRoleVisibleEnabled,
-    forceRoundMode,
-    forceRound: deriveForcedRound(maxPlayers, roles, forceRoundMode),
-    seats: [],
-    players: new Map(),
-    started: false,
-    phase: 'lobby',
-    messages: [],
-    game: null,
-    aiNameRegistry: new Set(),
-  };
-
-  rooms.set(roomCode, room);
-  joinRoom(hostClient, { roomCode, nickname: payload.nickname, avatar: payload.avatar });
-  return roomCode;
-}
-
 function syncClientSeqWithRoom(room) {
   if (!room || !room.players) return;
   for (const player of room.players.values()) {
@@ -631,115 +475,6 @@ function syncClientSeqWithRoom(room) {
   }
 }
 
-function buildActiveRoomSnapshot(room) {
-  return {
-    code: room.code,
-    hostId: room.hostId,
-    createdAt: room.createdAt,
-    maxPlayers: room.maxPlayers,
-    speakingSeconds: room.speakingSeconds,
-    roles: room.roles,
-    hostRole: room.hostRole || null,
-    ladyOfLakeEnabled: !!room.ladyOfLakeEnabled,
-    evilRoleVisibleEnabled: !!room.evilRoleVisibleEnabled,
-    forceRoundMode: room.forceRoundMode || FORCE_ROUND_MODE_FIXED_5,
-    forceRound: room.forceRound || MAX_ROUNDS,
-    seats: room.seats,
-    started: room.started,
-    phase: room.phase,
-    messages: room.messages || [],
-    speaking: room.speaking || null,
-    players: Array.from(room.players.values()),
-    game: room.game
-      ? {
-          startedAt: room.game.startedAt,
-          round: room.game.round,
-          attempt: room.game.attempt,
-          leaderIndex: room.game.leaderIndex,
-          leaderId: room.game.leaderId,
-          team: room.game.team || [],
-          votes: room.game.votes || {},
-          voteHistory: room.game.voteHistory || [],
-          missionHistory: room.game.missionHistory || [],
-          rejectsInRow: room.game.rejectsInRow || 0,
-          assignments: room.game.assignments || {},
-          missionVotes: room.game.missionVotes || {},
-          speakHistory: room.game.speakHistory || {},
-          claims: room.game.claims || {},
-          trust: room.game.trust || {},
-          revealedRoles: room.game.revealedRoles || null,
-          spokeThisRound: room.game.spokeThisRound || {},
-          assassinId: room.game.assassinId || null,
-          merlinId: room.game.merlinId || null,
-          assassination: room.game.assassination || null,
-          assassinationCandidates: room.game.assassinationCandidates || [],
-          revealedEvil: room.game.revealedEvil || null,
-          winner: room.game.winner || null,
-          recap: room.game.recap || [],
-          evilIntel: room.game.evilIntel || [],
-          ladyOfLake: room.game.ladyOfLake || null,
-          latestEarnedMedals: room.game.latestEarnedMedals || {},
-          historySaved: !!room.game.historySaved,
-          historyId: room.game.historyId || null,
-        }
-      : null,
-    aiNameRegistry: Array.from(room.aiNameRegistry || []),
-  };
-}
-
-function deleteActiveRoom(roomCode) {
-  if (!roomCode) return;
-  deleteActiveRoomTx(roomCode);
-}
-
-function persistActiveRoom(room) {
-  if (!room || !room.code) return;
-  const humanPlayers = Array.from(room.players.values()).filter((player) => !player.isAI && player.phone);
-  if (humanPlayers.length === 0) {
-    deleteActiveRoom(room.code);
-    return;
-  }
-  persistActiveRoomTx(room.code, JSON.stringify(buildActiveRoomSnapshot(room)), humanPlayers, now());
-}
-
-function hydrateRoomFromSnapshot(snapshot, options = {}) {
-  if (!snapshot || !snapshot.code) return null;
-  const forceHumansOffline = options.forceHumansOffline !== false;
-  const players = (Array.isArray(snapshot.players) ? snapshot.players : []).map((player) => {
-    const next = { ...player };
-    if (!next.isAI && next.phone && forceHumansOffline) {
-      next.offline = true;
-    }
-    return next;
-  });
-  return {
-    code: snapshot.code,
-    hostId: snapshot.hostId || null,
-    createdAt: snapshot.createdAt || now(),
-    maxPlayers: snapshot.maxPlayers || 7,
-    speakingSeconds: snapshot.speakingSeconds || 120,
-    roles: Array.isArray(snapshot.roles) ? snapshot.roles : defaultRoles(snapshot.maxPlayers || 7),
-    hostRole: snapshot.hostRole || null,
-    ladyOfLakeEnabled: !!snapshot.ladyOfLakeEnabled && (snapshot.maxPlayers || 7) >= 8,
-    evilRoleVisibleEnabled: !!snapshot.evilRoleVisibleEnabled,
-    forceRoundMode: normalizeForceRoundMode(snapshot.forceRoundMode),
-    forceRound: deriveForcedRound(
-      snapshot.maxPlayers || 7,
-      Array.isArray(snapshot.roles) ? snapshot.roles : defaultRoles(snapshot.maxPlayers || 7),
-      snapshot.forceRoundMode
-    ),
-    seats: Array.isArray(snapshot.seats) ? snapshot.seats : [],
-    players: new Map(players.map((player) => [player.id, player])),
-    started: !!snapshot.started,
-    phase: snapshot.phase || 'lobby',
-    messages: Array.isArray(snapshot.messages) ? snapshot.messages : [],
-    game: snapshot.game || null,
-    speaking: snapshot.speaking || null,
-    aiNameRegistry: new Set(Array.isArray(snapshot.aiNameRegistry) ? snapshot.aiNameRegistry : []),
-    speakingTimeout: null,
-  };
-}
-
 function resumeActiveRoom(room) {
   if (!room) return;
   if (room.speakingTimeout) {
@@ -747,9 +482,11 @@ function resumeActiveRoom(room) {
     room.speakingTimeout = null;
   }
   if (!room.started || !room.game) return;
+  if (room.game.historySaved) return; // 游戏已结束，禁止恢复以防幽灵游戏
   if (room.phase === 'team') {
     const leader = room.players.get(room.game.leaderId);
     if (leader && leader.isAI) autoProposeIfAiLeader(room);
+    autoplayPropose(room);
     return;
   }
   if (room.phase === 'speaking' && room.speaking) {
@@ -758,15 +495,15 @@ function resumeActiveRoom(room) {
     return;
   }
   if (room.phase === 'voting') {
-    autoVoteIfAi(room);
+    autoVoteIfAi(room); autoplayVote(room);
     return;
   }
   if (room.phase === 'mission') {
-    autoMissionIfAi(room);
+    autoMissionIfAi(room); autoplayMission(room);
     return;
   }
   if (room.phase === 'assassination') {
-    autoAssassinateIfAi(room);
+    autoAssassinateIfAi(room); scheduleAutoAssassinIfAutoplay(room);
   }
 }
 
@@ -826,2712 +563,64 @@ function loadPersistedActiveRooms() {
   }
 }
 
-function defaultRoles(count) {
-  return defaultRolesForCount(count);
-}
+// ─── 托管（Autoplay）核心逻辑 ────────────────────────────────────────────────
 
-function padRoles(roles, count) {
-  const out = roles.slice();
-  while (out.length < count) out.push('忠臣');
-  return out;
-}
-
-function isSpectatorPlayer(player) {
-  return !!(player && player.spectator);
-}
-
-function countSeatedPlayers(room) {
-  if (!room || !Array.isArray(room.seats)) return 0;
-  return room.seats.filter((id) => !!id).length;
-}
-
-function joinRoom(client, payload) {
-  if (!requireAuth(client)) return error(client, 'NEED_LOGIN');
-  const room = rooms.get(payload.roomCode);
-  if (!room) return error(client, 'ROOM_NOT_FOUND');
-  const existingPlayer = Array.from(room.players.values()).find(
-    (player) => !player.isAI && player.phone && player.phone === client.userPhone
-  );
-  if (existingPlayer) {
-    const user = getOrCreateUser(client.userPhone);
-    existingPlayer.nickname = (payload.nickname || user.nickname || existingPlayer.nickname || '玩家').slice(0, 12);
-    existingPlayer.avatar = payload.avatar || user.avatar || existingPlayer.avatar || '🐺';
-    takeOverRoomPlayer(client, room, existingPlayer);
-    return ok(client, { roomCode: room.code, recovered: true });
-  }
-  const forceSpectator = !!room.started || countSeatedPlayers(room) >= room.maxPlayers || payload.avatar === '👀';
-  const user = getOrCreateUser(client.userPhone);
-  const nickname = (payload.nickname || user.nickname || '玩家').slice(0, 12);
-  const avatar = forceSpectator ? '👀' : (payload.avatar || user.avatar || '🐺');
-
-  room.players.set(client.id, {
-    id: client.id,
-    nickname,
-    avatar,
-    phone: client.userPhone,
-    seat: null,
-    joinedAt: now(),
-    isAI: false,
-    spectator: forceSpectator,
-    offline: false,
-  });
-  // If joining as spectator during a live game, add to snapshot immediately so history records them even if they leave early
-  if (forceSpectator && room.started && room.game && client.userPhone) {
-    const snap = room.game.spectatorSnapshot = room.game.spectatorSnapshot || [];
-    if (!snap.some((s) => s.id === client.id)) {
-      snap.push({ id: client.id, nickname, phone: client.userPhone });
-    }
-  }
-  client.roomCode = room.code;
-  broadcastRoom(room);
-  return ok(client, { roomCode: room.code, spectator: forceSpectator });
-}
-
-function kickPlayer(client, payload) {
-  const room = rooms.get(client.roomCode);
-  if (!room || room.hostId !== client.id) return;
-  const { targetId } = payload;
-  if (!targetId || targetId === client.id) return;
-  const target = room.players.get(targetId);
-  if (!target) return;
-  // Notify the kicked player before removing
-  if (target.ws && target.ws.readyState === 1) {
-    target.ws.send(JSON.stringify({ type: 'KICKED' }));
-  }
-  removePlayerById(room, targetId);
-}
-
-function leaveRoom(client) {
-  const room = rooms.get(client.roomCode);
-  if (!room) return;
-  removePlayerById(room, client.id);
-  client.roomCode = null;
-}
-
-function clearReconnectEntry(phone) {
-  if (!phone) return;
-  const prev = reconnectEntries.get(phone);
-  if (prev && prev.timer) clearTimeout(prev.timer);
-  reconnectEntries.delete(phone);
-}
-
-function removePlayerById(room, playerId) {
-  const player = room.players.get(playerId);
-  if (player && player.phone) {
-    clearReconnectEntry(player.phone);
-    deleteActiveRoomPlayerByPhoneStmt.run(player.phone);
-  }
-  room.players.delete(playerId);
-  room.seats = room.seats.map((id) => (id === playerId ? null : id));
-  if (room.hostId === playerId) {
-    const nextHost = room.players.values().next().value;
-    room.hostId = nextHost ? nextHost.id : null;
-  }
-  const remainingHumans = Array.from(room.players.values()).filter((entry) => !entry.isAI);
-  if (room.players.size === 0 || remainingHumans.length === 0) {
-    rooms.delete(room.code);
-    deleteActiveRoom(room.code);
-    return;
-  }
-  broadcastRoom(room);
-}
-
-function scheduleReconnectOfflineMark(roomCode, playerId, phone) {
-  clearReconnectEntry(phone);
-  const expiresAt = now() + RECONNECT_GRACE_MS;
-  const timer = setTimeout(() => {
-    const current = reconnectEntries.get(phone);
-    if (!current || current.playerId !== playerId || current.expiresAt !== expiresAt) return;
-    reconnectEntries.delete(phone);
-
-    const room = rooms.get(roomCode);
-    if (!room) return;
-    const player = room.players.get(playerId);
-    if (!player || player.offline) return;
-    player.offline = true;
-    persistActiveRoom(room);
-    broadcastRoom(room);
-  }, RECONNECT_GRACE_MS);
-  reconnectEntries.set(phone, { roomCode, playerId, expiresAt, timer });
-}
-
-function rebindClientId(client, targetId) {
-  if (!targetId || client.id === targetId) return;
-  const ws = clients.get(client.id);
-  clients.delete(client.id);
-  client.id = targetId;
-  if (ws) clients.set(targetId, ws);
-}
-
-function detachSocketClient(ws) {
-  if (!ws) return;
-  const priorClient = ws._clientRef;
-  if (!priorClient) return;
-  priorClient.detached = true;
-  priorClient.roomCode = null;
-}
-
-function takeOverRoomPlayer(client, room, player) {
-  if (!room || !player) return null;
-  const oldWs = clients.get(player.id);
-  const nextWs = clients.get(client.id);
-  if (oldWs && nextWs && oldWs !== nextWs) {
-    detachSocketClient(oldWs);
-    try {
-      oldWs.close(4001, 'SESSION_TAKEN_OVER');
-    } catch (e) {}
-  }
-
-  clearReconnectEntry(player.phone);
-  rebindClientId(client, player.id);
-  client.roomCode = room.code;
-  player.offline = false;
-  player.lastReconnectedAt = now();
-  if (room.game && room.game.assignments && room.game.assignments[player.id]) {
-    send({ id: player.id }, { type: 'PRIVATE_ROLE', role: room.game.assignments[player.id] });
-  }
-  broadcastRoom(room);
-  return { roomCode: room.code, playerId: player.id };
-}
-
-function recoverClientPresence(client) {
-  if (!client.userPhone) return null;
-  const restoredRoom = restoreActiveRoomForPhone(client.userPhone);
-  let found = null;
-  if (restoredRoom) {
-    for (const player of restoredRoom.players.values()) {
-      if (!player.isAI && player.phone === client.userPhone && player.offline) {
-        found = { roomCode: restoredRoom.code, playerId: player.id };
-        break;
-      }
-    }
-  }
-  if (!found) {
-    found = reconnectEntries.get(client.userPhone);
-  }
-  if (!found) {
-    for (const room of rooms.values()) {
-      for (const player of room.players.values()) {
-        if (!player.isAI && player.phone === client.userPhone && player.offline) {
-          found = { roomCode: room.code, playerId: player.id };
-          break;
-        }
-      }
-      if (found) break;
-    }
-  }
-  if (!found) return null;
-
-  const room = rooms.get(found.roomCode);
-  const player = room ? room.players.get(found.playerId) : null;
-  if (!room || !player) {
-    clearReconnectEntry(client.userPhone);
-    return null;
-  }
-  return takeOverRoomPlayer(client, room, player);
-}
-
-function handleSocketClose(client) {
-  const room = rooms.get(client.roomCode);
-  if (!room) return;
-  const player = room.players.get(client.id);
-  if (!player || player.isAI || !player.phone) {
-    leaveRoom(client);
-    return;
-  }
-
-  player.offline = false;
-  player.lastDisconnectedAt = now();
-  persistActiveRoom(room);
-  scheduleReconnectOfflineMark(room.code, player.id, player.phone);
-}
-
-function setProfile(client, payload) {
-  if (!requireAuth(client)) return error(client, 'NEED_LOGIN');
-  const room = rooms.get(client.roomCode);
-  const nickname = payload.nickname ? payload.nickname.slice(0, 12) : null;
-  const avatar = payload.avatar || null;
-  const user = getOrCreateUser(client.userPhone);
-  const nextNickname = nickname || user.nickname;
-  const nextAvatar = avatar || user.avatar;
-  updateUserProfile(client.userPhone, nextNickname, nextAvatar);
-  if (!room) return;
-  const p = room.players.get(client.id);
-  if (!p) return;
-  p.nickname = nextNickname;
-  p.avatar = nextAvatar;
-  broadcastRoom(room);
-}
-
-function cheatReveal(client, payload) {
-  if (!requireAuth(client)) return error(client, 'NEED_LOGIN');
-  const room = rooms.get(client.roomCode);
-  if (!room) return error(client, 'ROOM_NOT_FOUND');
-  if (room.hostId !== client.id) return error(client, 'HOST_ONLY');
-  if (!room.started || !room.game || !room.game.assignments) return error(client, 'NOT_STARTED');
-
-  const targetId = String((payload && payload.targetId) || '');
-  if (!targetId || !room.players.has(targetId)) return error(client, 'INVALID_TARGET');
-  const role = room.game.assignments[targetId];
-  if (!role) return error(client, 'ROLE_NOT_FOUND');
-
-  send(client, { type: 'CHEAT_REVEAL_ROLE', data: { playerId: targetId, role } });
-}
-
-function buildGameHistoryPayload(room) {
-  const assignments = (room.game && room.game.assignments) || {};
-  const seatedIds = new Set(room.seats.filter(Boolean));
-  const players = room.seats
-    .map((id, idx) => {
-      const p = room.players.get(id);
-      const role = assignments[id] || '';
-      return {
-        id,
-        seat: idx + 1,
-        nickname: p ? p.nickname : `玩家${idx + 1}`,
-        phone: p && !p.isAI ? p.phone || null : null,
-        isAI: p ? !!p.isAI : false,
-        isHost: id === room.hostId,
-        role,
-        faction: ROLE_FACTIONS[role] || 'good',
-      };
-    })
-    .filter((x) => !!x.id);
-
-  // Spectators: merge snapshot (handles early-leavers) with any still-present live spectators
-  const addedSpectatorIds = new Set();
-  const snapshotList = (room.game && room.game.spectatorSnapshot) || [];
-  for (const s of snapshotList) {
-    if (!s || !s.id || seatedIds.has(s.id)) continue;
-    addedSpectatorIds.add(s.id);
-    players.push({ id: s.id, seat: null, nickname: s.nickname, phone: s.phone,
-      isAI: false, isHost: false, role: '观战', faction: 'spectator' });
-  }
-  for (const [id, p] of room.players.entries()) {
-    if (!p || p.isAI || !p.spectator || !p.phone || seatedIds.has(id) || addedSpectatorIds.has(id)) continue;
-    players.push({ id, seat: null, nickname: p.nickname || '观战者', phone: p.phone,
-      isAI: false, isHost: false, role: '观战', faction: 'spectator' });
-  }
-
-  return {
-    roomCode: room.code,
-    maxPlayers: room.maxPlayers,
-    startedAt: room.game.startedAt || room.createdAt || now(),
-    endedAt: now(),
-    winner: room.game.winner || 'unknown',
-    players,
-    voteHistory: room.game.voteHistory || [],
-    missionHistory: room.game.missionHistory || [],
-    speakHistory: room.game.speakHistory || {},
-    messages: room.messages || [],
-    assassination: room.game.assassination || null,
-    recaps: room.game.recap || [],
-    evilIntel: room.game.evilIntel || [],
-    ladyOfLake: room.game.ladyOfLake || null,
-    endVotes: room.game.endVotes || {},
-  };
-}
-
-function buildSeatSnapshot(room) {
-  const out = {};
-  const seats = Array.isArray(room && room.seats) ? room.seats : [];
-  seats.forEach((id, idx) => {
-    if (!id) return;
-    out[id] = idx + 1;
-  });
-  return out;
-}
-
-function persistGameHistory(room) {
-  if (!room || !room.game || room.game.historySaved) return;
-  try {
-    const snap = room.game.spectatorSnapshot || [];
-    const livePlayers = Array.from(room.players.entries()).map(([id,p]) => ({id, phone: p&&p.phone, spectator: p&&p.spectator}));
-    console.log(`[HISTORY] room=${room.code} snap=${JSON.stringify(snap)} livePlayers=${JSON.stringify(livePlayers)}`);
-    const payload = buildGameHistoryPayload(room);
-    const medalByPlayerId = evaluateMedalsForPayload(payload);
-    const latestEarnedMedals = {};
-    for (const p of payload.players) {
-      const codes = medalByPlayerId[p.id] || [];
-      latestEarnedMedals[p.id] = codes
-        .map((code) => {
-          const def = MEDAL_DEFS[code];
-          if (!def) return null;
-          return { code: def.code, name: def.name, faction: def.faction };
-        })
-        .filter(Boolean);
-    }
-    room.game.latestEarnedMedals = latestEarnedMedals;
-    const insertGame = userDb.prepare(
-      'INSERT INTO game_records(room_code, started_at, ended_at, max_players, winner, payload) VALUES(?,?,?,?,?,?)'
-    );
-    const insertParticipant = userDb.prepare(
-      `INSERT INTO game_participants(
-         game_id, phone, client_id, nickname, seat, role, faction, result, is_host, is_ai, created_at
-       ) VALUES(?,?,?,?,?,?,?,?,?,?,?)`
-    );
-    const insertMedal = userDb.prepare(
-      `INSERT INTO participant_medals(
-         game_id, phone, client_id, medal_code, medal_name, created_at
-       ) VALUES(?,?,?,?,?,?)`
-    );
-    const tx = userDb.transaction(() => {
-      const res = insertGame.run(
-        payload.roomCode,
-        payload.startedAt,
-        payload.endedAt,
-        payload.maxPlayers,
-        payload.winner,
-        JSON.stringify(payload)
-      );
-      const gameId = Number(res.lastInsertRowid);
-      room.game.historyGameId = gameId;
-      for (const p of payload.players) {
-        const result =
-          p.faction === 'spectator'
-            ? 'spectator'
-            : (payload.winner === 'good' && p.faction === 'good') || (payload.winner === 'evil' && p.faction === 'evil')
-            ? 'win'
-            : 'lose';
-        insertParticipant.run(
-          gameId,
-          p.phone || null,
-          p.id,
-          p.nickname,
-          p.seat ?? 0,   // 观战者 seat=null → 存 0
-          p.role,
-          p.faction,
-          result,
-          p.isHost ? 1 : 0,
-          p.isAI ? 1 : 0,
-          payload.endedAt
-        );
-        const earnedCodes = medalByPlayerId[p.id] || [];
-        for (const code of earnedCodes) {
-          const def = MEDAL_DEFS[code];
-          if (!def) continue;
-          insertMedal.run(gameId, p.phone || null, p.id, code, def.name, payload.endedAt);
-        }
-      }
-      room.game.historySaved = true;
-      room.game.historyId = gameId;
-    });
-    tx();
-  } catch (e) {
-    console.error('[HISTORY ERROR]', e && e.message, e && e.stack && e.stack.split('\n').slice(0,3).join(' | '));
-  }
-}
-
-function updateGameHistoryPayload(room) {
-  if (!room || !room.game || !room.game.historyGameId) return;
-  try {
-    const gameId = room.game.historyGameId;
-    const row = userDb.prepare('SELECT payload FROM game_records WHERE id = ?').get(gameId);
-    if (!row) return;
-    const payload = JSON.parse(row.payload);
-    payload.recaps = room.game.recap || [];
-    userDb.prepare('UPDATE game_records SET payload = ? WHERE id = ?').run(JSON.stringify(payload), gameId);
-  } catch (e) {
-    console.error('[HISTORY] updateGameHistoryPayload error:', e && e.message);
-  }
-}
-
-function savePeerVoteForHistory(room, voterId, targetId, voteType) {
-  if (!room || !room.game || !room.game.historyId) return;
-  const voter = room.players.get(voterId);
-  const target = room.players.get(targetId);
-  if (!voter || !target) return;
-  try {
-    userDb
-      .prepare(
-        `INSERT OR REPLACE INTO participant_peer_votes(
-           game_id, voter_phone, voter_client_id, target_phone, target_client_id, vote_type, created_at
-         ) VALUES(?,?,?,?,?,?,?)`
-      )
-      .run(
-        room.game.historyId,
-        voter.phone || null,
-        voter.id,
-        target.phone || null,
-        target.id,
-        voteType,
-        now()
-      );
-  } catch (e) {}
-}
-
-function summarizePeerVotes(rows) {
-  const summary = { c_le: 0, blame: 0, effort: 0 };
-  for (const row of rows || []) {
-    const key = String(row.voteType || row.vote_type || '');
-    if (summary[key] !== undefined) summary[key] += 1;
-  }
-  return summary;
-}
-
-function getHistoryListForPhone(phone, limit = 30, offset = 0) {
-  const stmt = userDb.prepare(
-    `SELECT
-       gp.game_id AS gameId,
-       gr.room_code AS roomCode,
-       gr.ended_at AS playedAt,
-       gr.max_players AS maxPlayers,
-       gp.seat AS seat,
-       gp.role AS role,
-       gp.result AS result,
-       gr.winner AS winner,
-       (
-         SELECT GROUP_CONCAT(pm.medal_code, '|')
-         FROM participant_medals pm
-         WHERE pm.game_id = gp.game_id AND pm.phone = gp.phone
-       ) AS medalCodes,
-       (
-         SELECT GROUP_CONCAT(pm.medal_name, '|')
-         FROM participant_medals pm
-         WHERE pm.game_id = gp.game_id AND pm.phone = gp.phone
-       ) AS medalNames,
-       (
-         SELECT GROUP_CONCAT(ppv.vote_type, '|')
-         FROM participant_peer_votes ppv
-         WHERE ppv.game_id = gp.game_id AND ppv.target_phone = gp.phone
-       ) AS peerVoteTypes
-     FROM game_participants gp
-     JOIN game_records gr ON gr.id = gp.game_id
-     WHERE gp.phone = ?
-     ORDER BY gr.ended_at DESC
-     LIMIT ? OFFSET ?`
-  );
-  return stmt.all(phone, limit, offset).map((row) => ({
-    ...row,
-    seat: row.seat === 0 ? null : row.seat,   // 观战者 seat=0 还原为 null
-    medals: row.medalCodes
-      ? row.medalCodes.split('|').filter(Boolean).map((code, idx) => ({
-          code,
-          name: (row.medalNames ? row.medalNames.split('|')[idx] : '') || (MEDAL_DEFS[code] && MEDAL_DEFS[code].name) || code,
-        }))
-      : [],
-    peerVotes: summarizePeerVotes(
-      row.peerVoteTypes
-        ? row.peerVoteTypes.split('|').filter(Boolean).map((voteType) => ({ voteType }))
-        : []
-    ),
-  }));
-}
-
-function getHistoryDetailForPhone(phone, gameId) {
-  const row = userDb
-    .prepare(
-      `SELECT
-         gp.role AS myRole,
-         gp.result AS myResult,
-         gp.seat AS mySeat,
-         gr.payload AS payload
-       FROM game_participants gp
-       JOIN game_records gr ON gr.id = gp.game_id
-       WHERE gp.phone = ? AND gp.game_id = ?
-       LIMIT 1`
-    )
-    .get(phone, gameId);
-  if (!row) return null;
-  let payload = null;
-  try {
-    payload = JSON.parse(row.payload);
-  } catch (e) {
-    payload = null;
-  }
-  if (!payload) return null;
-  const medals = userDb
-    .prepare(
-      `SELECT medal_code AS code, medal_name AS name
-       FROM participant_medals
-       WHERE game_id = ? AND phone = ?
-       ORDER BY id ASC`
-    )
-    .all(gameId, phone);
-  const peerVoteRows = userDb
-    .prepare(
-      `SELECT target_client_id AS targetId, vote_type AS voteType
-       FROM participant_peer_votes
-       WHERE game_id = ?
-       ORDER BY id ASC`
-    )
-    .all(gameId);
-  const myVote = userDb
-    .prepare(
-      `SELECT target_client_id AS targetId, vote_type AS voteType
-       FROM participant_peer_votes
-       WHERE game_id = ? AND voter_phone = ?
-       LIMIT 1`
-    )
-    .get(gameId, phone) || null;
-  return {
-    gameId,
-    myRole: row.myRole,
-    myResult: row.myResult,
-    mySeat: row.mySeat,
-    medals,
-    peerVotes: peerVoteRows,
-    myVote,
-    detail: payload,
-  };
-}
-
-function getRoleStatsForPhone(phone) {
-  const rows = userDb
-    .prepare(
-      `SELECT
-         role,
-         COUNT(1) AS total,
-         SUM(CASE WHEN result = 'win' THEN 1 ELSE 0 END) AS wins
-       FROM game_participants
-       WHERE phone = ? AND role != '观战'
-       GROUP BY role
-       ORDER BY total DESC, role ASC`
-    )
-    .all(phone);
-  const receivedVoteByRoleRows = userDb
-    .prepare(
-      `SELECT gp.role AS role, ppv.vote_type AS voteType, COUNT(1) AS total
-       FROM participant_peer_votes ppv
-       JOIN game_participants gp
-         ON gp.game_id = ppv.game_id
-        AND gp.client_id = ppv.target_client_id
-       WHERE gp.phone = ?
-       GROUP BY gp.role, ppv.vote_type`
-    )
-    .all(phone);
-  const receivedVoteByRole = new Map();
-  for (const row of receivedVoteByRoleRows) {
-    const role = row.role || '';
-    if (!receivedVoteByRole.has(role)) receivedVoteByRole.set(role, { c_le: 0, blame: 0, effort: 0 });
-    const target = receivedVoteByRole.get(role);
-    if (target[row.voteType] !== undefined) target[row.voteType] = Number(row.total || 0);
-  }
-  const byRole = rows.map((r) => {
-    const total = Number(r.total || 0);
-    const wins = Number(r.wins || 0);
-    const winRate = total > 0 ? Number(((wins / total) * 100).toFixed(1)) : 0;
-    return { role: r.role, total, wins, winRate, receivedVotes: receivedVoteByRole.get(r.role) || { c_le: 0, blame: 0, effort: 0 } };
-  });
-  const totalGames = byRole.reduce((s, r) => s + r.total, 0);
-  const totalWins = byRole.reduce((s, r) => s + r.wins, 0);
-  const overallWinRate = totalGames > 0 ? Number(((totalWins / totalGames) * 100).toFixed(1)) : 0;
-  const medalRows = userDb
-    .prepare(
-      `SELECT medal_code AS code, COUNT(1) AS total
-       FROM participant_medals
-       WHERE phone = ?
-       GROUP BY medal_code
-       ORDER BY total DESC, medal_code ASC`
-    )
-    .all(phone);
-  const medals = medalRows.map((r) => {
-    const def = MEDAL_DEFS[r.code];
-    return {
-      code: r.code,
-      name: (def && def.name) || r.code,
-      faction: (def && def.faction) || 'neutral',
-      total: Number(r.total || 0),
-    };
-  });
-  const totalMedals = medals.reduce((s, m) => s + m.total, 0);
-  const receivedVoteRows = userDb
-    .prepare(
-      `SELECT vote_type AS voteType, COUNT(1) AS total
-       FROM participant_peer_votes
-       WHERE target_phone = ?
-       GROUP BY vote_type
-       ORDER BY total DESC, vote_type ASC`
-    )
-    .all(phone);
-  const receivedVotes = summarizePeerVotes(receivedVoteRows);
-  const receivedVoteTotal = Object.values(receivedVotes).reduce((sum, value) => sum + Number(value || 0), 0);
-  return { totalGames, totalWins, overallWinRate, byRole, medals, totalMedals, receivedVotes, receivedVoteTotal };
-}
-
-function fetchHistoryList(client, payload) {
-  if (!requireAuth(client)) return error(client, 'NEED_LOGIN');
-  const limit = Math.min(100, Math.max(1, parseInt((payload && payload.limit) || 30, 10) || 30));
-  const offset = Math.max(0, parseInt((payload && payload.offset) || 0, 10) || 0);
-  const list = getHistoryListForPhone(client.userPhone, limit, offset);
-  send(client, { type: 'GAME_HISTORY_LIST', data: { list, limit, offset } });
-}
-
-function fetchHistoryDetail(client, payload) {
-  if (!requireAuth(client)) return error(client, 'NEED_LOGIN');
-  const gameId = Number(payload && payload.gameId);
-  if (!Number.isFinite(gameId) || gameId <= 0) return error(client, 'INVALID_GAME_ID');
-  const detail = getHistoryDetailForPhone(client.userPhone, gameId);
-  if (!detail) return error(client, 'HISTORY_NOT_FOUND');
-  send(client, { type: 'GAME_HISTORY_DETAIL', data: detail });
-}
-
-function fetchRoleStats(client) {
-  if (!requireAuth(client)) return error(client, 'NEED_LOGIN');
-  const stats = getRoleStatsForPhone(client.userPhone);
-  send(client, { type: 'ROLE_STATS', data: stats });
-}
-
-function chooseSeat(client, payload) {
-  const room = rooms.get(client.roomCode);
-  if (!room) return;
-  if (room.started) return error(client, 'ALREADY_STARTED');
-
-  const seatIndex = payload.seatIndex;
-  if (typeof seatIndex !== 'number' || seatIndex < 0 || seatIndex >= room.maxPlayers) {
-    return error(client, 'INVALID_SEAT');
-  }
-  while (room.seats.length < room.maxPlayers) room.seats.push(null);
-  const oldSeatIndex = room.seats.findIndex((id) => id === client.id);
-  const occupant = room.seats[seatIndex];
-
-  // Empty seat: sit directly. If player already had a seat, vacate old seat.
-  if (!occupant) {
-    if (oldSeatIndex >= 0) room.seats[oldSeatIndex] = null;
-    room.seats[seatIndex] = client.id;
-    const p = room.players.get(client.id);
-    if (p) p.seat = seatIndex;
-    broadcastRoom(room);
-    return;
-  }
-
-  // Clicking own seat: leave the seat (toggle off)
-  if (occupant === client.id) {
-    room.seats[seatIndex] = null;
-    const me = room.players.get(client.id);
-    if (me) { me.seat = null; me.spectator = false; }
-    broadcastRoom(room);
-    return;
-  }
-
-  // Player without a seat can抢占 AI seat (AI becomes unseated).
-  if (oldSeatIndex < 0) {
-    const occPlayer = room.players.get(occupant);
-    if (!occPlayer || !occPlayer.isAI) return error(client, 'SEAT_TAKEN');
-    room.seats[seatIndex] = client.id;
-    const me = room.players.get(client.id);
-    if (me) me.seat = seatIndex;
-    occPlayer.seat = null;
-    broadcastRoom(room);
-    return;
-  }
-
-  room.seats[oldSeatIndex] = occupant;
-  room.seats[seatIndex] = client.id;
-  const me = room.players.get(client.id);
-  const other = room.players.get(occupant);
-  if (me) me.seat = seatIndex;
-  if (other) other.seat = oldSeatIndex;
-  broadcastRoom(room);
-}
-
-function updateSettings(client, payload) {
-  const room = rooms.get(client.roomCode);
-  if (!room) return;
-  if (room.hostId !== client.id) return error(client, 'HOST_ONLY');
-  if (room.started) return error(client, 'ALREADY_STARTED');
-
-  if (payload.maxPlayers && payload.maxPlayers >= countSeatedPlayers(room) && payload.maxPlayers <= 10) {
-    room.maxPlayers = payload.maxPlayers;
-    room.roles = defaultRoles(room.maxPlayers);
-    while (room.seats.length > room.maxPlayers) room.seats.pop();
-    if (room.maxPlayers < 8) room.ladyOfLakeEnabled = false;
-  }
-  if (payload.speakingSeconds && payload.speakingSeconds >= 10 && payload.speakingSeconds <= 300) {
-    room.speakingSeconds = payload.speakingSeconds;
-  }
-  if (payload.roles !== undefined && payload.maxPlayers === undefined) {
-    if (!isValidRoleConfig(room.maxPlayers, payload.roles)) return error(client, 'INVALID_ROLE_CONFIG');
-    room.roles = payload.roles;
-  }
-  if (payload.hostRole !== undefined) {
-    const role = payload.hostRole;
-    if (role === null || role === '随机') {
-      room.hostRole = null;
-    } else if (typeof role === 'string' && room.roles.includes(role)) {
-      room.hostRole = role;
-    }
-  }
-  if (payload.ladyOfLakeEnabled !== undefined) {
-    room.ladyOfLakeEnabled = !!payload.ladyOfLakeEnabled && room.maxPlayers >= 8;
-  }
-  if (payload.evilRoleVisibleEnabled !== undefined) {
-    room.evilRoleVisibleEnabled = !!payload.evilRoleVisibleEnabled;
-  }
-  if (payload.forceRoundMode !== undefined) {
-    room.forceRoundMode = normalizeForceRoundMode(payload.forceRoundMode);
-  }
-  room.forceRound = deriveForcedRound(room.maxPlayers, room.roles, room.forceRoundMode);
-  if (room.hostRole && !room.roles.includes(room.hostRole)) {
-    room.hostRole = null;
-  }
-  broadcastRoom(room);
-}
-
-function startGame(client, payload) {
-  const room = rooms.get(client.roomCode);
-  if (!room) return;
-  if (room.hostId !== client.id) return error(client, 'HOST_ONLY');
-  if (room.started) return error(client, 'ALREADY_STARTED');
-  // 任何没有主动入座的真人，开局时标为观战者（不强制参与）
-  // 如果 payload.spectate=true，还可以把已入座的房主移出去
-  for (const p of room.players.values()) {
-    if (p.isAI) continue;
-    const inSeat = room.seats.some((id) => id === p.id);
-    if (p.id === room.hostId && inSeat && payload && payload.spectate) {
-      const idx = room.seats.indexOf(p.id);
-      if (idx >= 0) room.seats[idx] = null;
-      p.seat = null;
-      p.spectator = true;
-      p.avatar = '👀';
-    } else if (!inSeat && !isSpectatorPlayer(p)) {
-      p.spectator = true;
-      p.avatar = '👀';
-    }
-  }
-  // auto-seat humans, then fill AI for empty seats
-  autoSeatHumans(room);
-  fillAiPlayers(room);
-  if (countSeatedPlayers(room) < 5) return error(client, 'NOT_ENOUGH_PLAYERS');
-  if (!room.seats.every((id) => id)) return error(client, 'SEATS_NOT_FULL');
-
-  room.started = true;
-  room.phase = 'team';
-  startGameState(room);
-  // Snapshot spectators at game start so we can record them in history even if they leave early
-  const seatedAtStart = new Set(room.seats.filter(Boolean));
-  for (const [id, p] of room.players.entries()) {
-    if (!p || p.isAI || !p.spectator || !p.phone || seatedAtStart.has(id)) continue;
-    room.game.spectatorSnapshot.push({ id, nickname: p.nickname || '观战者', phone: p.phone });
-  }
-  preselectTeam(room);
-  room.messages.push({ ts: now(), from: '系统', text: '游戏开始，进入组队阶段' });
-  if (room.game.ladyOfLake && room.game.ladyOfLake.holderId) {
-    const holder = room.players.get(room.game.ladyOfLake.holderId);
-    room.messages.push({ ts: now(), from: '系统', text: `本局开启湖中仙女，初始持有者为 ${holder ? holder.nickname : '未知玩家'}` });
-  }
-  room.messages.push({ ts: now(), from: '系统', text: `本局强制轮为第${room.forceRound || MAX_ROUNDS}次组队` });
-  broadcastRoom(room);
-  sendPrivateRoles(room);
-  const leader = room.players.get(room.game.leaderId);
-  if (leader && leader.isAI) {
-    autoProposeIfAiLeader(room);
-  }
-}
-
-function resetGame(client) {
-  const room = rooms.get(client.roomCode);
-  if (!room) return;
-  if (room.hostId !== client.id) return error(client, 'HOST_ONLY');
-  // reset game state but keep players/seats/settings
-  room.started = false;
-  room.phase = 'lobby';
-  room.speaking = null;
-  if (room.speakingTimeout) clearTimeout(room.speakingTimeout);
-  room.speakingTimeout = null;
-  room.messages = [];
-  room.game = null;
-  // Keep existing AI and keep all current seat assignments for rematch.
-  // If any human has already left, their seat will already be null and next start will refill with AI.
-  broadcastRoom(room);
-}
-
-function redealIdentities(client) {
-  const room = rooms.get(client.roomCode);
-  if (!room) return;
-  if (room.hostId !== client.id) return error(client, 'HOST_ONLY');
-  if (!room.started) return error(client, 'NOT_STARTED');
-  if (!room.seats.every((id) => id) || countSeatedPlayers(room) < 5) return error(client, 'SEATS_NOT_FULL');
-
-  if (room.speakingTimeout) clearTimeout(room.speakingTimeout);
-  room.speakingTimeout = null;
-  room.speaking = null;
-  room.phase = 'team';
-  room.messages = [{ ts: now(), from: '系统', text: '房主已重发身份，按当前配置重新开始本局' }];
-  startGameState(room);
-  preselectTeam(room);
-  if (room.game.ladyOfLake && room.game.ladyOfLake.holderId) {
-    const holder = room.players.get(room.game.ladyOfLake.holderId);
-    room.messages.push({ ts: now(), from: '系统', text: `本局开启湖中仙女，初始持有者为 ${holder ? holder.nickname : '未知玩家'}` });
-  }
-  broadcastRoom(room);
-  sendPrivateRoles(room);
-
-  const leader = room.players.get(room.game.leaderId);
-  if (leader && leader.isAI) {
-    autoProposeIfAiLeader(room);
-  }
-}
-
-function nextSpeaker(client) {
-  const room = rooms.get(client.roomCode);
-  if (!room) return;
-  if (room.hostId !== client.id) return error(client, 'HOST_ONLY');
-  if (!room.started) return error(client, 'NOT_STARTED');
-  if (room.phase !== 'speaking') return error(client, 'NOT_SPEAKING_PHASE');
-
-  const currentId = room.seats[room.speaking.index];
-  if (currentId && !room.game.spokeThisRound[currentId]) {
-    return error(client, 'CURRENT_NOT_SPOKEN');
-  }
-  // if leader is current speaker, move to voting after leader spoke
-  if (room.game.leaderId === currentId) {
-    room.phase = 'voting';
-    room.game.votes = {};
-    room.messages.push({ ts: now(), from: '系统', text: '队长发言结束，进入投票' });
-    broadcastRoom(room);
-    autoVoteIfAi(room);
-    return;
-  }
-
-  advanceSpeaker(room);
-}
-
-function hostSkipSpeaker(client) {
-  const room = rooms.get(client.roomCode);
-  if (!room) return;
-  if (room.hostId !== client.id) return error(client, 'HOST_ONLY');
-  if (!room.started) return error(client, 'NOT_STARTED');
-  if (room.phase !== 'speaking') return error(client, 'NOT_SPEAKING_PHASE');
-
-  const currentId = room.seats[room.speaking.index];
-  if (currentId) room.game.spokeThisRound[currentId] = true;
-
-  if (room.game.leaderId === currentId) {
-    room.phase = 'voting';
-    room.game.votes = {};
-    room.messages.push({ ts: now(), from: '系统', text: '房主跳过当前发言，进入投票' });
-    broadcastRoom(room);
-    autoVoteIfAi(room);
-    return;
-  }
-
-  room.messages.push({ ts: now(), from: '系统', text: '房主跳过当前发言，切换下一位' });
-  advanceSpeaker(room);
-}
-
-function hostSkipToVote(client) {
-  const room = rooms.get(client.roomCode);
-  if (!room) return;
-  if (room.hostId !== client.id) return error(client, 'HOST_ONLY');
-  if (!room.started) return error(client, 'NOT_STARTED');
-  if (room.phase !== 'speaking') return error(client, 'NOT_SPEAKING_PHASE');
-
-  if (room.speakingTimeout) {
-    clearTimeout(room.speakingTimeout);
-    room.speakingTimeout = null;
-  }
-  room.speaking = null;
-  room.game.votes = {};
-  room.phase = 'voting';
-  room.messages.push({ ts: now(), from: '系统', text: '房主已直接进入投票阶段' });
-  broadcastRoom(room);
-  autoVoteIfAi(room);
-}
-
-function startMissionPhase(client) {
-  const room = rooms.get(client.roomCode);
-  if (!room) return;
-  if (room.hostId !== client.id) return error(client, 'HOST_ONLY');
-  if (!room.started) return error(client, 'NOT_STARTED');
-  enterTeamPhase(room, `进入第${room.game.round}轮组队`);
-}
-
-function proposeTeam(client, payload) {
-  const room = rooms.get(client.roomCode);
-  if (!room || !room.game) return;
-  if (room.phase !== 'team' && room.phase !== 'speaking') return error(client, 'NOT_TEAM_PHASE');
-  if (room.game.leaderId !== client.id) return error(client, 'LEADER_ONLY');
-
-  const team = (payload.team || []).filter((id) => room.players.has(id));
-  const teamSize = getTeamSize(room);
-  if (team.length !== teamSize) return error(client, 'INVALID_TEAM_SIZE');
-
-  room.game.team = team;
-  room.game.votes = {};
-  if (room.phase === 'team') {
-    room.phase = 'speaking';
-    room.game.spokeThisRound = {};
-    setSpeakingStart(room);
-    room.messages.push({ ts: now(), from: '系统', text: `队长已确定队伍（${team.length}人），进入发言阶段` });
-    broadcastRoom(room);
-    scheduleSpeakTimeout(room);
-    autoSpeakIfAi(room);
-    return;
-  }
-
-  // Leader can submit final team during speaking and start voting immediately.
-  if (room.speakingTimeout) {
-    clearTimeout(room.speakingTimeout);
-    room.speakingTimeout = null;
-  }
-  room.speaking = null;
-  room.phase = 'voting';
-  room.messages.push({ ts: now(), from: '系统', text: `队长已提交最终队伍（${team.length}人），进入投票` });
-  broadcastRoom(room);
-  autoVoteIfAi(room);
-}
-
-function updateTeam(client, payload) {
-  const room = rooms.get(client.roomCode);
-  if (!room || !room.game) return;
-  if (room.game.leaderId !== client.id) return error(client, 'LEADER_ONLY');
-  if (room.phase !== 'team' && room.phase !== 'speaking') return error(client, 'NOT_TEAM_EDIT');
-  const team = (payload.team || []).filter((id) => room.players.has(id));
-  const teamSize = getTeamSize(room);
-  if (team.length > teamSize) return error(client, 'INVALID_TEAM_SIZE');
-  room.game.team = team;
-  room.game.votes = {};
-  broadcastRoom(room);
-}
-
-function voteTeam(client, payload) {
-  const room = rooms.get(client.roomCode);
-  if (!room || !room.game) return;
-  if (room.phase !== 'voting') return error(client, 'NOT_VOTING_PHASE');
-  const approve = !!payload.approve;
-  room.game.votes[client.id] = approve;
-
-  // check all votes in
-  const allIds = room.seats.filter((id) => id);
-  if (allIds.every((id) => room.game.votes[id] !== undefined)) {
-    resolveVote(room);
-  }
-  broadcastRoom(room);
-}
-
-function executeMission(client, payload) {
-  const room = rooms.get(client.roomCode);
-  if (!room || !room.game) return;
-  if (room.phase !== 'mission') return error(client, 'NOT_MISSION_PHASE');
-  if (!room.game.team.includes(client.id)) return error(client, 'NOT_IN_TEAM');
-
-  const role = room.game.assignments[client.id];
-  const faction = ROLE_FACTIONS[role] || 'good';
-  let fail = !!payload.fail;
-  if (faction === 'good') fail = false;
-
-  room.game.missionVotes[client.id] = fail;
-  const teamIds = room.game.team;
-  if (teamIds.every((id) => room.game.missionVotes[id] !== undefined)) {
-    resolveMission(room);
-  }
-  broadcastRoom(room);
-}
-
-function endPlayerVote(client, payload) {
-  if (!requireAuth(client)) return error(client, 'NEED_LOGIN');
-  const room = rooms.get(client.roomCode);
-  if (!room || !room.game) return error(client, 'ROOM_NOT_FOUND');
-  if (room.phase !== 'end') return error(client, 'NOT_END_PHASE');
-  const targetId = String((payload && payload.targetId) || '');
-  const voteType = String((payload && payload.voteType) || '');
-  if (!targetId || !room.players.has(targetId) || targetId === client.id) return error(client, 'INVALID_TARGET');
-  if (!['c_le', 'blame', 'effort'].includes(voteType)) return error(client, 'INVALID_VOTE_TYPE');
-  if (!room.game.endVotes) room.game.endVotes = {};
-  if (room.game.endVotes[client.id]) return error(client, 'END_VOTE_ALREADY_CAST');
-  room.game.endVotes[client.id] = {
-    targetId,
-    voteType,
-    createdAt: now(),
-  };
-  savePeerVoteForHistory(room, client.id, targetId, voteType);
-  broadcastRoom(room);
-}
-
-function broadcastRoom(room) {
-  persistActiveRoom(room);
-  const payload = {
-    type: 'ROOM_STATE',
-    room: publicRoom(room),
-  };
-  for (const client of room.players.values()) {
-    const ws = clients.get(client.id);
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify(payload));
-    }
-  }
-}
-
-function publicRoom(room) {
-  return {
-    code: room.code,
-    hostId: room.hostId,
-    maxPlayers: room.maxPlayers,
-    speakingSeconds: room.speakingSeconds,
-    roles: room.roles,
-    hostRole: room.hostRole || null,
-    ladyOfLakeEnabled: !!room.ladyOfLakeEnabled,
-    evilRoleVisibleEnabled: !!room.evilRoleVisibleEnabled,
-    forceRoundMode: room.forceRoundMode || FORCE_ROUND_MODE_FIXED_5,
-    forceRound: room.forceRound || MAX_ROUNDS,
-    started: room.started,
-    phase: room.phase,
-    speaking: room.speaking || null,
-    seats: room.seats,
-    players: Array.from(room.players.values()),
-    messages: room.messages || [],
-    game: publicGame(room),
-  };
-}
-
-function publicGame(room) {
-  if (!room.game) return null;
-  const ladyOfLake = room.game.ladyOfLake
-    ? {
-        enabled: !!room.game.ladyOfLake.enabled,
-        holderId: room.game.ladyOfLake.holderId || null,
-        history: (room.game.ladyOfLake.history || []).map((entry) => ({
-          round: entry.round,
-          holderId: entry.holderId,
-          targetId: entry.targetId,
-        })),
-      }
-    : null;
-  return {
-    round: room.game.round,
-    attempt: room.game.attempt,
-    leaderId: room.game.leaderId,
-    team: room.game.team,
-    phase: room.phase,
-    votes: room.game.votes || {},
-    missionVotes: room.game.missionVotes || {},
-    voteHistory: room.game.voteHistory || [],
-    missionHistory: room.game.missionHistory || [],
-    rejectsInRow: room.game.rejectsInRow || 0,
-    teamSize: getTeamSize(room),
-    failRequirement: getFailRequirement(room),
-    speakHistory: room.game.speakHistory || {},
-    revealedRoles: room.game.revealedRoles || null,
-    revealedEvil: room.game.revealedEvil || null,
-    winner: room.game.winner || null,
-    assassination: room.game.assassination || null,
-    recap: room.game.recap || [],
-    evilIntel: room.game.evilIntel || [],
-    endVotes: room.game.endVotes || {},
-    ladyOfLake,
-    trust: room.game.trust || {},
-    latestEarnedMedals: room.game.latestEarnedMedals || {},
-    endVotes: room.game.endVotes || {},
-  };
-}
-
-function ok(client, data) {
-  send(client, { type: 'OK', data });
-}
-
-function error(client, code) {
-  send(client, { type: 'ERROR', code });
-}
-
-function send(client, msg) {
-  const ws = clients.get(client.id);
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify(msg));
-  }
-}
-
-function seatNumber(room, playerId) {
-  const idx = room.seats.findIndex((id) => id === playerId);
-  return idx >= 0 ? idx + 1 : null;
-}
-
-function viewRole(client) {
-  const room = rooms.get(client.roomCode);
-  if (!room || !room.game) return;
-  const myRole = room.game.assignments[client.id];
-  const info = { role: myRole, seats: [], roleDetails: {} };
-  if (myRole === '派西维尔') {
-    // Merlin + Morgana seats (two thumbs)
-    const seats = [];
-    for (const id of Object.keys(room.game.assignments)) {
-      const r = room.game.assignments[id];
-      if (r === '梅林' || r === '莫甘娜') seats.push(seatNumber(room, id));
-    }
-    info.seats = seats.filter(Boolean);
-  } else if (myRole === '梅林') {
-    // sees evil except Mordred
-    const seats = [];
-    for (const id of Object.keys(room.game.assignments)) {
-      const r = room.game.assignments[id];
-      if (ROLE_FACTIONS[r] === 'evil' && r !== '莫德雷德') seats.push(seatNumber(room, id));
-    }
-    info.seats = seats.filter(Boolean);
-    info.visibleFaction = 'evil';
-  } else if (ROLE_FACTIONS[myRole] === 'evil') {
-    // evil sees evil teammates (not specific roles), except Oberon sees nobody
-    if (myRole === '奥伯伦') {
-      info.seats = [];
-      return send(client, { type: 'ROLE_INFO', data: info });
-    }
-    const seats = [];
-    for (const id of Object.keys(room.game.assignments)) {
-      const r = room.game.assignments[id];
-      // evil do not see Oberon, and Oberon does not see them
-      if (ROLE_FACTIONS[r] === 'evil' && r !== '奥伯伦' && id !== client.id) {
-        seats.push(seatNumber(room, id));
-        if (room.evilRoleVisibleEnabled) {
-          info.roleDetails[id] = r;
-        }
-      }
-    }
-    info.seats = seats.filter(Boolean);
-  }
-  send(client, { type: 'ROLE_INFO', data: info });
-}
-
-function startGameState(room) {
-  const roles = shuffle(room.roles);
-  const seatIds = room.seats.slice();
-  const assignments = {};
-  const hostId = room.hostId;
-  let rolePool = roles.slice();
-  if (room.hostRole && hostId) {
-    const idx = rolePool.indexOf(room.hostRole);
-    if (idx >= 0) {
-      rolePool.splice(idx, 1);
-      assignments[hostId] = room.hostRole;
-    }
-  }
-  for (const id of seatIds) {
-    if (assignments[id]) continue;
-    assignments[id] = rolePool.shift();
-  }
-  const assassinId = seatIds.find((id) => assignments[id] === '刺客') || null;
-  const merlinId = seatIds.find((id) => assignments[id] === '梅林') || null;
-
-  room.game = {
-    startedAt: now(),
-    round: 1,
-    attempt: 1,
-    leaderIndex: Math.floor(Math.random() * seatIds.length),
-    leaderId: null,
-    team: [],
-    votes: {},
-    voteHistory: [],
-    missionHistory: [],
-    rejectsInRow: 0,
-    assignments,
-    missionVotes: {},
-    speakHistory: { '1-1': [] },
-    claims: { '1-1': {} },
-    trust: {},
-    revealedRoles: null,
-    spokeThisRound: {},
-    assassinId,
-    merlinId,
-    assassination: null,
-    revealedEvil: null,
-    winner: null,
-    endVotes: {},
-    spectatorSnapshot: [],
-    ladyOfLake:
-      room.ladyOfLakeEnabled && room.maxPlayers >= 8
-        ? {
-            enabled: true,
-            holderId: null,
-            history: [],
-          }
-        : null,
-  };
-  room.game.leaderId = seatIds[room.game.leaderIndex];
-  if (room.game.ladyOfLake && seatIds.length > 0) {
-    const initialHolderIndex = (room.game.leaderIndex + seatIds.length - 1) % seatIds.length;
-    room.game.ladyOfLake.holderId = seatIds[initialHolderIndex];
-  }
-  for (const id of seatIds) {
-    room.game.trust[id] = 0;
-  }
-}
-
-function sendPrivateRoles(room) {
-  for (const player of room.players.values()) {
-    if (player.isAI) continue;
-    const role = room.game.assignments[player.id];
-    send({ id: player.id }, { type: 'PRIVATE_ROLE', role });
-  }
-}
-
-function getTeamSize(room) {
-  const sizes = TEAM_SIZES[room.maxPlayers] || TEAM_SIZES[7];
-  return sizes[room.game.round - 1];
-}
-
-function getFailRequirement(room) {
-  const reqs = FAIL_REQUIREMENT[room.maxPlayers] || FAIL_REQUIREMENT[7];
-  return reqs[room.game.round - 1];
-}
-
-function isLadyOfLakeEnabled(room) {
-  return !!(room && room.game && room.game.ladyOfLake && room.game.ladyOfLake.enabled);
-}
-
-function getLadyOfLakeEligibleTargets(room) {
-  if (!isLadyOfLakeEnabled(room)) return [];
-  const holderId = room.game.ladyOfLake.holderId;
-  const previousHolders = new Set((room.game.ladyOfLake.history || []).map((entry) => entry.holderId));
-  if (holderId) previousHolders.add(holderId);
-  return room.seats.filter((id) => id && id !== holderId && !previousHolders.has(id));
-}
-
-function shouldTriggerLadyOfLake(room, completedRound) {
-  return isLadyOfLakeEnabled(room) && completedRound >= 2 && completedRound <= 4;
-}
-
-function autoLadyOfLakeIfAi(room) {
-  if (!room || !room.game || room.phase !== 'lady' || !room.game.ladyOfLake) return;
-  const holder = room.players.get(room.game.ladyOfLake.holderId);
-  if (!holder || !holder.isAI) return;
-  const targets = getLadyOfLakeEligibleTargets(room);
-  if (targets.length === 0) {
-    room.phase = 'team';
-    room.messages.push({ ts: now(), from: '系统', text: `进入第${room.game.round}-${room.game.attempt}轮组队` });
-    broadcastRoom(room);
-    const leader = room.players.get(room.game.leaderId);
-    if (leader && leader.isAI) autoProposeIfAiLeader(room);
-    return;
-  }
-  setTimeout(() => {
-    const stillRoom = rooms.get(room.code);
-    if (!stillRoom || stillRoom.phase !== 'lady' || !stillRoom.game || !stillRoom.game.ladyOfLake) return;
-    const stillHolder = stillRoom.players.get(stillRoom.game.ladyOfLake.holderId);
-    if (!stillHolder || !stillHolder.isAI) return;
-    const eligible = getLadyOfLakeEligibleTargets(stillRoom);
-    if (!eligible.length) return;
-    const targetId = eligible[Math.floor(Math.random() * eligible.length)];
-    resolveLadyOfLake(stillRoom, targetId);
-  }, 1200);
-}
-
-function resolveLadyOfLake(room, targetId) {
-  if (!room || !room.game || room.phase !== 'lady' || !room.game.ladyOfLake) return false;
-  const holderId = room.game.ladyOfLake.holderId;
-  const eligibleTargets = getLadyOfLakeEligibleTargets(room);
-  if (!holderId || !eligibleTargets.includes(targetId)) return false;
-  const target = room.players.get(targetId);
-  if (!target) return false;
-  const alignment = ROLE_FACTIONS[room.game.assignments[targetId]] === 'evil' ? 'evil' : 'good';
-  room.game.ladyOfLake.history.push({
-    round: room.game.round,
-    holderId,
-    targetId,
-    alignment,
-  });
-  send(
-    { id: holderId },
-    {
-      type: 'LADY_OF_LAKE_RESULT',
-      data: {
-        round: room.game.round,
-        targetId,
-        targetNickname: target.nickname,
-        alignment,
-      },
-    }
-  );
-  room.game.ladyOfLake.holderId = targetId;
-  room.phase = 'team';
-  room.messages.push({
-    ts: now(),
-    from: '系统',
-    text: `湖中仙女已查验 ${target.nickname}，标记传递给 ${target.nickname}，进入第${room.game.round}-${room.game.attempt}轮组队`,
-  });
-  broadcastRoom(room);
-  const leader = room.players.get(room.game.leaderId);
-  if (leader && leader.isAI) autoProposeIfAiLeader(room);
-  return true;
-}
-
-function useLadyOfLake(client, payload) {
-  const room = rooms.get(client.roomCode);
-  if (!room || !room.game) return;
-  if (room.phase !== 'lady' || !room.game.ladyOfLake) return error(client, 'NOT_LADY_OF_LAKE_PHASE');
-  if (room.game.ladyOfLake.holderId !== client.id) return error(client, 'LADY_OF_LAKE_ONLY');
-  const targetId = String((payload && payload.targetId) || '');
-  if (!resolveLadyOfLake(room, targetId)) return error(client, 'INVALID_LADY_OF_LAKE_TARGET');
-}
-
-function enterTeamPhase(room, msg) {
-  room.phase = 'team';
-  room.messages.push({ ts: now(), from: '系统', text: msg });
-  preselectTeam(room);
-  broadcastRoom(room);
-  const leader = room.players.get(room.game.leaderId);
-  if (leader && leader.isAI) {
-    autoProposeIfAiLeader(room);
-  }
-}
-
-function advanceSpeaker(room) {
-  const nextIndex = (room.speaking.index + 1) % room.maxPlayers;
-  room.speaking.index = nextIndex;
-  room.speaking.endAt = now() + room.speakingSeconds * 1000;
-  broadcastRoom(room);
-  scheduleSpeakTimeout(room);
-  autoSpeakIfAi(room);
-}
-
-function scheduleSpeakTimeout(room) {
-  if (room.speakingTimeout) clearTimeout(room.speakingTimeout);
-  if (!room.speaking) return;
-  const currentId = room.seats[room.speaking.index];
-  if (!currentId) return;
-  const remainingMs = room.speaking.endAt ? Math.max(0, room.speaking.endAt - now()) : room.speakingSeconds * 1000;
-  room.speakingTimeout = setTimeout(() => {
-    const stillRoom = rooms.get(room.code);
-  if (!stillRoom || stillRoom.phase !== 'speaking') return;
-  const current = stillRoom.seats[stillRoom.speaking.index];
-  if (!current) return;
-  if (!stillRoom.game.spokeThisRound[current]) {
-    stillRoom.game.spokeThisRound[current] = true;
-  }
-  if (stillRoom.game.leaderId === current) {
-    stillRoom.phase = 'voting';
-    stillRoom.game.votes = {};
-    stillRoom.messages.push({ ts: now(), from: '系统', text: '队长发言结束，进入投票' });
-    broadcastRoom(stillRoom);
-    autoVoteIfAi(stillRoom);
-  } else {
-    advanceSpeaker(stillRoom);
-  }
-}, remainingMs);
-}
-
-function preselectTeam(room) {
-  if (!room || !room.game) return;
-  // New rule: entering team phase starts with an empty proposal.
-  // Human leaders manually select members; AI leaders think first and then submit.
-  room.game.team = [];
-  room.game.votes = {};
-}
-
-function resolveVote(room) {
-  if (!room || !room.game || room.phase !== 'voting') return;
-  const votes = room.game.votes;
-  const allIds = room.seats.filter((id) => id);
-  const approves = allIds.filter((id) => votes[id]).length;
-  const rejects = allIds.length - approves;
-  const approved = approves > rejects;
-  const seatSnapshot = buildSeatSnapshot(room);
-  room.game.voteHistory.push({
-    round: room.game.round,
-    attempt: room.game.attempt,
-    leaderId: room.game.leaderId,
-    team: room.game.team,
-    votes: { ...votes },
-    seatSnapshot,
-    approves,
-    rejects,
-    approved,
-  });
-  if (approved) {
-    room.phase = 'mission';
-    room.game.missionVotes = {};
-    room.messages.push({ ts: now(), from: '系统', text: `队伍通过（${approves}赞成 / ${rejects}反对），开始任务` });
-    autoMissionIfAi(room);
-  } else {
-    room.game.rejectsInRow += 1;
-    room.messages.push({ ts: now(), from: '系统', text: `队伍被否决（${approves}赞成 / ${rejects}反对）` });
-    const forceRound = room.forceRound || MAX_ROUNDS;
-    if (Number(room.game.attempt || 0) >= forceRound) {
-      room.phase = 'end';
-      revealAll(room);
-      room.game.winner = 'evil';
-      recordGameSummary(room, 'evil');
-      generateRecaps(room);
-      persistGameHistory(room);
-      room.messages.push({
-        ts: now(),
-        from: '系统',
-        text: `强制组队第${forceRound}次未能发车，坏人阵营胜利（已亮明身份）`,
-      });
-    } else {
-      nextLeader(room);
-      room.game.attempt += 1;
-      room.phase = 'team';
-      preselectTeam(room);
-      const key = `${room.game.round}-${room.game.attempt}`;
-      if (!room.game.speakHistory[key]) room.game.speakHistory[key] = [];
-      if (!room.game.claims[key]) room.game.claims[key] = {};
-      room.messages.push({ ts: now(), from: '系统', text: `更换队长，进入第${room.game.round}-${room.game.attempt}轮组队` });
-      broadcastRoom(room);
-      const leader = room.players.get(room.game.leaderId);
-      if (leader && leader.isAI) {
-        autoProposeIfAiLeader(room);
-      }
-    }
-  }
-
-  // update trust based on claimed stance vs actual vote
-  const key = `${room.game.round}-${room.game.attempt}`;
-  const claims = room.game.claims ? room.game.claims[key] || {} : {};
-  for (const id of Object.keys(votes)) {
-    const claim = claims[id];
-    if (!claim) continue;
-    const votedApprove = votes[id] ? 'approve' : 'reject';
-    if (claim === votedApprove) {
-      room.game.trust[id] = (room.game.trust[id] || 0) + 1;
-    } else {
-      room.game.trust[id] = (room.game.trust[id] || 0) - 1;
-    }
-  }
-}
-
-function resolveMission(room) {
-  if (!room || !room.game || room.phase !== 'mission') return;
-  const votes = room.game.missionVotes;
-  const teamIds = room.game.team;
-  const fails = teamIds.filter((id) => votes[id]).length;
-  const needFail = getFailRequirement(room);
-  const success = fails < needFail;
-  const seatSnapshot = buildSeatSnapshot(room);
-  room.game.missionHistory.push({
-    round: room.game.round,
-    team: teamIds,
-    fails,
-    needFail,
-    missionVotes: { ...votes },
-    seatSnapshot,
-    success,
-  });
-  room.messages.push({
-    ts: now(),
-    from: '系统',
-    text: `任务${success ? '成功' : '失败'}（失败票 ${fails} / 需求 ${needFail}）`,
-  });
-  const successCount = room.game.missionHistory.filter((m) => m.success).length;
-  const failCount = room.game.missionHistory.filter((m) => !m.success).length;
-  if (successCount >= 3) {
-    room.phase = 'assassination';
-    revealEvilToAll(room);
-    room.messages.push({ ts: now(), from: '系统', text: '好人完成三次任务，进入刺杀阶段' });
-    gatherEvilIntel(room);
-    autoAssassinateIfAi(room);
-  } else if (failCount >= 3) {
-    room.phase = 'end';
-    revealAll(room);
-    room.game.winner = 'evil';
-    recordGameSummary(room, 'evil');
-    generateRecaps(room);
-    persistGameHistory(room);
-    room.messages.push({ ts: now(), from: '系统', text: '坏人阵营胜利（已亮明身份）' });
-  } else {
-    const completedRound = room.game.round;
-    if (completedRound >= MAX_ROUNDS) {
-      room.phase = 'end';
-      revealAll(room);
-      room.game.winner = 'evil';
-      recordGameSummary(room, 'evil');
-      generateRecaps(room);
-      persistGameHistory(room);
-      room.messages.push({ ts: now(), from: '系统', text: '任务轮次已耗尽，坏人阵营胜利（已亮明身份）' });
-      broadcastRoom(room);
-      return;
-    }
-    room.game.round += 1;
-    room.game.attempt = 1;
-    room.game.rejectsInRow = 0;
-    const key = `${room.game.round}-${room.game.attempt}`;
-    if (!room.game.speakHistory[key]) room.game.speakHistory[key] = [];
-    if (!room.game.claims[key]) room.game.claims[key] = {};
-    room.game.spokeThisRound = {};
-    nextLeader(room);
-    preselectTeam(room);
-    if (shouldTriggerLadyOfLake(room, completedRound)) {
-      room.phase = 'lady';
-      const holder = room.players.get(room.game.ladyOfLake.holderId);
-      room.messages.push({
-        ts: now(),
-        from: '系统',
-        text: `进入湖中仙女阶段，由 ${holder ? holder.nickname : '未知玩家'} 查验一名玩家阵营`,
-      });
-      broadcastRoom(room);
-      autoLadyOfLakeIfAi(room);
-    } else {
-      room.phase = 'team';
-      room.messages.push({ ts: now(), from: '系统', text: `进入第${room.game.round}-${room.game.attempt}轮组队` });
-      broadcastRoom(room);
-      const leader = room.players.get(room.game.leaderId);
-      if (leader && leader.isAI) {
-        autoProposeIfAiLeader(room);
-      }
-    }
-  }
-}
-
-function nextLeader(room) {
-  room.game.leaderIndex = (room.game.leaderIndex + 1) % room.maxPlayers;
-  room.game.leaderId = room.seats[room.game.leaderIndex];
-}
-
-function setSpeakingStart(room) {
-  const leaderIndex = room.game ? room.game.leaderIndex : 0;
-  const startIndex = (leaderIndex + 1) % room.maxPlayers;
-  room.speaking = { index: startIndex, endAt: now() + room.speakingSeconds * 1000 };
-}
-
-function fillAiPlayers(room) {
-  const existingCount = room.players.size;
-  const toAdd = room.maxPlayers - countSeatedPlayers(room);
-  if (toAdd <= 0) return;
-  const usedNames = new Set(Array.from(room.players.values()).map((p) => p.nickname));
-  if (room.aiNameRegistry) {
-    for (const name of room.aiNameRegistry) usedNames.add(name);
-  }
-  // Pick unused AI characters; shuffle so each game gets different combos
-  const allChars = Object.keys(AI_CHARACTERS);
-  const available = shuffle(allChars.filter((n) => !usedNames.has(n)));
-  let charIdx = 0;
-  for (let i = 0; i < toAdd; i++) {
-    const id = `ai${existingCount + i + 1}`;
-    // Pick next available character, fallback to sequential if exhausted
-    const charName = available[charIdx] || `AI${existingCount + i + 1}`;
-    charIdx += 1;
-    usedNames.add(charName);
-    if (room.aiNameRegistry) room.aiNameRegistry.add(charName);
-    const char = AI_CHARACTERS[charName] || AI_CHARACTERS[Object.keys(AI_CHARACTERS)[0]];
-    room.players.set(id, {
-      id,
-      nickname: charName,
-      avatar: '🤖',
-      seat: null,
-      joinedAt: now(),
-      isAI: true,
-      aiPersonaKey: charName,
-      aiStyle: char.style,
-      aiPersonaId: charName,
-    });
-  }
-  // fill empty seats with AI
-  for (let idx = 0; idx < room.maxPlayers; idx++) {
-    if (!room.seats[idx]) {
-      const ai = Array.from(room.players.values()).find((p) => p.isAI && p.seat === null);
-      if (ai) {
-        ai.seat = idx;
-        room.seats[idx] = ai.id;
-      }
-    }
-  }
-}
-
-function autoSeatHumans(room) {
-  while (room.seats.length < room.maxPlayers) room.seats.push(null);
-  const seated = new Set(room.seats.filter((id) => id));
-  // 只坐入已明确选座（在 room.seats 里）的真人；
-  // 没有主动点过座位的人视为旁观，不强制入座。
-  const humans = Array.from(room.players.values()).filter((p) => !p.isAI && !isSpectatorPlayer(p) && seated.has(p.id));
-  for (const p of humans) {
-    if (p.seat !== null && p.seat !== undefined) continue;
-    if (seated.has(p.id)) continue;
-    const emptyIndex = room.seats.findIndex((id) => !id);
-    if (emptyIndex >= 0) {
-      room.seats[emptyIndex] = p.id;
-      p.seat = emptyIndex;
-      seated.add(p.id);
-    }
-  }
-}
-
-function autoSpeakIfAi(room) {
-  const seatId = room.seats[room.speaking.index];
-  const player = room.players.get(seatId);
-  if (!player || !player.isAI || !room.game) return;
-  const role = room.game.assignments[player.id];
-  (async () => {
-    let msg = '';
-    try {
-      msg = await decideSpeak({ room, player, role, roleFactions: ROLE_FACTIONS });
-    } catch (e) {
-      console.error('[decideSpeak] error:', e.message);
-      msg = '';
-    }
-    if (!msg) msg = aiSpeak(room, player, role);
-    if (!canSpeak(room, player.id)) return;
-    pushSpeak(room, player.nickname, msg, player.id);
-    room.messages.push({ ts: now(), from: player.nickname, text: msg });
-    room.game.spokeThisRound[player.id] = true;
-    broadcastRoom(room);
-    if (room.speakingTimeout) clearTimeout(room.speakingTimeout);
-    if (room.game.leaderId === player.id) {
-      // 队长发完言后，基于本轮所有发言重新评估队伍
-      const leaderRole = room.game.assignments[player.id];
-      const teamSize = getTeamSize(room);
-      let revised = false;
-      try {
-        const newSeats = await decideTeam({
-          room, leaderId: player.id, role: leaderRole,
-          roleFactions: ROLE_FACTIONS, teamSize,
-        });
-        if (newSeats && newSeats.length > 0) {
-          const idMap = {};
-          room.seats.forEach((id, idx) => (idMap[idx + 1] = id));
-          const newIds = [...new Set(newSeats.map(s => idMap[s]).filter(Boolean))];
-          // 加上队长自己
-          if (!newIds.includes(player.id)) newIds.unshift(player.id);
-          const finalIds = newIds.slice(0, teamSize);
-          if (finalIds.length === teamSize) {
-            const oldTeam = [...(room.game.team || [])];
-            const changed = finalIds.length !== oldTeam.length
-              || finalIds.some(id => !oldTeam.includes(id));
-            if (changed) {
-              room.game.team = finalIds;
-              const newSeatNums = finalIds.map(id => seatNumber(room, id)).filter(Boolean).join('、');
-              room.messages.push({ ts: now(), from: player.nickname, text: `（思考后调整了队伍）新队伍：${newSeatNums}号` });
-              broadcastRoom(room);
-              revised = true;
-            }
-          }
-        }
-      } catch (_) {}
-      room.phase = 'voting';
-      room.game.votes = {};
-      room.messages.push({ ts: now(), from: '系统', text: revised ? '队长重新调整队伍后，进入投票' : '队长发言结束，进入投票' });
-      broadcastRoom(room);
-      autoVoteIfAi(room);
-    } else {
-      advanceSpeaker(room);
-    }
-  })();
-}
-
-function buildLadyAnnouncement(room, player, role) {
-  if (!room || !room.game || !room.game.ladyOfLake || !player) return '';
-  const history = Array.isArray(room.game.ladyOfLake.history) ? room.game.ladyOfLake.history : [];
-  if (!history.length) return '';
-  const latest = history[history.length - 1];
-  if (!latest || latest.round !== room.game.round || latest.holderId !== player.id) return '';
-  const target = room.players.get(latest.targetId);
-  if (!target) return '';
-
-  const trueAlignment = latest.alignment === 'evil' ? '坏人' : '好人';
-  const faction = ROLE_FACTIONS[role] || 'good';
-  const announcedAlignment =
-    faction === 'good' ? trueAlignment : Math.random() < 0.5 ? trueAlignment : trueAlignment === '坏人' ? '好人' : '坏人';
-  const verb = announcedAlignment === '坏人' ? '偏坏' : '偏好';
-  const targetSeat = seatNumber(room, target.id);
-  return `我刚验了${targetSeat ? `${targetSeat}号` : ''}${target.nickname}，我这边看到他是${announcedAlignment}，这轮先按${verb}处理。`;
-}
-
-function interruptActiveFlowForAssassination(room) {
-  if (!room || !room.game) return;
-  if (room.speakingTimeout) {
-    clearTimeout(room.speakingTimeout);
-    room.speakingTimeout = null;
-  }
-  room.speaking = null;
-  room.game.spokeThisRound = {};
-  // Stop in-flight stage completion from using stale partial inputs.
-  room.game.votes = {};
-  room.game.missionVotes = {};
-}
-
-function aiSpeak(room, player, role) {
-  const ladyAnnouncement = buildLadyAnnouncement(room, player, role);
-  if (ladyAnnouncement) return ladyAnnouncement;
-  const faction = ROLE_FACTIONS[role] || 'good';
-  const round = room.game.round;
-  const leaderName = room.players.get(room.game.leaderId)?.nickname || '队长';
-  const lastVote = room.game.voteHistory[room.game.voteHistory.length - 1];
-  const lastMission = room.game.missionHistory[room.game.missionHistory.length - 1];
-  const aiKnowledge = inferAiKnowledge(room, player.id, role);
-  const currentTeam = room.game.team || [];
-
-  if (faction === 'good') {
-    const knownEvilOnTeam = currentTeam.filter((id) => aiKnowledge.knownEvilIds.includes(id));
-    if (knownEvilOnTeam.length > 0) {
-      const seats = knownEvilOnTeam.map((id) => seatNumber(room, id)).filter(Boolean);
-      if (role === '梅林') {
-        return `这队风险太高，我不建议过。${seats.length ? `重点看${seats.join('、')}号位。` : ''}`;
-      }
-      return `这队里有我判断的铁风险位，先否掉重组更稳。${seats.length ? `（${seats.join('、')}号）` : ''}`;
-    }
-    const speechClaimed = Array.from(inferSpeechClaimedEvilIds(room)).filter((id) => id !== player.id);
-    if (speechClaimed.length > 0) {
-      const s = seatNumber(room, speechClaimed[0]);
-      if (s) return `${s}号发言出现明显自爆信息，我会先按坏人位处理。`;
-    }
-    if (lastMission && !lastMission.success && Array.isArray(lastMission.team) && lastMission.team.includes(player.id)) {
-      const fails = Number(lastMission.fails || 0);
-      if (lastMission.team.length === 2 && fails === 1) {
-        const other = lastMission.team.find((id) => id !== player.id);
-        const seat = other ? seatNumber(room, other) : null;
-        if (seat) return `上轮双人任务出1坏票，如果按任务结果倒推，${seat}号风险最高。`;
-      }
-    }
-    const lines = [
-      `第${round}轮，我更看重队长${leaderName}的组队逻辑。`,
-      `我倾向低风险队伍，先看这轮提案是否合理。`,
-      `上一轮${lastMission ? (lastMission.success ? '成功' : '失败') : '未知'}，我会据此调整判断。`,
-      `我更愿意通过包含上一轮表现好的玩家的队伍。`,
-    ];
-    const first = lines[Math.floor(Math.random() * lines.length)];
-    const second = lines[Math.floor(Math.random() * lines.length)];
-    return `${first}${Math.random() < 0.7 ? second : ''}`;
-  }
-
-  if (role === '莫甘娜') {
-    const lines = [
-      `我是倾向通过队伍的，别把好人自己绑住。`,
-      `第${round}轮不要盲信“安全人”，我更看重结构。`,
-      `可以给队长${leaderName}一次机会，别急着否。`,
-    ];
-    const first = lines[Math.floor(Math.random() * lines.length)];
-    const second = lines[Math.floor(Math.random() * lines.length)];
-    return `${first}${Math.random() < 0.7 ? second : ''}`;
-  }
-  if (role === '刺客') {
-    const lines = [
-      `我觉得这轮队伍可以试一试，别太保守。`,
-      `上轮投票分裂，今天更该抓信息。`,
-      `别把“表忠”当成证据，结构更重要。`,
-    ];
-    const first = lines[Math.floor(Math.random() * lines.length)];
-    const second = lines[Math.floor(Math.random() * lines.length)];
-    return `${first}${Math.random() < 0.7 ? second : ''}`;
-  }
-  if (role === '莫德雷德') {
-    const lines = [
-      `保持冷静，别被情绪推着走。`,
-      `如果队伍结构合理，我会支持通过。`,
-      `我更看重位置和连贯性，不看人设。`,
-    ];
-    const first = lines[Math.floor(Math.random() * lines.length)];
-    const second = lines[Math.floor(Math.random() * lines.length)];
-    return `${first}${Math.random() < 0.7 ? second : ''}`;
-  }
-  if (role === '奥伯伦') {
-    const lines = [
-      `我倾向看结构，不太关心人设。`,
-      `第${round}轮应该更谨慎，但不要过度否决。`,
-      `我希望看到更清晰的队伍逻辑。`,
-    ];
-    const first = lines[Math.floor(Math.random() * lines.length)];
-    const second = lines[Math.floor(Math.random() * lines.length)];
-    return `${first}${Math.random() < 0.7 ? second : ''}`;
-  }
-  const lines = [
-    `我觉得队伍里有我更稳，信息更清晰。`,
-    `这轮别过度谨慎，先过一轮。`,
-    `投票结果${lastVote ? (lastVote.approved ? '通过' : '否决') : '未知'}，下一步看队伍结构。`,
-  ];
-  const first = lines[Math.floor(Math.random() * lines.length)];
-  const second = lines[Math.floor(Math.random() * lines.length)];
-  return `${first}${Math.random() < 0.7 ? second : ''}`;
-}
-
-function startAssassination(client) {
-  const room = rooms.get(client.roomCode);
-  if (!room || !room.game) return;
-  if (!room.started) return error(client, 'NOT_STARTED');
-  const role = room.game.assignments[client.id];
-  if (role !== '刺客') return error(client, 'ASSASSIN_ONLY');
-  if (room.phase === 'end') return error(client, 'ALREADY_ENDED');
-  interruptActiveFlowForAssassination(room);
-  room.phase = 'assassination';
-  room.messages.push({ ts: now(), from: '系统', text: '刺客选择提前刺杀' });
-  revealEvilToAll(room);
-  broadcastRoom(room);
-  gatherEvilIntel(room);
-  autoAssassinateIfAi(room);
-}
-
-function assassinate(client, payload) {
-  const room = rooms.get(client.roomCode);
-  if (!room || !room.game) return;
-  const role = room.game.assignments[client.id];
-  if (role !== '刺客') return error(client, 'ASSASSIN_ONLY');
-  if (room.phase === 'end') return error(client, 'ALREADY_ENDED');
-  if (room.phase !== 'assassination') {
-    interruptActiveFlowForAssassination(room);
-    room.phase = 'assassination';
-    room.messages.push({ ts: now(), from: '系统', text: '刺客选择提前刺杀' });
-  }
-  revealEvilToAll(room);
-  const candidateSeats = room.seats
-    .map((id, idx) => ({ id, seat: idx + 1 }))
-    .filter((s) => s.id && ROLE_FACTIONS[room.game.assignments[s.id]] !== 'evil' && s.id !== client.id)
-    .map((s) => s.seat);
-  room.game.assassinationCandidates = candidateSeats;
-  const targetId = payload && payload.targetId;
-  if (!targetId || !room.players.has(targetId)) return error(client, 'INVALID_TARGET');
-  resolveAssassination(room, targetId, client.id, null);
-}
-
-function resolveAssassination(room, targetId, assassinId, reasoning) {
-  const targetRole = room.game.assignments[targetId];
-  const hit = targetRole === '梅林';
-  room.phase = 'end';
-  revealAll(room);
-  const merlinId = room.game.merlinId;
-  const merlinSeat = merlinId ? seatNumber(room, merlinId) : null;
-  room.game.assassination = {
-    targetId,
-    assassinId,
-    hit,
-    reasoning,
-    merlinSeat,
-    candidateSeats: room.game.assassinationCandidates || [],
-    evilIntel: room.game.evilIntel || [],
-  };
-  room.game.winner = hit ? 'evil' : 'good';
-  recordGameSummary(room, room.game.winner);
-  generateRecaps(room);
-  persistGameHistory(room);
-  room.messages.push({
-    ts: now(),
-    from: '系统',
-    text: `刺杀结果：${hit ? '命中梅林，坏人胜利' : '刺杀失败，好人胜利'}（已亮明身份）`,
-  });
-  broadcastRoom(room);
-}
-
-function generateRecaps(room) {
-  if (!room || !room.game) return;
-  if (room.game.recapGenerated) return;
-  const gameRef = room.game;
-  room.game.recapGenerated = true;
-  const recaps = [];
-  const tasks = [];
-  for (const p of room.players.values()) {
-    if (!p.isAI) continue;
-    const role = room.game.assignments[p.id];
-    tasks.push(
-      (async () => {
-        let suspicious = [];
-        let reason = '';
-        let recap = {};
-        let review = null;
-        let actionSummary = null;
-        // Always use server-side authoritative private info. Do not trust model-returned info fields.
-        let info = roleInfoForRecap(room, p.id, role);
-        try {
-          const res = await decideRecap({ room, player: p, role, roleFactions: ROLE_FACTIONS });
-          recap = res || {};
-          review = recap.review || null;
-          actionSummary = recap.actionSummary || null;
-        } catch (e) {
-          suspicious = [];
-          reason = '';
-        }
-        // normalize role-specific recap
-        const rolesInGame = new Set(room.roles || []);
-        if (role === '梅林') {
-          // Merlin's known evil seats are deterministic; never let the model overwrite them.
-          const evilSeats = Array.isArray(info.seats) ? info.seats.slice().sort((a, b) => a - b) : [];
-          const guessMordredSeat = rolesInGame.has('莫德雷德') ? recap.merlin?.guessMordredSeat || null : null;
-          reason = recap.merlin?.reason || reason;
-          // sanitize: do not label known evil as good in reason
-          if (reason && evilSeats && evilSeats.length) {
-            for (const seat of evilSeats) {
-              const seatStr = String(seat);
-              reason = reason.replace(new RegExp(`${seatStr}是(忠臣|派西维尔|梅林)`, 'g'), `${seatStr}是坏人`);
-              reason = reason.replace(new RegExp(`认为${seatStr}是(忠臣|派西维尔|梅林)`, 'g'), `认为${seatStr}是坏人`);
-            }
-          }
-          if (hasMerlinReasonContradiction(reason, evilSeats)) {
-            reason = '';
-          }
-          if (!reason) {
-            reason = buildMerlinReason(room, evilSeats, guessMordredSeat);
-          }
-          suspicious = evilSeats;
-          recaps.push({
-            id: p.id,
-            nickname: p.nickname,
-            seat: seatNumber(room, p.id),
-            role,
-            think: recap.think || '',
-            knownInfo: recap.knownInfo || '',
-            info,
-            merlin: {
-              evilSeats,
-              guessMordredSeat,
-            },
-            reason,
-            review,
-            actionSummary,
-          });
-          recordAiRecapMemory(room, p, role, { review });
-          Promise.resolve(storeRecapInsights(room, p, role, recap, ROLE_FACTIONS)).catch(() => {});
-          return;
-        }
-        if (role === '派西维尔') {
-          const thumbs = info.seats || [];
-          let guessMerlinSeat = recap.percival?.guessMerlinSeat;
-          let guessMorganaSeat = recap.percival?.guessMorganaSeat;
-          if (!thumbs.includes(guessMerlinSeat)) guessMerlinSeat = thumbs[0] || null;
-          if (!thumbs.includes(guessMorganaSeat)) guessMorganaSeat = thumbs[1] || null;
-          if (guessMerlinSeat === guessMorganaSeat && thumbs.length >= 2) {
-            guessMorganaSeat = thumbs.find((s) => s !== guessMerlinSeat) || guessMorganaSeat;
-          }
-          reason = recap.percival?.reason || reason;
-          recaps.push({
-            id: p.id,
-            nickname: p.nickname,
-            seat: seatNumber(room, p.id),
-            role,
-            think: recap.think || '',
-            knownInfo: recap.knownInfo || '',
-            info,
-            percival: {
-              guessMerlinSeat,
-              guessMorganaSeat,
-            },
-            reason: reason || '结合拇指位发言强度与投票倾向做判断。',
-            review,
-            actionSummary,
-          });
-          recordAiRecapMemory(room, p, role, { review });
-          Promise.resolve(storeRecapInsights(room, p, role, recap, ROLE_FACTIONS)).catch(() => {});
-          return;
-        }
-        if (ROLE_FACTIONS[role] === 'evil') {
-          const teammateRoles = Array.isArray(recap.evil?.teammateRoles) ? recap.evil.teammateRoles : [];
-          const knownEvilSeats = info.seats || [];
-          const normalizedTeammates = knownEvilSeats.map((seat) => {
-            const found = teammateRoles.find((t) => t && t.seat === seat);
-            return { seat, role: found && found.role ? found.role : '同伴' };
-          });
-          const guessMerlinSeat = recap.evil?.guessMerlinSeat || null;
-          reason = recap.evil?.reason || reason;
-          recaps.push({
-            id: p.id,
-            nickname: p.nickname,
-            seat: seatNumber(room, p.id),
-            role,
-            think: recap.think || '',
-            knownInfo: recap.knownInfo || '',
-            info,
-            evil: {
-              teammateRoles: normalizedTeammates,
-              guessMerlinSeat,
-            },
-            reason: reason || '结合好人站队与投票表现，推测梅林位置。',
-            review,
-            actionSummary,
-          });
-          recordAiRecapMemory(room, p, role, { review });
-          Promise.resolve(storeRecapInsights(room, p, role, recap, ROLE_FACTIONS)).catch(() => {});
-          return;
-        }
-        // loyal / other good
-        suspicious = Array.isArray(recap.loyal?.suspicious) ? recap.loyal.suspicious : suspicious;
-        reason = recap.loyal?.reason || reason;
-        recaps.push({
-          id: p.id,
-          nickname: p.nickname,
-          seat: seatNumber(room, p.id),
-          role,
-          think: recap.think || '',
-          knownInfo: recap.knownInfo || '',
-          info,
-          loyal: {
-            suspicious,
-            guessMerlinSeat: recap.loyal?.guessMerlinSeat || null,
-          },
-          reason: reason || '依据任务失败与投票对立判断可疑位。',
-          review,
-          actionSummary,
-        });
-        recordAiRecapMemory(room, p, role, { review });
-        Promise.resolve(storeRecapInsights(room, p, role, recap, ROLE_FACTIONS)).catch(() => {});
-      })().catch((e) => console.error('[generateRecaps] task error:', e && e.message))
-    );
-  }
-  Promise.allSettled(tasks).then(() => {
-    if (!room || !room.game || room.game !== gameRef) return;
-    room.game.recap = recaps.sort((a, b) => (a.seat || 0) - (b.seat || 0));
-    updateGameHistoryPayload(room);
-    broadcastRoom(room);
-    // 异步后处理：发言质量评分 + 战略规律提炼（不影响主流程）
-    evaluateGameSpeeches(room, ROLE_FACTIONS).catch(() => {});
-    extractStrategyPatterns(room, ROLE_FACTIONS).catch(() => {});
-  });
-}
-
-function autoAssassinateIfAi(room) {
-  const assassinId = room.game.assassinId;
-  if (!assassinId) return;
-  const assassin = room.players.get(assassinId);
-  if (!assassin || !assassin.isAI) return;
-  if (room.phase !== 'assassination') return;
-  (async () => {
-    let targetId = null;
-    let reasoning = '';
-    await gatherEvilIntel(room);
-    const candidateSeats = room.seats
-      .map((id, idx) => ({ id, seat: idx + 1 }))
-      .filter((s) => s.id && ROLE_FACTIONS[room.game.assignments[s.id]] !== 'evil' && s.id !== assassinId)
-      .map((s) => s.seat);
-    room.game.assassinationCandidates = candidateSeats;
-    try {
-      const res = await decideAssassinate({
-        room,
-        assassinId,
-        role: room.game.assignments[assassinId],
-        roleFactions: ROLE_FACTIONS,
-        evilIntel: room.game.evilIntel || [],
-      });
-      if (res && res.targetSeat) {
-        const idx = res.targetSeat - 1;
-        targetId = room.seats[idx] || null;
-        reasoning = res.reasoning || '';
-      }
-    } catch (e) {
-      targetId = null;
-    }
-    if (targetId) {
-      const targetRole = room.game.assignments[targetId];
-      const targetFaction = ROLE_FACTIONS[targetRole] || 'good';
-      if (targetFaction === 'evil' || targetId === assassinId) {
-        targetId = null;
-      }
-    }
-    if (!targetId) {
-      const fallback = aiAssassinate(room, assassinId);
-      targetId = fallback.targetId;
-      reasoning = reasoning || fallback.reasoning;
-    }
-    revealEvilToAll(room);
-    resolveAssassination(room, targetId, assassinId, reasoning);
-    if (reasoning) {
-      room.messages.push({ ts: now(), from: assassin.nickname, text: `我的推理：${reasoning}` });
-    }
-  })();
-}
-
-function aiAssassinate(room, assassinId) {
-  const allIds = room.seats.filter((id) => id);
-  const voteHistory = room.game.voteHistory || [];
-  const missionHistory = room.game.missionHistory || [];
-  const scores = {};
-  for (const id of allIds) scores[id] = 0;
-  // heuristic: people who pushed teams that succeeded are more likely Merlin
-  for (const v of voteHistory) {
-    if (v.approved) {
-      v.team.forEach((id) => (scores[id] += 1));
-    }
-  }
-  for (const m of missionHistory) {
-    if (m.success) {
-      m.team.forEach((id) => (scores[id] += 1));
-    }
-  }
-  const candidates = allIds.filter((id) => {
-    if (id === assassinId) return false;
-    const role = room.game.assignments[id];
-    const faction = ROLE_FACTIONS[role] || 'good';
-    return faction !== 'evil';
-  });
-  candidates.sort((a, b) => scores[b] - scores[a]);
-  const targetId = candidates[0] || allIds.find((id) => id !== assassinId);
-  const targetName = room.players.get(targetId)?.nickname || '玩家';
-  const reasoning = `根据投票与任务记录，${targetName}在多次成功队伍中出现，嫌疑最高。`;
-  return { targetId, reasoning };
-}
-
-function extractVoteClaim(text) {
-  if (!text) return null;
-  const t = text.replace(/\s+/g, '');
-  const approveWords = ['支持', '赞成', '通过', '同意', '上车', '过', '保', '稳过'];
-  const rejectWords = ['反对', '否决', '不通过', '别过', '不行', '不赞成', '不行', '拒绝'];
-  const hasApprove = approveWords.some((w) => t.includes(w));
-  const hasReject = rejectWords.some((w) => t.includes(w));
-  if (hasApprove && !hasReject) return 'approve';
-  if (hasReject && !hasApprove) return 'reject';
-  return null;
-}
-
-function hasMerlinReasonContradiction(reason, evilSeats) {
-  if (!reason || !Array.isArray(evilSeats) || evilSeats.length === 0) return false;
-  const goodLabels = ['忠臣', '派西维尔', '梅林', '好人'];
-  for (const seat of evilSeats) {
-    const seatStr = String(seat);
-    for (const label of goodLabels) {
-      if (reason.includes(`${seatStr}是${label}`) || reason.includes(`认为${seatStr}是${label}`)) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-function buildMerlinReason(room, evilSeats, guessMordredSeat) {
-  const failRounds = (room.game.missionHistory || []).filter((m) => !m.success).map((m) => m.round);
-  const failText = failRounds.length > 0 ? `失败轮次为第${failRounds.join('、')}轮。` : '本局任务失败信息较少。';
-  const evilText = evilSeats && evilSeats.length > 0 ? evilSeats.join('，') : '暂无';
-  const mordredText = guessMordredSeat ? `结合隐藏位判断，莫德雷德倾向是${guessMordredSeat}号。` : '本局无莫德雷德或暂无明确莫德雷德判断。';
-  return `我已知坏人位为${evilText}，这些位是我判断队伍安全性的核心。${failText}${mordredText}我的发言会尽量隐蔽地保护梅林信息，不会公开点名已知坏人。`;
-}
-
-function roleInfoForRecap(room, playerId, role) {
-  const info = { role, seats: [] };
-  if (!room || !room.game) return info;
-  if (role === '派西维尔') {
-    const seats = [];
-    for (const id of Object.keys(room.game.assignments)) {
-      const r = room.game.assignments[id];
-      if (r === '梅林' || r === '莫甘娜') seats.push(seatNumber(room, id));
-    }
-    info.seats = seats.filter(Boolean).sort((a, b) => a - b);
-    return info;
-  }
-  if (role === '梅林') {
-    const seats = [];
-    for (const id of Object.keys(room.game.assignments)) {
-      const r = room.game.assignments[id];
-      if (ROLE_FACTIONS[r] === 'evil' && r !== '莫德雷德') seats.push(seatNumber(room, id));
-    }
-    info.seats = seats.filter(Boolean).sort((a, b) => a - b);
-    return info;
-  }
-  if (ROLE_FACTIONS[role] === 'evil') {
-    if (role === '奥伯伦') {
-      info.seats = [];
-      return info;
-    }
-    const seats = [];
-    for (const id of Object.keys(room.game.assignments)) {
-      const r = room.game.assignments[id];
-      if (ROLE_FACTIONS[r] === 'evil' && r !== '奥伯伦' && id !== playerId) seats.push(seatNumber(room, id));
-    }
-    info.seats = seats.filter(Boolean).sort((a, b) => a - b);
-    return info;
-  }
-  return info;
-}
-
-function speak(client, payload) {
-  const room = rooms.get(client.roomCode);
-  if (!room || !room.game) return;
-  if (!room.started) return error(client, 'NOT_STARTED');
-  if (room.phase !== 'speaking') return error(client, 'NOT_SPEAKING_PHASE');
-  if (!canSpeak(room, client.id)) return error(client, 'NOT_YOUR_TURN');
-  const text = (payload && payload.text ? String(payload.text) : '').trim();
-  if (!text) return error(client, 'EMPTY_SPEAK');
-  const safe = text.slice(0, 120);
-  const player = room.players.get(client.id);
-  if (!player) return;
-  pushSpeak(room, player.nickname, safe, player.id);
-  room.messages.push({ ts: now(), from: player.nickname, text: safe });
-  room.game.spokeThisRound[client.id] = true;
-  broadcastRoom(room);
-}
-
-function endSpeak(client) {
-  const room = rooms.get(client.roomCode);
-  if (!room || !room.game) return;
-  if (!room.started) return error(client, 'NOT_STARTED');
-  if (room.phase !== 'speaking') return error(client, 'NOT_SPEAKING_PHASE');
-  const currentId = room.seats[room.speaking.index];
-  if (currentId !== client.id) return error(client, 'NOT_YOUR_TURN');
-  room.game.spokeThisRound[client.id] = true;
-  if (room.game.leaderId === client.id) {
-    room.phase = 'voting';
-    room.game.votes = {};
-    room.messages.push({ ts: now(), from: '系统', text: '队长发言结束，进入投票' });
-    broadcastRoom(room);
-    autoVoteIfAi(room);
-    return;
-  }
-  advanceSpeaker(room);
-}
-
-function canSpeak(room, playerId) {
-  if (!room || !room.game || room.phase !== 'speaking') return false;
-  const currentSeatId = room.seats[room.speaking.index];
-  if (currentSeatId !== playerId) return false;
-  return !room.game.spokeThisRound[playerId];
-}
-
-
-function autoProposeIfAiLeader(room) {
-  const leader = room.players.get(room.game.leaderId);
-  if (!leader || !leader.isAI) return;
-  const teamSize = getTeamSize(room);
-  (async () => {
-    let teamSeats = [];
-    try {
-      teamSeats = await decideTeam({
-        room,
-        leaderId: leader.id,
-        role: room.game.assignments[leader.id],
-        roleFactions: ROLE_FACTIONS,
-        teamSize,
-      });
-    } catch (e) {
-      teamSeats = [];
-    }
-    if (!teamSeats || teamSeats.length === 0) {
-      teamSeats = aiPickTeam(room, leader, teamSize)
-        .map((id) => seatNumber(room, id))
-        .filter(Boolean);
-    }
-    const idMap = {};
-    room.seats.forEach((id, idx) => (idMap[idx + 1] = id));
-    const teamIds = teamSeats.map((s) => idMap[s]).filter(Boolean);
-    const unique = [];
-    for (const id of teamIds) {
-      if (!unique.includes(id)) unique.push(id);
-    }
-    // AI leaders should generally include themselves in the team unless a later rule rewrites the proposal.
-    if (!unique.includes(leader.id)) {
-      unique.unshift(leader.id);
-    }
-    // Hard logic correction: if mission history proves some seats are evil, good AI leaders should avoid reusing them when alternatives exist.
-    const leaderRole = room.game.assignments[leader.id];
-    const leaderFaction = ROLE_FACTIONS[leaderRole] || 'good';
-    if (leaderFaction === 'good') {
-      const hard = inferMissionHardKnowledge(room);
-      const knownEvil = new Set(hard.knownEvilIds);
-      const aiKnowledge = inferAiKnowledge(room, leader.id, leaderRole);
-      for (const id of aiKnowledge.knownEvilIds) knownEvil.add(id);
-      const hasKnownEvil = unique.some((id) => knownEvil.has(id));
-      const cleanPoolCount = room.seats.filter((id) => id && !knownEvil.has(id)).length;
-      if (hasKnownEvil && cleanPoolCount >= teamSize) {
-        unique.length = 0;
-      }
-    }
-    while (unique.length < teamSize) {
-      const fallback = aiPickTeam(room, leader, teamSize);
-      for (const id of fallback) {
-        if (!unique.includes(id)) unique.push(id);
-        if (unique.length === teamSize) break;
-      }
-      if (fallback.length === 0) break;
-    }
-    if (!unique.includes(leader.id)) {
-      if (unique.length >= teamSize) {
-        const replaceIdx = unique.findIndex((id) => id !== leader.id);
-        if (replaceIdx >= 0) unique[replaceIdx] = leader.id;
-      } else {
-        unique.unshift(leader.id);
-      }
-    }
-    room.game.team = unique.slice(0, teamSize);
-    room.phase = 'speaking';
-    room.game.votes = {};
-    room.game.spokeThisRound = {};
-    setSpeakingStart(room);
-    room.messages.push({ ts: now(), from: '系统', text: `AI队长已确定队伍（${room.game.team.length}人），进入发言阶段` });
-    broadcastRoom(room);
-    scheduleSpeakTimeout(room);
-    autoSpeakIfAi(room);
-  })();
-}
-
-function aiPickTeam(room, leader, teamSize) {
-  const allIds = room.seats.filter((id) => id);
-  const role = room.game.assignments[leader.id];
-  const faction = ROLE_FACTIONS[role] || 'good';
-  const hard = inferMissionHardKnowledge(room);
-  const suspicion = inferPublicSuspicion(room);
-  const aiKnowledge = inferAiKnowledge(room, leader.id, role);
-  let candidates = allIds.slice();
-  if (faction === 'evil') {
-    const evilIds = allIds.filter((id) => ROLE_FACTIONS[room.game.assignments[id]] === 'evil' && id !== leader.id);
-    const needFail = getFailRequirement(room);
-    const desiredEvilCount = needFail >= 2 ? Math.min(2, teamSize) : 1;
-    const team = [leader.id];
-    const evilPool = shuffle(evilIds);
-    while (
-      evilPool.length > 0 &&
-      team.length < teamSize &&
-      team.filter((id) => ROLE_FACTIONS[room.game.assignments[id]] === 'evil').length < desiredEvilCount
-    ) {
-      team.push(evilPool.shift());
-    }
-    candidates = candidates.filter((id) => !team.includes(id));
-    while (team.length < teamSize) {
-      team.push(candidates.splice(Math.floor(Math.random() * candidates.length), 1)[0]);
-    }
-    return team;
-  }
-  // good: include self + random
-  const knownGood = new Set(hard.knownGoodIds);
-  const knownEvil = new Set([...hard.knownEvilIds, ...aiKnowledge.knownEvilIds]);
-  if (role === '梅林') {
-    for (const id of getMerlinKnownEvilIds(room, leader.id)) knownEvil.add(id);
-  }
-  const team = [leader.id];
-  candidates = candidates.filter((id) => id !== leader.id);
-
-  // Prefer known-good seats from failed/success missions' hard deductions.
-  const knownGoodCandidates = candidates.filter((id) => knownGood.has(id));
-  for (const id of knownGoodCandidates) {
-    if (team.length >= teamSize) break;
-    if (!team.includes(id)) team.push(id);
-  }
-
-  // Avoid mission-proven evil seats if enough alternatives exist.
-  let cleanCandidates = candidates
-    .filter((id) => !team.includes(id) && !knownEvil.has(id))
-    .sort((a, b) => (suspicion[a] || 0) - (suspicion[b] || 0));
-  while (team.length < teamSize && cleanCandidates.length > 0) {
-    team.push(cleanCandidates.splice(Math.floor(Math.random() * cleanCandidates.length), 1)[0]);
-  }
-
-  // Only if still insufficient, backfill from unknown/known-evil remaining pool.
-  candidates = candidates
-    .filter((id) => !team.includes(id))
-    .sort((a, b) => (suspicion[a] || 0) - (suspicion[b] || 0));
-  while (team.length < teamSize) {
-    team.push(candidates.splice(Math.floor(Math.random() * candidates.length), 1)[0]);
-  }
-  return team;
-}
-
-function getMerlinKnownEvilIds(room, merlinId) {
-  const ids = [];
-  if (!room || !room.game || !room.game.assignments) return ids;
-  for (const id of room.seats || []) {
-    if (!id || id === merlinId) continue;
-    const role = room.game.assignments[id];
-    if (ROLE_FACTIONS[role] === 'evil' && role !== '莫德雷德') ids.push(id);
-  }
-  return ids;
-}
-
-function inferAiKnowledge(room, playerId, role) {
-  const knownEvil = new Set();
-  const knownGood = new Set();
-  if (!room || !room.game) return { knownEvilIds: [], knownGoodIds: [] };
-
-  // Priority 1: private role information
-  for (const id of knownEvilIds(room, playerId, role)) knownEvil.add(id);
-
-  // Priority 2: mission hard logic (self-involved, self alignment known)
-  const faction = ROLE_FACTIONS[role] || 'good';
-  if (faction === 'good') {
-    const missions = room.game.missionHistory || [];
-    for (const m of missions) {
-      if (!m || !Array.isArray(m.team) || !m.team.includes(playerId)) continue;
-      const fails = Number(m.fails || 0);
-      if (m.team.length === 2 && fails === 1) {
-        const other = m.team.find((id) => id !== playerId);
-        if (other) knownEvil.add(other);
-      }
-      if (m.team.length >= 2 && fails === m.team.length - 1) {
-        for (const id of m.team) if (id !== playerId) knownEvil.add(id);
-      }
-    }
-  }
-
-  // Priority 3: speech self-claim / self-expose
-  for (const id of inferSpeechClaimedEvilIds(room)) {
-    if (id && id !== playerId) knownEvil.add(id);
-  }
-
-  return { knownEvilIds: Array.from(knownEvil), knownGoodIds: Array.from(knownGood) };
-}
-
-function inferSpeechClaimedEvilIds(room) {
-  const out = new Set();
-  if (!room || !room.game || !room.game.speakHistory) return out;
-  for (const arr of Object.values(room.game.speakHistory)) {
-    if (!Array.isArray(arr)) continue;
-    for (const item of arr) {
-      if (!item || !item.playerId || !item.text) continue;
-      if (isSelfEvilClaim(item.text)) out.add(item.playerId);
-    }
-  }
-  return out;
-}
-
-function isSelfEvilClaim(text) {
-  const t = String(text || '').replace(/\s+/g, '');
-  if (!t) return false;
-  if (/我(是|就是)(坏人|反派|狼|匪)/.test(t)) return true;
-  if (/我(是|就是)(刺客|莫甘娜|莫德雷德|奥伯伦|爪牙)/.test(t)) return true;
-  return false;
-}
-
-function inferMissionHardKnowledge(room) {
-  const knownGoodIds = new Set();
-  const knownEvilIds = new Set();
-  const missions = (room && room.game && room.game.missionHistory) || [];
-  for (const m of missions) {
-    if (!m || !Array.isArray(m.team) || m.team.length === 0) continue;
-    const fails = Number(m.fails || 0);
-    // Important: fails===0 does NOT prove all-good in Avalon because evil may choose to hide.
-    // Strict logic we can safely use publicly:
-    if (fails === m.team.length) {
-      for (const id of m.team) knownEvilIds.add(id);
-    }
-  }
-  return { knownGoodIds: Array.from(knownGoodIds), knownEvilIds: Array.from(knownEvilIds) };
-}
-
-function inferPublicSuspicion(room) {
-  const scores = {};
-  const allIds = (room && room.seats ? room.seats.filter(Boolean) : []) || [];
-  for (const id of allIds) scores[id] = 0;
-  const missions = (room && room.game && room.game.missionHistory) || [];
-  const votes = (room && room.game && room.game.voteHistory) || [];
-
-  // Mission evidence dominates: failed missions increase suspicion, successful missions reduce suspicion.
-  for (const m of missions) {
-    if (!m || !Array.isArray(m.team) || m.team.length === 0) continue;
-    if (m.success) {
-      for (const id of m.team) scores[id] = (scores[id] || 0) - 0.55;
-    } else {
-      const weight = 1 + (Number(m.fails || 0) / Math.max(1, m.team.length));
-      for (const id of m.team) scores[id] = (scores[id] || 0) + weight;
-    }
-  }
-
-  // Voting evidence: supporting failed approved teams is suspicious; rejecting clean successful teams is mildly suspicious.
-  for (const v of votes) {
-    if (!v || !v.approved || !v.votes) continue;
-    const mission = missions.find((m) => m.round === v.round);
-    if (!mission) continue;
-    for (const [pid, approve] of Object.entries(v.votes)) {
-      if (!(pid in scores)) scores[pid] = 0;
-      if (mission.success && !approve) scores[pid] += 0.35;
-      if (!mission.success && approve) scores[pid] += 0.45;
-      if (!mission.success && !approve) scores[pid] -= 0.15;
-    }
-  }
-  return scores;
-}
-
-function autoVoteIfAi(room) {
-  if (!room || !room.game || room.phase !== 'voting') return;
-  const gameRef = room.game;
-  const allIds = room.seats.filter((id) => id);
-  const aiIds = allIds.filter((id) => { const p = room.players.get(id); return p && p.isAI; });
-  if (!aiIds.length) return;
-
-  for (const id of aiIds) {
-    decideVote({
-      room, playerId: id,
-      role: room.game.assignments[id],
-      roleFactions: ROLE_FACTIONS,
-    }).then((approve) => {
-      if (!room.game || room.game !== gameRef || room.phase !== 'voting') return;
-      room.game.votes[id] = normalizeAiVote(room, id, approve);
-      if (allIds.every((pid) => room.game.votes[pid] !== undefined)) resolveVote(room);
-      broadcastRoom(room);
-    }).catch(() => {});
-  }
-}
-
-function aiVote(room, player) {
-  const role = room.game.assignments[player.id];
-  const faction = ROLE_FACTIONS[role] || 'good';
-  const rejectsInRow = room.game.rejectsInRow || 0;
-  const hard = inferMissionHardKnowledge(room);
-  const suspicion = inferPublicSuspicion(room);
-  const aiKnowledge = inferAiKnowledge(room, player.id, role);
-  const knownEvil = new Set([...hard.knownEvilIds, ...aiKnowledge.knownEvilIds]);
-  const knownGood = new Set(hard.knownGoodIds);
-  if (rejectsInRow >= 3) {
-    return true;
-  }
-  if (faction === 'evil') {
-    const hasEvil = room.game.team.some((id) => ROLE_FACTIONS[room.game.assignments[id]] === 'evil');
-    if (hasEvil) {
-      if (rejectsInRow < 3 && Math.random() < 0.35) return false;
-      return true;
-    }
-    // avoid auto-loss on 5th reject
-    if (rejectsInRow >= 4) return true;
-    return Math.random() < 0.35;
-  }
-  // good: strongly use mission/vote evidence
-  if (room.game.team.some((id) => knownEvil.has(id))) return false;
-  if (room.game.team.every((id) => knownGood.has(id))) return true;
-  const teamRisk = room.game.team.reduce((s, id) => s + Math.max(0, suspicion[id] || 0), 0);
-  if (teamRisk >= Math.max(2.2, room.game.team.length * 0.95)) return false;
-  if (teamRisk <= 0.3) return true;
-  // fallback: approve if self in team or small randomness
-  if (room.game.team.includes(player.id)) return true;
-  if (rejectsInRow >= 2) return true;
-  return Math.random() < 0.5;
-}
-
-function knownEvilIds(room, playerId, role) {
-  const ids = [];
-  if (role === '梅林') {
-    for (const id of Object.keys(room.game.assignments)) {
-      const r = room.game.assignments[id];
-      if (ROLE_FACTIONS[r] === 'evil' && r !== '莫德雷德') ids.push(id);
-    }
-    return ids;
-  }
-  if (ROLE_FACTIONS[role] === 'evil' && role !== '奥伯伦') {
-    for (const id of Object.keys(room.game.assignments)) {
-      const r = room.game.assignments[id];
-      if (ROLE_FACTIONS[r] === 'evil' && r !== '奥伯伦' && id !== playerId) ids.push(id);
-    }
-    return ids;
-  }
-  return ids;
-}
-
-function normalizeAiVote(room, playerId, approve) {
-  const role = room.game.assignments[playerId];
-  const faction = ROLE_FACTIONS[role] || 'good';
-  const team = room.game.team || [];
-  const rejectsInRow = room.game.rejectsInRow || 0;
-  const aiKnowledge = inferAiKnowledge(room, playerId, role);
-  const knownEvil = aiKnowledge.knownEvilIds;
-  const teamHasKnownEvil = team.some((id) => knownEvil.includes(id));
-  const hard = inferMissionHardKnowledge(room);
-  const hardKnownEvil = new Set(hard.knownEvilIds);
-  const hardKnownGood = new Set(hard.knownGoodIds);
-  const suspicion = inferPublicSuspicion(room);
-  if (faction === 'good') {
-    if (team.some((id) => hardKnownEvil.has(id))) {
-      if (rejectsInRow >= 4) return true; // avoid 5th reject auto-loss edge case
-      return false;
-    }
-    if (team.length > 0 && team.every((id) => hardKnownGood.has(id))) return true;
-    const teamRisk = team.reduce((s, id) => s + Math.max(0, suspicion[id] || 0), 0);
-    if (teamRisk >= Math.max(2.2, team.length * 0.95) && rejectsInRow < 4) return false;
-    if (teamRisk <= 0.3) return true;
-    // Merlin may approve risky team to hide, with small probability
-    if (teamHasKnownEvil) {
-      if (role === '梅林' && Math.random() < 0.25) return true;
-      return false;
-    }
-    // prefer approve if self in team, but still allow strategy
-    if (team.includes(playerId) && Math.random() < 0.8) return true;
-    if (rejectsInRow >= 3) return true;
-    return approve;
-  }
-  // evil
-  const teamHasEvil = team.some((id) => ROLE_FACTIONS[room.game.assignments[id]] === 'evil');
-  if (teamHasEvil) {
-    if (rejectsInRow < 4 && Math.random() < 0.28) return false;
-    return true;
-  }
-  if (rejectsInRow >= 4) return true;
-  return approve;
-}
-
-function autoMissionIfAi(room) {
-  if (!room || !room.game || room.phase !== 'mission') return;
-  const gameRef = room.game;
-  const teamIds = room.game.team;
-  const aiIds = teamIds.filter((id) => { const p = room.players.get(id); return p && p.isAI; });
-  if (!aiIds.length) return;
-
-  for (const id of aiIds) {
-    decideMission({
-      room, playerId: id,
-      role: room.game.assignments[id],
-      roleFactions: ROLE_FACTIONS,
-    }).then((fail) => {
-      if (!room.game || room.game !== gameRef || room.phase !== 'mission') return;
-      room.game.missionVotes[id] = normalizeAiMission(room, id, fail);
-      if (teamIds.every((tid) => room.game.missionVotes[tid] !== undefined)) resolveMission(room);
-      broadcastRoom(room);
-    }).catch(() => {});
-  }
-}
-
-function aiMissionVote(room, player) {
-  const role = room.game.assignments[player.id];
-  const faction = ROLE_FACTIONS[role] || 'good';
-  if (faction === 'good') return false;
-  const needFail = getFailRequirement(room);
-  const evilOnTeam = room.game.team.filter((id) => ROLE_FACTIONS[room.game.assignments[id]] === 'evil').length;
-  if (needFail === 1 && evilOnTeam >= 2) return Math.random() < 0.42;
-  return Math.random() < 0.78;
-}
-
-function normalizeAiMission(room, playerId, fail) {
-  const role = room.game.assignments[playerId];
-  const faction = ROLE_FACTIONS[role] || 'good';
-  if (faction === 'good') return false;
-  const successCount = room.game.missionHistory.filter((m) => m.success).length;
-  const failCount = room.game.missionHistory.filter((m) => !m.success).length;
-  const needFail = getFailRequirement(room);
-  const evilOnTeam = room.game.team.filter((id) => ROLE_FACTIONS[room.game.assignments[id]] === 'evil').length;
-  // if failing can win soon, prioritize fail
-  if (failCount >= 2) return true;
-  // if evil can swing by failing, prefer fail
-  if (needFail === 1) {
-    if (evilOnTeam >= 2) return Math.random() < 0.58 ? true : fail;
-    return Math.random() < 0.9 ? true : fail;
-  }
-  // needFail == 2: be cautious if only one evil on team
-  if (needFail === 2 && evilOnTeam <= 1) return Math.random() < 0.45 ? true : fail;
-  return Math.random() < 0.75 ? true : fail;
-}
-
-function revealAll(room) {
-  const revealed = {};
-  for (const p of room.players.values()) {
-    revealed[p.id] = room.game.assignments[p.id];
-  }
-  room.game.revealedRoles = revealed;
-}
-
-function pushSpeak(room, from, text, playerId) {
-  if (!room.game || !room.game.speakHistory) return;
-  const key = `${room.game.round}-${room.game.attempt || 1}`;
-  if (!room.game.speakHistory[key]) room.game.speakHistory[key] = [];
-  room.game.speakHistory[key].push({ ts: now(), from, text, playerId: playerId || null });
-  if (playerId) {
-    if (!room.game.claims[key]) room.game.claims[key] = {};
-    const claim = extractVoteClaim(text);
-    if (claim) room.game.claims[key][playerId] = claim;
-  }
-}
-
-
-function revealEvilToEvil(room) {
-  const evilIds = Object.keys(room.game.assignments).filter((id) => ROLE_FACTIONS[room.game.assignments[id]] === 'evil');
-  const reveal = {};
-  for (const id of evilIds) {
-    reveal[id] = room.game.assignments[id];
-  }
-  for (const id of evilIds) {
-    const player = room.players.get(id);
-    if (!player || player.isAI) continue;
-    send({ id }, { type: 'EVIL_REVEAL', data: reveal });
-  }
-}
-
-function revealEvilToAll(room) {
-  const evilIds = Object.keys(room.game.assignments).filter((id) => ROLE_FACTIONS[room.game.assignments[id]] === 'evil');
-  const reveal = {};
-  for (const id of evilIds) {
-    reveal[id] = room.game.assignments[id];
-  }
-  room.game.revealedEvil = reveal;
-}
-
-function gatherEvilIntel(room) {
-  if (!room || !room.game) return Promise.resolve();
-  const evilIds = Object.keys(room.game.assignments).filter((id) => ROLE_FACTIONS[room.game.assignments[id]] === 'evil');
-  const tasks = evilIds.map(async (id) => {
-    const player = room.players.get(id);
-    if (!player || !player.isAI) return null;
-    const role = room.game.assignments[id];
-    try {
-      const res = await decideEvilIntel({ room, player, role, roleFactions: ROLE_FACTIONS });
-      return {
-        id,
-        nickname: player.nickname,
-        seat: seatNumber(room, id),
-        guessMerlinSeat: res && res.guessMerlinSeat ? res.guessMerlinSeat : null,
-        reason: res && res.reason ? res.reason : '',
-      };
-    } catch (e) {
-      return null;
-    }
-  });
-  return Promise.all(tasks).then((arr) => {
-    room.game.evilIntel = (arr || []).filter(Boolean).sort((a, b) => (a.seat || 0) - (b.seat || 0));
-    broadcastRoom(room);
-  });
-}
 
 const clients = new Map();
 let clientSeq = 1;
+
+// 注入 game.js 所需的运行时状态与 AI 函数
+initGame({
+  rooms,
+  clients,
+  fillAiPlayers, autoSeatHumans,
+  autoProposeIfAiLeader, autoplayPropose, autoplaySkipSpeak,
+  autoSpeakIfAi, autoVoteIfAi, autoplayVote,
+  autoMissionIfAi, autoplayMission,
+  autoAssassinateIfAi, scheduleAutoAssassinIfAutoplay,
+  generateRecaps, gatherEvilIntel,
+  revealAll, revealEvilToAll,
+});
+
+// 注入 presence.js 所需的副作用函数
+initPresence({
+  rooms,
+  clients,
+  deleteActiveRoom,
+  persistActiveRoom,
+  restoreActiveRoomForPhone,
+  leaveRoom,
+  broadcastRoom,
+  send,
+  resolveMission,
+});
+
+// 注入 room.js 所需的副作用函数
+initRoom({
+  rooms,
+  clients,
+  broadcastRoom,
+  send,
+  error,
+  ok,
+  removePlayerById,
+  takeOverRoomPlayer,
+});
+
+// 注入 game-ai.js 所需的副作用函数
+initGameAi({
+  broadcastRoom,
+  advanceSpeaker,
+  scheduleSpeakTimeout,
+  setSpeakingStart,
+  resolveVote,
+  resolveMission,
+  resolveAssassination,
+  resolveLadyOfLake,
+  getLadyOfLakeEligibleTargets,
+  send,
+  updateGameHistoryPayload,
+});
 
 wss.on('connection', (ws) => {
   const client = { id: `u${clientSeq++}`, roomCode: null };
@@ -3569,6 +658,9 @@ wss.on('connection', (ws) => {
         break;
       case 'KICK_PLAYER':
         kickPlayer(client, payload || {});
+        break;
+      case 'VOICE_DONE':
+        resolveVoiceDone(client.roomCode);
         break;
       case 'SET_PROFILE':
         setProfile(client, payload || {});
@@ -3627,9 +719,6 @@ wss.on('connection', (ws) => {
       case 'ASSASSINATE':
         assassinate(client, payload || {});
         break;
-      case 'END_PLAYER_VOTE':
-        endPlayerVote(client, payload || {});
-        break;
       case 'SPEAK':
         speak(client, payload || {});
         break;
@@ -3642,9 +731,56 @@ wss.on('connection', (ws) => {
       case 'GET_GAME_HISTORY_DETAIL':
         fetchHistoryDetail(client, payload || {});
         break;
+      case 'REQUEST_HISTORY_RECAP':
+        generateHistoryRecap(client, payload || {});
+        break;
       case 'GET_ROLE_STATS':
         fetchRoleStats(client);
         break;
+      case 'AUTOPLAY_ON': {
+        const apRoom = rooms.get(client.roomCode);
+        const apPlayer = apRoom && apRoom.players.get(client.id);
+        if (!apPlayer || apPlayer.isAI) break;
+        apPlayer.autoplay = true;
+        if (payload && payload.assassinTarget && apRoom.game && apRoom.game.assassinId === client.id) {
+          apPlayer.autoplayTarget = payload.assassinTarget;
+        }
+        if (apPlayer.phone) {
+          const t = autoplayTimers.get(apPlayer.phone);
+          if (t) { clearTimeout(t); autoplayTimers.delete(apPlayer.phone); }
+        }
+        apRoom.messages.push({ ts: now(), from: '系统', text: `${apPlayer.nickname} 已开启托管` });
+        broadcastRoom(apRoom);
+        triggerAutoplayActions(apRoom);
+        break;
+      }
+      case 'AUTOPLAY_OFF': {
+        const apRoom = rooms.get(client.roomCode);
+        const apPlayer = apRoom && apRoom.players.get(client.id);
+        if (!apPlayer || apPlayer.isAI) break;
+        apPlayer.autoplay = false;
+        const act = assassinAutoplayTimers.get(apRoom.code);
+        if (act) { clearTimeout(act); assassinAutoplayTimers.delete(apRoom.code); }
+        apRoom.messages.push({ ts: now(), from: '系统', text: `${apPlayer.nickname} 已关闭托管` });
+        broadcastRoom(apRoom);
+        break;
+      }
+      case 'REQUEST_RECAP': {
+        const rrRoom = rooms.get(client.roomCode);
+        if (!rrRoom || !rrRoom.game || rrRoom.phase !== 'end') break;
+        if (rrRoom.game.recapGenerating) {
+          // 已在生成中，告知客户端当前状态
+          send(client, { type: 'ROOM_STATE', room: publicRoom(rrRoom) });
+          break;
+        }
+        // 允许重试：上次生成过但结果为空（LLM 失败），重置 recapGenerated
+        if (rrRoom.game.recapGenerated && !(rrRoom.game.recap || []).length) {
+          rrRoom.game.recapGenerated = false;
+        }
+        if (rrRoom.game.recapGenerated) break; // 已有结果，不重复生成
+        generateRecaps(rrRoom);
+        break;
+      }
       default:
         break;
     }
@@ -3656,6 +792,10 @@ wss.on('connection', (ws) => {
     }
     if (clients.get(client.id) === ws) {
       clients.delete(client.id);
+    }
+    // 清理 phoneClients，避免旧 clientId 残留
+    if (client.userPhone && phoneClients.get(client.userPhone) === client.id) {
+      phoneClients.delete(client.userPhone);
     }
   });
 });
