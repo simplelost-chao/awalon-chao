@@ -11,7 +11,7 @@
   </review-page>
   <!-- ===== 审核模式结束 ===== -->
 
-  <image class="bg" wx:if="{{!reviewMode}}" src="{{room && !atHome ? 'https://www.awalon.top/mp-assets/in-game-bg-optimized.jpg' : 'https://www.awalon.top/mp-assets/home-bg-optimized.jpg'}}" mode="aspectFill" />
+  <image class="bg" wx:if="{{!reviewMode}}" src="{{room && !atHome ? skinInGameBg : skinHomeBg}}" mode="aspectFill" />
   <view class="mask" wx:if="{{!reviewMode}}"></view>
 
   <!-- 首页 nav -->

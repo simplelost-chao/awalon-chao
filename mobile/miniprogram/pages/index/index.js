@@ -5,6 +5,7 @@ const {
   missionMetaByCount, forcedRoundForRoom, isCurrentForcedAttempt,
   getLatestMissionRecord, buildMissionPills, formatRecapEntry,
 } = require("../../utils/gameUtils");
+const { getSkin } = require("../../skins");
 const app = getApp();
 const NOTE_LABELS_GOOD = ["梅林", "派西", "偏好", "正义", "排水"];
 const NOTE_LABELS_EVIL = ["偏坏", "狼人", "奥伯伦"];
@@ -72,6 +73,8 @@ Page({
     navTotalHeight: 64,
     wsUrl: "",
     skinId: 'dark-gold',
+    skinHomeBg: 'https://www.awalon.top/mp-assets/home-bg-optimized.jpg',
+    skinInGameBg: 'https://www.awalon.top/mp-assets/in-game-bg-optimized.jpg',
     clientId: "",
     authToken: "",
     loggedIn: false,
@@ -215,9 +218,12 @@ Page({
     const wsUrl = app.globalData.wsUrl;
     const nav = app.globalData.nav || {};
     // Load skin and register change listener
-    this.setData({ skinId: app.globalData.skinId || 'dark-gold' });
+    const _skinId = app.globalData.skinId || 'dark-gold';
+    const _skin = getSkin(_skinId);
+    this.setData({ skinId: _skinId, skinHomeBg: _skin.homeBg, skinInGameBg: _skin.inGameBg });
     app.globalData.skinChangeListener = (newSkinId) => {
-      this.setData({ skinId: newSkinId });
+      const skin = getSkin(newSkinId);
+      this.setData({ skinId: newSkinId, skinHomeBg: skin.homeBg, skinInGameBg: skin.inGameBg });
     };
     // 审核模式：已加载则直接用，否则等回调
     if (app.globalData.reviewMode) {
