@@ -1,5 +1,5 @@
 <view class="rv-page">
-  <image class="rv-bg" src="https://www.awalon.top/mp-assets/home-bg-optimized.jpg" mode="aspectFill" />
+  <image class="rv-bg" src="{{skinHomeBg}}" mode="aspectFill" />
   <view class="rv-mask"></view>
   <view class="rv-nav" style="padding-top:{{statusBarHeight}}px; height:{{navBarHeight}}px;">
     <text class="rv-nav-logo">Avalon</text>

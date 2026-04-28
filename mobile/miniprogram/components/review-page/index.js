@@ -1,3 +1,18 @@
+const { getSkin } = require("../../skins");
+const VOICE_URL = 'https://voice.zhuchao.life/synthesize_cached';
+const PERSONA_QUIPS = [
+  { key: '莫甘娜的微笑',   text: '逻辑上讲，真正有问题的人，是不需要反复解释的。' },
+  { key: '梅林看穿你了',   text: '某些人心里应该很清楚。懂的人自然懂。' },
+  { key: '奥伯龙没朋友',   text: '我有自己的判断。不必解释。' },
+  { key: '我知道你知道',   text: '你知道我在看你。信息战，从现在开始。' },
+  { key: '背刺有理',       text: '对不起，但逻辑不允许我继续护着你。' },
+  { key: '沉默即答案',     text: '懂的自然懂。' },
+  { key: '任务失败不是我', text: '反正不是我，证据我都列出来了，大家好好想想！' },
+  { key: '帕西法尔的直觉', text: '直觉告诉我有问题，说不清楚，大家信我一次嘛。' },
+  { key: '三号位可疑',     text: '我锁定了，不管你们怎么想，我就认准这个人。' },
+  { key: '不解释',         text: '随便。爱信不信。' },
+];
+
 const CARD_DATA = [
   {
     role: '梅林',
@@ -65,14 +80,59 @@ Component({
   },
 
   data: {
+    skinHomeBg: 'https://www.awalon.top/mp-assets/home-bg-optimized.jpg',
     currentCard: null,
     cardVisible: false,
+    voicePlaying: false,
+  },
+
+  lifetimes: {
+    attached() {
+      const app = getApp();
+      const skinId = (app.globalData && app.globalData.skinId) || 'dark-gold';
+      this.setData({ skinHomeBg: getSkin(skinId).homeBg });
+    },
   },
 
   methods: {
     onDrawCard() {
       const shuffled = CARD_DATA.slice().sort(() => Math.random() - 0.5);
       this.setData({ currentCard: shuffled[0], cardVisible: true });
+    },
+
+    onPlayVoice() {
+      if (this.data.voicePlaying) return;
+      this.setData({ voicePlaying: true });
+      const quip = PERSONA_QUIPS[Math.floor(Math.random() * PERSONA_QUIPS.length)];
+      const done = () => this.setData({ voicePlaying: false });
+      wx.request({
+        url: VOICE_URL,
+        method: 'POST',
+        header: { 'Content-Type': 'application/json' },
+        data: { tts_text: quip.text, contact_id: quip.key },
+        responseType: 'arraybuffer',
+        timeout: 60000,
+        success: (res) => {
+          if (res.statusCode !== 200) { done(); return; }
+          const fs = wx.getFileSystemManager();
+          const tmpPath = `${wx.env.USER_DATA_PATH}/rv_voice_${Date.now()}.wav`;
+          fs.writeFile({
+            filePath: tmpPath,
+            data: res.data,
+            success: () => {
+              if (this._rvAudio) { try { this._rvAudio.destroy(); } catch (e) {} }
+              const ctx = wx.createInnerAudioContext();
+              ctx.src = tmpPath;
+              ctx.onEnded(() => { ctx.destroy(); fs.unlink({ filePath: tmpPath, fail: () => {} }); done(); });
+              ctx.onError(() => { ctx.destroy(); fs.unlink({ filePath: tmpPath, fail: () => {} }); done(); });
+              ctx.play();
+              this._rvAudio = ctx;
+            },
+            fail: () => done(),
+          });
+        },
+        fail: () => done(),
+      });
     },
 
     onEnterTouchStart() {
