@@ -2,6 +2,7 @@
 <html lang="zh">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <title>Avalon · Skin Studio</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -11,7 +12,7 @@
   --good:#4ade80;--evil:#f87171;--accent:#d9b36b;
   --r:10px;--font:-apple-system,'PingFang SC',sans-serif;--mono:'JetBrains Mono',monospace;
 }
-body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
 
 /* ─── Header ─── */
 .hd{height:52px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;padding:0 16px;flex-shrink:0}
@@ -55,9 +56,17 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 .asset-file{font-size:10px;color:var(--sub);font-family:var(--mono)}
 .asset-badge{width:8px;height:8px;border-radius:50%;background:var(--good);flex-shrink:0;margin-left:auto;box-shadow:0 0 5px var(--good)}
 .tag-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+/* ─── Atlas tree ─── */
+.atlas-toggle{width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:4px;font-size:11px;color:var(--sub);flex-shrink:0;cursor:pointer}
+.atlas-toggle:hover{background:rgba(255,255,255,.08);color:var(--text)}
+.slot-children{border-left:2px solid rgba(255,255,255,.06);margin-left:20px}
+.slot-item{padding:5px 10px}
+.slot-thumb{width:32px;height:32px;border-radius:4px}
+.slot-item .asset-name{font-size:11px}
+.slot-item .asset-file{font-size:9px}
 
 /* ─── Prompt Panel ─── */
-.panel-prompt{display:flex;flex-direction:column;overflow:hidden;padding:0}
+.panel-prompt{display:flex;flex-direction:column;overflow:hidden;padding:0;background:var(--surface)}
 .pp-top{padding:16px 20px 12px;border-bottom:1px solid var(--border);flex-shrink:0}
 .pp-asset-label{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .pp-asset-name{font-size:15px;font-weight:700}
@@ -87,8 +96,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 .panel-preview{border-left:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;align-items:center;padding:16px 12px;overflow-y:auto}
 .panel-preview::-webkit-scrollbar{width:4px}
 .panel-preview::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08)}
-.preview-tabs{display:flex;gap:2px;margin-bottom:12px;background:var(--card);padding:3px;border-radius:8px;border:1px solid var(--border);overflow:hidden}
-.preview-tab{padding:5px 8px;border-radius:5px;font-size:10px;cursor:pointer;color:var(--sub);transition:all .15s;white-space:nowrap;flex:1;text-align:center}
+.preview-tabs{display:flex;gap:2px;margin-bottom:12px;background:var(--card);padding:3px;border-radius:8px;border:1px solid var(--border);overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+.preview-tabs::-webkit-scrollbar{display:none}
+.preview-tab{padding:5px 8px;border-radius:5px;font-size:10px;cursor:pointer;color:var(--sub);transition:all .15s;white-space:nowrap;flex:0 0 auto;text-align:center}
 .preview-tab.active{background:rgba(255,255,255,.08);color:var(--text)}
 
 /* ─── Phone Frame ─── */
@@ -126,11 +136,12 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 .ph-cnt{flex:1;padding:2px 0;border-radius:3px;font-size:6px;text-align:center;background:rgba(0,0,0,0.16);border:1px solid rgba(255,255,255,0.12);color:var(--aw-subtext,#aeb6c7);white-space:nowrap}
 .ph-cnt.on{background:rgba(216,176,107,0.18);border-color:rgba(216,176,107,0.55);color:var(--aw-accent,#d9b36b);font-weight:700}
 
-/* Role chips */
+/* Role chips — vertical card layout matching real UI */
 .ph-chips{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:5px}
-.ph-rchip{padding:2px 5px;border-radius:999px;font-size:6.5px;display:flex;align-items:center;gap:2px;line-height:1.3}
-.good-chip{background:rgba(7,50,120,0.35);border:1px solid rgba(78,158,255,0.45);color:#bfdbfe}
-.evil-chip{background:rgba(110,12,12,0.50);border:1px solid rgba(220,60,60,0.45);color:#fca5a5}
+.ph-rchip{padding:4px 5px;border-radius:4px;font-size:6px;display:flex;flex-direction:column;align-items:center;gap:1px;min-width:20px;line-height:1.3}
+.ph-rchip-img{width:15px;height:15px;border-radius:3px;object-fit:cover;flex-shrink:0}
+.good-chip{background:rgba(30,90,200,0.12);border:1px solid rgba(80,160,255,0.55);color:#d3daea}
+.evil-chip{background:rgba(160,35,45,0.12);border:1px solid rgba(220,80,90,0.55);color:#d3daea}
 .spec-chip{background:rgba(88,28,135,0.35);border:1px solid rgba(192,132,252,0.4);color:#d4aaff}
 
 /* CTA buttons */
@@ -200,6 +211,34 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 .ph-panel-hd{display:flex;align-items:center;justify-content:space-between;padding:5px 7px;border-left:2px solid #d8b06b;background:linear-gradient(90deg,rgba(216,176,107,0.16),transparent);border-bottom:1px solid rgba(216,176,107,0.10);margin-bottom:0;border-radius:0}
 .ph-panel-title{color:#f2e5c8;font-size:8px;font-weight:700;letter-spacing:1px}
 .ph-panel-sub{color:rgba(216,176,107,0.5);font-size:6.5px}
+
+/* ── Mission vote table ── */
+.ph-mission-table{width:100%;border-radius:5px;overflow:hidden;border:1px solid var(--aw-panel-border,rgba(255,255,255,.08))}
+.ph-mt-head{display:grid;background:rgba(255,255,255,0.04);padding:3px 5px;font-size:5.5px;font-weight:700;color:var(--aw-subtext,#aeb6c7);letter-spacing:0.5px}
+.ph-mt-row{display:grid;padding:3.5px 5px;border-top:1px solid rgba(255,255,255,0.05);align-items:center}
+.ph-mt-row:nth-child(even){background:rgba(255,255,255,0.02)}
+.ph-mt-round{font-size:5.5px;font-weight:700;color:var(--aw-subtext,#aeb6c7)}
+.ph-mt-team{display:flex;gap:2px;align-items:center}
+.ph-mt-av{width:11px;height:11px;border-radius:50%;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:6px;border:1px solid rgba(255,255,255,.12)}
+.ph-mt-votes{display:flex;gap:2px;align-items:center}
+.ph-mt-v{font-size:6px;font-weight:700;min-width:10px;text-align:center}
+.ph-mt-v.y{color:#50dc8c}.ph-mt-v.n{color:#ff6b6b}
+.ph-mt-result{font-size:6px;font-weight:700;padding:1px 4px;border-radius:999px}
+.ph-mt-result.ok{background:rgba(80,220,140,0.15);color:#50dc8c;border:1px solid rgba(80,220,140,0.3)}
+.ph-mt-result.ng{background:rgba(220,80,80,0.15);color:#ff6b6b;border:1px solid rgba(220,80,80,0.3)}
+
+/* ── AI speak / chat section ── */
+.ph-speak-list{display:flex;flex-direction:column;gap:4px}
+.ph-speak-row{display:flex;align-items:flex-start;gap:4px}
+.ph-speak-row.me{flex-direction:row-reverse}
+.ph-speak-av{width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-size:8px;flex-shrink:0;border:1px solid rgba(255,255,255,.12)}
+.ph-speak-wrap{display:flex;flex-direction:column;gap:1px;max-width:76%}
+.ph-speak-wrap.me{align-items:flex-end}
+.ph-speak-nm{font-size:5px;color:var(--aw-subtext,#aeb6c7);margin:0 2px}
+.ph-speak-bubble{padding:4px 6px;border-radius:5px;font-size:6px;line-height:1.55;color:var(--aw-text,#eef1f7)}
+.ph-speak-bubble.other{background:var(--aw-input-bg,rgba(255,255,255,.07));border:1px solid var(--aw-input-border,rgba(255,255,255,.12))}
+.ph-speak-bubble.me{background:linear-gradient(135deg,rgba(216,176,107,0.22),rgba(216,176,107,0.12));border:1px solid rgba(216,176,107,0.28);color:#f2e5c8}
+.ph-speak-bubble.ai{background:rgba(78,158,255,0.10);border:1px solid rgba(78,158,255,0.22);color:#bfdbfe}
 
 /* ── Stats overview ── */
 .ph-ov-nums{display:flex;align-items:center;padding:8px 8px 6px}
@@ -287,10 +326,67 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 .ph-hc-bottom{display:flex;align-items:center;flex-wrap:wrap;gap:3px;margin-top:5px;padding-top:4px;border-top:1px solid rgba(255,255,255,0.055)}
 .ph-hc-medal{display:flex;align-items:center;gap:2px;padding:2px 5px;border-radius:999px;background:rgba(216,176,107,0.06);border:1px solid rgba(216,176,107,0.16)}
 .ph-hc-medal-txt{font-size:5.5px;color:rgba(216,176,107,0.72)}
+/* medals in role stats */
+.ph-medal-section{padding:6px 8px}
+.ph-medal-section+.ph-medal-section{border-top:1px solid rgba(255,255,255,0.06);padding-top:6px}
+.ph-medal-section-title{display:block;font-size:7px;font-weight:700;letter-spacing:1px;margin-bottom:5px;padding-left:4px}
+.ph-medal-section-title.good{color:#7ac7ff;border-left:2px solid rgba(78,158,255,0.6)}
+.ph-medal-section-title.evil{color:#ff8a8a;border-left:2px solid rgba(220,80,80,0.6)}
+.ph-medal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.ph-medal-card{display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 3px;border-radius:6px;background:rgba(216,176,107,0.05);border:1px solid rgba(216,176,107,0.14);text-align:center}
+.ph-medal-zero{opacity:0.32}
+.ph-medal-name{font-size:5.5px;color:rgba(242,229,200,0.75);line-height:1.3}
+.ph-medal-cnt{font-size:8px;font-weight:800;color:#d8b06b}
 .ph-hc-time{margin-left:auto;font-size:5.5px;color:rgba(200,210,230,0.3);white-space:nowrap}
 
 /* pagination */
 .ph-pagination{position:absolute;bottom:0;left:0;right:0;z-index:10;padding:8px 14px 12px;background:linear-gradient(0deg,rgba(6,8,15,1) 55%,rgba(6,8,15,.6) 80%,transparent);display:flex;align-items:center;justify-content:center;gap:12px}
+
+/* ── Bottom panel toggle (发言/投票/任务) ── */
+.ph-panel-toggle{display:flex;gap:1px;padding:3px 8px 3px;background:rgba(0,0,0,.25);border-bottom:1px solid rgba(255,255,255,.05);flex-shrink:0;z-index:10}
+.ph-toggle-btn{flex:1;text-align:center;padding:3px 0;font-size:6.5px;color:var(--aw-subtext,#aeb6c7);cursor:pointer;border-radius:3px;transition:all .1s}
+.ph-toggle-btn.active{background:rgba(255,255,255,.09);color:var(--aw-text,#eef1f7);font-weight:700}
+
+/* ── Speak panel (发言) ── */
+.ph-spk-card{position:relative;z-index:10;flex-shrink:0;background:var(--aw-panel,rgba(19,23,31,.82));border-top:1px solid var(--aw-nav-border,rgba(255,255,255,.08));padding:6px 8px 8px}
+.ph-spk-accent{height:2px;background:linear-gradient(90deg,transparent,var(--aw-accent,#d9b36b) 50%,transparent);margin:-6px -8px 5px}
+.ph-spk-top{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.ph-spk-av{width:22px;height:22px;border-radius:50%;background:rgba(12,10,8,.5);border:1px solid var(--aw-panel-border,rgba(255,255,255,.1));display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;position:relative}
+.ph-spk-dot{position:absolute;right:-2px;top:-2px;width:6px;height:6px;border-radius:50%;background:#4ade80;border:1px solid rgba(0,0,0,.5)}
+.ph-spk-info{flex:1;min-width:0}
+.ph-spk-nm{font-size:8px;font-weight:700;color:var(--aw-text,#eef1f7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ph-spk-hint{font-size:5.5px;color:var(--aw-subtext,#aeb6c7);margin-top:1px}
+.ph-spk-timer{font-size:9px;font-weight:700;color:var(--aw-accent,#d9b36b);flex-shrink:0}
+.ph-spk-track{height:3px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden;margin-bottom:5px}
+.ph-spk-fill{height:100%;border-radius:999px;background:var(--aw-accent,#d9b36b)}
+.ph-spk-divider{width:100%;height:1px;background:var(--aw-input-bg,rgba(255,255,255,.06));margin:4px 0}
+.ph-spk-input-row{display:flex;gap:3px;margin-bottom:3px}
+.ph-spk-input{flex:1;background:var(--aw-input-bg,rgba(255,255,255,.06));border:1px solid var(--aw-input-border,rgba(255,255,255,.14));border-radius:4px;color:var(--aw-subtext,#aeb6c7);font-size:7px;padding:3px 5px}
+.ph-spk-send{background:linear-gradient(180deg,#e4c281,#c89b52);color:#1a1510;border-radius:4px;padding:3px 8px;font-size:7px;font-weight:700;flex-shrink:0}
+.ph-spk-end{width:100%;background:transparent;border:1px solid var(--aw-btn-ghost-border,rgba(255,255,255,.2));color:var(--aw-btn-ghost-text,#eef1f7);border-radius:4px;padding:4px;font-size:7px;text-align:center}
+
+/* ── End-game reveal grid ── */
+.ph-reveal-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.ph-reveal-card{border-radius:5px;padding:5px 4px;display:flex;flex-direction:column;align-items:center;gap:2px;border:1px solid transparent;position:relative}
+.ph-reveal-card.good{background:rgba(7,50,120,.22);border-color:rgba(78,158,255,.32)}
+.ph-reveal-card.evil{background:rgba(100,15,15,.28);border-color:rgba(220,60,60,.32)}
+.ph-reveal-av{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;overflow:hidden;flex-shrink:0}
+.ph-reveal-av.good{border:1.5px solid rgba(78,158,255,.72);box-shadow:0 0 6px rgba(78,158,255,.28);background:rgba(7,40,110,.4)}
+.ph-reveal-av.evil{border:1.5px solid rgba(220,60,60,.72);box-shadow:0 0 6px rgba(200,40,40,.28);background:rgba(45,6,6,.8)}
+.ph-reveal-av img{width:100%;height:100%;object-fit:cover}
+.ph-reveal-nm{font-size:6.5px;font-weight:700;color:var(--aw-text,#eef1f7)}
+.ph-reveal-role{font-size:5.5px;padding:1px 5px;border-radius:999px}
+.ph-reveal-role.good{background:rgba(7,50,120,.4);border:1px solid rgba(78,158,255,.4);color:#bfdbfe}
+.ph-reveal-role.evil{background:rgba(100,15,15,.5);border:1px solid rgba(220,60,60,.4);color:#fca5a5}
+.ph-reveal-dead{position:absolute;top:2px;right:3px;font-size:7px;opacity:.65}
+/* Result banner */
+.ph-end-banner{border-radius:8px;padding:8px 10px;text-align:center;margin-bottom:4px}
+.ph-end-banner.good-win{background:linear-gradient(135deg,rgba(7,50,120,.55),rgba(12,14,30,.90));border:1px solid rgba(78,158,255,.42)}
+.ph-end-banner.evil-win{background:linear-gradient(135deg,rgba(100,15,15,.60),rgba(16,6,6,.92));border:1px solid rgba(220,60,60,.40)}
+.ph-end-title{font-size:14px;font-weight:900;letter-spacing:2px;line-height:1.2}
+.ph-end-banner.good-win .ph-end-title{color:#7ac7ff;text-shadow:0 0 16px rgba(78,158,255,.6)}
+.ph-end-banner.evil-win .ph-end-title{color:#ff8a8a;text-shadow:0 0 16px rgba(220,80,80,.6)}
+.ph-end-sub{font-size:6.5px;margin-top:3px;opacity:.55}
 .ph-pg-arrow{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,0.07);border:1px solid rgba(216,176,107,0.28);color:#d8b06b;font-size:12px;display:flex;align-items:center;justify-content:center}
 .ph-pg-indicator{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:22px}
 .ph-pg-num{font-size:11px;font-weight:700;line-height:1;color:#d8b06b}
@@ -299,6 +395,181 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
 ::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px}
+
+/* ─── Mobile ─── */
+.mob-nav{display:none}
+@media(max-width:768px){
+  body{overflow:hidden}
+  /* Header: compact, hide subtitle and key input */
+  .hd{padding:0 12px;gap:8px}
+  .hd-sep,.hd-key-wrap{display:none}
+  /* Show compact key button instead */
+  .hd-key-btn{display:flex!important}
+  /* Skin tabs: smaller */
+  .stab{padding:5px 10px}
+  .stab-id{display:none}
+  /* Workspace: show one panel at a time via flex column */
+  .workspace{
+    display:flex;flex-direction:column;
+    grid-template-columns:unset;
+    overflow:hidden;
+  }
+  .panel-assets,.panel-prompt,.panel-preview{
+    display:none;border:none;flex:1;min-height:0;overflow-y:auto;
+    padding-bottom:64px; /* clear fixed mob-nav */
+  }
+  .panel-assets.mob-active,.panel-prompt.mob-active,.panel-preview.mob-active{
+    display:flex;flex-direction:column;
+  }
+  /* Preview panel: full screen, tabs float as overlay, phone centered */
+  .panel-preview.mob-active{
+    padding:0;overflow:hidden;position:relative;
+    padding-bottom:56px;/* clear mob-nav */
+    align-items:center;justify-content:flex-start;
+    padding-top:36px;/* clear floating tab bar */
+  }
+  /* Preview tabs: float at top as translucent overlay */
+  .panel-preview .preview-tabs{
+    position:absolute;top:0;left:0;right:0;z-index:50;
+    width:100%;margin-bottom:0;border-radius:0;
+    border:none;border-bottom:1px solid rgba(255,255,255,.08);
+    background:rgba(9,11,17,.88);backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;
+    scrollbar-width:none;justify-content:flex-start;
+    padding:5px 8px;
+  }
+  .panel-preview .preview-tabs::-webkit-scrollbar{display:none}
+  .panel-preview .preview-tab{flex:0 0 auto;white-space:nowrap;font-size:11px;padding:5px 14px}
+  /* Phone frame: strip chrome, keep natural size for transform-scale */
+  /* pointer-events:none prevents scaled hit-area from blocking mob-nav taps */
+  .phone-frame{
+    border:none!important;border-radius:0!important;
+    box-shadow:none!important;
+    transform-origin:top center;
+    flex-shrink:0;
+    pointer-events:none;
+  }
+  /* Hide helper tip on mobile */
+  .panel-preview > div:last-child{display:none}
+  /* Prompt panel: block layout on mobile so overflow-y:auto actually scrolls */
+  .panel-prompt.mob-active{display:block;overflow-y:auto;overflow-x:hidden}
+  .pp-prompt-area{flex:none;overflow:visible;display:block;min-height:0}
+  .pp-prompt-wrap{flex:none;overflow:visible;display:block}
+  .pp-top{padding:12px 14px 10px}
+  .pp-actions{flex-wrap:wrap;padding:10px 14px;gap:8px}
+  .btn{padding:10px 14px;font-size:13px}
+  .pp-result-img{max-height:260px}
+  .pp-prompt{flex:none;width:100%;min-height:100px;height:auto;resize:vertical;box-sizing:border-box}
+  /* Bottom nav */
+  .mob-nav{
+    display:flex;
+    position:fixed;bottom:0;left:0;right:0;z-index:100;
+    height:56px;background:var(--surface);border-top:1px solid var(--border);
+  }
+  .mob-nav-btn{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:2px;cursor:pointer;color:var(--sub);font-size:10px;transition:color .15s;
+    -webkit-tap-highlight-color:transparent;border:none;background:none;
+  }
+  .mob-nav-btn.active{color:var(--accent)}
+  .mob-nav-icon{font-size:18px;line-height:1}
+  /* Atlas grid slightly larger cells on mobile */
+  #atlasGrid{gap:8px!important}
+  /* Stitch progress text */
+  #stitchProgress{padding:0 14px 8px}
+  /* Asset panel padding */
+  .panel-assets{padding-bottom:0}
+  /* Key modal */
+  .mob-key-modal{
+    display:none;position:fixed;inset:0;z-index:200;
+    background:rgba(0,0,0,.7);align-items:flex-end;
+  }
+  .mob-key-modal.open{display:flex}
+  .mob-key-sheet{
+    width:100%;background:var(--surface);border-radius:16px 16px 0 0;
+    padding:20px 16px 36px;border-top:1px solid var(--border);
+  }
+  .mob-key-sheet label{font-size:12px;color:var(--sub);display:block;margin-bottom:8px}
+  .mob-key-sheet input{
+    width:100%;background:var(--card);border:1px solid var(--border);
+    border-radius:8px;color:var(--text);font-size:14px;padding:10px 12px;
+    font-family:var(--mono);outline:none;
+  }
+  .mob-key-close{margin-top:12px;width:100%;padding:12px;border-radius:8px;
+    background:var(--accent);color:#1a1200;font-weight:700;font-size:14px;
+    border:none;cursor:pointer}
+}
+@media(min-width:769px){
+  .hd-key-btn{display:none!important}
+  .mob-key-modal{display:none!important}
+}
+
+/* ── Fullscreen preview overlay ──────────────────────────── */
+#fsOverlay{
+  display:none;position:fixed;inset:0;z-index:9999;
+  background:#000;flex-direction:column;align-items:center;
+  justify-content:space-between;overflow:hidden;
+  -webkit-tap-highlight-color:transparent;
+  user-select:none;-webkit-user-select:none;
+}
+#fsOverlay.open{display:flex}
+#fsClose{
+  position:absolute;top:max(env(safe-area-inset-top,0px),14px);right:16px;
+  width:36px;height:36px;border-radius:50%;z-index:10;
+  background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.22);
+  color:#fff;font-size:17px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  -webkit-tap-highlight-color:transparent;
+}
+#fsTabLabel{
+  position:absolute;top:max(env(safe-area-inset-top,0px),16px);left:16px;
+  color:rgba(255,255,255,.55);font-size:12px;z-index:10;
+  pointer-events:none;letter-spacing:.5px;
+}
+#fsContent{
+  flex:1;width:100%;display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
+}
+#fsPhoneScreen{
+  width:280px;height:560px;
+  transform-origin:center center;
+  position:relative;overflow:hidden;
+  display:flex;flex-direction:column;
+  flex-shrink:0;
+}
+#fsDots{
+  padding:10px 0 calc(10px + env(safe-area-inset-bottom,0px));
+  display:flex;gap:5px;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.fs-dot{
+  width:7px;height:7px;border-radius:4px;
+  background:rgba(255,255,255,.25);cursor:pointer;
+  transition:all .22s cubic-bezier(.4,0,.2,1);
+  -webkit-tap-highlight-color:transparent;
+}
+.fs-dot.active{width:24px;background:rgba(255,255,255,.9)}
+/* Tap-to-fullscreen zone on phone frame */
+#fsTapZone{
+  display:none;position:absolute;inset:0;z-index:10;cursor:pointer;
+}
+/* Fullscreen entry button (desktop) */
+#fsBtn{
+  display:none;margin-top:8px;padding:5px 12px;border-radius:6px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
+  color:var(--sub);font-size:11px;cursor:pointer;
+  transition:background .15s;
+}
+#fsBtn:hover{background:rgba(255,255,255,.1)}
+@media(max-width:768px){
+  #fsTapZone{display:block}
+  /* phone-frame: allow pointer events for tap-to-fullscreen */
+  .phone-frame{pointer-events:auto!important;cursor:pointer}
+}
+@media(min-width:769px){
+  #fsBtn{display:inline-flex;align-items:center;gap:4px}
+}
 </style>
 </head>
 <body>
@@ -313,6 +584,32 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
     <div class="hd-key-status" id="keyStatus"></div>
     <input class="hd-key" id="apiKey" type="password" placeholder="sk-..." oninput="onKeyInput()">
   </div>
+  <!-- Mobile: compact key button -->
+  <button class="hd-key-btn" style="display:none;margin-left:auto;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--sub);font-size:11px;padding:5px 10px;cursor:pointer" onclick="document.getElementById('mobKeyModal').classList.add('open')">
+    🔑 <span id="mobKeyDot" style="width:6px;height:6px;border-radius:50%;background:var(--muted);display:inline-block;vertical-align:middle"></span>
+  </button>
+</div>
+
+<!-- Mobile bottom nav -->
+<div class="mob-nav" id="mobNav">
+  <button class="mob-nav-btn active" id="mobTabAssets" onclick="switchMobilePanel('assets')">
+    <span class="mob-nav-icon">🗂️</span>素材
+  </button>
+  <button class="mob-nav-btn" id="mobTabPrompt" onclick="switchMobilePanel('prompt')">
+    <span class="mob-nav-icon">✏️</span>提示词
+  </button>
+  <button class="mob-nav-btn" id="mobTabPreview" onclick="switchMobilePanel('preview')">
+    <span class="mob-nav-icon">📱</span>预览
+  </button>
+</div>
+
+<!-- Mobile key input modal -->
+<div class="mob-key-modal" id="mobKeyModal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="mob-key-sheet">
+    <label>OpenAI API Key（用于生成图片）</label>
+    <input type="password" id="mobApiKey" placeholder="sk-..." oninput="onMobKeyInput()">
+    <button class="mob-key-close" onclick="document.getElementById('mobKeyModal').classList.remove('open')">完成</button>
+  </div>
 </div>
 
 <div class="skin-tabs" id="skinTabs"></div>
@@ -322,14 +619,23 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
   <div class="panel-assets" id="assetPanel"></div>
 
   <!-- ── Middle: Prompt + Generate ── -->
-  <div class="panel-prompt">
+  <div class="panel-prompt" id="promptPanel">
     <div class="pp-top">
-      <div class="pp-asset-label" id="ppLabel">
-        <span class="pp-asset-name" id="ppName">← 选择左侧素材</span>
-        <span class="pp-spec" id="ppSpec"></span>
+      <div class="pp-asset-label" id="ppLabel" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <div style="min-width:0">
+          <span class="pp-asset-name" id="ppName">← 选择左侧素材</span>
+          <span class="pp-spec" id="ppSpec"></span>
+        </div>
+        <button class="btn btn-ghost" style="flex-shrink:0;padding:6px 12px;font-size:12px" onclick="document.getElementById('uploadInput').click()">📤 上传图片</button>
       </div>
     </div>
-    <div class="pp-prompt-area">
+    <!-- Atlas grid view (shown when atlas parent selected) -->
+    <div id="atlasView" style="display:none;padding:12px 14px 4px">
+      <div id="atlasFullPreview"></div>
+      <div id="atlasGrid" style="display:grid;gap:6px"></div>
+    </div>
+    <!-- Normal prompt + result (shown for non-atlas or slot selection) -->
+    <div class="pp-prompt-area" id="promptArea">
       <textarea class="pp-prompt" id="ppPrompt" placeholder="点击左侧素材查看对应 Prompt…"></textarea>
       <div class="pp-loading" id="ppLoading">
         <div class="spinner"></div>
@@ -339,26 +645,47 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);height:100vh
     </div>
     <div class="pp-actions">
       <button class="btn btn-primary" id="btnGenerate" onclick="generate()" disabled>⚡ 生成图片</button>
+      <button class="btn btn-ghost" id="btnStitch" onclick="stitchFromCDN()" style="display:none">🧩 拼接现有素材</button>
       <button class="btn btn-ghost" id="btnCopy" onclick="copyPrompt()">复制 Prompt</button>
       <button class="btn btn-good" id="btnApply" onclick="applyToPreview()" style="display:none">✓ 应用到预览</button>
       <button class="btn btn-ghost" id="btnDownload" onclick="downloadResult()" style="display:none">↓ 下载</button>
     </div>
+    <input type="file" id="uploadInput" accept="image/*" style="display:none" onchange="handleUpload(this)">
+    <div id="stitchProgress" style="display:none;font-size:10px;color:var(--c-sub);margin-top:6px;text-align:center"></div>
   </div>
 
   <!-- ── Right: Phone Preview ── -->
-  <div class="panel-preview">
+  <div class="panel-preview" id="previewPanel">
     <div class="preview-tabs">
       <div class="preview-tab active" onclick="setPreviewTab('home',this)">主页</div>
       <div class="preview-tab" onclick="setPreviewTab('game',this)">游戏中</div>
       <div class="preview-tab" onclick="setPreviewTab('stats',this)">角色统计</div>
       <div class="preview-tab" onclick="setPreviewTab('history',this)">历史对战</div>
       <div class="preview-tab" onclick="setPreviewTab('role',this)">身份牌</div>
+      <div class="preview-tab" onclick="setPreviewTab('event',this)">任务结果</div>
+      <div class="preview-tab" onclick="setPreviewTab('endgame',this)">终局</div>
+      <div class="preview-tab" onclick="setPreviewTab('ui',this)">UI组件</div>
     </div>
-    <div class="phone-frame" id="phoneFrame">
-      <!-- Filled by JS -->
+    <div style="position:relative;flex-shrink:0">
+      <div class="phone-frame" id="phoneFrame" onclick="enterFullscreen()">
+        <!-- Filled by JS -->
+      </div>
+      <!-- tap zone overlay for mobile (absorbs the click, enters fullscreen) -->
+      <div id="fsTapZone" onclick="enterFullscreen()"></div>
     </div>
+    <button id="fsBtn" onclick="enterFullscreen()">⛶ 全屏预览</button>
     <div style="margin-top:10px;font-size:10px;color:var(--muted);text-align:center">生成图片后点「应用到预览」即时生效</div>
   </div>
+</div>
+
+<!-- ── Fullscreen preview overlay ── -->
+<div id="fsOverlay">
+  <span id="fsTabLabel"></span>
+  <button id="fsClose" onclick="exitFullscreen();event.stopPropagation()">✕</button>
+  <div id="fsContent">
+    <div id="fsPhoneScreen"></div>
+  </div>
+  <div id="fsDots"></div>
 </div>
 
 <script>
@@ -375,27 +702,82 @@ const SKINS = {
     vars:{'--aw-bg':'#f4f0ea','--aw-bg-2':'#e8e2d8','--aw-panel':'rgba(244,240,234,.88)','--aw-panel-border':'rgba(0,0,0,.12)','--aw-text':'#1a1612','--aw-subtext':'#6b5f54','--aw-accent':'#2d2520','--aw-accent-text':'#f4f0ea','--aw-nav-bg':'rgba(234,230,220,.92)','--aw-nav-border':'rgba(0,0,0,.08)','--aw-input-bg':'rgba(255,255,255,.70)','--aw-input-border':'rgba(0,0,0,.16)','--aw-btn-ghost-border':'rgba(0,0,0,.22)','--aw-btn-ghost-text':'#2d2520'}},
   'cyber-neon':   { name:'赛博霓虹',  chip:'linear-gradient(135deg,#0d0b16,#1a1040)', chipBorder:'rgba(232,121,249,.5)', isDark:true,
     vars:{'--aw-bg':'#0d0b16','--aw-bg-2':'#14102a','--aw-panel':'rgba(20,16,40,.88)','--aw-panel-border':'rgba(232,121,249,.15)','--aw-text':'#f0e8ff','--aw-subtext':'#b097d8','--aw-accent':'#e879f9','--aw-accent-text':'#1a0020','--aw-nav-bg':'rgba(10,6,22,.92)','--aw-nav-border':'rgba(232,121,249,.12)','--aw-input-bg':'rgba(255,255,255,.05)','--aw-input-border':'rgba(232,121,249,.20)','--aw-btn-ghost-border':'rgba(232,121,249,.30)','--aw-btn-ghost-text':'#f0e8ff'}},
-  'dark-dungeon': { name:'暗黑地牢',  chip:'linear-gradient(135deg,#0e0a07,#1a1008)', chipBorder:'rgba(200,144,42,.4)', isDark:true,
-    vars:{'--aw-bg':'#0e0a07','--aw-bg-2':'#1a1208','--aw-panel':'rgba(20,14,8,.90)','--aw-panel-border':'rgba(180,130,60,.15)','--aw-text':'#e8d8b8','--aw-subtext':'#9a8060','--aw-accent':'#c8902a','--aw-accent-text':'#0e0a07','--aw-nav-bg':'rgba(10,6,2,.92)','--aw-nav-border':'rgba(180,130,60,.10)','--aw-input-bg':'rgba(255,255,255,.04)','--aw-input-border':'rgba(180,130,60,.18)','--aw-btn-ghost-border':'rgba(200,144,42,.30)','--aw-btn-ghost-text':'#e8d8b8'}},
+  'dark-dungeon': { name:'邪恶铭刻',  chip:'linear-gradient(135deg,#0c0802,#180f04)', chipBorder:'rgba(185,138,52,.6)', isDark:true, frameUrl:'data:image/png;base64,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', textureUrl:'data:image/png;base64,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', dividerUrl:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAAQCAYAAAD506FJAAAB7ElEQVR4nO2aQUvCYBzGt0JCQkLKsJCQkBhhSUis0JAwRpiISEh02d0P4WEfwrvfoINdPHfQaye/QZc+Q4byDMafkrkN5tjzg/HbZHPv3vd9/r4DFYUQQgghhBBCSFywTG0UdhtIeGyFeG+yAeE39IMnFoH4wgIQ8/Av9lkE4gsLQESxTO0ziPDb+C0CftpDQi4AlqktDyxTU+FtOAHvwEl4F07Be3Aa3ocz8CGchY/hHHwC5+FTuACfwcuGWqZ2DhfhC7gEX8Fl+BrW4Vu4At/BNfgersMPsAE/wg24CbfgNtyBn+Eu/AK/2gNhmdpg3bB5Cd1f4fdbBLy0x/m8dj84+qUr+q0j+rUl+r0hxsUQ41YX41oT414R80IX86Ys5lVJzLuimJeamLcFMa/zYt7nRC6yIjcZkau0yF1K5DIpcpsQubZzrix3JoNqGsXA3tQVx2pA56oRvmdgbb/pfTSdYegPZz03YXPSH84uvYZfN9pf0/HbkfOz8fT7vT+cNV1+59rtkc87GVQXRefHsc1XHM8DOne+Yd8T1j25AojiCsDe3F7juHY0GVTn/21eVwDrtocrAGVzVgAkeizC5vaX3+1rwDq//EG2h4QHC0BMkUXAT/gJIRHEfh3g/wAIiSkMPyGEEEKIEjN+AeZ9z8yBbhP+AAAAAElFTkSuQmCC',
+    vars:{'--aw-bg':'#0c0802','--aw-bg-2':'#180f04','--aw-panel':'rgba(22,14,4,.97)','--aw-panel-border':'rgba(185,138,52,.65)','--aw-panel-border-width':'2px','--aw-panel-shadow':'0 0 0 1px rgba(185,138,52,.22),0 6px 28px rgba(0,0,0,.75),inset 0 0 48px rgba(0,0,0,.55)','--aw-text':'#edd9aa','--aw-subtext':'#9a7848','--aw-accent':'#c8902a','--aw-accent-text':'#0c0802','--aw-nav-bg':'rgba(8,5,1,.98)','--aw-nav-border':'rgba(185,138,52,.45)','--aw-input-bg':'rgba(255,220,140,.05)','--aw-input-border':'rgba(185,138,52,.35)','--aw-btn-ghost-border':'rgba(185,138,52,.55)','--aw-btn-ghost-text':'#edd9aa'}},
   'abyss':        { name:'深渊',      chip:'linear-gradient(135deg,#050507,#080818)', chipBorder:'rgba(64,96,192,.4)', isDark:true,
     vars:{'--aw-bg':'#050507','--aw-bg-2':'#0a0a12','--aw-panel':'rgba(8,8,16,.92)','--aw-panel-border':'rgba(100,120,180,.12)','--aw-text':'#d0d8f0','--aw-subtext':'#7080a8','--aw-accent':'#4060c0','--aw-accent-text':'#ffffff','--aw-nav-bg':'rgba(2,2,8,.95)','--aw-nav-border':'rgba(80,100,160,.10)','--aw-input-bg':'rgba(255,255,255,.04)','--aw-input-border':'rgba(80,100,160,.16)','--aw-btn-ghost-border':'rgba(80,100,160,.30)','--aw-btn-ghost-text':'#d0d8f0'}},
 };
 
 const CDN = 'https://www.awalon.top/mp-assets';
+
+// Atlas slot definitions — order matches row-major grid position
+const ROLE_SLOTS = [
+  {id:'merlin',       name:'梅林',         cdnFile:'role-split/merlin.png'},
+  {id:'percival',     name:'派西维尔',     cdnFile:'role-split/percival.png'},
+  {id:'arthur_loyal', name:'忠臣',         cdnFile:'role-split/arthur_loyal.png'},
+  {id:'lancelot_good',name:'兰斯洛特·正义',cdnFile:'role-split/lancelot_good.png'},
+  {id:'assassin',     name:'刺客',         cdnFile:'role-split/assassin.png'},
+  {id:'morgana',      name:'莫甘娜',       cdnFile:'role-split/morgana.png'},
+  {id:'mordred',      name:'莫德雷德',     cdnFile:'role-split/mordred.png'},
+  {id:'oberon',       name:'奥伯伦',       cdnFile:'role-split/oberon.png'},
+  {id:'minion',       name:'爪牙',         cdnFile:'role-split/minion.png'},
+  {id:'lancelot_evil',name:'兰斯洛特·邪恶',cdnFile:'role-split/lancelot_evil.png'},
+  null, null, null, null, null, null, // 4×4 grid = 16 cells, 6 empty
+];
+const MEDAL_SLOTS = [
+  // 正义 row 0
+  {id:'merlin_survivor',          name:'梅林是狗'},
+  {id:'good_blocker',             name:'挡刀侠'},
+  {id:'good_clean_captain',       name:'老司机'},
+  {id:'good_clean_trust',         name:'开眼玩家'},
+  // 正义 row 1
+  {id:'good_wolf_trust',          name:'钻狼窝'},
+  {id:'good_first_round_clean_captain', name:'盲人骑瞎马'},
+  {id:'good_three_evil_team_captain',   name:'错到极致也是对'},
+  {id:'good_three_fail_lose',     name:'不嘻嘻'},
+  // 正义 row 2
+  {id:'merlin_three_fail_lose',   name:'心累'},
+  {id:'percival_morgana_trust',   name:'晕头转向'},
+  {id:'good_comeback_win',        name:'开往春田花花'},
+  {id:'good_three_success_participant', name:'正义王'},
+  // 邪恶 row 3
+  {id:'assassin_early_hit_merlin',name:'刺客大师'},
+  {id:'morgana_percival_fail_master',   name:'洗头大师'},
+  {id:'oberon_no_fail_with_evil', name:'找到组织'},
+  {id:'oberon_double_fail_with_evil',   name:'撞车'},
+  // 邪恶 row 4
+  {id:'evil_protect_round_fail',  name:'保护轮也炸了'},
+  {id:'evil_three_fail_win',      name:'炸三塔'},
+  {id:'evil_hide_votes_master',   name:'藏票大师'},
+  {id:'evil_all_fail_non_protect',name:'毫无默契'},
+  // 邪恶 row 5
+  {id:'evil_first_three_fail_win',name:'车胎炸了'},
+  {id:'evil_three_fail_participant',name:'狼王'},
+  {id:'evil_no_fail_win',         name:'演技派'},
+  {id:'evil_fake_good_voter',     name:'我想当个正义'},
+];
+
 const ASSETS = [
-  {id:'home-bg',    name:'主页背景',  file:'home-bg.jpg',       cdnFile:'home-bg-optimized.jpg', cat:'背景图', tag:'bg',    spec:'1024×1792 · JPG', dalleSize:'1024x1792', tagColor:'#a78bfa'},
-  {id:'in-game-bg', name:'游戏背景',  file:'in-game-bg.jpg',    cdnFile:'in-game-bg-optimized.jpg', cat:'背景图', tag:'bg', spec:'1024×1792 · JPG', dalleSize:'1024x1792', tagColor:'#a78bfa'},
-  {id:'table',      name:'圆桌',      file:'table.png',          cdnFile:'table.png',             cat:'圆桌',   tag:'table', spec:'1024×1024 · PNG', dalleSize:'1024x1024', tagColor:'#fbbf24'},
-  {id:'merlin',     name:'梅林',      file:'role-split/merlin.png',      cat:'角色·正义', tag:'good',  spec:'1024×1024 · PNG', dalleSize:'1024x1024', tagColor:'#4ade80'},
-  {id:'percival',   name:'派西维尔',  file:'role-split/percival.png',    cat:'角色·正义', tag:'good',  spec:'1024×1024 · PNG', dalleSize:'1024x1024', tagColor:'#4ade80'},
-  {id:'arthur_loyal',name:'忠臣',     file:'role-split/arthur_loyal.png',cat:'角色·正义', tag:'good',  spec:'1024×1024 · PNG', dalleSize:'1024x1024', tagColor:'#4ade80'},
-  {id:'lancelot_good',name:'兰斯洛特·正义',file:'role-split/lancelot_good.png',cat:'角色·正义',tag:'good',spec:'1024×1024 · PNG',dalleSize:'1024x1024',tagColor:'#4ade80'},
-  {id:'assassin',   name:'刺客',      file:'role-split/assassin.png',    cat:'角色·邪恶', tag:'evil',  spec:'1024×1024 · PNG', dalleSize:'1024x1024', tagColor:'#f87171'},
-  {id:'morgana',    name:'莫甘娜',    file:'role-split/morgana.png',     cat:'角色·邪恶', tag:'evil',  spec:'1024×1024 · PNG', dalleSize:'1024x1024', tagColor:'#f87171'},
-  {id:'mordred',    name:'莫德雷德',  file:'role-split/mordred.png',     cat:'角色·邪恶', tag:'evil',  spec:'1024×1024 · PNG', dalleSize:'1024x1024', tagColor:'#f87171'},
-  {id:'oberon',     name:'奥伯伦',    file:'role-split/oberon.png',      cat:'角色·邪恶', tag:'evil',  spec:'1024×1024 · PNG', dalleSize:'1024x1024', tagColor:'#f87171'},
-  {id:'minion',     name:'爪牙',      file:'role-split/minion.png',      cat:'角色·邪恶', tag:'evil',  spec:'1024×1024 · PNG', dalleSize:'1024x1024', tagColor:'#f87171'},
-  {id:'lancelot_evil',name:'兰斯洛特·邪恶',file:'role-split/lancelot_evil.png',cat:'角色·邪恶',tag:'evil',spec:'1024×1024 · PNG',dalleSize:'1024x1024',tagColor:'#f87171'},
+  {id:'home-bg',      name:'主页背景',  file:'home-bg.jpg',      cdnFile:'home-bg-optimized.jpg', cat:'背景图', tag:'bg',     spec:'1024×1792 · JPG', dalleSize:'1024x1792', tagColor:'#a78bfa'},
+  {id:'in-game-bg',   name:'游戏背景',  file:'in-game-bg.jpg',   cdnFile:'in-game-bg-optimized.jpg', cat:'背景图', tag:'bg', spec:'1024×1792 · JPG', dalleSize:'1024x1792', tagColor:'#a78bfa'},
+  {id:'table',        name:'圆桌',      file:'table.png',         cdnFile:'table.png',             cat:'圆桌',    tag:'table',  spec:'1024×1024 · PNG', dalleSize:'1024x1024', tagColor:'#fbbf24'},
+  {id:'roles-atlas',  name:'角色图集',  file:'roles-atlas.png',   cat:'图集·角色', tag:'atlas',  spec:'1024×1024 · PNG (4×4 网格，含10角色，每格256×256正方形)', dalleSize:'1024x1024', tagColor:'#4ade80',
+   slots: ROLE_SLOTS,  grid:{cols:4, rows:4}},
+  {id:'medals-atlas', name:'勋章图集',  file:'medals-atlas.png',  cat:'图集·勋章', tag:'atlas',  spec:'1024×1024 · PNG (4×6 网格，含24勋章)', dalleSize:'1024x1024', tagColor:'#fbbf24',
+   slots: MEDAL_SLOTS, grid:{cols:4, rows:6}},
+  // ── 游戏事件 ──
+  {id:'quest-success', name:'任务成功图', file:'quest-success.png', cdnFile:'quest-success-420x300.png', cat:'游戏事件', tag:'event', spec:'420×300 · PNG', dalleSize:'1792x1024', tagColor:'#4ade80', cdnAlways:true},
+  {id:'quest-fail',    name:'任务失败图', file:'quest-fail.png',    cdnFile:'quest-failed-420x300.png',  cat:'游戏事件', tag:'event', spec:'420×300 · PNG', dalleSize:'1792x1024', tagColor:'#f87171', cdnAlways:true},
+  // ── UI 图标 ──
+  {id:'kill-icon',    name:'刺杀图标', file:'ui-icons/kill.png',             cdnFile:'ui-icons/kill.png',             cat:'UI图标', tag:'icon', spec:'图标 · PNG', dalleSize:'1024x1024', tagColor:'#f87171', cdnAlways:true},
+  {id:'history-icon', name:'历史图标', file:'ui-icons/history_scroll.png',   cdnFile:'ui-icons/history_scroll.png',   cat:'UI图标', tag:'icon', spec:'图标 · PNG', dalleSize:'1024x1024', tagColor:'#a78bfa', cdnAlways:true},
+  {id:'stats-icon',   name:'统计图标', file:'ui-icons/stats_bars.png',       cdnFile:'ui-icons/stats_bars.png',       cat:'UI图标', tag:'icon', spec:'图标 · PNG', dalleSize:'1024x1024', tagColor:'#fbbf24', cdnAlways:true},
+  // ── 皮肤纹理素材 (用于面板/按钮背景) ──
+  {id:'panel-frame',    name:'面板边框',   file:'ui/panel-frame.png',    cat:'UI纹理', tag:'texture', spec:'256×256 · PNG', dalleSize:'1024x1024', tagColor:'#c8902a'},
+  {id:'panel-texture',  name:'面板纹理',   file:'ui/panel-texture.png',  cat:'UI纹理', tag:'texture', spec:'512×512 · PNG (可平铺)', dalleSize:'1024x1024', tagColor:'#c8902a'},
+  {id:'btn-texture',    name:'按钮纹理',   file:'ui/btn-texture.png',    cat:'UI纹理', tag:'texture', spec:'512×128 · PNG', dalleSize:'1792x1024', tagColor:'#c8902a'},
+  {id:'divider',        name:'分隔线装饰', file:'ui/divider.png',        cat:'UI纹理', tag:'texture', spec:'512×32 · PNG', dalleSize:'1792x1024', tagColor:'#c8902a'},
+  {id:'font-title',     name:'标题字体',   file:'fonts/title.woff2',     cat:'字体',   tag:'font',    spec:'woff2 字体文件', dalleSize:null, tagColor:'#a78bfa', isFont:true},
 ];
 
 const PROMPTS = {
@@ -403,91 +785,77 @@ const PROMPTS = {
     'home-bg':`Dark fantasy medieval great hall at night, stone walls lit by golden candlelight, banners with sword emblems hanging from vaulted ceiling, misty atmospheric depth, warm amber and gold light against deep navy-charcoal stone, dramatic chiaroscuro shadows, Arthurian castle interior, oil painting style, cinematic composition, bottom third of image darker for UI overlay, no text, no UI elements, no people, vertical 9:16 portrait format`,
     'in-game-bg':`Dark Arthurian throne room at night, round table silhouette in center obscured by dramatic shadow, iron sconces with flickering candlelight on stone pillars, arched windows showing stormy sky, deep navy and charcoal tones with gold and amber highlights, tense mysterious atmosphere, dark fantasy oil painting style, bottom third darker, no text, no UI, no people, vertical 9:16 portrait format`,
     'table':`Top-down view of a medieval round table, dark oak wood texture with carved sword-and-shield emblem in center, gold inlay decorative border, worn Arthurian aesthetic, perfect circle viewed from directly above, transparent PNG background no floor, only the circular table surface, no chairs no figures, square 1:1 format`,
-    'merlin':`Dark fantasy portrait of Merlin, wise elderly wizard with long silver beard and piercing knowing eyes, wearing deep blue star-patterned robes, holding a glowing golden staff, candlelit stone castle background, dramatic chiaroscuro oil painting, warm gold and navy tones, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'percival':`Dark fantasy portrait of Percival, young noble knight in polished silver armor with golden trim, earnest loyal expression, holding a glowing holy grail, candlelit stone castle, dark fantasy oil painting, warm gold and silver tones, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'arthur_loyal':`Dark fantasy portrait of a loyal Knight of the Round Table, honest dependable face, silver chainmail and blue tunic with Arthur's crest, determined expression, candlelit stone background, dark fantasy oil painting, warm amber and navy, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'lancelot_good':`Dark fantasy portrait of Lancelot the greatest knight, powerful confident, handsome noble face, gleaming gold-trimmed armor with lion crest, heroic warm light, dark fantasy oil painting, gold and deep blue, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'assassin':`Dark fantasy portrait of an Assassin, dark hooded cloak, face half-shadowed with cold calculating eyes, concealed dagger glinting in candlelight, dark fantasy oil painting, deep shadow with minimal gold rim light, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'morgana':`Dark fantasy portrait of Morgana the dark sorceress, beautiful with long black hair and piercing violet eyes, elegant dark gown with purple magical aura, seductive and dangerous, dark fantasy oil painting, deep shadow with cold purple light, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'mordred':`Dark fantasy portrait of Mordred the treacherous knight, black full armor with red skull accents, scheming cold eyes behind a visor, the ultimate betrayer, dark fantasy oil painting, deep shadow with red and dark gold, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'oberon':`Dark fantasy portrait of Oberon the lone wolf, wild untamed, suspicious eyes that trust no one, rough worn traveling cloak, no faction markings, dim candlelight barely illuminating face, dark fantasy oil painting, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'minion':`Dark fantasy portrait of a shadowy Minion of Mordred, dark hooded figure face completely hidden except two glowing eyes, anonymous menacing, heavy dark cloak, dark fantasy oil painting, deep shadow minimal gold rim, half-body bust portrait face area in upper 50%, no text, PNG square`,
-    'lancelot_evil':`Dark fantasy portrait of Lancelot corrupted and fallen, cracked gold armor with dark energy seeping through, handsome face with inner conflict and torment, split warm gold and cold dark tones, dark fantasy oil painting, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'roles-atlas':`Dark fantasy Arthurian character portrait atlas, strict 4-column × 4-row grid on dark parchment, 1024×1024 image so each cell is exactly 256×256 SQUARE PIXELS, thin gold dividing lines between every cell. STRICT COMPOSITION RULE: every cell is a SQUARE BUST PORTRAIT — head and upper chest only, NO full body, face horizontally centered, eyes at vertical center, face filling 65–75% of the square cell. 10 characters + 6 empty cells. Row 1: [Merlin] wise elder wizard silver beard star-patterned robes; [Percival] noble knight polished silver armor gold trim; [Loyal Knight] honest dependable face silver chainmail; [Good Lancelot] powerful knight gleaming gold lion-crest armor. Row 2: [Assassin] dark hood cold calculating eyes; [Morgana] black hair violet eyes purple aura dark gown; [Mordred] black armor red skull scheming eyes; [Oberon] wild rough cloak suspicious eyes. Row 3: [Minion] hooded figure two glowing eyes centered in square; [Evil Lancelot] cracked gold armor tormented face; [empty dark parchment square]; [empty dark parchment square]. Row 4: [empty]; [empty]; [empty]; [empty]. CRITICAL: square cells, face fills the square, no full body, dark parchment background, warm gold oil painting style, no text no labels`,
+    'medals-atlas':`Dark fantasy icon reference sheet, strict 4-column × 6-row grid, thin gold border lines between every cell, 24 icon cells on dark parchment, medieval dark fantasy art style, gold and amber tones on deep shadow. Row 1: [Merlin camouflage — wizard behind a mask pretending to be neutral]; [Shield blocker — sword piercing protective shield]; [Captain helm — ship steering wheel steady hand]; [Open eye — divine all-seeing radiant eye]. Row 2: [Wolf trap — noble caught in wolf snare]; [Blind bullseye — blindfolded archer hitting center]; [Triple mistake — three misaligned X marks]; [Sad tears — dejected losing expression]. Row 3: [Exhausted wizard — facepalm head in hands]; [Dizzy eyes — spinning confused expression]; [Spring bus — small kindergarten bus happy]; [Justice crown — laurel wreath crown]. Row 4: [Dagger strike — assassin blade thrusting]; [Enchant wave — sorceress seduction gesture]; [Found pack — lone wolf finding group]; [Car collision — two vehicles crashing]. Row 5: [Dome shatter — protective shield breaking]; [Three towers exploding — sequential tower blasts]; [Shadow coins — hidden figure concealing tokens]; [Split paths — two figures walking apart]. Row 6: [Tire burst — car wheel exploding]; [Wolf king crown — ornate crown for wolf leader]; [White theater mask — blank expressionless face]; [Spy switch — undercover agent switching sides]. All icons symbolic flat-art style, warm amber gold on dark background, no text no labels, 1:1 square format`,
+    'quest-success':`Triumphant Arthurian quest victory banner, landscape 3:2 illustration, radiant golden light explosion from center, gleaming holy sword raised in glory surrounded by magical golden sparkles and divine light rays, Arthurian heraldic crest glowing, burning amber and gold palette against deep navy-charcoal, cinematic dark fantasy oil painting, dramatic God rays, no text no UI, landscape format`,
+    'quest-fail':`Ominous Arthurian quest failure banner, landscape 3:2, shattered sword and crushed shield in spreading darkness, dark red embers and falling ash drifting down, dying amber glow fading against deep charcoal, Arthurian dark fantasy oil painting style, somber and foreboding atmosphere, no text no UI, landscape format`,
+    'kill-icon':`Medieval ornate golden dagger icon, single elegant blade pointing downward, blood drop at tip, intricate gold crossguard and handle, dark fantasy engraving style on near-black background, isolated centered object, heraldic icon, square 1:1, no text`,
+    'history-icon':`Ancient medieval scroll icon, rolled parchment manuscript with gold wax seal and crimson ribbon, unfurled slightly to show aged script line-marks, Arthurian manuscript aesthetic on dark background, isolated centered icon, square 1:1, no text`,
+    'stats-icon':`Medieval battle ranking pillars icon, three ascending gold bar columns like tournament rank towers, tallest on right with crown accent, heraldic icon style on dark near-black background, isolated centered icon, square 1:1, no text`,
   },
   'celestial':{
     'home-bg':`Ethereal celestial palace floating above clouds, soft luminous light filtering through misty waterfalls, delicate white and azure architecture with glowing lanterns, fairy wisps drifting in gentle breeze, Studio Ghibli inspired watercolor style, light and airy pale blue white and soft gold palette, magical serene atmosphere, NO dark overlay keep entire image bright and luminous, no text no UI no people, vertical 9:16 portrait format`,
     'in-game-bg':`Enchanted celestial garden courtyard with circular stone platform, glowing fairy lights floating in gentle mist, cherry blossoms and silver-leafed trees, soft azure sky with luminous clouds, Studio Ghibli inspired watercolor style, pale blue and white tones with soft warm gold, entire image bright and open, no dark areas, no text no UI no people, vertical 9:16 portrait format`,
     'table':`Top-down view of an ethereal round table made of luminous white crystal or polished white marble, delicate floral and cloud engravings in soft blue, gentle luminous glow from the surface, celestial fairy tale aesthetic, perfect circle viewed from directly above, transparent PNG background no floor, only the table surface, no chairs no figures, square 1:1 format`,
-    'merlin':`Ethereal watercolor portrait of Merlin reimagined as a wise celestial elder, long silver hair and kind all-knowing eyes, flowing robes of celestial blue and white with star embroidery, surrounded by gentle floating lights, soft luminous fairy realm background, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'percival':`Ethereal watercolor portrait of Percival as a noble celestial knight, earnest loyal face, silver armor decorated with cloud patterns and white flowing cape, holding a glowing holy grail, soft blue-white background, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'arthur_loyal':`Ethereal watercolor portrait of a loyal celestial knight, honest open face, polished armor with soft blue tunic, dependable and steadfast, soft luminous background, watercolor style, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'lancelot_good':`Ethereal watercolor portrait of Lancelot as the greatest celestial champion, confident powerful noble face, gleaming golden armor with celestial motifs, warm heroic glow, luminous blue-gold background, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'assassin':`Ethereal watercolor portrait of an Assassin in the celestial realm, dark midnight-blue hooded cloak contrasting the luminous realm, cold pale eyes barely visible, concealed blade glinting with corrupted light, watercolor style with darker shadow tones, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'morgana':`Ethereal watercolor portrait of Morgana as a dark celestial enchantress, strikingly beautiful with long black hair and violet eyes, deep indigo gown absorbing celestial light, subtle purple aura mimicking holy light, watercolor style with deeper shadows, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'mordred':`Ethereal watercolor portrait of Mordred as the celestial traitor, dark armor with cracked celestial patterns revealing shadow beneath, scheming eyes behind visor, corruption in the ethereal realm, watercolor style with fractured light, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'oberon':`Ethereal watercolor portrait of Oberon as a lone wanderer in the celestial realm, wild untamed appearance, suspicious eyes trusting nobody, rough travel cloak stained from long journeys, muted tones watercolor, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'minion':`Ethereal watercolor portrait of a shadowy celestial Minion, featureless dark hooded figure with glowing eyes, wrapped in corrupted shadow cloak, ethereal background, watercolor with dark shadow tones, half-body bust portrait showing only glowing eyes in upper 50%, no text, PNG square`,
-    'lancelot_evil':`Ethereal watercolor portrait of Lancelot fallen from celestial grace, once-golden armor cracked with dark energy, face showing inner torment and conflict, half-bright half-dark split, watercolor style, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'roles-atlas':`Celestial fairy realm character portrait atlas, strict 4-column × 4-row grid on luminous white parchment, 1024×1024 image so each cell is exactly 256×256 SQUARE PIXELS, soft blue dividing lines between cells. STRICT COMPOSITION RULE: every cell is a SQUARE BUST PORTRAIT — head and upper chest only, NO full body, face horizontally centered, eyes at vertical center, face filling 65–75% of the square cell. Studio Ghibli watercolor style, soft blue-white and warm gold lighting. 10 characters + 6 empty cells. Row 1: [Merlin] wise celestial elder long silver hair star-embroidered robes; [Percival] noble knight cloud-pattern armor; [Loyal Knight] honest open face soft blue armor; [Good Lancelot] gleaming golden armor celestial motifs. Row 2: [Assassin] midnight-blue hood cold pale eyes; [Morgana] black hair violet eyes deep indigo gown; [Mordred] dark armor cracked celestial patterns scheming eyes; [Oberon] rough travel cloak muted tones. Row 3: [Minion] shadowy hood two glowing eyes centered in square; [Evil Lancelot] cracked golden armor tormented face; [empty luminous square]; [empty luminous square]. Row 4: [empty]; [empty]; [empty]; [empty]. CRITICAL: square cells, face fills the square, no full body, soft luminous white background, watercolor style, no text no labels`,
+    'medals-atlas':`Celestial fairy realm icon reference sheet, strict 4-column × 6-row grid, soft blue border lines between every cell, 24 icon cells on luminous white background, Studio Ghibli watercolor icon style, soft blue and gold pastel tones. Row 1: [Wizard neutral mask]; [Shield with sword piercing]; [Ship helm steering wheel]; [Radiant all-seeing eye]. Row 2: [Knight in wolf snare]; [Blindfolded archer bullseye]; [Three misaligned X marks]; [Sad tears face]. Row 3: [Facepalm exhausted]; [Dizzy spinning eyes]; [Cute kindergarten bus]; [Laurel crown]. Row 4: [Dagger thrust]; [Enchantress gesture]; [Wolf finding group]; [Two cars collision]. Row 5: [Shield dome shattering]; [Three sequential tower explosions]; [Hidden figure hoarding tokens]; [Two figures walking apart]. Row 6: [Tire explosion]; [Wolf king crown]; [White theater mask]; [Spy switching sides]. All icons watercolor pastel style, soft blue and gold on white, no text no labels, 1:1 square format`,
+    'quest-success':`Ethereal celestial quest triumph banner, landscape 3:2, divine luminous rays cascading from heavens, golden lotus petals and fairy sparkles raining down, joyful light ascending, soft pale blue and warm gold luminous palette on white, Studio Ghibli watercolor style, bright and airy no dark areas, no text no UI, landscape format`,
+    'quest-fail':`Celestial quest setback banner, landscape 3:2, fading magical light with wilting silver flowers and drifting pale petals, melancholy soft glow, muted blue-grays and dimmed gold on pale background, Studio Ghibli watercolor style, gentle sorrowful mood, no text no UI, landscape format`,
+    'kill-icon':`Celestial crystal dagger icon, single elegant crystalline pale blue blade pointing downward, soft luminous glow at edges, delicate fairy-touched detail, ethereal icon style on white-blue background, isolated centered, square 1:1, no text`,
+    'history-icon':`Celestial glowing scroll icon, luminous white parchment with soft blue cloud-pattern borders, gentle golden light radiating from the open scroll, Studio Ghibli watercolor style, isolated centered on pale background, square 1:1, no text`,
+    'stats-icon':`Celestial achievement bars icon, three soft luminous ascending pillars with gentle blue glow and tiny star sparkles at tops, watercolor pastel style on pale background, isolated centered, square 1:1, no text`,
   },
   'ink-wash':{
     'home-bg':`Traditional Chinese ink wash painting landscape, towering misty mountains with pine trees on cliffs, vast empty sky with minimal cloud wash, small pavilion visible in distance, warm cream and parchment paper texture background, deep ink black brushstrokes with intentional empty space, classical sumi-e style, sense of vast serene silence, NO dark overlay keep entire image light and airy, no text no UI no people, vertical 9:16 portrait format`,
     'in-game-bg':`Traditional Chinese ink painting of a scholarly pavilion interior overlooking misty mountain valley, bamboo forest through lattice windows, ink brushstroke screens on walls, warm parchment and off-white paper texture, deep ink black accents, refined elegant atmosphere, classical East Asian art style, NO dark overlay keep image light, no text no UI no people, vertical 9:16 portrait format`,
     'table':`Top-down view of a traditional Chinese lacquered round table, dark polished rosewood surface with subtle grain, ink-brushed dragon medallion in center painted in gold and black, delicate carved wooden border with cloud patterns, warm antique aesthetic, isolated object from above, transparent PNG background no floor, only the circular table, no chairs no figures, square 1:1 format`,
-    'merlin':`Traditional Chinese ink wash portrait of Merlin as a wise Taoist elder, long white beard and knowing eyes, flowing Taoist robes with star and moon patterns, holding a gnarled wooden staff, sumi-e brushstroke style warm parchment background, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'percival':`Traditional Chinese ink wash portrait of Percival as a loyal young general, earnest determined face, ink-painted armor with phoenix crest, holding a jade-inlaid sword, sumi-e style warm parchment background, classical Chinese warrior aesthetic, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'arthur_loyal':`Traditional Chinese ink wash portrait of a loyal soldier, honest straightforward face, simple ink-painted armor, plain but dependable, classical Chinese brush painting style parchment background, sumi-e aesthetic, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'lancelot_good':`Traditional Chinese ink wash portrait of the greatest warrior, powerful confident face, gold-inlaid black armor with dragon crest, commanding heroic presence, sumi-e style warm parchment tones and gold ink, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'assassin':`Traditional Chinese ink wash portrait of an Assassin, dark robed figure with concealed face showing only sharp cold eyes, black ink brushstroke suggesting shadow and hidden danger, sumi-e style predominantly dark ink tones on parchment, half-body bust portrait face area in upper 50%, no text, PNG square`,
-    'morgana':`Traditional Chinese ink wash portrait of Morgana as a dark enchantress, beautiful and dangerous with black hair flowing like ink, dark robes with serpent motifs, subtle dark magic aura, Chinese ink painting style with deep ink tones and subtle red accents, sumi-e brushwork, half-body bust portrait face in upper 50%, no text, PNG square`,
-    'mordred':`Traditional Chinese ink wash portrait of Mordred as a treacherous general, dark heavy armor with broken clan crest, scheming calculating eyes, heavy dark brushstrokes suggesting hidden menace, sumi-e style, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'oberon':`Traditional Chinese ink wash portrait of Oberon as a wandering lone wolf, wild unkempt appearance, suspicious eyes trusting nobody, rough worn travel clothes with no allegiance markings, sumi-e brushwork on parchment, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'minion':`Traditional Chinese ink wash portrait of a shadowy Minion, dark hooded anonymous figure rendered in heavy ink brushstrokes, only glowing eyes visible, sumi-e painting style dominant dark ink tones, half-body bust portrait face area in upper 50%, no text, PNG square`,
-    'lancelot_evil':`Traditional Chinese ink wash portrait of Lancelot fallen from grace, cracked black armor with fading gold, tormented conflicted face showing inner war between honor and corruption, dramatic split brushwork light and dark ink, sumi-e style, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'roles-atlas':`Traditional Chinese ink wash character portrait atlas, strict 4-column × 4-row grid on warm parchment paper, 1024×1024 image so each cell is exactly 256×256 SQUARE PIXELS, thin ink brushstroke dividing lines. STRICT COMPOSITION RULE: every cell is a SQUARE BUST PORTRAIT — head and upper chest only, NO full body, face horizontally centered, eyes at vertical center, face filling 65–75% of the square cell. Sumi-e style, deep ink and warm parchment tones. 10 characters + 6 empty cells. Row 1: [Merlin as Taoist elder] white beard star-moon robes; [Percival as loyal general] earnest face phoenix-crest ink armor; [Loyal Knight] honest plain ink armor; [Good Lancelot] gold-inlaid black armor dragon crest. Row 2: [Assassin] only sharp cold eyes visible ink shadow; [Morgana] black hair ink serpent-motif robes; [Mordred] heavy armor broken crest scheming eyes; [Oberon] wild unkempt suspicious. Row 3: [Minion] hooded anonymous glowing eyes in square; [Evil Lancelot] cracked black armor tormented face; [empty parchment square]; [empty parchment square]. Row 4: [empty]; [empty]; [empty]; [empty]. CRITICAL: square cells, face fills the square, no full body, warm parchment background, sumi-e brushwork, no text no labels`,
+    'medals-atlas':`Traditional Chinese ink wash icon reference sheet, strict 4-column × 6-row grid, thin ink brushstroke border lines between every cell, 24 icon cells on warm parchment paper, classical sumi-e brush painting icon style, deep black ink and gold red accents. Row 1: [Wizard disguise mask sumi-e]; [Sword piercing shield brushstroke]; [Ship helm brushstroke]; [All-seeing eye ink circle]. Row 2: [Knight in wolf snare ink]; [Blindfolded archer sumi-e]; [Three misaligned X brushstrokes]; [Sad tears ink brushstroke]. Row 3: [Facepalm exhausted figure]; [Dizzy spinning brush]; [Small bus ink illustration]; [Laurel crown brushstroke]. Row 4: [Dagger thrust ink]; [Enchantress gesture sumi-e]; [Wolf meets pack ink]; [Two vehicles collision ink]. Row 5: [Shield dome breaking ink]; [Three tower explosions ink]; [Shadow figure hoarding]; [Two figures parting ways ink]. Row 6: [Tire explosion brushstroke]; [Wolf crown ink]; [White mask sumi-e]; [Spy switching sides ink]. All icons sumi-e brushstroke style, dark ink on warm parchment, no text no labels, 1:1 square format`,
+    'quest-success':`Chinese ink wash quest victory banner, landscape 3:2, bold triumphant brushstroke composition, flying cranes ascending in celebration, plum blossom petals scattering upward, dramatic ink flourish with gold-red seal accent, deep black ink on warm parchment background, sumi-e style, no text no UI, landscape format`,
+    'quest-fail':`Chinese ink quest failure banner, landscape 3:2, fallen autumn leaves and broken ink blossoms scattered, somber diagonal brushstroke of defeat, dark grey ink wash rain, mournful empty space on aged parchment, classical sumi-e style, no text no UI, landscape format`,
+    'kill-icon':`Chinese ink painting dagger icon, single elegant brushstroke blade pointing downward, minimal sumi-e style, deep black ink on warm cream parchment, isolated centered, square 1:1, no text`,
+    'history-icon':`Chinese bamboo scroll icon, traditional rolled bamboo scroll with red ribbon seal and hanging jade pendant, ink-brushed detail, warm parchment tones, isolated centered on cream background, square 1:1, no text`,
+    'stats-icon':`Chinese ink ranking pillars icon, three ascending brushstroke vertical bars representing competition tiers, minimal sumi-e style, deep ink on warm cream background, isolated centered, square 1:1, no text`,
   },
   'cyber-neon':{
     'home-bg':`Cyberpunk neon city rooftop at night, rain-slicked surfaces reflecting neon signs in magenta pink and electric cyan, towering megastructure skyscrapers with holographic advertisements, dark purple-black sky with neon light pollution, Blade Runner 2049 aesthetic, cinematic digital painting, bottom third darker for UI overlay, no text no UI no people, vertical 9:16 portrait format`,
     'in-game-bg':`Cyberpunk underground club or secret meeting room, circular neon-lit table in center with holographic displays floating above, magenta and purple neon strip lighting on dark walls, rain visible outside floor-to-ceiling windows, electric atmosphere of danger and intrigue, Blade Runner 2049 style, deep purple-black with neon pink and cyan, bottom third darker, no text no UI no people, vertical 9:16 portrait format`,
     'table':`Top-down view of a futuristic cyberpunk round table, dark matte carbon-fiber surface, glowing neon pink circuit-board pattern etched into surface with electric cyan edge lighting, holographic interface elements embedded in rim, cyberpunk tech aesthetic, perfect circle from directly above, transparent PNG background no floor, no objects no chairs no figures, square 1:1 format`,
-    'merlin':`Cyberpunk portrait of Merlin as an elderly tech oracle, silver AR implants around knowing eyes, dark hooded coat with glowing blue circuit patterns, the wise hacker who sees all data streams, neon-lit cyberpunk digital art, magenta and cyan neon on deep purple-black, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'percival':`Cyberpunk portrait of Percival as a loyal enforcement officer, earnest determined face with blue holographic visor, white tactical armor with cyan light accents, holding a glowing data grail device, blue and cyan neon on dark background, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'arthur_loyal':`Cyberpunk portrait of a loyal soldier, honest average face, standard-issue tactical gear and blue team insignia, dependable and professional, cool blue tones on deep purple-black background with subtle cyan lighting, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'lancelot_good':`Cyberpunk portrait of Lancelot as an elite enhanced super-soldier, powerful build with gold-toned exosuit and blade implants, confident handsome face with golden eye implants, the ultimate warrior of the resistance, gold and cyan highlights on dark background, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'assassin':`Cyberpunk portrait of an Assassin, sleek black stealth suit with active camouflage shimmer, face hidden behind a red-glowing camera-lens mask, holding a monomolecular blade, neon-lit cyberpunk style deep red and black against purple-black, half-body bust portrait face area in upper 50%, no text, PNG square`,
-    'morgana':`Cyberpunk portrait of Morgana as a dangerous AI hacker femme fatale, beautiful face with violet cybernetic eye implants, black bodysuit with neon pink neural-interface patterns, master of digital deception, magenta and violet neon style, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'mordred':`Cyberpunk portrait of Mordred as a corporate traitor, black tactical armor with hidden red identity marker under blue paint, scheming cold eyes, a mole inside the resistance, red and black against dark purple, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'oberon':`Cyberpunk portrait of Oberon as a rogue operative, independent dangerous mercenary, face scarred and suspicious behind cracked visor, ragged mix-matched gear from multiple factions, a lone wolf trusting nobody, muted tones with dim orange glow, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'minion':`Cyberpunk portrait of a generic corporate Minion, black helmet with red visor concealing all features, anonymous mass-produced enforcer uniform, menacing but faceless, red and black neon style, half-body bust portrait upper area showing only red glowing visor, no text, PNG square`,
-    'lancelot_evil':`Cyberpunk portrait of Lancelot defected elite soldier, cracked golden exosuit leaking dark energy, face showing intense conflict between loyalty and betrayal, half lit by blue team light half by red corporation glow, cyberpunk style, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'roles-atlas':`Cyberpunk character portrait atlas, strict 4-column × 4-row grid on dark carbon-fiber background, 1024×1024 image so each cell is exactly 256×256 SQUARE PIXELS, thin neon cyan dividing lines. STRICT COMPOSITION RULE: every cell is a SQUARE BUST PORTRAIT — head and upper chest only, NO full body, face horizontally centered, eyes at vertical center, face filling 65–75% of the square cell. Cyberpunk digital art style, magenta and cyan neon lighting. 10 characters + 6 empty cells. Row 1: [Merlin as tech oracle] AR implants knowing eyes dark coat glowing circuits; [Percival] earnest face blue holographic visor tactical armor; [Loyal Knight] honest face standard gear blue insignia; [Good Lancelot] gold exosuit golden eye implants. Row 2: [Assassin] camera-lens red mask cold eyes; [Morgana] violet cybernetic implants neon pink neural patterns; [Mordred] black tactical armor scheming eyes; [Oberon] cracked visor muted orange. Row 3: [Minion] black helmet red visor blank; [Evil Lancelot] cracked golden exosuit half blue half red; [empty dark carbon square]; [empty dark carbon square]. Row 4: [empty]; [empty]; [empty]; [empty]. CRITICAL: square cells, face fills the square, no full body, dark carbon background, neon cyberpunk style, no text no labels`,
+    'medals-atlas':`Cyberpunk neon icon reference sheet, strict 4-column × 6-row grid, thin neon cyan border lines between every cell, 24 icon cells on dark carbon-fiber background, flat cyberpunk HUD icon style, magenta cyan and neon purple tones. Row 1: [Disguise hologram mask]; [Shield with neon sword impact]; [Helm glowing cyan]; [Scanning all-seeing sensor eye]. Row 2: [Knight caught in digital snare]; [Blindfolded aiming sensor bullseye]; [Three error X glitch marks]; [Sad emoji pixel face]. Row 3: [System overload facepalm]; [Dizzy glitch spin]; [Small vehicle neon]; [Digital crown laurel]. Row 4: [Blade strike neon]; [Hacker wave gesture]; [Signal found group]; [Vehicle collision neon sparks]. Row 5: [Firewall shattering]; [Three explosion neon blasts]; [Hidden figure stealing data tokens]; [Two agents diverging paths]. Row 6: [Tire explosion glitch]; [Wolf crown neon]; [Blank avatar mask]; [Agent switching team logo]. All icons flat-art HUD style, neon on dark, no text no labels, 1:1 square format`,
+    'quest-success':`Cyberpunk mission success notification banner, landscape 3:2, neon green data pulse explosion radiating outward, holographic particle burst in magenta and cyan, glitch celebration effect with digital confetti, dark carbon background with electric neon glow, Blade Runner aesthetic, no text no UI, landscape format`,
+    'quest-fail':`Cyberpunk mission failed alert banner, landscape 3:2, red holographic alert distortion, static interference and crimson scan lines, data corruption spreading across frame, deep purple-black background with dying red neon glow, Blade Runner digital art style, no text no UI, landscape format`,
+    'kill-icon':`Cyberpunk monomolecular blade icon, single sleek high-tech blade pointing downward, neon pink edge glow with electric sparks, flat HUD icon style on dark carbon background, isolated centered, square 1:1, no text`,
+    'history-icon':`Cyberpunk holographic data log icon, neon cyan wireframe scroll or tablet display panel, glowing digital history interface, flat HUD icon style on dark background, isolated centered, square 1:1, no text`,
+    'stats-icon':`Cyberpunk stats display icon, three neon purple-magenta ascending bars with glow halos, HUD data visualization aesthetic, flat icon style on dark background, isolated centered, square 1:1, no text`,
   },
   'dark-dungeon':{
-    'home-bg':`Dark Gothic dungeon hall, rough-hewn stone walls with iron torches burning amber, rusted chains and worn skulls as decoration, oppressive low vaulted ceiling, deep warm brown and near-black palette with amber torchlight pools, grimdark medieval atmosphere, Diablo III inspired oil painting, dramatic shadows, bottom third darker for UI overlay, no text no UI no people, vertical 9:16 portrait format`,
-    'in-game-bg':`Gothic dungeon chamber repurposed as a secret council room, torchlit stone alcoves with ancient weapons mounted on walls, bones and animal skull trophies, rough stone throne at far end, deep brown-black with amber and orange torch glow, sinister conspiratorial atmosphere, grimdark fantasy illustration, bottom third darker, no text no UI no people, vertical 9:16 portrait format`,
-    'table':`Top-down view of a dungeon round table, rough-hewn dark stone surface with carved rune circle or skull pattern, iron bolts and chains embedded at the edges, amber torchlight reflected on the surface, grimdark fantasy aesthetic, perfect circle from directly above, transparent PNG background no floor, only the circular stone table, no objects no chairs no figures, square 1:1 format`,
-    'merlin':`Grimdark portrait of Merlin, battle-worn ancient wizard with deep-set knowing eyes, dark weathered robes covered in runes and ash, holding a cracked amber-glowing staff, a survivor of countless dark battles, grimdark fantasy oil painting style, torchlit amber and shadow background, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'percival':`Grimdark portrait of Percival, battle-scarred knight with determined eyes, worn dented armor with holy symbol under grime, clutching a battered glowing chalice, grim resolve in a hopeless dungeon, grimdark fantasy style, torchlit amber tones, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'arthur_loyal':`Grimdark portrait of a loyal soldier, weary honest face, battered chainmail with simple crest, the common fighter who keeps going despite everything, grimdark fantasy illustration, warm amber torchlight on dark stone, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'lancelot_good':`Grimdark portrait of Lancelot the greatest warrior, imposing scarred face with cold determined eyes, heavy black and gold armor battle-worn but powerful, unstoppable force for good in the darkness, grimdark fantasy oil painting, amber torchlight on dark stone, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'assassin':`Grimdark portrait of an Assassin, black leather and shadow wrappings with only cold merciless eyes visible above a mask, a curved dark blade dripping, skulking in dungeon shadows, grimdark illustration dark brown-black with minimal amber highlight, half-body bust portrait face area in upper 50%, no text, PNG square`,
-    'morgana':`Grimdark portrait of Morgana the dark witch, terrifying pale beauty with black hollow eyes, torn dark robes with bone ornaments, cursed black magic flame, dangerous and ancient evil presence, grimdark illustration style dark amber and shadow tones, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'mordred':`Grimdark portrait of Mordred the traitor knight, massive dark armor with broken crest and red skull markings, face of cold hatred and ambition, the most dangerous enemy from within, grimdark illustration deep shadow with amber rim light, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'oberon':`Grimdark portrait of Oberon the wild outsider, feral untamed appearance with darting suspicious eyes, crude mismatched armor from fallen enemies, an outcast even in the dungeon, dim amber torchlight barely illuminating face, grimdark illustration, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'minion':`Grimdark portrait of a dungeon Minion, dark hooded executioner figure with iron skull mask, anonymous and terrifying, dungeon chains across heavy black plate, near-black and amber torchlight, half-body bust portrait showing only iron mask in upper 50%, no text, PNG square`,
-    'lancelot_evil':`Grimdark portrait of Lancelot fallen and corrupted, once-great knight consumed by dungeon darkness, face with haunted guilty eyes, blackened cracked armor with faded gold, grimdark illustration amber light and deep shadow split, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'home-bg':`Darkest Dungeon Inscryption style pixel art illustration, gothic dungeon entrance, flickering torch casting warm amber-orange candlelight against pitch black stone walls, rough dark wood beams overhead, dungeon floor with bones and debris barely visible in shadow, the scene feels oppressive and claustrophobic, very dark palette with warm amber torchlight as only light source, hand-drawn pixel art gothic illustration, dark atmospheric horror, bottom third of image in deep shadow for UI text overlay, no text no UI elements no characters, vertical 9:16 portrait format`,
+    'in-game-bg':`Darkest Dungeon Inscryption style pixel art, ancient stone council chamber in total darkness, single amber torch revealing a circular carved stone table in center, dungeon walls with iron wall sconces holding dim candles, carved runes on stone floor barely visible, very dark atmosphere with warm amber light pools, hand-drawn gothic pixel illustration, oppressive dark fantasy, bottom third deepest shadow, no text no UI no people, vertical 9:16 portrait format`,
+    'table':`Darkest Dungeon Inscryption pixel art style, top-down view of a rough-hewn circular stone table, dark basalt surface with carved skull and rune markings, amber candlelight reflected on stone, grimdark gothic pixel illustration, dark warm palette, perfect circle viewed from directly above, transparent PNG background no floor, only the circular stone table, no chairs no figures, square 1:1 format`,
+    'roles-atlas':`Darkest Dungeon Inscryption style character portrait atlas, strict 4-column × 4-row grid on dark stone parchment background, 1024×1024 image each cell exactly 256×256 SQUARE PIXELS, thin amber iron dividing lines. STRICT RULE: every cell is a SQUARE BUST PORTRAIT — head and upper chest only, NO full body, face horizontally centered, filling 65-75% of cell. Hand-drawn gothic pixel art portrait style, dark atmospheric torchlight, amber-sepia tones on near-black. Row 1: [Merlin] elderly wizard ancient hood star-rune robes torchlit face; [Percival] noble knight battered silver armor holy crest; [Loyal Knight] worn honest face rough chainmail; [Good Lancelot] powerful scarred knight golden-black armor. Row 2: [Assassin] hollow cold eyes black leather hood wrappings; [Morgana] pale witch dark hollow eyes bone ornaments dark veil; [Mordred] dark heavy armor skull motif scheming shadowed eyes; [Oberon] wild suspicious eyes ragged hood crude leather. Row 3: [Minion] iron skull mask two glowing eyes in shadow; [Evil Lancelot] haunted hollow eyes blackened cracked armor; [empty dark stone]; [empty dark stone]. Row 4: [empty]; [empty]; [empty]; [empty]. CRITICAL: Darkest Dungeon Inscryption pixel art portrait style, torchlit dark stone background, NO full body, face fills cell, no text no labels`,
+    'medals-atlas':`Darkest Dungeon Inscryption style icon atlas, strict 4-column × 6-row grid, thin amber border lines between cells, 24 icon cells on dark stone background, hand-drawn gothic pixel icon style, warm amber-sepia on near-black. Row 1: [Wizard disguise mask gothic]; [Shield pierced sword]; [Iron helm captain]; [All-seeing rune eye]. Row 2: [Knight trapped in stone snare]; [Blindfolded crossbow bullseye]; [Three carved X failure marks]; [Skull face tears]. Row 3: [Exhausted wizard facepalm]; [Dizzy skull spin]; [Small cart dungeon]; [Bone crown laurel]. Row 4: [Dripping dagger gothic]; [Dark witch enchant gesture]; [Wolf finds pack]; [Two figures colliding]. Row 5: [Iron shield shattering]; [Three towers exploding]; [Hooded figure hiding tokens]; [Two figures parting]. Row 6: [Wagon wheel bursting]; [Wolf skull king crown]; [Blank iron mask]; [Cloaked traitor switching]. All icons hand-drawn Darkest Dungeon pixel gothic style, amber on dark stone, no text no labels, 1:1 square`,
+    'quest-success':`Darkest Dungeon Inscryption pixel art, triumphant quest success banner, landscape 3:2, blazing amber torch flame in center radiating light, gothic sword raised in victory against dungeon stone background, amber gold light flooding dark chamber, hand-drawn gothic pixel illustration, warm amber palette, no text no UI, landscape format`,
+    'quest-fail':`Darkest Dungeon Inscryption pixel art, failed quest defeat banner, landscape 3:2, torch flame extinguished leaving dying embers, shattered sword and scattered bones in near darkness, deep shadow swallowing everything, only faint amber ember glow remains, hand-drawn gothic pixel illustration, no text no UI, landscape format`,
+    'kill-icon':`Darkest Dungeon Inscryption style pixel art icon, dark iron execution dagger pointing downward, crude gothic craftsmanship, dried blood at tip, warm amber torchlight glow on near-black background, isolated centered icon, square 1:1, no text`,
+    'history-icon':`Darkest Dungeon Inscryption style pixel art icon, rough stone tablet with carved dungeon records, iron ring at top, amber torchlight on near-black stone, isolated centered icon, square 1:1, no text`,
+    'stats-icon':`Darkest Dungeon Inscryption style pixel art icon, three ascending carved stone or bone pillars as rank markers, amber torchlight on dark dungeon background, isolated centered icon, square 1:1, no text`,
+    'panel-frame':`Darkest Dungeon Inscryption style pixel art UI frame border, exactly 96×96 pixels, dark carved wood or stone border approximately 20 pixels wide on all four sides, amber-gold pixel art corner ornaments with cross or diamond motifs, thin amber pixel border lines, THE CENTER AREA MUST BE TRANSPARENT OR SOLID #0c0802, dark gothic pixel game UI asset style, flat 2D top-down view, no 3D, warm amber on near-black`,
+    'panel-texture':`Seamlessly tileable dark stone or aged wood grain surface texture, Darkest Dungeon Inscryption pixel art style, deep brown-black (#0c0802 base), subtle pixel art grain and crack detail, very subtle amber mineral veins, gothic dungeon aesthetic, flat tile texture, no lighting gradient, square 1:1 format`,
+    'btn-texture':`Darkest Dungeon Inscryption style dark stone tablet texture for button, rectangular, rough dark basalt pixel art surface, very subtle amber crystal grain texture, gothic dungeon aesthetic, no text no UI, wide landscape 4:1 ratio`,
+    'divider':`Darkest Dungeon Inscryption style pixel art ornamental divider line, horizontal, centered, amber-gold pixel art with small diamond or cross center ornament, thin amber lines extending from center fading out, on transparent or pure black background, gothic pixel art game UI, wide banner format`,
   },
   'abyss':{
     'home-bg':`Abyssal deep ocean or cosmic void, pitch black with faint bioluminescent blue and violet light from creatures barely visible in the depths, ancient unknowable structures looming below, oppressive vastness and silence, Lovecraftian scale and horror, cold blue and indigo on absolute black, no visible light source only diffused bioluminescence, bottom third darker for UI overlay, no text no UI no people, vertical 9:16 portrait format`,
     'in-game-bg':`Ancient underwater stone chamber in absolute darkness, walls covered in unknowable glowing runes and impossible geometry, cold blue bioluminescent light revealing edges of vast columns and archways, cosmic horror atmosphere, Lovecraftian elder architecture, a meeting place that should not exist, pitch black with cold blue and violet glow, bottom third darker, no text no UI no people, vertical 9:16 portrait format`,
     'table':`Top-down view of an ancient cosmic round table made of void-black stone or crystallized darkness, cold blue glowing elder sign or tentacle motif engraved in center, unknowable rune border pulsing with faint bioluminescent violet, Lovecraftian cosmic horror aesthetic, perfect circle from directly above, transparent PNG background no floor, only the circular table surface, no objects no chairs no figures, square 1:1 format`,
-    'merlin':`Cosmic horror portrait of Merlin, ancient beyond comprehension, eyes containing galaxies and vast knowledge no mortal should possess, wearing robes made of woven starlight and void, a being of cosmic scale condensed into human form, cold blue and deep black digital painting, bioluminescent accents, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'percival':`Cosmic horror portrait of Percival, a brave soul in the abyss with determined face illuminated by cold blue light, void-touched armor absorbing surrounding darkness, holding a chalice of bioluminescent light in the depths, cold blue on absolute black background, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'arthur_loyal':`Cosmic horror portrait of a loyal soldier in the abyss, determined honest face illuminated by faint blue glow, dark void-touched armor, a small light of loyalty in the infinite darkness, cold blue accent on absolute black digital painting, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'lancelot_good':`Cosmic horror portrait of Lancelot as champion of the abyss, powerful presence with cold blue glowing eyes, deep void armor crackling with contained cosmic energy, the greatest warrior even in the depths, cold blue and deep black digital painting, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'assassin':`Cosmic horror portrait of an Assassin of the void, pure shadow with eyes like dead stars, wearing darkness itself as cloak, a blade made of crystallized void, Lovecraftian horror figure existing between dimensions, violet and cold blue against absolute black, half-body bust portrait showing only pale glowing eyes in upper 50%, no text, PNG square`,
-    'morgana':`Cosmic horror portrait of Morgana as an entity from beyond, beautiful and terrible with eyes that see through all deception, dark robes flowing like deep ocean currents, tentacle-like aura barely contained in human form, Lovecraftian beauty horror, cold violet and blue on absolute black, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'mordred':`Cosmic horror portrait of Mordred as a void herald, dark armor collapsing inward like a black hole, cold empty eyes consumed by the abyss, the ultimate betrayer serving the void, digital painting cold blue and absolute black, half-body bust portrait face in upper 50% of image, no text, PNG square`,
-    'oberon':`Cosmic horror portrait of Oberon as a deep sea aberration, wild and unknowable, eyes like deep ocean trenches reflecting no light, form partially dissolving into the void around edges, an entity trusting and aligning with nothing, cold blue-black bioluminescent style, half-body bust portrait face area in upper 50%, no text, PNG square`,
-    'minion':`Cosmic horror portrait of a void Minion, humanoid silhouette of pure darkness with two cold blue pinpoint eyes, form blending into the surrounding abyss, impossible to tell where it ends and the void begins, absolute black with cold blue eye glow, upper 50% showing only two cold light points, no text, PNG square`,
-    'lancelot_evil':`Cosmic horror portrait of Lancelot consumed by the abyss, once a champion now an avatar of the void, form half-dissolved into cold blue darkness, face a war between last shred of humanity and the void claiming him, split between faint warm human glow and overwhelming cold void blue-black, half-body bust portrait face in upper 50% of image, no text, PNG square`,
+    'roles-atlas':`Cosmic horror abyss character portrait atlas, strict 4-column × 4-row grid on void-black background, 1024×1024 image so each cell is exactly 256×256 SQUARE PIXELS, faint bioluminescent blue dividing lines. STRICT COMPOSITION RULE: every cell is a SQUARE BUST PORTRAIT — head and upper chest only, NO full body, face horizontally centered, eyes at vertical center, face filling 65–75% of the square cell. Cosmic horror digital painting, cold blue and violet bioluminescence. 10 characters + 6 empty cells. Row 1: [Merlin] galaxy eyes void-woven robes; [Percival] determined face cold blue void armor; [Loyal Knight] honest face faint blue glow void armor; [Good Lancelot] glowing blue eyes void armor. Row 2: [Assassin] dead-star eyes darkness cloak; [Morgana] beautiful terrible deep ocean eyes; [Mordred] empty abyss eyes collapsing armor; [Oberon] dissolving form unknowable eyes. Row 3: [Minion] two cold blue pinpoint eyes on void dark face; [Evil Lancelot] half-dissolved face cold blue darkness; [empty void-black square]; [empty void-black square]. Row 4: [empty]; [empty]; [empty]; [empty]. CRITICAL: square cells, face fills the square, no full body, void-black background with cold bioluminescent glow, no text no labels`,
+    'medals-atlas':`Cosmic horror abyss icon reference sheet, strict 4-column × 6-row grid, faint bioluminescent border lines between every cell, 24 icon cells on absolute black background, Lovecraftian bioluminescent icon style, cold blue and violet on void black. Row 1: [Eldritch disguise mask cold blue]; [Shield pierced void blade]; [Cosmic helm cold glow]; [All-seeing void eye runes]. Row 2: [Entity caught in tentacle snare]; [Blindfolded void sensor bullseye]; [Three failure X cold glitch]; [Void tears bioluminescent]. Row 3: [Cosmic horror facepalm]; [Void dizzy spin]; [Impossible geometry vessel]; [Eldritch crown]. Row 4: [Void dagger strike]; [Enchantress tentacle gesture]; [Void entity finds collective]; [Two void forms colliding]. Row 5: [Void shield shattering]; [Three structures imploding]; [Shadow entity consuming tokens]; [Two forms diverging into darkness]. Row 6: [Void explosion]; [Wolf king eldritch crown]; [Blank void mask]; [Agent consumed switching void]. All icons bioluminescent cold blue style on absolute black, no text no labels, 1:1 square format`,
+    'quest-success':`Cosmic abyss quest success beacon, landscape 3:2, cold blue bioluminescent pulse radiating outward in expanding rings, void entities converging in silent triumph, eldritch tendrils curling upward in alien celebration, absolute black background with cold blue and violet bioluminescent glow, Lovecraftian digital painting, no text no UI, landscape format`,
+    'quest-fail':`Cosmic abyss quest consumed, landscape 3:2, cold blue light imploding and dying to absolute black, void swallowing all traces of the mission, bioluminescent trail fading into nothingness, Lovecraftian horror of endless darkness, pitch black with last cold blue traces vanishing, no text no UI, landscape format`,
+    'kill-icon':`Void crystallized dagger icon, single blade formed of condensed darkness pointing downward, cold blue bioluminescent edge glow, absolute black background, isolated centered, square 1:1, no text`,
+    'history-icon':`Void rune archive icon, dark obsidian tablet with cold blue glowing elder rune inscriptions, cosmic archive aesthetic, Lovecraftian style on absolute black background, isolated centered, square 1:1, no text`,
+    'stats-icon':`Cosmic void data columns icon, three ascending cold blue bioluminescent pillars like deep sea creatures glowing, cosmic data visualization on absolute black, isolated centered, square 1:1, no text`,
   },
 };
 
@@ -496,20 +864,75 @@ const PROMPTS = {
 // ══════════════════════════════════════════════════════════════
 let currentSkin = 'dark-gold';
 let currentAsset = null;
+let currentSlot  = null; // slot id when a child is selected
+let expandedAtlases = new Set(); // atlas ids whose children are shown
 let generatedAssets = {}; // 'skinId:assetId' -> dataURL
 let lastGeneratedUrl = null;
 let currentPreviewTab = 'home';
+let currentEventView  = 'success'; // for 任务结果 tab toggle
+let currentGamePanel  = 'speak';   // 'vote' | 'speak' | 'mission' — game tab bottom panel
+let currentEndgame    = 'good';    // 'good' | 'evil' — 终局 tab result
+
+// ══════════════════════════════════════════════════════════════
+// ASSET PERSISTENCE (IndexedDB — survives page refresh)
+// ══════════════════════════════════════════════════════════════
+let _idb = null;
+function idbOpen() {
+  if (_idb) return Promise.resolve(_idb);
+  return new Promise((res, rej) => {
+    const req = indexedDB.open('skin-studio-v1', 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('assets');
+    req.onsuccess = e => { _idb = e.target.result; res(_idb); };
+    req.onerror = () => rej(req.error);
+  });
+}
+function idbSave(key, val) {
+  if (!val || !val.startsWith('data:')) return; // skip plain CDN URLs
+  idbOpen()
+    .then(db => db.transaction('assets', 'readwrite').objectStore('assets').put(val, key))
+    .catch(e => console.warn('idbSave failed', e));
+}
+function idbDelete(key) {
+  idbOpen()
+    .then(db => db.transaction('assets', 'readwrite').objectStore('assets').delete(key))
+    .catch(() => {});
+}
+function idbLoadAll() {
+  return idbOpen().then(db => new Promise(res => {
+    const result = {};
+    const req = db.transaction('assets').objectStore('assets').openCursor();
+    req.onsuccess = e => {
+      const cursor = e.target.result;
+      if (cursor) { result[cursor.key] = cursor.value; cursor.continue(); }
+      else res(result);
+    };
+    req.onerror = () => res({});
+  })).catch(() => ({}));
+}
 
 // ══════════════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
   const saved = localStorage.getItem('openai_key');
-  if (saved) { document.getElementById('apiKey').value = saved; updateKeyStatus(); }
+  if (saved) {
+    document.getElementById('apiKey').value = saved;
+    document.getElementById('mobApiKey').value = saved;
+    updateKeyStatus();
+  }
   renderSkinTabs();
-  renderAssets();
-  selectAsset('home-bg');
-  renderPreview();
+
+  // Restore persisted assets first, then render
+  idbLoadAll().then(persisted => {
+    Object.assign(generatedAssets, persisted);
+    renderAssets();
+    if (isMobile()) {
+      document.getElementById('assetPanel').classList.add('mob-active');
+    } else {
+      selectAsset('home-bg');
+    }
+    renderPreview();
+  });
 });
 
 function onKeyInput() {
@@ -517,12 +940,57 @@ function onKeyInput() {
   if (k) localStorage.setItem('openai_key', k);
   updateKeyStatus();
 }
+function onMobKeyInput() {
+  const k = document.getElementById('mobApiKey').value.trim();
+  document.getElementById('apiKey').value = k;
+  if (k) localStorage.setItem('openai_key', k);
+  updateKeyStatus();
+}
 function updateKeyStatus() {
   const k = document.getElementById('apiKey').value.trim();
   const el = document.getElementById('keyStatus');
   el.classList.toggle('ok', k.startsWith('sk-'));
+  const dot = document.getElementById('mobKeyDot');
+  if (dot) { dot.style.background = k.startsWith('sk-') ? 'var(--good)' : 'var(--muted)'; dot.style.boxShadow = k.startsWith('sk-') ? '0 0 6px var(--good)' : 'none'; }
   document.getElementById('btnGenerate').disabled = !currentAsset || !k.startsWith('sk-');
 }
+
+// ── Mobile panel switching ──
+let currentMobilePanel = 'assets';
+const MOB_PANELS = {assets:'assetPanel', prompt:'promptPanel', preview:'previewPanel'};
+const MOB_TABS   = {assets:'mobTabAssets', prompt:'mobTabPrompt', preview:'mobTabPreview'};
+function switchMobilePanel(panel) {
+  if (currentMobilePanel === panel) return; // already on this panel, do nothing
+  currentMobilePanel = panel;
+  Object.keys(MOB_PANELS).forEach(p => {
+    const el  = document.getElementById(MOB_PANELS[p]);
+    const tab = document.getElementById(MOB_TABS[p]);
+    if (el)  { if (p === panel) el.classList.add('mob-active');  else el.classList.remove('mob-active'); }
+    if (tab) { if (p === panel) tab.classList.add('active'); else tab.classList.remove('active'); }
+  });
+  if (panel === 'preview') requestAnimationFrame(scalePhoneFrame);
+}
+function isMobile() { return window.innerWidth <= 768; }
+
+function scalePhoneFrame() {
+  const frame = document.getElementById('phoneFrame');
+  if (!frame) return;
+  if (!isMobile()) { frame.style.transform = ''; frame.style.marginBottom = ''; return; }
+  const panel = document.getElementById('previewPanel');
+  if (!panel) return;
+  // Panel has padding-top:36px (tab bar) + padding-bottom:56px (mob-nav) applied via CSS
+  // Available visual area for the phone
+  const availW = panel.clientWidth;
+  const availH = panel.clientHeight - 36 - 56;
+  const scaleW = availW / 280;
+  const scaleH = availH / 560;
+  const scale  = Math.min(scaleW, scaleH, 3.0);
+  frame.style.transform = `scale(${scale})`;
+  frame.style.transformOrigin = 'top center';
+  // Compensate layout height: transform doesn't affect flow, add margin so panel scrolls correctly
+  frame.style.marginBottom = Math.max(0, Math.round(560 * (scale - 1))) + 'px';
+}
+window.addEventListener('resize', () => { if (isMobile() && currentMobilePanel === 'preview') scalePhoneFrame(); });
 
 // ══════════════════════════════════════════════════════════════
 // SKIN TABS
@@ -551,7 +1019,7 @@ function selectSkin(id) {
 function getAssetUrl(skinId, asset) {
   const key = `${skinId}:${asset.id}`;
   if (generatedAssets[key]) return generatedAssets[key];
-  if (skinId === 'dark-gold') return `${CDN}/${asset.cdnFile || asset.file}`;
+  if (skinId === 'dark-gold' || asset.cdnAlways) return `${CDN}/${asset.cdnFile || asset.file}`;
   return null;
 }
 
@@ -561,53 +1029,365 @@ function renderAssets() {
   container.innerHTML = cats.map(cat => {
     const items = ASSETS.filter(a => a.cat === cat);
     return `<div class="asset-cat">${cat}</div>` + items.map(a => {
-      const url = getAssetUrl(currentSkin, a);
       const key = `${currentSkin}:${a.id}`;
       const hasGen = !!generatedAssets[key];
-      const thumbContent = url
-        ? `<img src="${url}" onerror="this.parentElement.textContent='${a.tag==='bg'?'🌄':a.tag==='table'?'🪵':a.tag==='good'?'⚔️':'🗡️'}'"/>`
-        : `<span style="font-size:16px">${a.tag==='bg'?'🌄':a.tag==='table'?'🪵':a.tag==='good'?'⚔️':'🗡️'}</span>`;
-      return `<div class="asset-item ${a.id===currentAsset?'active':''}" onclick="selectAsset('${a.id}')">
-        <div class="asset-thumb">${thumbContent}</div>
-        <div class="asset-info">
-          <div class="asset-name">${a.name}</div>
-          <div class="asset-file">${a.file.split('/').pop()}</div>
-        </div>
-        <div class="tag-dot" style="background:${a.tagColor}"></div>
-        ${hasGen ? '<div class="asset-badge"></div>' : ''}
-      </div>`;
+
+      if (a.slots) {
+        // ── Atlas parent row ──
+        const slotCount = a.slots.filter(s => s).length;
+        const doneCount = a.slots.filter(s => s && generatedAssets[`${currentSkin}:${s.id}`]).length;
+        const atlasUrl  = generatedAssets[key];
+        const firstSlot = a.slots.find(s => s);
+        const thumbUrl  = atlasUrl
+          || (firstSlot ? (generatedAssets[`${currentSkin}:${firstSlot.id}`]
+              || (firstSlot.cdnFile ? `${CDN}/${firstSlot.cdnFile}` : null)) : null);
+        const thumbHtml = thumbUrl
+          ? `<img src="${thumbUrl}" onerror="this.style.display='none'"/>`
+          : `<span style="font-size:16px">🗂️</span>`;
+        const isExpanded = expandedAtlases.has(a.id);
+        const isActive   = currentAsset === a.id && !currentSlot;
+
+        let html = `<div class="asset-item ${isActive?'active':''}" onclick="selectAsset('${a.id}')">
+          <div class="asset-thumb">${thumbHtml}</div>
+          <div class="asset-info">
+            <div class="asset-name">${a.name}</div>
+            <div class="asset-file">${a.file.split('/').pop()}</div>
+            <div style="font-size:9px;color:${doneCount===slotCount&&slotCount>0?'#4ade80':'var(--c-sub)'};margin-top:1px">${doneCount}/${slotCount} 已裁切</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px">
+            ${hasGen ? '<div class="asset-badge"></div>' : ''}
+            <div class="atlas-toggle" onclick="event.stopPropagation();toggleAtlas('${a.id}')" title="${isExpanded?'收起':'展开'}">${isExpanded?'▾':'▸'}</div>
+          </div>
+        </div>`;
+
+        // ── Child slot rows (shown when expanded) ──
+        if (isExpanded) {
+          html += '<div class="slot-children">' + a.slots.map((slot, idx) => {
+            if (!slot) return '';
+            const slotKey = `${currentSkin}:${slot.id}`;
+            const slotUrl = generatedAssets[slotKey]
+              || (slot.cdnFile ? `${CDN}/${slot.cdnFile}` : null)
+              || (a.id === 'medals-atlas' ? `${CDN}/medals/${slot.id === 'good_first_round_clean_captain' ? 'good_protect_round_fail_captain' : slot.id}.png` : null);
+            const slotThumb = slotUrl
+              ? `<img src="${slotUrl}" onerror="this.style.display='none'"/>`
+              : `<span style="font-size:11px">·</span>`;
+            const isSlotActive = currentAsset === a.id && currentSlot === slot.id;
+            const hasCrop = !!generatedAssets[slotKey];
+            return `<div class="asset-item slot-item ${isSlotActive?'active':''}" onclick="selectSlot('${a.id}','${slot.id}')">
+              <div class="asset-thumb slot-thumb">${slotThumb}</div>
+              <div class="asset-info">
+                <div class="asset-name" style="font-size:11px">${slot.name}</div>
+                <div class="asset-file" style="font-size:9px">${slot.id}</div>
+              </div>
+              ${hasCrop ? '<div class="asset-badge"></div>' : ''}
+            </div>`;
+          }).join('') + '</div>';
+        }
+        return html;
+
+      } else {
+        // ── Regular asset row ──
+        const url = getAssetUrl(currentSkin, a);
+        const thumbContent = url
+          ? `<img src="${url}" onerror="this.parentElement.textContent='${a.tag==='bg'?'🌄':a.tag==='table'?'🪵':'🗡️'}'"/>`
+          : `<span style="font-size:16px">${a.tag==='bg'?'🌄':a.tag==='table'?'🪵':'🗡️'}</span>`;
+        const isActive = currentAsset === a.id && !currentSlot;
+        return `<div class="asset-item ${isActive?'active':''}" onclick="selectAsset('${a.id}')">
+          <div class="asset-thumb">${thumbContent}</div>
+          <div class="asset-info">
+            <div class="asset-name">${a.name}</div>
+            <div class="asset-file">${a.file.split('/').pop()}</div>
+          </div>
+          <div class="tag-dot" style="background:${a.tagColor}"></div>
+          ${hasGen ? '<div class="asset-badge"></div>' : ''}
+        </div>`;
+      }
     }).join('');
+  }).join('');
+}
+
+function toggleAtlas(atlasId) {
+  if (expandedAtlases.has(atlasId)) expandedAtlases.delete(atlasId);
+  else expandedAtlases.add(atlasId);
+  renderAssets();
+}
+
+function selectSlot(atlasId, slotId) {
+  currentAsset = atlasId;
+  currentSlot  = slotId;
+  const atlas  = ASSETS.find(a => a.id === atlasId);
+  const slot   = atlas.slots.find(s => s && s.id === slotId);
+
+  // Middle panel: switch to promptArea to show the crop image
+  if (isMobile()) switchMobilePanel('prompt');
+  document.getElementById('atlasView').style.display  = 'none';
+  document.getElementById('promptArea').style.display = '';
+
+  document.getElementById('ppName').textContent = slot.name;
+  document.getElementById('ppSpec').textContent = '裁切自 ' + atlas.name;
+  document.getElementById('ppPrompt').value = '← 点击父图集可编辑 Prompt 并生成';
+  document.getElementById('btnGenerate').disabled = true;
+  document.getElementById('btnStitch').style.display = 'none';
+  document.getElementById('btnCopy').style.display = 'none';
+
+  const slotUrl = generatedAssets[`${currentSkin}:${slotId}`]
+    || (slot.cdnFile ? `${CDN}/${slot.cdnFile}` : null)
+    || (atlasId === 'medals-atlas'
+        ? `${CDN}/medals/${slotId === 'good_first_round_clean_captain' ? 'good_protect_round_fail_captain' : slotId}.png`
+        : null);
+
+  const ri = document.getElementById('ppResultImg');
+  if (slotUrl) {
+    ri.src = slotUrl;
+    ri.classList.add('visible');
+    lastGeneratedUrl = slotUrl;
+    document.getElementById('btnApply').style.display = 'none';
+    document.getElementById('btnDownload').style.display = '';
+  } else {
+    ri.classList.remove('visible');
+    lastGeneratedUrl = null;
+    document.getElementById('btnApply').style.display = 'none';
+    document.getElementById('btnDownload').style.display = 'none';
+  }
+  document.getElementById('stitchProgress').style.display = 'none';
+  renderAssets();
+}
+
+function renderAtlasView(asset) {
+  const { cols } = asset.grid;
+  const slots = asset.slots;
+
+  // Show full stitched atlas image at the top if available
+  const stitchedUrl = generatedAssets[`${currentSkin}:${asset.id}`];
+  const atlasPreview = document.getElementById('atlasFullPreview');
+  if (stitchedUrl) {
+    atlasPreview.innerHTML = '<img src="' + stitchedUrl + '" style="width:100%;border-radius:8px;border:1px solid rgba(255,255,255,.1);display:block;margin-bottom:10px" alt="完整图集">'
+      + '<div style="font-size:10px;color:var(--sub);margin-bottom:10px;text-align:center">↑ 完整图集 · 点击下方格子查看单张裁切</div>';
+  } else {
+    atlasPreview.innerHTML = '<div style="text-align:center;font-size:11px;color:var(--muted);padding:16px 0 8px">尚未生成图集 · 点击「拼接现有素材」加载 CDN 图片</div>';
+  }
+
+  document.getElementById('atlasGrid').style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  document.getElementById('atlasGrid').innerHTML = slots.map(slot => {
+    if (!slot) return `<div style="background:rgba(255,255,255,.02);border-radius:6px;padding-bottom:100%"></div>`;
+    const url = generatedAssets[`${currentSkin}:${slot.id}`]
+      || (slot.cdnFile ? `${CDN}/${slot.cdnFile}` : null)
+      || (asset.id === 'medals-atlas'
+          ? `${CDN}/medals/${slot.id === 'good_first_round_clean_captain' ? 'good_protect_round_fail_captain' : slot.id}.png`
+          : null);
+    const hasCrop = !!generatedAssets[`${currentSkin}:${slot.id}`];
+    const sel = currentAsset===asset.id && currentSlot===slot.id;
+    return `<div onclick="selectSlot('${asset.id}','${slot.id}')"
+      style="cursor:pointer;border-radius:6px;overflow:hidden;border:1.5px solid ${sel?'var(--accent)':'rgba(255,255,255,.08)'};background:rgba(255,255,255,.03);transition:border-color .15s"
+    >
+      <div style="position:relative;width:100%;padding-bottom:100%;overflow:hidden">
+        ${url ? `<img src="${url}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'">` : ''}
+        ${hasCrop ? '<div style="position:absolute;top:3px;right:3px;width:7px;height:7px;border-radius:50%;background:#4ade80;box-shadow:0 0 4px #4ade80"></div>' : ''}
+      </div>
+      <div style="padding:3px 4px;font-size:9px;color:rgba(255,255,255,.5);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${slot.name}</div>
+    </div>`;
   }).join('');
 }
 
 function selectAsset(id) {
   currentAsset = id;
+  currentSlot  = null;
   const asset = ASSETS.find(a => a.id === id);
   const prompt = PROMPTS[currentSkin]?.[id] || '';
 
+  if (isMobile()) switchMobilePanel('prompt');
   document.getElementById('ppName').textContent = asset.name;
   document.getElementById('ppSpec').textContent = asset.spec;
-  document.getElementById('ppPrompt').value = prompt;
+  document.getElementById('btnCopy').style.display = '';
 
-  // Show current generated result if any
-  const key = `${currentSkin}:${id}`;
-  const resultImg = document.getElementById('ppResultImg');
-  if (generatedAssets[key]) {
-    resultImg.src = generatedAssets[key];
-    resultImg.classList.add('visible');
-    lastGeneratedUrl = generatedAssets[key];
-    document.getElementById('btnApply').style.display = '';
-    document.getElementById('btnDownload').style.display = '';
-  } else {
-    resultImg.classList.remove('visible');
-    lastGeneratedUrl = null;
+  const isAtlas = !!asset.slots;
+  const isFont  = !!asset.isFont;
+  document.getElementById('atlasView').style.display = isAtlas ? '' : 'none';
+  document.getElementById('promptArea').style.display = '';  // always visible
+
+  if (isFont) {
+    document.getElementById('ppPrompt').value = '字体文件需手动下载并上传。推荐字体：Zpix 像素字体（中文像素风格）或 Cinzel Decorative（拉丁字符哥特风格）。上传至 CDN 路径后填写 URL。';
+    document.getElementById('btnGenerate').disabled = true;
+    document.getElementById('btnStitch').style.display = 'none';
     document.getElementById('btnApply').style.display = 'none';
     document.getElementById('btnDownload').style.display = 'none';
+    const ri = document.getElementById('ppResultImg');
+    ri.classList.remove('visible');
+    renderAssets();
+    return;
+  }
+
+  document.getElementById('ppPrompt').value = prompt;        // atlas prompt also shown
+
+  if (isAtlas) {
+    // Clear any leftover result image from a previously selected slot
+    const ri = document.getElementById('ppResultImg');
+    ri.classList.remove('visible');
+    document.getElementById('btnApply').style.display = 'none';
+    document.getElementById('btnDownload').style.display = 'none';
+    const alreadyStitched = !!generatedAssets[`${currentSkin}:${id}`];
+    renderAtlasView(asset);
+    if (!alreadyStitched) {
+      stitchFromCDN();
+    }
+  } else {
+    const key = `${currentSkin}:${id}`;
+    const resultImg = document.getElementById('ppResultImg');
+    if (generatedAssets[key]) {
+      resultImg.src = generatedAssets[key];
+      resultImg.classList.add('visible');
+      lastGeneratedUrl = generatedAssets[key];
+      document.getElementById('btnApply').style.display = '';
+      document.getElementById('btnDownload').style.display = '';
+    } else {
+      resultImg.classList.remove('visible');
+      lastGeneratedUrl = null;
+      document.getElementById('btnApply').style.display = 'none';
+      document.getElementById('btnDownload').style.display = 'none';
+    }
   }
 
   const k = document.getElementById('apiKey').value.trim();
-  document.getElementById('btnGenerate').disabled = !k.startsWith('sk-');
+  document.getElementById('btnGenerate').disabled = isAtlas || !k.startsWith('sk-');
+  if (isAtlas) {
+    const alreadyDone = !!generatedAssets[`${currentSkin}:${id}`];
+    const stitchBtn = document.getElementById('btnStitch');
+    stitchBtn.style.display = '';
+    stitchBtn.textContent = alreadyDone ? '🔄 重新拼接' : '🧩 拼接现有素材';
+  } else {
+    document.getElementById('btnStitch').style.display = 'none';
+  }
+  document.getElementById('btnApply').style.display  = isAtlas ? 'none' : (generatedAssets[`${currentSkin}:${id}`] ? '' : 'none');
+  document.getElementById('btnDownload').style.display = isAtlas ? 'none' : (generatedAssets[`${currentSkin}:${id}`] ? '' : 'none');
   renderAssets();
+}
+
+// ══════════════════════════════════════════════════════════════
+// STITCH FROM CDN
+// ══════════════════════════════════════════════════════════════
+function slotCdnUrl(atlasId, slot) {
+  if (atlasId === 'roles-atlas') return CDN + '/' + slot.cdnFile;
+  const fc = slot.id === 'good_first_round_clean_captain' ? 'good_protect_round_fail_captain' : slot.id;
+  return CDN + '/medals/' + fc + '.png';
+}
+
+async function loadImgBlob(url) {
+  // fetch as blob → objectURL avoids canvas CORS taint
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(resp.status);
+  const blob = await resp.blob();
+  return URL.createObjectURL(blob);
+}
+
+async function stitchFromCDN() {
+  const asset = ASSETS.find(a => a.id === currentAsset);
+  if (!asset || !asset.slots) return;
+
+  const slots = asset.slots.filter(s => s);
+  const { cols, rows } = asset.grid;
+  const CELL = 256;
+
+  const progressEl = document.getElementById('stitchProgress');
+  const btn = document.getElementById('btnStitch');
+  btn.disabled = true;
+  progressEl.style.display = '';
+  progressEl.textContent = '正在加载…';
+
+  // Try canvas path (fetch → blob → objectURL → drawImage, no CORS taint)
+  let canvasOk = false;
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width  = cols * CELL;
+    canvas.height = rows * CELL;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#0a0b11';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    for (let idx = 0; idx < asset.slots.length; idx++) {
+      const slot = asset.slots[idx];
+      if (!slot) continue;
+      progressEl.textContent = `加载 ${slot.name}… (${Math.round(idx/asset.slots.length*100)}%)`;
+      const objUrl = await loadImgBlob(slotCdnUrl(asset.id, slot));
+      await new Promise((res, rej) => {
+        const img = new Image();
+        img.onload = () => {
+          const col = idx % cols, row = Math.floor(idx / cols);
+          ctx.drawImage(img, col * CELL, row * CELL, CELL, CELL);
+          URL.revokeObjectURL(objUrl);
+          res();
+        };
+        img.onerror = rej;
+        img.src = objUrl;
+      });
+    }
+
+    const dataUrl = canvas.toDataURL('image/png');
+    generatedAssets[`${currentSkin}:${currentAsset}`] = dataUrl;
+    idbSave(`${currentSkin}:${currentAsset}`, dataUrl);
+    lastGeneratedUrl = dataUrl;
+    splitAtlas(currentSkin, asset, dataUrl);
+
+    canvasOk = true;
+    progressEl.textContent = `✓ 拼接完成，已裁切 ${slots.length} 个子资源`;
+
+  } catch(e) {
+    console.warn('canvas path failed:', e);
+  }
+
+  // Fallback: store CDN URLs directly into generatedAssets per slot
+  if (!canvasOk) {
+    for (const slot of slots) {
+      generatedAssets[`${currentSkin}:${slot.id}`] = slotCdnUrl(asset.id, slot);
+    }
+    // Store first slot as lastGeneratedUrl for download
+    lastGeneratedUrl = slotCdnUrl(asset.id, slots[0]);
+    progressEl.textContent = `✓ 已直接使用 CDN 素材（${slots.length}个）`;
+  }
+
+  document.getElementById('btnApply').style.display = 'none';
+  document.getElementById('btnDownload').style.display = 'none';
+  btn.disabled = false;
+  btn.textContent = '🔄 重新拼接';
+  expandedAtlases.add(currentAsset);
+  // Refresh atlas grid view
+  const stitchedAsset = ASSETS.find(a => a.id === currentAsset);
+  if (stitchedAsset) renderAtlasView(stitchedAsset);
+  renderAssets();
+  renderPreview();
+}
+
+// ══════════════════════════════════════════════════════════════
+// ATLAS SPLITTING
+// ══════════════════════════════════════════════════════════════
+function splitAtlas(skinId, asset, dataUrl, onDone) {
+  if (!asset.slots || !asset.grid) return;
+  const { cols, rows } = asset.grid;
+  const image = new Image();
+  image.onload = () => {
+    const cw = image.naturalWidth  / cols;
+    const ch = image.naturalHeight / rows;
+    // Center-square crop so non-4:3 source images still produce square avatars
+    const size = Math.round(Math.min(cw, ch));
+    asset.slots.forEach((slot, idx) => {
+      if (!slot) return;
+      const col = idx % cols;
+      const row = Math.floor(idx / cols);
+      const sx = col * cw + (cw - size) / 2;
+      const sy = row * ch + (ch - size) / 2;
+      const canvas = document.createElement('canvas');
+      canvas.width  = size;
+      canvas.height = size;
+      canvas.getContext('2d').drawImage(image, sx, sy, size, size, 0, 0, size, size);
+      const slotKey = skinId + ':' + slot.id;
+      const slotDataUrl = canvas.toDataURL('image/png');
+      generatedAssets[slotKey] = slotDataUrl;
+      idbSave(slotKey, slotDataUrl);
+    });
+    if (onDone) onDone();
+    renderAssets();
+    renderPreview();
+  };
+  image.src = dataUrl;
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -652,13 +1432,19 @@ async function generate() {
 
     const key2 = `${currentSkin}:${currentAsset}`;
     generatedAssets[key2] = dataUrl;
+    idbSave(key2, dataUrl);
     lastGeneratedUrl = dataUrl;
 
-    const img = document.getElementById('ppResultImg');
-    img.src = dataUrl;
-    img.classList.add('visible');
-    document.getElementById('btnApply').style.display = '';
-    document.getElementById('btnDownload').style.display = '';
+    if (asset.slots) {
+      // Atlas: split and refresh grid — no big result image shown
+      splitAtlas(currentSkin, asset, dataUrl, () => renderAtlasView(asset));
+    } else {
+      const img = document.getElementById('ppResultImg');
+      img.src = dataUrl;
+      img.classList.add('visible');
+      document.getElementById('btnApply').style.display = '';
+      document.getElementById('btnDownload').style.display = '';
+    }
     renderAssets();
   } catch(e) {
     alert('请求失败: ' + e.message);
@@ -671,6 +1457,35 @@ async function generate() {
 
 function applyToPreview() {
   renderPreview();
+}
+
+function handleUpload(input) {
+  const file = input.files[0];
+  if (!file || !currentAsset) return;
+  input.value = ''; // reset so same file can be re-uploaded
+  const reader = new FileReader();
+  reader.onload = e => {
+    const dataUrl = e.target.result;
+    const key = `${currentSkin}:${currentAsset}`;
+    generatedAssets[key] = dataUrl;
+    idbSave(key, dataUrl);
+    lastGeneratedUrl = dataUrl;
+    const asset = ASSETS.find(a => a.id === currentAsset);
+    if (asset.slots) {
+      // Atlas: auto-split — renderAtlasView called in callback after crops ready
+      splitAtlas(currentSkin, asset, dataUrl, () => renderAtlasView(asset));
+    } else {
+      // Single asset: show preview and enable apply/download
+      const img = document.getElementById('ppResultImg');
+      img.src = dataUrl;
+      img.classList.add('visible');
+      document.getElementById('btnApply').style.display = '';
+      document.getElementById('btnDownload').style.display = '';
+    }
+    renderAssets();
+    renderPreview();
+  };
+  reader.readAsDataURL(file);
 }
 
 function downloadResult() {
@@ -699,6 +1514,7 @@ function setPreviewTab(tab, el) {
   document.querySelectorAll('.preview-tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   renderPreview();
+  if (isMobile()) requestAnimationFrame(scalePhoneFrame);
 }
 
 function getSkinVar(skinId, v) {
@@ -722,6 +1538,501 @@ function inlineVars(skinId) {
   return Object.entries(SKINS[skinId].vars).map(([k,v]) => `${k}:${v}`).join(';');
 }
 
+function skinDivider(skinId) {
+  const s = SKINS[skinId];
+  if (skinId === 'dark-dungeon' && s.dividerUrl) {
+    return `<div style="width:100%;height:10px;background-image:url('${s.dividerUrl}');background-repeat:no-repeat;background-position:center;background-size:contain;margin:3px 0;opacity:0.9"></div>`;
+  }
+  return '';
+}
+
+function skinExtraStyles(skinId) {
+  const s = SKINS[skinId];
+  if (skinId !== 'dark-dungeon' || !s.frameUrl) return '';
+  return `<style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@700;900&display=swap');
+    @font-face {
+      font-family: 'DDTitle';
+      src: url('https://www.awalon.top/mp-assets/skins/dark-dungeon/fonts/title.woff2') format('truetype');
+      font-weight: 900; font-style: normal;
+    }
+
+    /* ══ 邪恶铭刻 / Inscryption 大气滤镜 ══════════════════════ */
+    .phone-screen {
+      filter: contrast(1.07) brightness(0.96) saturate(0.80) !important;
+    }
+    /* 暗角晕染（烛光桌面感） */
+    .phone-screen::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 18;
+      pointer-events: none;
+      background: radial-gradient(ellipse 85% 90% at 50% 50%,
+        transparent 35%, rgba(4,2,0,.40) 70%, rgba(2,1,0,.65) 100%);
+    }
+
+    /* ── 全局字体：重衬线哥特感 ── */
+    .phone-screen * {
+      font-family: 'Noto Serif SC', 'STSong', 'SimSun', serif !important;
+    }
+    .phone-screen .ph-nav-title,
+    .phone-screen .ph-btn-p,
+    .phone-screen .ph-vote-yes,
+    .phone-screen .ph-panel-title {
+      font-family: 'DDTitle', 'Noto Serif SC', 'STSong', serif !important;
+      font-weight: 900 !important;
+    }
+
+    /* ── 导航栏：石刻横梁 ── */
+    .ph-nav {
+      background: rgba(6,3,0,.99) !important;
+      border-bottom: 2px solid rgba(200,150,55,.60) !important;
+      box-shadow: 0 2px 12px rgba(0,0,0,.9) !important;
+    }
+    .ph-nav-title {
+      color: #e8d090 !important;
+      letter-spacing: 8px !important;
+      text-shadow:
+        0 0 18px rgba(200,150,50,.85),
+        0 0 40px rgba(185,138,52,.35),
+        0 1px 3px rgba(0,0,0,1) !important;
+    }
+    .ph-nav-back {
+      background: rgba(10,5,1,.95) !important;
+      border: 1px solid rgba(185,138,52,.55) !important;
+      border-bottom-color: rgba(100,70,20,.7) !important;
+      color: #b89050 !important;
+      border-radius: 2px !important;
+      box-shadow: 0 1px 0 #040200, inset 0 1px 0 rgba(255,200,80,.08) !important;
+    }
+
+    /* ── 面板：雕刻石板 ── */
+    .ph-panel {
+      border-image: url("${s.frameUrl}") 20 fill / 10px / 0 stretch !important;
+      border-width: 10px !important;
+      background-image: url("${s.textureUrl}") !important;
+      background-size: 64px 64px !important;
+      background-blend-mode: overlay !important;
+      background-color: rgba(12,6,1,.98) !important;
+      box-shadow:
+        0 0 0 1px rgba(185,138,52,.18),
+        0 8px 24px rgba(0,0,0,.90),
+        inset 0 0 30px rgba(0,0,0,.5) !important;
+      border-radius: 0 !important;
+    }
+    .ph-panel-hd {
+      border-left: 3px solid rgba(200,150,55,.90) !important;
+      background: linear-gradient(90deg,rgba(185,138,52,.16),rgba(185,138,52,.04) 50%,transparent) !important;
+      border-bottom: 1px solid rgba(185,138,52,.20) !important;
+      padding-left: 6px !important;
+    }
+    .ph-panel-title {
+      color: #e8d090 !important;
+      letter-spacing: 3px !important;
+      text-shadow: 0 0 10px rgba(200,150,55,.55), 0 1px 2px rgba(0,0,0,.9) !important;
+    }
+    .ph-panel-sub { color: rgba(170,120,45,.65) !important; }
+
+    /* ── 主按钮：石碑铭刻 ── */
+    .ph-btn-p {
+      background-color: #180a01 !important;
+      background-image: url("${s.textureUrl}") !important;
+      background-size: 48px !important;
+      background-blend-mode: overlay !important;
+      border-top: 1px solid rgba(230,175,70,.80) !important;
+      border-left: 1px solid rgba(200,150,55,.75) !important;
+      border-right: 1px solid rgba(120,80,25,.90) !important;
+      border-bottom: 3px solid rgba(80,45,5,.95) !important;
+      color: #f0df98 !important;
+      text-shadow:
+        0 0 12px rgba(220,165,50,.90),
+        0 0 24px rgba(185,138,52,.45),
+        0 1px 3px rgba(0,0,0,1) !important;
+      box-shadow:
+        0 4px 0 #030100,
+        0 5px 16px rgba(0,0,0,.80),
+        inset 0 1px 0 rgba(255,210,90,.12),
+        inset 0 -2px 6px rgba(0,0,0,.60) !important;
+      border-radius: 2px !important;
+      letter-spacing: 4px !important;
+    }
+    .ph-btn-p:active { box-shadow: 0 1px 0 #030100, inset 0 2px 6px rgba(0,0,0,.7) !important; }
+    .ph-btn-g {
+      background: rgba(10,5,1,.75) !important;
+      background-image: url("${s.textureUrl}") !important;
+      background-size: 48px !important;
+      background-blend-mode: overlay !important;
+      border: 1px solid rgba(185,138,52,.42) !important;
+      border-bottom-color: rgba(100,65,10,.8) !important;
+      color: #b08840 !important;
+      border-radius: 2px !important;
+      letter-spacing: 2px !important;
+      box-shadow: 0 2px 0 #030100 !important;
+    }
+
+    /* ── 投票按钮 ── */
+    .ph-vote-yes {
+      background-color: #1c0c01 !important;
+      background-image: url("${s.textureUrl}") !important;
+      background-size: 48px !important;
+      background-blend-mode: overlay !important;
+      border-top: 1px solid rgba(230,175,70,.80) !important;
+      border-left: 1px solid rgba(200,150,55,.75) !important;
+      border-right: 1px solid rgba(120,80,25,.90) !important;
+      border-bottom: 3px solid rgba(80,45,5,.95) !important;
+      color: #f0df98 !important;
+      text-shadow: 0 0 10px rgba(220,165,50,.85), 0 1px 2px rgba(0,0,0,1) !important;
+      box-shadow: 0 3px 0 #030100, inset 0 1px 0 rgba(255,200,80,.10) !important;
+      border-radius: 2px !important;
+      letter-spacing: 3px !important;
+    }
+    .ph-vote-no {
+      background: rgba(10,5,1,.75) !important;
+      background-image: url("${s.textureUrl}") !important;
+      background-size: 48px !important;
+      background-blend-mode: overlay !important;
+      border: 1px solid rgba(185,138,52,.38) !important;
+      border-bottom-color: rgba(100,65,10,.8) !important;
+      color: #a07830 !important;
+      border-radius: 2px !important;
+      letter-spacing: 2px !important;
+      box-shadow: 0 2px 0 #030100 !important;
+    }
+
+    /* ── 投票/行动底栏：从黑暗中升起 ── */
+    .ph-action-panel {
+      background-color: rgba(8,4,0,.99) !important;
+      background-image: url("${s.textureUrl}") !important;
+      background-size: 64px !important;
+      background-blend-mode: overlay !important;
+      border-top: 2px solid rgba(200,150,55,.65) !important;
+      box-shadow: 0 -10px 32px rgba(0,0,0,.92) !important;
+    }
+    .ph-vote-title  { color: #7a5830 !important; letter-spacing: 5px !important; font-size: 6px !important; }
+    .ph-vote-av     {
+      border: 2px solid rgba(185,138,52,.65) !important;
+      box-shadow: 0 0 10px rgba(185,138,52,.30), inset 0 0 8px rgba(0,0,0,.6) !important;
+      background: rgba(14,7,1,.9) !important;
+    }
+    .ph-vote-name   { color: #7a5830 !important; }
+    .ph-vote-divider{ background: rgba(185,138,52,.22) !important; height: 1px !important; }
+
+    /* ── 人数选择/角色标签 ── */
+    .ph-sec-chip {
+      background: rgba(185,138,52,.07) !important;
+      border-color: rgba(185,138,52,.28) !important;
+      color: #8a6830 !important;
+      letter-spacing: 3px !important;
+      border-radius: 1px !important;
+    }
+    .ph-cnt { border-radius: 1px !important; }
+    .ph-cnt.on {
+      background: rgba(200,148,45,.22) !important;
+      border-color: rgba(200,148,45,.85) !important;
+      color: #dea840 !important;
+      text-shadow: 0 0 6px rgba(200,148,45,.5) !important;
+    }
+    .ph-rchip { border-radius: 1px !important; }
+    .ph-rchip.good-chip { border-color: rgba(80,130,220,.45) !important; background: rgba(30,60,140,.15) !important; color: #98b8f0 !important; }
+    .ph-rchip.evil-chip { border-color: rgba(180,50,50,.50) !important; background: rgba(100,15,15,.22) !important; color: #e89090 !important; }
+
+    /* ── 任务 Pills ── */
+    .ph-pill { background: rgba(12,6,1,.72) !important; border-color: rgba(185,138,52,.20) !important; border-radius: 1px !important; }
+    .ph-pill.success { background: rgba(16,44,18,.85) !important; border-color: rgba(60,180,100,.45) !important; }
+    .ph-pill.fail    { background: rgba(44,10,10,.85) !important; border-color: rgba(180,50,50,.45) !important; }
+    .ph-pill.current {
+      background: rgba(185,138,52,.16) !important;
+      border-color: rgba(200,150,55,.88) !important;
+      box-shadow: 0 0 10px rgba(185,138,52,.25), inset 0 0 8px rgba(0,0,0,.4) !important;
+    }
+    .ph-pill-curnum { color: #e8d090 !important; text-shadow: 0 0 10px rgba(200,150,55,.60) !important; }
+    .ph-pill-lbl    { color: #7a5830 !important; }
+
+    /* ── 圆桌座位 ── */
+    .ph-seat-av {
+      background: rgba(12,6,1,.88) !important;
+      border: 1px solid rgba(185,138,52,.48) !important;
+      box-shadow: 0 0 8px rgba(185,138,52,.18), inset 0 0 8px rgba(0,0,0,.65) !important;
+    }
+    .ph-seat-name { color: #7a5830 !important; font-size: 5px !important; }
+    .ph-seat-no   {
+      background: rgba(6,3,0,.98) !important;
+      border-color: rgba(185,138,52,.55) !important;
+      color: #c8982a !important;
+      text-shadow: 0 0 4px rgba(185,138,52,.5) !important;
+    }
+    .ph-seat.me .ph-seat-av   {
+      border-color: rgba(220,170,60,.95) !important;
+      box-shadow: 0 0 10px rgba(220,170,60,.55), inset 0 0 8px rgba(0,0,0,.5) !important;
+    }
+    .ph-seat.good .ph-seat-av {
+      border-color: rgba(80,140,240,.70) !important;
+      box-shadow: 0 0 8px rgba(60,110,220,.28) !important;
+      background: rgba(8,18,45,.65) !important;
+    }
+    .ph-seat.evil .ph-seat-av {
+      border-color: rgba(190,50,50,.72) !important;
+      box-shadow: 0 0 8px rgba(160,30,30,.32) !important;
+      background: rgba(35,5,5,.85) !important;
+    }
+
+    /* ── 发言气泡 ── */
+    .ph-speak-bubble.other {
+      background: rgba(14,7,1,.82) !important;
+      border-color: rgba(185,138,52,.16) !important;
+      color: #c0a070 !important;
+      border-radius: 1px !important;
+    }
+    .ph-speak-bubble.me {
+      background: rgba(185,138,52,.15) !important;
+      border-color: rgba(200,150,55,.42) !important;
+      color: #e8d090 !important;
+      border-radius: 1px !important;
+    }
+    .ph-speak-bubble.ai {
+      background: rgba(35,70,150,.12) !important;
+      border-color: rgba(90,130,240,.24) !important;
+      color: #98b0f0 !important;
+      border-radius: 1px !important;
+    }
+
+    /* ── 历史卡片 ── */
+    .ph-hc { border-radius: 1px !important; }
+    .ph-hc.win  {
+      background: linear-gradient(135deg,rgba(14,40,16,.94),rgba(8,4,1,.97) 65%) !important;
+      border-color: rgba(50,180,90,.28) !important;
+    }
+    .ph-hc.lose {
+      background: linear-gradient(135deg,rgba(40,10,10,.94),rgba(8,4,1,.97) 65%) !important;
+      border-color: rgba(180,50,50,.28) !important;
+    }
+    .ph-hc-rolename.good { color: #98b8f0 !important; text-shadow: 0 0 8px rgba(80,150,240,.38) !important; }
+    .ph-hc-rolename.evil { color: #e89090 !important; text-shadow: 0 0 8px rgba(240,70,70,.38) !important; }
+
+    /* ── 统计/分析页 ── */
+    .ph-ov-num { text-shadow: 0 0 14px currentColor !important; }
+    .ph-fc.good { border-color: rgba(80,140,240,.28) !important; background: rgba(16,36,90,.22) !important; }
+    .ph-fc.evil { border-color: rgba(180,50,50,.28) !important; background: rgba(70,8,8,.22) !important; }
+    .ph-role-cell {
+      background: rgba(12,6,1,.82) !important;
+      border-color: rgba(185,138,52,.18) !important;
+      border-radius: 1px !important;
+    }
+
+    /* ── 输入框 ── */
+    .ph-panel input {
+      background: rgba(255,220,140,.03) !important;
+      border-color: rgba(185,138,52,.28) !important;
+      color: #e8d090 !important;
+      border-radius: 1px !important;
+    }
+
+    /* ── 分页 ── */
+    .ph-pg-arrow { color: #7a5830 !important; }
+    .ph-pg-num   { color: #e8d090 !important; text-shadow: 0 0 8px rgba(185,138,52,.45) !important; }
+
+    /* ── 用户行 / 头像 ── */
+    .ph-user-row {
+      border-left-color: rgba(200,150,55,.85) !important;
+      background: linear-gradient(90deg,rgba(185,138,52,.14),rgba(185,138,52,.03) 60%,transparent) !important;
+    }
+    .ph-av {
+      background: rgba(10,5,1,.9) !important;
+      border-color: rgba(185,138,52,.45) !important;
+      box-shadow: inset 0 0 8px rgba(0,0,0,.6) !important;
+    }
+
+    /* ── 任务详情表（石刻档案风格）── */
+    .ph-mission-table {
+      border-color: rgba(185,138,52,.22) !important;
+      background: rgba(10,5,1,.65) !important;
+      border-radius: 0 !important;
+    }
+    .ph-mt-head {
+      background: rgba(185,138,52,.09) !important;
+      color: #7a5830 !important;
+      border-bottom: 1px solid rgba(185,138,52,.18) !important;
+    }
+    .ph-mt-row {
+      border-top-color: rgba(185,138,52,.10) !important;
+    }
+    .ph-mt-row:nth-child(even) { background: rgba(185,138,52,.04) !important; }
+    .ph-mt-round { color: #9a7848 !important; font-style: italic !important; }
+    .ph-mt-av {
+      background: rgba(10,5,1,.75) !important;
+      border-color: rgba(185,138,52,.28) !important;
+    }
+    .ph-mt-v.y { color: #7ab050 !important; }
+    .ph-mt-v.n { color: #c04838 !important; }
+    .ph-mt-result.ok {
+      background: rgba(40,80,20,.35) !important;
+      color: #88b858 !important;
+      border-color: rgba(80,140,40,.35) !important;
+      border-radius: 1px !important;
+    }
+    .ph-mt-result.ng {
+      background: rgba(80,20,12,.40) !important;
+      color: #c85848 !important;
+      border-color: rgba(160,45,35,.35) !important;
+      border-radius: 1px !important;
+    }
+
+    /* ── 发言区 ── */
+    .ph-speak-av {
+      background: rgba(10,5,1,.80) !important;
+      border-color: rgba(185,138,52,.28) !important;
+    }
+    .ph-speak-nm { color: #7a5830 !important; font-style: italic !important; }
+
+    /* ── 圆桌中心确认按钮 ── */
+    .ph-center-confirm-btn {
+      background-color: rgba(20,10,1,.95) !important;
+      background-image: url("${s.textureUrl}") !important;
+      background-size: 48px !important;
+      background-blend-mode: overlay !important;
+      border-top: 1px solid rgba(220,165,60,.80) !important;
+      border-left: 1px solid rgba(185,138,52,.70) !important;
+      border-right: 1px solid rgba(100,65,20,.85) !important;
+      border-bottom: 2px solid rgba(60,35,5,.95) !important;
+      color: #e8d080 !important;
+      font-weight: 700 !important;
+      letter-spacing: 2px !important;
+      text-shadow: 0 0 8px rgba(200,148,45,.85), 0 1px 2px rgba(0,0,0,1) !important;
+      box-shadow: 0 2px 0 #030100, inset 0 1px 0 rgba(255,200,80,.10) !important;
+      border-radius: 1px !important;
+    }
+
+    /* ── 任务结果页专属 ── */
+    .ph-ev-banner {
+      border-radius: 0 !important;
+      border-width: 2px !important;
+    }
+    .ph-ev-label { letter-spacing: 4px !important; }
+    .ph-ev-sublabel { color: rgba(155,115,55,.65) !important; }
+
+    /* ── 发言面板 ── */
+    .ph-spk-card {
+      background-color: rgba(8,4,0,.99) !important;
+      background-image: url("${s.textureUrl}") !important;
+      background-size: 64px !important;
+      background-blend-mode: overlay !important;
+      border-top: 2px solid rgba(200,150,55,.65) !important;
+      box-shadow: 0 -10px 32px rgba(0,0,0,.92) !important;
+    }
+    .ph-spk-accent {
+      background: linear-gradient(90deg,transparent,rgba(200,150,55,.70) 50%,transparent) !important;
+    }
+    .ph-spk-av {
+      background: rgba(12,6,1,.88) !important;
+      border-color: rgba(185,138,52,.55) !important;
+      box-shadow: 0 0 8px rgba(185,138,52,.22), inset 0 0 8px rgba(0,0,0,.6) !important;
+    }
+    .ph-spk-dot { background: #80b048 !important; box-shadow: 0 0 5px rgba(100,160,50,.55) !important; }
+    .ph-spk-nm  { color: #e8d090 !important; }
+    .ph-spk-hint{ color: #6a4820 !important; }
+    .ph-spk-timer {
+      color: #e8d090 !important;
+      text-shadow: 0 0 10px rgba(185,138,52,.55) !important;
+      font-family: 'DDTitle', 'Noto Serif SC', serif !important;
+    }
+    .ph-spk-track {
+      background: rgba(185,138,52,.12) !important;
+      border-radius: 1px !important;
+    }
+    .ph-spk-fill {
+      background: linear-gradient(90deg, rgba(120,80,20,.90), rgba(200,150,55,.95)) !important;
+    }
+    .ph-spk-divider { background: rgba(185,138,52,.18) !important; }
+    .ph-spk-input {
+      background: rgba(10,5,1,.88) !important;
+      border-color: rgba(185,138,52,.32) !important;
+      color: #c0a070 !important;
+      border-radius: 1px !important;
+    }
+    .ph-spk-send {
+      background-color: #180a01 !important;
+      background-image: url("${s.textureUrl}") !important;
+      background-size: 48px !important;
+      background-blend-mode: overlay !important;
+      border-top: 1px solid rgba(200,165,60,.75) !important;
+      border-left: 1px solid rgba(175,130,45,.70) !important;
+      border-right: 1px solid rgba(110,70,20,.85) !important;
+      border-bottom: 2px solid rgba(70,40,5,.95) !important;
+      color: #e8d090 !important;
+      border-radius: 1px !important;
+      text-shadow: 0 0 8px rgba(185,138,52,.60) !important;
+    }
+    .ph-spk-end {
+      background: rgba(10,5,1,.72) !important;
+      border-color: rgba(185,138,52,.35) !important;
+      color: #8a6830 !important;
+      border-radius: 1px !important;
+      letter-spacing: 2px !important;
+    }
+
+    /* ── 底部面板切换条 ── */
+    .ph-panel-toggle {
+      background: rgba(5,2,0,.98) !important;
+      border-bottom-color: rgba(185,138,52,.15) !important;
+    }
+    .ph-toggle-btn.active {
+      background: rgba(185,138,52,.14) !important;
+      color: #e8d090 !important;
+    }
+    .ph-toggle-btn { color: #6a4820 !important; }
+
+    /* ── 终局翻牌 reveal grid ── */
+    .ph-reveal-card { border-radius: 0 !important; }
+    .ph-reveal-card.good {
+      background: rgba(8,22,55,.60) !important;
+      border-color: rgba(80,140,240,.32) !important;
+    }
+    .ph-reveal-card.evil {
+      background: rgba(55,8,8,.65) !important;
+      border-color: rgba(180,50,50,.35) !important;
+    }
+    .ph-reveal-av.good {
+      border-color: rgba(80,140,240,.85) !important;
+      box-shadow: 0 0 8px rgba(60,110,220,.35) !important;
+      background: rgba(8,18,45,.75) !important;
+    }
+    .ph-reveal-av.evil {
+      border-color: rgba(180,50,50,.85) !important;
+      box-shadow: 0 0 8px rgba(150,30,30,.35) !important;
+      background: rgba(35,5,5,.88) !important;
+    }
+    .ph-reveal-nm  { color: #e8d090 !important; font-family: 'DDTitle', 'Noto Serif SC', serif !important; }
+    .ph-reveal-role.good {
+      background: rgba(18,50,120,.55) !important;
+      border-color: rgba(80,140,240,.45) !important;
+      color: #98b8f0 !important;
+    }
+    .ph-reveal-role.evil {
+      background: rgba(80,12,12,.60) !important;
+      border-color: rgba(180,50,50,.45) !important;
+      color: #e89090 !important;
+    }
+    /* End-game banner */
+    .ph-end-banner {
+      border-radius: 0 !important;
+      border-width: 2px !important;
+    }
+    .ph-end-banner.good-win {
+      background: linear-gradient(135deg,rgba(8,22,55,.70),rgba(8,4,1,.96) 70%) !important;
+      border-color: rgba(80,140,240,.40) !important;
+    }
+    .ph-end-banner.evil-win {
+      background: linear-gradient(135deg,rgba(60,8,8,.72),rgba(8,4,1,.96) 70%) !important;
+      border-color: rgba(180,50,50,.40) !important;
+    }
+    .ph-end-title {
+      font-family: 'DDTitle', 'Noto Serif SC', serif !important;
+      letter-spacing: 6px !important;
+      text-shadow: 0 0 22px currentColor !important;
+    }
+  </style>`;
+}
 function renderPreview() {
   const frame = document.getElementById('phoneFrame');
   const skin = SKINS[currentSkin];
@@ -750,15 +2061,17 @@ function renderPreview() {
   }
 
   function roleImgUrl(roleId) {
-    return generatedAssets[`${currentSkin}:${roleId}`]
-      || (currentSkin === 'dark-gold' ? `https://www.awalon.top/mp-assets/role-split/${roleId}.png` : null);
+    if (generatedAssets[`${currentSkin}:${roleId}`]) return generatedAssets[`${currentSkin}:${roleId}`];
+    // CDN fallback for all skins (dark-gold has real CDN images, others may 404 gracefully)
+    const slot = ROLE_SLOTS.find(s => s && s.id === roleId);
+    return slot ? `${CDN}/${slot.cdnFile}` : null;
   }
 
   // ── HOME SCREEN ──────────────────────────────────────────────
   if (currentPreviewTab === 'home') {
     frame.innerHTML = `
     <div class="phone-screen" style="${vars};position:relative;display:flex;flex-direction:column">
-      ${bgLayer('home')}${maskDiv}
+      ${skinExtraStyles(currentSkin)}${bgLayer('home')}${maskDiv}
       <div class="ph-nav"><div class="ph-nav-title">AVALON</div></div>
       <div class="ph-content">
         <!-- User panel -->
@@ -777,19 +2090,25 @@ function renderPreview() {
             <div class="ph-act-btn"><span style="font-size:11px">📖</span><span style="font-size:6px;color:var(--aw-subtext)">游戏规则</span></div>
           </div>
         </div>
+        ${skinDivider(currentSkin)}
         <!-- Room setup panel -->
         <div class="ph-panel">
           <div class="ph-count-row">
             ${['5人','6人','7人','8人','9人','10人'].map((c,i)=>`<div class="ph-cnt${i===2?' on':''}">${c}</div>`).join('')}
           </div>
           <div class="ph-chips">
-            <span class="ph-rchip good-chip">✦ 梅林</span>
-            <span class="ph-rchip good-chip">✦ 派西</span>
-            <span class="ph-rchip good-chip">忠臣</span>
-            <span class="ph-rchip good-chip">忠臣</span>
-            <span class="ph-rchip evil-chip">⚔ 刺客</span>
-            <span class="ph-rchip evil-chip">⚔ 莫甘娜</span>
-            <span class="ph-rchip evil-chip">莫德雷德</span>
+            ${[
+              {id:'merlin',      name:'梅林',    cls:'good-chip'},
+              {id:'percival',    name:'派西',    cls:'good-chip'},
+              {id:'arthur_loyal',name:'忠臣',    cls:'good-chip'},
+              {id:'arthur_loyal',name:'忠臣',    cls:'good-chip'},
+              {id:'assassin',    name:'刺客',    cls:'evil-chip'},
+              {id:'morgana',     name:'莫甘娜',  cls:'evil-chip'},
+              {id:'mordred',     name:'莫德雷德',cls:'evil-chip'},
+            ].map(r => `<span class="ph-rchip ${r.cls}">
+              <img class="ph-rchip-img" src="${roleImgUrl(r.id) || ''}" onerror="this.style.display='none'">
+              <span>${r.name}</span>
+            </span>`).join('')}
           </div>
           <div style="margin-bottom:5px;padding:3px 6px;border-radius:4px;border:1px solid var(--aw-panel-border);background:rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:space-between">
             <span style="font-size:7px;color:var(--aw-subtext)">高级设置</span>
@@ -863,7 +2182,7 @@ function renderPreview() {
 
     frame.innerHTML = `
     <div class="phone-screen" style="${vars};position:relative;display:flex;flex-direction:column">
-      ${bgLayer('game')}${maskDiv}
+      ${skinExtraStyles(currentSkin)}${bgLayer('game')}${maskDiv}
       <div class="ph-nav">
         <div class="ph-nav-back">← 返回</div>
         <div class="ph-nav-title">1234 号房</div>
@@ -878,7 +2197,7 @@ function renderPreview() {
           <div class="ph-table-inner">
             ${tableCircleHtml}
             ${seatsHtml}
-            <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:linear-gradient(180deg,#e4c281,#c89b52);color:#1a1510;border-radius:5px;padding:3px 7px;font-size:6.5px;font-weight:700;white-space:nowrap;z-index:2">确认组队</div>
+            <div class="ph-center-confirm-btn" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:linear-gradient(180deg,#e4c281,#c89b52);color:#1a1510;border-radius:5px;padding:3px 7px;font-size:6.5px;font-weight:700;white-space:nowrap;z-index:2">确认组队</div>
           </div>
         </div>
         <!-- Mission pills -->
@@ -886,8 +2205,103 @@ function renderPreview() {
           <div class="ph-sec-chip">任务进度</div>
           <div class="ph-pills-row">${pillsHtml}</div>
         </div>
+        <!-- Mission vote table -->
+        <div style="padding:0 2px">
+          <div class="ph-sec-chip">任务详情</div>
+          <div class="ph-mission-table">
+            <div class="ph-mt-head" style="grid-template-columns:24px 1fr 56px 28px">
+              <span>轮次</span><span>出征队伍</span><span>投票</span><span>结果</span>
+            </div>
+            <div class="ph-mt-row" style="grid-template-columns:24px 1fr 56px 28px">
+              <span class="ph-mt-round">R1</span>
+              <div class="ph-mt-team"><div class="ph-mt-av">🦊</div><div class="ph-mt-av">🐉</div></div>
+              <div class="ph-mt-votes">
+                <span class="ph-mt-v y">✓</span><span class="ph-mt-v y">✓</span><span class="ph-mt-v y">✓</span><span class="ph-mt-v y">✓</span><span class="ph-mt-v n">✗</span><span class="ph-mt-v n">✗</span><span class="ph-mt-v y">✓</span>
+              </div>
+              <span class="ph-mt-result ok">成功</span>
+            </div>
+            <div class="ph-mt-row" style="grid-template-columns:24px 1fr 56px 28px">
+              <span class="ph-mt-round">R2</span>
+              <div class="ph-mt-team"><div class="ph-mt-av">🐉</div><div class="ph-mt-av">🦅</div><div class="ph-mt-av">🌙</div></div>
+              <div class="ph-mt-votes">
+                <span class="ph-mt-v n">✗</span><span class="ph-mt-v y">✓</span><span class="ph-mt-v n">✗</span><span class="ph-mt-v y">✓</span><span class="ph-mt-v n">✗</span><span class="ph-mt-v n">✗</span><span class="ph-mt-v y">✓</span>
+              </div>
+              <span class="ph-mt-result ng">失败</span>
+            </div>
+            <div class="ph-mt-row" style="grid-template-columns:24px 1fr 56px 28px;opacity:0.6">
+              <span class="ph-mt-round" style="color:var(--aw-accent,#d9b36b)">R3</span>
+              <div class="ph-mt-team"><div class="ph-mt-av" style="border-color:rgba(216,176,107,0.4)">🦊</div><div class="ph-mt-av" style="border-color:rgba(216,176,107,0.4)">🌊</div></div>
+              <div class="ph-mt-votes" style="font-size:5.5px;color:rgba(255,255,255,0.3)">投票中…</div>
+              <span></span>
+            </div>
+          </div>
+        </div>
+        <!-- AI speak / chat section -->
+        <div style="padding:0 2px 2px">
+          <div class="ph-sec-chip">玩家发言</div>
+          <div class="ph-speak-list">
+            <div class="ph-speak-row">
+              <div class="ph-speak-av">🐉</div>
+              <div class="ph-speak-wrap">
+                <span class="ph-speak-nm">龙影</span>
+                <div class="ph-speak-bubble other">我觉得第一轮我们赢得比较顺，月影的反应有点奇怪，大家注意一下。</div>
+              </div>
+            </div>
+            <div class="ph-speak-row me">
+              <div class="ph-speak-av">🦊</div>
+              <div class="ph-speak-wrap me">
+                <span class="ph-speak-nm">光影（我）</span>
+                <div class="ph-speak-bubble me">我支持龙影的判断，第二轮失败说明队伍里有奸细。</div>
+              </div>
+            </div>
+            <div class="ph-speak-row">
+              <div class="ph-speak-av" style="background:rgba(78,158,255,0.15);border-color:rgba(78,158,255,0.35)">🤖</div>
+              <div class="ph-speak-wrap">
+                <span class="ph-speak-nm" style="color:rgba(78,158,255,0.7)">AI · 分析</span>
+                <div class="ph-speak-bubble ai">从投票数据看，⚡雷鸣和🌙月影的投票模式与好人阵营不符，建议下轮避开。</div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <!-- Voting panel -->
+      <!-- Bottom panel toggle + mode panels -->
+      <div class="ph-panel-toggle">
+        <div class="ph-toggle-btn ${currentGamePanel==='speak'?'active':''}" onclick="currentGamePanel='speak';renderPreview()">发言中</div>
+        <div class="ph-toggle-btn ${currentGamePanel==='vote'?'active':''}" onclick="currentGamePanel='vote';renderPreview()">投票</div>
+        <div class="ph-toggle-btn ${currentGamePanel==='mission'?'active':''}" onclick="currentGamePanel='mission';renderPreview()">执行任务</div>
+      </div>
+      ${currentGamePanel === 'speak' ? `
+      <!-- Speaking panel: other player speaking (watching) -->
+      <div class="ph-spk-card">
+        <div class="ph-spk-accent"></div>
+        <div class="ph-spk-top">
+          <div class="ph-spk-av">🐉<span class="ph-spk-dot"></span></div>
+          <div class="ph-spk-info">
+            <div class="ph-spk-nm">龙影 · 正在发言</div>
+            <div class="ph-spk-hint">共 60 秒 · 请认真倾听</div>
+          </div>
+          <div class="ph-spk-timer">0:38</div>
+        </div>
+        <div class="ph-spk-track"><div class="ph-spk-fill" style="width:37%"></div></div>
+        <div style="font-size:6px;color:var(--aw-subtext,#aeb6c7);text-align:center;margin-top:3px">等待当前玩家发言结束…</div>
+      </div>` : currentGamePanel === 'mission' ? `
+      <!-- Mission panel: execute mission vote -->
+      <div class="ph-action-panel">
+        <div class="ph-vote-title">你在出征队中 · 请选择任务行动</div>
+        <div class="ph-vote-team">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:1px">
+            <div style="position:relative;display:inline-block"><div class="ph-vote-av">🦊</div><span style="position:absolute;right:-4px;bottom:-2px;min-width:12px;height:12px;padding:0 2px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:rgba(236,196,118,.96);color:#20160d;font-size:6px;font-weight:700;line-height:1">1</span></div>
+            <div class="ph-vote-name">光影（我）</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:1px">
+            <div style="position:relative;display:inline-block"><div class="ph-vote-av">🌊</div><span style="position:absolute;right:-4px;bottom:-2px;min-width:12px;height:12px;padding:0 2px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:rgba(236,196,118,.96);color:#20160d;font-size:6px;font-weight:700;line-height:1">7</span></div>
+            <div class="ph-vote-name">海浪</div>
+          </div>
+        </div>
+        <div class="ph-vote-divider"></div>
+        <div class="ph-vote-btns"><div class="ph-vote-yes">✓ 执行成功</div><div class="ph-vote-no">✗ 执行失败</div></div>
+      </div>` : `
+      <!-- Voting panel: team approval vote -->
       <div class="ph-action-panel">
         <div class="ph-vote-title">请对当前提名队伍投票</div>
         <div class="ph-vote-team">
@@ -902,7 +2316,7 @@ function renderPreview() {
         </div>
         <div class="ph-vote-divider"></div>
         <div class="ph-vote-btns"><div class="ph-vote-yes">同意</div><div class="ph-vote-no">反对</div></div>
-      </div>
+      </div>`}
     </div>`;
 
   // ── ROLE STATS SCREEN ───────────────────────────────────────
@@ -956,9 +2370,43 @@ function renderPreview() {
       </div>`;
     }).join('');
 
+    const medalBase = 'https://www.awalon.top/mp-assets/medals/';
+    const mUrl = code => medalBase + (code === 'good_first_round_clean_captain' ? 'good_protect_round_fail_captain' : code) + '.png';
+    const medalSections = [
+      {title:'正义阵营', cls:'good', list:[
+        {code:'merlin_survivor',name:'梅林是狗',cnt:3},
+        {code:'good_clean_trust',name:'开眼玩家',cnt:2},
+        {code:'good_clean_captain',name:'老司机',cnt:5},
+        {code:'good_three_success_participant',name:'正义王',cnt:1},
+        {code:'good_comeback_win',name:'开往春田花花',cnt:1},
+        {code:'good_blocker',name:'挡刀侠',cnt:0},
+      ]},
+      {title:'邪恶阵营', cls:'evil', list:[
+        {code:'assassin_early_hit_merlin',name:'刺客大师',cnt:2},
+        {code:'evil_three_fail_win',name:'炸三塔',cnt:1},
+        {code:'evil_hide_votes_master',name:'藏票大师',cnt:3},
+        {code:'evil_no_fail_win',name:'演技派',cnt:0},
+        {code:'morgana_percival_fail_master',name:'洗头大师',cnt:1},
+        {code:'evil_three_fail_participant',name:'狼王',cnt:0},
+      ]},
+    ];
+    const medalsHtml = medalSections.map(sec => {
+      const cells = sec.list.map(m =>
+        '<div class="ph-medal-card' + (m.cnt===0?' ph-medal-zero':'') + '">' +
+        '<img src="' + mUrl(m.code) + '" style="width:20px;height:20px;object-fit:contain" onerror="this.style.display=\'none\'">' +
+        '<div class="ph-medal-name">' + m.name + '</div>' +
+        '<div class="ph-medal-cnt">' + m.cnt + '</div>' +
+        '</div>'
+      ).join('');
+      return '<div class="ph-medal-section">' +
+        '<span class="ph-medal-section-title ' + sec.cls + '">' + sec.title + '</span>' +
+        '<div class="ph-medal-grid">' + cells + '</div>' +
+        '</div>';
+    }).join('');
+
     frame.innerHTML = `
     <div class="phone-screen" style="${vars};position:relative;display:flex;flex-direction:column">
-      ${bgLayer('game')}${maskDiv}
+      ${skinExtraStyles(currentSkin)}${bgLayer('game')}${maskDiv}
       <div class="ph-nav">
         <div class="ph-nav-back">← 返回</div>
         <div class="ph-nav-title">我的主页</div>
@@ -997,23 +2445,32 @@ function renderPreview() {
           <div class="ph-panel-hd"><span class="ph-panel-title">按角色统计</span></div>
           <div class="ph-role-grid">${roleCellsHtml}</div>
         </div>
+        <!-- Medals panel -->
+        <div class="ph-panel" style="padding:0;overflow:hidden">
+          <div class="ph-panel-hd"><span class="ph-panel-title">获得勋章</span></div>
+          ${medalsHtml}
+        </div>
       </div>
     </div>`;
 
   // ── HISTORY SCREEN ───────────────────────────────────────────
   } else if (currentPreviewTab === 'history') {
     const historyData = [
-      {result:'win',  faction:'good', role:'梅林',    roleId:'merlin',    room:'8821', players:7,  seat:2, medals:[{icon:'🌟',name:'先知先觉'}], time:'2小时前'},
+      {result:'win',  faction:'good', role:'梅林',    roleId:'merlin',    room:'8821', players:7,  seat:2, medals:[{code:'merlin_survivor',name:'梅林是狗'},{code:'good_three_success_participant',name:'正义王'}], time:'2小时前'},
       {result:'lose', faction:'evil', role:'莫甘娜',  roleId:'morgana',   room:'7743', players:7,  seat:5, medals:[], time:'昨天'},
-      {result:'win',  faction:'good', role:'忠臣',    roleId:'arthur_loyal',room:'6291',players:10,seat:3, medals:[{icon:'🏅',name:'众志成城'}], time:'前天'},
-      {result:'lose', faction:'evil', role:'刺客',    roleId:'assassin',  room:'5882', players:7,  seat:1, medals:[{icon:'🎯',name:'刺客失手'}], time:'3天前'},
+      {result:'win',  faction:'good', role:'忠臣',    roleId:'arthur_loyal',room:'6291',players:10,seat:3, medals:[{code:'good_comeback_win',name:'开往春田花花'}], time:'前天'},
+      {result:'lose', faction:'evil', role:'刺客',    roleId:'assassin',  room:'5882', players:7,  seat:1, medals:[{code:'assassin_early_hit_merlin',name:'刺客大师'},{code:'evil_three_fail_win',name:'炸三塔'}], time:'3天前'},
     ];
     const cardsHtml = historyData.map(h => {
       const rUrl = roleImgUrl(h.roleId);
       const avHtml = rUrl
         ? `<img src="${rUrl}" onerror="this.textContent='${h.role[0]}'">`
         : h.role[0];
-      const medalsHtml = h.medals.map(m => `<div class="ph-hc-medal"><span style="font-size:8px">${m.icon}</span><span class="ph-hc-medal-txt">${m.name}</span></div>`).join('');
+      const medalImgUrl = code => {
+        const fileCode = code === 'good_first_round_clean_captain' ? 'good_protect_round_fail_captain' : code;
+        return `https://www.awalon.top/mp-assets/medals/${fileCode}.png`;
+      };
+      const medalsHtml = h.medals.map(m => `<div class="ph-hc-medal"><img src="${medalImgUrl(m.code)}" style="width:11px;height:11px;object-fit:contain;flex-shrink:0" onerror="this.style.display='none'"><span class="ph-hc-medal-txt">${m.name}</span></div>`).join('');
       return `<div class="ph-hc ${h.result}">
         <div class="ph-hc-body">
           <div class="ph-hc-top">
@@ -1045,7 +2502,7 @@ function renderPreview() {
 
     frame.innerHTML = `
     <div class="phone-screen" style="${vars};position:relative;display:flex;flex-direction:column">
-      ${bgLayer('game')}${maskDiv}
+      ${skinExtraStyles(currentSkin)}${bgLayer('game')}${maskDiv}
       <div class="ph-nav">
         <div class="ph-nav-back">← 返回</div>
         <div class="ph-nav-title">历史对战</div>
@@ -1062,7 +2519,7 @@ function renderPreview() {
     </div>`;
 
   // ── IDENTITY / ROLE CARD SCREEN ──────────────────────────────
-  } else {
+  } else if (currentPreviewTab === 'role') {
     const roleId = (currentAsset && ASSETS.find(a => a.id === currentAsset && (a.tag === 'good' || a.tag === 'evil'))) ? currentAsset : 'merlin';
     const roleAsset = ASSETS.find(a => a.id === roleId) || ASSETS[3];
     const isEvil = roleAsset.tag === 'evil';
@@ -1104,7 +2561,7 @@ function renderPreview() {
 
     frame.innerHTML = `
     <div class="phone-screen" style="${vars};position:relative;display:flex;flex-direction:column">
-      ${bgLayer('game')}${maskDiv}
+      ${skinExtraStyles(currentSkin)}${bgLayer('game')}${maskDiv}
       <div class="ph-nav">
         <div class="ph-nav-back">← 返回</div>
         <div class="ph-nav-title">1234 号房</div>
@@ -1129,8 +2586,338 @@ function renderPreview() {
         </div>
       </div>
     </div>`;
+
+  // ── MISSION RESULT SCREEN ───────────────────────────────────
+  } else if (currentPreviewTab === 'event') {
+    const isSuccess = currentEventView === 'success';
+    const evAsset   = ASSETS.find(a => a.id === (isSuccess ? 'quest-success' : 'quest-fail'));
+    const evUrl     = getAssetUrl(currentSkin, evAsset);
+    const isDDSkin  = currentSkin === 'dark-dungeon';
+    // dark-dungeon uses muted olive/ember tones; other skins use bright green/red
+    const evColor   = isSuccess
+      ? (isDDSkin ? '#90c060' : '#4ade80')
+      : (isDDSkin ? '#d06050' : '#f87171');
+    const evBg      = isSuccess
+      ? (isDDSkin ? 'rgba(28,55,12,0.95)' : 'rgba(40,120,60,0.18)')
+      : (isDDSkin ? 'rgba(65,12,6,0.96)'  : 'rgba(120,20,20,0.18)');
+    const evBdr     = isSuccess
+      ? (isDDSkin ? 'rgba(90,150,45,0.55)' : 'rgba(74,222,128,0.35)')
+      : (isDDSkin ? 'rgba(175,50,38,0.55)' : 'rgba(248,113,113,0.35)');
+    const evLabel   = isSuccess ? '任务成功' : '任务失败';
+    const evRound   = 3;
+    const vYClr = isDDSkin ? '#90c060' : '#4ade80';
+    const vNClr = isDDSkin ? '#c85848' : '#f87171';
+    const voteResults = isSuccess
+      ? [{e:'🌙',v:'✓'},{e:'🦊',v:'✓'},{e:'🐉',v:'✓'}]
+      : [{e:'🌙',v:'✓'},{e:'🦊',v:'✗'},{e:'🐉',v:'✗'}];
+    const votesHtml = voteResults.map(v =>
+      '<div style="display:flex;flex-direction:column;align-items:center;gap:2px">'
+      + '<div style="font-size:12px;line-height:1">' + v.e + '</div>'
+      + '<div style="font-size:8px;font-weight:700;color:' + (v.v==='✓'?vYClr:vNClr) + '">' + v.v + '</div>'
+      + '</div>'
+    ).join('');
+
+    frame.innerHTML = `
+    <div class="phone-screen" style="${vars};position:relative;display:flex;flex-direction:column">
+      ${skinExtraStyles(currentSkin)}${bgLayer('game')}${maskDiv}
+      <div class="ph-nav">
+        <div class="ph-nav-back">← 返回</div>
+        <div class="ph-nav-title">第 ${evRound} 轮任务</div>
+        <!-- Toggle: success / fail -->
+        <div style="margin-left:auto;display:flex;gap:2px;background:rgba(255,255,255,.06);border-radius:5px;padding:2px">
+          <div onclick="currentEventView='success';renderPreview()" style="padding:2px 5px;border-radius:3px;font-size:7px;cursor:pointer;background:${isSuccess?'rgba(74,222,128,.18)':'transparent'};color:${isSuccess?'#4ade80':'rgba(255,255,255,.4)'}">成功</div>
+          <div onclick="currentEventView='fail';renderPreview()" style="padding:2px 5px;border-radius:3px;font-size:7px;cursor:pointer;background:${!isSuccess?'rgba(248,113,113,.18)':'transparent'};color:${!isSuccess?'#f87171':'rgba(255,255,255,.4)'}">失败</div>
+        </div>
+      </div>
+      <div class="ph-content" style="align-items:center;justify-content:center;gap:8px">
+        <!-- Mission result banner -->
+        <div class="ph-ev-banner" style="width:100%;border-radius:8px;overflow:hidden;border:1px solid ${evBdr};background:${evBg}">
+          ${evUrl ? `<img src="${evUrl}" style="width:100%;display:block;object-fit:cover;max-height:72px" onerror="this.style.display='none'">` : ''}
+          <div style="padding:6px 8px;text-align:center">
+            <div class="ph-ev-label" style="font-size:13px;font-weight:800;color:${evColor};letter-spacing:2px">${evLabel}</div>
+            <div class="ph-ev-sublabel" style="font-size:7px;color:rgba(255,255,255,.4);margin-top:2px">第 ${evRound} 轮 · ${voteResults.length} 人出行</div>
+          </div>
+        </div>
+        <!-- Vote breakdown -->
+        <div class="ph-panel" style="width:100%">
+          <div style="font-size:7px;color:var(--aw-subtext);margin-bottom:6px">任务票型</div>
+          <div style="display:flex;justify-content:center;gap:16px">${votesHtml}</div>
+          <div style="margin-top:8px;font-size:7px;color:var(--aw-subtext);text-align:center">
+            ${isSuccess ? '全员投出成功票' : `${voteResults.filter(v=>v.v==='✗').length} 票失败`}
+          </div>
+        </div>
+        <!-- Mission progress pills (compact) -->
+        <div class="ph-panel" style="width:100%">
+          <div style="font-size:7px;color:var(--aw-subtext);margin-bottom:4px">任务进度</div>
+          <div class="ph-pills-row">
+            ${[1,2,3,4,5].map(i => {
+              const st = i<evRound ? (i===2?'fail':'success') : i===evRound ? (isSuccess?'success':'fail') : 'future';
+              const ic = st==='success'?'✓':st==='fail'?'✗':'·';
+              return `<div class="ph-pill ${st}"><div class="ph-pill-icon">${ic}</div></div>`;
+            }).join('')}
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  // ── END-GAME REVEAL SCREEN ──────────────────────────────────
+  } else if (currentPreviewTab === 'endgame') {
+    const isGoodWin = currentEndgame === 'good';
+    const resultClass = isGoodWin ? 'good-win' : 'evil-win';
+    const resultTitle = isGoodWin ? '正义阵营胜利' : '邪恶阵营胜利';
+    const resultSub   = isGoodWin ? '三轮任务成功 · 刺客未能击中梅林' : '任务连续失败 · 邪恶阵营称霸圆桌';
+
+    const revealPlayers = [
+      {e:'🦊', nm:'光影',  role:'梅林',     roleId:'merlin',       faction:'good'},
+      {e:'🐉', nm:'龙影',  role:'派西维尔', roleId:'percival',     faction:'good'},
+      {e:'🦅', nm:'鹰眼',  role:'忠臣',     roleId:'arthur_loyal', faction:'good'},
+      {e:'🌙', nm:'月影',  role:'莫甘娜',   roleId:'morgana',      faction:'evil'},
+      {e:'🦋', nm:'蝶舞',  role:'忠臣',     roleId:'arthur_loyal', faction:'good'},
+      {e:'⚡', nm:'雷鸣',  role:'刺客',     roleId:'assassin',     faction:'evil'},
+      {e:'🌊', nm:'海浪',  role:'爪牙',     roleId:'minion',       faction:'evil'},
+    ];
+
+    const revealCardsHtml = revealPlayers.map(p => {
+      const rUrl = roleImgUrl(p.roleId);
+      const avHtml = rUrl
+        ? `<img src="${rUrl}" onerror="this.style.display='none'">`
+        : p.e;
+      return `<div class="ph-reveal-card ${p.faction}">
+        <div class="ph-reveal-av ${p.faction}">${avHtml}</div>
+        <div class="ph-reveal-nm">${p.nm}</div>
+        <div class="ph-reveal-role ${p.faction}">${p.role}</div>
+      </div>`;
+    }).join('');
+
+    // Assassination section (only relevant when good side wins)
+    const assassinSection = isGoodWin ? `
+      <div class="ph-panel" style="width:100%;padding:6px 8px">
+        <div style="font-size:7px;color:var(--aw-subtext,#aeb6c7);margin-bottom:5px">刺客行动</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div style="font-size:13px">⚡</div>
+          <div style="flex:1">
+            <div style="font-size:7.5px;font-weight:700;color:var(--aw-text,#eef1f7)">雷鸣 猜测梅林为：</div>
+            <div style="font-size:6.5px;color:var(--aw-subtext,#aeb6c7);margin-top:1px">🐉 龙影 · 派西维尔</div>
+          </div>
+          <div style="padding:2px 6px;border-radius:999px;background:rgba(80,220,140,.12);border:1px solid rgba(80,220,140,.32);font-size:6.5px;font-weight:700;color:#50dc8c">猜错</div>
+        </div>
+      </div>` : `
+      <div class="ph-panel" style="width:100%;padding:6px 8px">
+        <div style="font-size:7px;color:var(--aw-subtext,#aeb6c7);margin-bottom:5px">刺客行动</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <div style="font-size:13px">⚡</div>
+          <div style="flex:1">
+            <div style="font-size:7.5px;font-weight:700;color:var(--aw-text,#eef1f7)">雷鸣 正确识别梅林</div>
+            <div style="font-size:6.5px;color:var(--aw-subtext,#aeb6c7);margin-top:1px">🦊 光影 · 梅林 被刺杀</div>
+          </div>
+          <div style="padding:2px 6px;border-radius:999px;background:rgba(220,80,80,.12);border:1px solid rgba(220,80,80,.32);font-size:6.5px;font-weight:700;color:#f87171">刺杀成功</div>
+        </div>
+      </div>`;
+
+    frame.innerHTML = `
+    <div class="phone-screen" style="${vars};position:relative;display:flex;flex-direction:column">
+      ${skinExtraStyles(currentSkin)}${bgLayer('game')}${maskDiv}
+      <div class="ph-nav">
+        <div class="ph-nav-back">← 返回</div>
+        <div class="ph-nav-title">游戏结束</div>
+        <div style="margin-left:auto;display:flex;gap:2px;background:rgba(255,255,255,.06);border-radius:5px;padding:2px">
+          <div onclick="currentEndgame='good';renderPreview()" style="padding:2px 5px;border-radius:3px;font-size:6.5px;cursor:pointer;background:${isGoodWin?'rgba(78,158,255,.18)':'transparent'};color:${isGoodWin?'#7ac7ff':'rgba(255,255,255,.4)'}">正义胜</div>
+          <div onclick="currentEndgame='evil';renderPreview()" style="padding:2px 5px;border-radius:3px;font-size:6.5px;cursor:pointer;background:${!isGoodWin?'rgba(220,60,60,.18)':'transparent'};color:${!isGoodWin?'#ff8a8a':'rgba(255,255,255,.4)'}">邪恶胜</div>
+        </div>
+      </div>
+      <div class="ph-content" style="gap:5px">
+        <!-- Result banner -->
+        <div class="ph-end-banner ${resultClass}">
+          <div class="ph-end-title">${resultTitle}</div>
+          <div class="ph-end-sub" style="color:${isGoodWin?'rgba(120,180,255,.65)':'rgba(220,120,120,.65)'}">${resultSub}</div>
+          <div style="display:flex;justify-content:center;gap:12px;margin-top:5px">
+            <div style="text-align:center"><div style="font-size:9px;font-weight:700;color:${isGoodWin?'#7ac7ff':'#ff8a8a'}">3</div><div style="font-size:5px;color:rgba(255,255,255,.35);letter-spacing:1px">任务胜</div></div>
+            <div style="width:1px;background:rgba(255,255,255,.1)"></div>
+            <div style="text-align:center"><div style="font-size:9px;font-weight:700;color:${isGoodWin?'#ff8a8a':'#7ac7ff'}">2</div><div style="font-size:5px;color:rgba(255,255,255,.35);letter-spacing:1px">任务败</div></div>
+          </div>
+        </div>
+        ${skinDivider(currentSkin)}
+        <!-- Reveal grid -->
+        <div class="ph-sec-chip">身份揭示</div>
+        <div class="ph-reveal-grid">${revealCardsHtml}</div>
+        ${skinDivider(currentSkin)}
+        <!-- Assassination result -->
+        ${assassinSection}
+        <!-- Play again button -->
+        <div class="ph-btn-row" style="padding:0 2px">
+          <div class="ph-btn-p">再来一局</div>
+          <div class="ph-btn-g">返回主页</div>
+        </div>
+      </div>
+    </div>`;
+
+  // ── UI COMPONENTS SCREEN ────────────────────────────────────
+  } else if (currentPreviewTab === 'ui') {
+    const acc    = skin.vars['--aw-accent']      || '#d9b36b';
+    const accTxt = skin.vars['--aw-accent-text'] || '#1a1200';
+    const ghost  = skin.vars['--aw-btn-ghost-border'] || 'rgba(255,255,255,.22)';
+    const ghTxt  = skin.vars['--aw-btn-ghost-text']   || '#eef1f7';
+    const inpBg  = skin.vars['--aw-input-bg']    || 'rgba(255,255,255,.06)';
+    const inpBdr = skin.vars['--aw-input-border']|| 'rgba(255,255,255,.14)';
+    const pnl    = skin.vars['--aw-panel']       || 'rgba(19,23,31,.82)';
+    const pnlBdr = skin.vars['--aw-panel-border']|| 'rgba(255,255,255,.10)';
+    const tx     = skin.vars['--aw-text']        || '#eef1f7';
+    const sub    = skin.vars['--aw-subtext']     || '#aeb6c7';
+
+    const killUrl    = getAssetUrl(currentSkin, ASSETS.find(a=>a.id==='kill-icon'));
+    const histUrl    = getAssetUrl(currentSkin, ASSETS.find(a=>a.id==='history-icon'));
+    const statsUrl   = getAssetUrl(currentSkin, ASSETS.find(a=>a.id==='stats-icon'));
+
+    frame.innerHTML = `
+    <div class="phone-screen" style="${vars};position:relative;display:flex;flex-direction:column">
+      ${skinExtraStyles(currentSkin)}${bgLayer('home')}${maskDiv}
+      <div class="ph-nav"><div class="ph-nav-title">UI 组件预览</div></div>
+      <div class="ph-content" style="gap:7px">
+
+        <!-- Buttons -->
+        <div class="ph-panel">
+          <div style="font-size:7px;font-weight:700;color:${sub};letter-spacing:2px;margin-bottom:6px">BUTTONS</div>
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="background:${acc};color:${accTxt};border-radius:7px;padding:7px;text-align:center;font-size:10px;font-weight:700;letter-spacing:1px">组队出发</div>
+            <div style="border:1px solid ${ghost};color:${ghTxt};border-radius:7px;padding:6px;text-align:center;font-size:10px;background:rgba(255,255,255,.03)">查看详情</div>
+            <div style="display:flex;gap:4px">
+              <div style="flex:1;background:rgba(74,222,128,.14);border:1px solid rgba(74,222,128,.35);border-radius:7px;padding:6px;text-align:center;font-size:9px;color:#4ade80;font-weight:700">✓ 同意</div>
+              <div style="flex:1;background:rgba(248,113,113,.14);border:1px solid rgba(248,113,113,.35);border-radius:7px;padding:6px;text-align:center;font-size:9px;color:#f87171;font-weight:700">✗ 拒绝</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Input + Chips -->
+        <div class="ph-panel">
+          <div style="font-size:7px;font-weight:700;color:${sub};letter-spacing:2px;margin-bottom:6px">INPUTS &amp; CHIPS</div>
+          <div style="background:${inpBg};border:1px solid ${inpBdr};border-radius:7px;padding:6px 8px;font-size:8px;color:${sub}">输入房间号…</div>
+          <div style="margin-top:5px;display:flex;gap:4px;flex-wrap:wrap">
+            <div style="padding:3px 10px;border-radius:999px;background:${acc};color:${accTxt};font-size:8px;font-weight:700">5人</div>
+            <div style="padding:3px 10px;border-radius:999px;border:1px solid ${ghost};color:${ghTxt};font-size:8px">7人</div>
+            <div style="padding:3px 10px;border-radius:999px;border:1px solid ${ghost};color:${ghTxt};font-size:8px">10人</div>
+          </div>
+        </div>
+
+        <!-- Dialog -->
+        <div style="background:${pnl};border:1px solid ${pnlBdr};border-radius:10px;padding:10px 10px 8px;position:relative;overflow:hidden">
+          <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,${acc},transparent)"></div>
+          <div style="font-size:10px;font-weight:700;color:${tx};text-align:center;margin-bottom:4px">确认刺杀梅林？</div>
+          <div style="font-size:7px;color:${sub};text-align:center;margin-bottom:8px">此操作不可撤销，请谨慎确认</div>
+          <div style="display:flex;gap:4px">
+            <div style="flex:1;border:1px solid ${ghost};color:${ghTxt};border-radius:6px;padding:5px;text-align:center;font-size:9px">取消</div>
+            <div style="flex:1;background:rgba(248,113,113,.18);border:1px solid rgba(248,113,113,.4);color:#f87171;border-radius:6px;padding:5px;text-align:center;font-size:9px;font-weight:700">确认刺杀</div>
+          </div>
+        </div>
+
+        <!-- Nav icons -->
+        <div class="ph-panel">
+          <div style="font-size:7px;font-weight:700;color:${sub};letter-spacing:2px;margin-bottom:6px">NAV ICONS</div>
+          <div style="display:flex;gap:10px;align-items:center">
+            ${killUrl  ? `<div style="display:flex;flex-direction:column;align-items:center;gap:2px"><img src="${killUrl}"  style="width:24px;height:24px;object-fit:contain" onerror="this.style.display='none'"><span style="font-size:6px;color:${sub}">刺杀</span></div>` : ''}
+            ${histUrl  ? `<div style="display:flex;flex-direction:column;align-items:center;gap:2px"><img src="${histUrl}"  style="width:24px;height:24px;object-fit:contain" onerror="this.style.display='none'"><span style="font-size:6px;color:${sub}">历史</span></div>` : ''}
+            ${statsUrl ? `<div style="display:flex;flex-direction:column;align-items:center;gap:2px"><img src="${statsUrl}" style="width:24px;height:24px;object-fit:contain" onerror="this.style.display='none'"><span style="font-size:6px;color:${sub}">统计</span></div>` : ''}
+            <div style="margin-left:auto;display:flex;flex-direction:column;align-items:center;gap:2px">
+              <div style="width:24px;height:24px;border-radius:50%;background:${acc};display:flex;align-items:center;justify-content:center;font-size:11px;color:${accTxt}">⚔</div>
+              <span style="font-size:6px;color:${sub}">主色</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>`;
   }
+
+  // After rendering, sync fullscreen if open
+  if (_fsOpen) _fsUpdate();
 }
+
+// ══════════════════════════════════════════════════════════════
+// FULLSCREEN PREVIEW
+// ══════════════════════════════════════════════════════════════
+const _FS_TABS  = ['home','game','stats','history','role','event','endgame','ui'];
+const _FS_NAMES = ['主页','游戏中','角色统计','历史对战','身份牌','任务结果','终局','UI组件'];
+let _fsOpen = false;
+let _fsTx = 0, _fsTt = 0;
+
+function enterFullscreen() {
+  _fsOpen = true;
+  document.getElementById('fsOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  _fsUpdate();
+  requestAnimationFrame(_fsScale);
+}
+function exitFullscreen() {
+  _fsOpen = false;
+  document.getElementById('fsOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function _fsScale() {
+  const scr = document.getElementById('fsPhoneScreen');
+  const wrap = document.getElementById('fsContent');
+  if (!scr || !wrap) return;
+  const scale = Math.min(wrap.clientWidth / 280, wrap.clientHeight / 560) * 0.97;
+  scr.style.transform = `scale(${scale})`;
+}
+function _fsUpdate() {
+  // Copy phone-screen HTML into fullscreen container
+  const src = document.querySelector('#phoneFrame .phone-screen');
+  const dst = document.getElementById('fsPhoneScreen');
+  if (!src || !dst) return;
+  dst.innerHTML = src.innerHTML;
+  // Copy inline style vars (skin colors etc.)
+  dst.setAttribute('style', src.getAttribute('style') || '');
+  dst.className = src.className;
+  // Restore fixed dimensions and transform
+  dst.style.width = '280px';
+  dst.style.height = '560px';
+  dst.style.flexShrink = '0';
+  dst.style.transformOrigin = 'center center';
+
+  // Tab label
+  const idx = _FS_TABS.indexOf(currentPreviewTab);
+  const lbl = document.getElementById('fsTabLabel');
+  if (lbl) lbl.textContent = _FS_NAMES[idx] || '';
+
+  // Dot indicators
+  const dots = document.getElementById('fsDots');
+  if (dots) dots.innerHTML = _FS_TABS.map((_, i) =>
+    `<div class="fs-dot${i===idx?' active':''}" onclick="fsGoTab(${i});event.stopPropagation()"></div>`
+  ).join('');
+
+  _fsScale();
+}
+function fsGoTab(i) {
+  const tab = _FS_TABS[i];
+  if (!tab) return;
+  currentPreviewTab = tab;
+  // Sync main tab bar
+  document.querySelectorAll('.preview-tab').forEach((el, j) =>
+    el.classList.toggle('active', j === i)
+  );
+  renderPreview(); // renderPreview() calls _fsUpdate() at end since _fsOpen is true
+}
+
+// Swipe handling on fullscreen overlay
+(function() {
+  const ov = document.getElementById('fsOverlay');
+  ov.addEventListener('touchstart', e => {
+    _fsTx = e.touches[0].clientX;
+    _fsTt = Date.now();
+  }, {passive:true});
+  ov.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - _fsTx;
+    const dt = Date.now() - _fsTt;
+    if (Math.abs(dx) > 45 && dt < 450) {
+      const cur = _FS_TABS.indexOf(currentPreviewTab);
+      const next = dx < 0
+        ? Math.min(cur + 1, _FS_TABS.length - 1)
+        : Math.max(cur - 1, 0);
+      if (next !== cur) fsGoTab(next);
+    }
+  }, {passive:true});
+  // Scale on resize
+  window.addEventListener('resize', () => { if (_fsOpen) _fsScale(); }, {passive:true});
+})();
 </script>
 </body>
 </html>
