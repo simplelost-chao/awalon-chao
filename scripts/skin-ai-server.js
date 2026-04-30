@@ -194,6 +194,26 @@ const QA_ASSETS    = ['home-bg', 'in-game-bg', 'table', 'quest-success', 'quest-
                       'merlin', 'percival', 'arthur_loyal', 'lancelot_good',
                       'assassin', 'morgana', 'mordred', 'oberon', 'minion', 'lancelot_evil'];
 
+// dark-gold 皮肤使用游戏 CDN 默认资产（没有服务器生成图时的回退）
+const CDN_BASE = 'https://www.awalon.top/mp-assets';
+const DARK_GOLD_CDN = {
+  'home-bg':       `${CDN_BASE}/home-bg-optimized.jpg`,
+  'in-game-bg':    `${CDN_BASE}/in-game-bg-optimized.jpg`,
+  'table':         `${CDN_BASE}/table.png`,
+  'quest-success': `${CDN_BASE}/quest-success-420x300.png`,
+  'quest-fail':    `${CDN_BASE}/quest-failed-420x300.png`,
+  'merlin':        `${CDN_BASE}/role-split/merlin.png`,
+  'percival':      `${CDN_BASE}/role-split/percival.png`,
+  'arthur_loyal':  `${CDN_BASE}/role-split/arthur_loyal.png`,
+  'lancelot_good': `${CDN_BASE}/role-split/lancelot_good.png`,
+  'assassin':      `${CDN_BASE}/role-split/assassin.png`,
+  'morgana':       `${CDN_BASE}/role-split/morgana.png`,
+  'mordred':       `${CDN_BASE}/role-split/mordred.png`,
+  'oberon':        `${CDN_BASE}/role-split/oberon.png`,
+  'minion':        `${CDN_BASE}/role-split/minion.png`,
+  'lancelot_evil': `${CDN_BASE}/role-split/lancelot_evil.png`,
+};
+
 async function downloadAssets(skinId, assetIds) {
   let assets = await fetchJson(`${RELAY_BASE}/api/skin-generated/${skinId}`);
   if (assets && assets.assets) assets = assets.assets;
@@ -203,12 +223,16 @@ async function downloadAssets(skinId, assetIds) {
 
   const localPaths = {};
   for (const id of assetIds) {
-    const rel = assets[id];
-    if (!rel) continue;
-    const ext  = path.extname(rel) || '.jpeg';
+    const rel = assets?.[id];
+    // 服务器有生成图时用服务器路径，否则对 dark-gold 回退到 CDN
+    const url = rel
+      ? `${RELAY_BASE}${rel}`
+      : (skinId === 'dark-gold' ? DARK_GOLD_CDN[id] : null);
+    if (!url) continue;
+    const ext  = path.extname(url.split('?')[0]) || '.jpeg';
     const dest = path.join(tmpDir, `${id}${ext}`);
     if (!fs.existsSync(dest) || fs.statSync(dest).size === 0) {
-      await downloadFile(`${RELAY_BASE}${rel}`, dest);
+      await downloadFile(url, dest);
     }
     localPaths[id] = dest;
   }
