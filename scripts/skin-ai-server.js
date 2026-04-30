@@ -218,27 +218,39 @@ const DARK_GOLD_ASSETS = {
 };
 
 async function downloadAssets(skinId, assetIds) {
-  let assets = await fetchJson(`${RELAY_BASE}/api/skin-generated/${skinId}`);
-  if (assets && assets.assets) assets = assets.assets;
+  let assets = {};
+  try {
+    const resp = await fetchJson(`${RELAY_BASE}/api/skin-generated/${skinId}`);
+    if (resp && resp.assets) assets = resp.assets;
+  } catch(e) {
+    console.log(`  [warn] 获取资产列表失败: ${e.message}，使用内置路径`);
+  }
 
   const tmpDir = path.join(os.tmpdir(), `skin-ai-${skinId}`);
   fs.mkdirSync(tmpDir, { recursive: true });
 
   const localPaths = {};
   for (const id of assetIds) {
-    const rel = assets?.[id];
+    const rel = assets[id];
     // 服务器有用户生成图时优先，否则 dark-gold 用内置资产路径
     const url = rel
       ? `${RELAY_BASE}${rel}`
       : (skinId === 'dark-gold' ? DARK_GOLD_ASSETS[id] : null);
-    if (!url) continue;
+    if (!url) { console.log(`  [skip] ${id}: 无资产路径`); continue; }
     const ext  = path.extname(url.split('?')[0]) || '.jpeg';
     const dest = path.join(tmpDir, `${id}${ext}`);
-    if (!fs.existsSync(dest) || fs.statSync(dest).size === 0) {
-      await downloadFile(url, dest);
+    try {
+      if (!fs.existsSync(dest) || fs.statSync(dest).size === 0) {
+        await downloadFile(url, dest);
+      }
+      localPaths[id] = dest;
+    } catch(e) {
+      console.log(`  [warn] ${id} 下载失败: ${e.message} (${url})`);
+      // 删除可能存在的空文件，避免下次被当作已缓存
+      try { fs.unlinkSync(dest); } catch(_) {}
     }
-    localPaths[id] = dest;
   }
+  console.log(`  [info] 下载完成: ${Object.keys(localPaths).length}/${assetIds.length} 个资产`);
   return localPaths;
 }
 
