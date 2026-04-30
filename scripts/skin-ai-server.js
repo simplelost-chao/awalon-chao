@@ -194,24 +194,27 @@ const QA_ASSETS    = ['home-bg', 'in-game-bg', 'table', 'quest-success', 'quest-
                       'merlin', 'percival', 'arthur_loyal', 'lancelot_good',
                       'assassin', 'morgana', 'mordred', 'oberon', 'minion', 'lancelot_evil'];
 
-// dark-gold 皮肤使用游戏 CDN 默认资产（没有服务器生成图时的回退）
-const CDN_BASE = 'https://www.awalon.top/mp-assets';
-const DARK_GOLD_CDN = {
-  'home-bg':       `${CDN_BASE}/home-bg-optimized.jpg`,
-  'in-game-bg':    `${CDN_BASE}/in-game-bg-optimized.jpg`,
-  'table':         `${CDN_BASE}/table.png`,
-  'quest-success': `${CDN_BASE}/quest-success-420x300.png`,
-  'quest-fail':    `${CDN_BASE}/quest-failed-420x300.png`,
-  'merlin':        `${CDN_BASE}/role-split/merlin.png`,
-  'percival':      `${CDN_BASE}/role-split/percival.png`,
-  'arthur_loyal':  `${CDN_BASE}/role-split/arthur_loyal.png`,
-  'lancelot_good': `${CDN_BASE}/role-split/lancelot_good.png`,
-  'assassin':      `${CDN_BASE}/role-split/assassin.png`,
-  'morgana':       `${CDN_BASE}/role-split/morgana.png`,
-  'mordred':       `${CDN_BASE}/role-split/mordred.png`,
-  'oberon':        `${CDN_BASE}/role-split/oberon.png`,
-  'minion':        `${CDN_BASE}/role-split/minion.png`,
-  'lancelot_evil': `${CDN_BASE}/role-split/lancelot_evil.png`,
+// dark-gold 皮肤资产已存于服务器本地路径（不再依赖 CDN）
+const DG_SERVER_BASE = 'https://www.awalon.top/tools/skin-assets/dark-gold';
+const DARK_GOLD_ASSETS = {
+  'home-bg':       `${DG_SERVER_BASE}/assets/home-bg.jpg`,
+  'in-game-bg':    `${DG_SERVER_BASE}/assets/in-game-bg.jpg`,
+  'table':         `${DG_SERVER_BASE}/assets/table.png`,
+  'quest-success': `${DG_SERVER_BASE}/assets/quest-success.png`,
+  'quest-fail':    `${DG_SERVER_BASE}/assets/quest-fail.png`,
+  'kill-icon':     `${DG_SERVER_BASE}/assets/kill-icon.png`,
+  'history-icon':  `${DG_SERVER_BASE}/assets/history-icon.png`,
+  'stats-icon':    `${DG_SERVER_BASE}/assets/stats-icon.png`,
+  'merlin':        `${DG_SERVER_BASE}/roles/merlin.png`,
+  'percival':      `${DG_SERVER_BASE}/roles/percival.png`,
+  'arthur_loyal':  `${DG_SERVER_BASE}/roles/arthur_loyal.png`,
+  'lancelot_good': `${DG_SERVER_BASE}/roles/lancelot_good.png`,
+  'assassin':      `${DG_SERVER_BASE}/roles/assassin.png`,
+  'morgana':       `${DG_SERVER_BASE}/roles/morgana.png`,
+  'mordred':       `${DG_SERVER_BASE}/roles/mordred.png`,
+  'oberon':        `${DG_SERVER_BASE}/roles/oberon.png`,
+  'minion':        `${DG_SERVER_BASE}/roles/minion.png`,
+  'lancelot_evil': `${DG_SERVER_BASE}/roles/lancelot_evil.png`,
 };
 
 async function downloadAssets(skinId, assetIds) {
@@ -224,10 +227,10 @@ async function downloadAssets(skinId, assetIds) {
   const localPaths = {};
   for (const id of assetIds) {
     const rel = assets?.[id];
-    // 服务器有生成图时用服务器路径，否则对 dark-gold 回退到 CDN
+    // 服务器有用户生成图时优先，否则 dark-gold 用内置资产路径
     const url = rel
       ? `${RELAY_BASE}${rel}`
-      : (skinId === 'dark-gold' ? DARK_GOLD_CDN[id] : null);
+      : (skinId === 'dark-gold' ? DARK_GOLD_ASSETS[id] : null);
     if (!url) continue;
     const ext  = path.extname(url.split('?')[0]) || '.jpeg';
     const dest = path.join(tmpDir, `${id}${ext}`);

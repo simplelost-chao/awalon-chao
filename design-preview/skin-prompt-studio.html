@@ -1455,30 +1455,82 @@ async function seedDarkDungeonExtras() {
 }
 
 // ══════════════════════════════════════════════════════════════
-// SEED BUILTIN SKIN DEFAULTS
+// SEED DARK-GOLD (DEFAULT SKIN) ASSETS
 // ══════════════════════════════════════════════════════════════
-function seedBuiltinDefaultAssets() {
-  // Fill generatedAssets with CDN URLs for dark-gold (the default skin).
-  // Only fills slots not already occupied by user-generated / IDB-persisted assets.
-  // Not written to IDB — pure in-memory fallback that runs every page load.
-  const skinId = 'dark-gold';
-  function maybeSet(key, url) {
-    if (!generatedAssets[key]) {
-      generatedAssets[key] = url;
-      const vers = versionedAssets[key] || (versionedAssets[key] = []);
-      if (!vers.includes(url)) vers.push(url);
-    }
+const DG_BASE_ASSETS = '/tools/skin-assets/dark-gold/assets/';
+const DG_BASE_ROLES  = '/tools/skin-assets/dark-gold/roles/';
+const DG_BASE_MEDALS = '/tools/skin-assets/dark-gold/medals/';
+
+const DG_ASSET_MAP = {
+  'home-bg':       DG_BASE_ASSETS + 'home-bg.jpg',
+  'in-game-bg':    DG_BASE_ASSETS + 'in-game-bg.jpg',
+  'table':         DG_BASE_ASSETS + 'table.png',
+  'quest-success': DG_BASE_ASSETS + 'quest-success.png',
+  'quest-fail':    DG_BASE_ASSETS + 'quest-fail.png',
+  'kill-icon':     DG_BASE_ASSETS + 'kill-icon.png',
+  'history-icon':  DG_BASE_ASSETS + 'history-icon.png',
+  'stats-icon':    DG_BASE_ASSETS + 'stats-icon.png',
+};
+const DG_ROLE_IDS  = ['merlin','percival','arthur_loyal','lancelot_good','assassin','morgana','mordred','oberon','minion','lancelot_evil'];
+const DG_MEDAL_IDS = ['merlin_survivor','good_blocker','good_clean_captain','good_clean_trust',
+  'good_wolf_trust','good_first_round_clean_captain','good_three_evil_team_captain','good_three_fail_lose',
+  'merlin_three_fail_lose','percival_morgana_trust','good_comeback_win','good_three_success_participant',
+  'assassin_early_hit_merlin','morgana_percival_fail_master','oberon_no_fail_with_evil','oberon_double_fail_with_evil',
+  'evil_protect_round_fail','evil_three_fail_win','evil_hide_votes_master','evil_all_fail_non_protect',
+  'evil_first_three_fail_win','evil_three_fail_participant','evil_no_fail_win','evil_fake_good_voter'];
+
+const DG_SEED_VERSION = 'v1'; // bump to force-reseed
+
+async function seedDarkGoldAssets() {
+  let storedVer = null;
+  try {
+    const db = await idbOpen();
+    storedVer = await new Promise(r => {
+      const req = db.transaction('assets').objectStore('assets').get('dg-seed-version');
+      req.onsuccess = e => r(e.target.result || null);
+      req.onerror = () => r(null);
+    });
+  } catch(_) {}
+  const forceReseed = storedVer !== DG_SEED_VERSION;
+
+  let anyLoaded = false;
+  async function seedOne(key, url) {
+    if (!forceReseed && (generatedAssets[key] || versionedAssets[key]?.length)) return;
+    try {
+      const res = await fetch(url + '?v=' + DG_SEED_VERSION);
+      if (!res.ok) return;
+      const blob = await res.blob();
+      const dataUrl = await new Promise(r => { const fr = new FileReader(); fr.onload = e => r(e.target.result); fr.readAsDataURL(blob); });
+      if (forceReseed) {
+        versionedAssets[key] = [dataUrl];
+        idbSaveVersions(key, versionedAssets[key]);
+      } else {
+        pushVersion(key, dataUrl);
+      }
+      generatedAssets[key] = dataUrl;
+      idbSave(key, dataUrl);
+      anyLoaded = true;
+    } catch(_) {}
   }
-  // Background + scene + event + icon assets
-  for (const asset of ASSETS) {
-    if (!asset.cdnFile || asset.slots) continue; // skip atlases
-    maybeSet(`${skinId}:${asset.id}`, `${CDN}/${asset.cdnFile}`);
+
+  // Assets + roles in parallel
+  await Promise.all([
+    ...Object.entries(DG_ASSET_MAP).map(([id, url]) => seedOne(`dark-gold:${id}`, url)),
+    ...DG_ROLE_IDS.map(id => seedOne(`dark-gold:${id}`, DG_BASE_ROLES + id + '.png')),
+  ]);
+  if (anyLoaded || forceReseed) renderPreview();
+
+  // Medals in batches
+  for (let i = 0; i < DG_MEDAL_IDS.length; i += 6) {
+    await Promise.all(DG_MEDAL_IDS.slice(i, i + 6).map(id =>
+      seedOne(`dark-gold:${id}`, DG_BASE_MEDALS + id + '.png')
+    ));
   }
-  // Individual role images
-  for (const slot of ROLE_SLOTS) {
-    if (!slot || !slot.cdnFile) continue;
-    maybeSet(`${skinId}:${slot.id}`, `${CDN}/${slot.cdnFile}`);
-  }
+
+  try {
+    const db = await idbOpen();
+    db.transaction('assets', 'readwrite').objectStore('assets').put(DG_SEED_VERSION, 'dg-seed-version');
+  } catch(_) {}
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1519,8 +1571,8 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.removeItem(`ref-imgs:${skinId}`);
       }
     }
-    // Seed dark-gold with CDN URLs so asset panel shows thumbnails + badges
-    seedBuiltinDefaultAssets();
+    // Seed dark-gold default assets (non-blocking)
+    seedDarkGoldAssets();
     // Seed pre-generated dark-dungeon images as v1 in background (non-blocking)
     seedDarkDungeonRoles();
     seedDarkDungeonExtras();
@@ -4538,10 +4590,10 @@ function renderPreview() {
   function bgLayer(type) {
     const id = type === 'home' ? 'home-bg' : 'in-game-bg';
     const gen = generatedAssets[`${currentSkin}:${id}`];
-    const cdn = currentSkin === 'dark-gold'
-      ? (type === 'home' ? 'https://www.awalon.top/mp-assets/home-bg-optimized.jpg' : 'https://www.awalon.top/mp-assets/in-game-bg-optimized.jpg')
+    const fallback = currentSkin === 'dark-gold'
+      ? DG_BASE_ASSETS + (type === 'home' ? 'home-bg.jpg' : 'in-game-bg.jpg')
       : null;
-    const url = gen || cdn;
+    const url = gen || fallback;
     if (url) {
       // dark-dungeon: show bg behind a heavy opaque overlay to keep the gothic mood
       const ddOverlay = currentSkin === 'dark-dungeon'
@@ -4559,7 +4611,7 @@ function renderPreview() {
     : '';
 
   function tableImgUrl() {
-    return generatedAssets[`${currentSkin}:table`] || (currentSkin === 'dark-gold' ? 'https://www.awalon.top/mp-assets/table.png' : null);
+    return generatedAssets[`${currentSkin}:table`] || (currentSkin === 'dark-gold' ? DG_BASE_ASSETS + 'table.png' : null);
   }
 
   function roleImgUrl(roleId) {
