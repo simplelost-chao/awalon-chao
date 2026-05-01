@@ -85,7 +85,7 @@ const {
 
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: '8mb' }));
+app.use(express.json({ limit: '30mb' }));
 app.get('/health', (req, res) => res.json({ ok: true, token: 'awalon-ok' }));
 let runtimeReviewMode = process.env.REVIEW_MODE === 'true';
 const ADMIN_KEY = process.env.ADMIN_KEY || '';
@@ -104,6 +104,195 @@ const SKIN_CATALOGUE = [
 
 app.get('/api/skins', (req, res) => {
   res.json({ skins: SKIN_CATALOGUE });
+});
+
+// Proxy image fetch — used by Skin Studio to bypass CORS on Doubao TOS image URLs
+app.post('/api/proxy-image', async (req, res) => {
+  try {
+    const { url } = req.body || {};
+    if (!url || !/^https?:\/\//.test(url)) return res.status(400).json({ error: 'invalid url' });
+    const imgRes = await fetch(url, { signal: AbortSignal.timeout(30000) });
+    if (!imgRes.ok) return res.status(502).json({ error: `upstream ${imgRes.status}` });
+    const buffer = Buffer.from(await imgRes.arrayBuffer());
+    const mimeType = imgRes.headers.get('content-type') || 'image/jpeg';
+    res.json({ b64: buffer.toString('base64'), mimeType });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+
+// ─── Skin Studio Ref Images ───────────────────────────────────────────────────
+const REF_IMGS_DIR = path.join(__dirname, '../public/tools/skin-assets/ref-imgs');
+fs.mkdirSync(REF_IMGS_DIR, { recursive: true });
+
+// GET  /api/ref-imgs/:skinId  → { urls: [...] }
+app.get('/api/ref-imgs/:skinId', (req, res) => {
+  const { skinId } = req.params;
+  if (!/^[\w-]+$/.test(skinId)) return res.status(400).json({ error: 'invalid skinId' });
+  const dir = path.join(REF_IMGS_DIR, skinId);
+  if (!fs.existsSync(dir)) return res.json({ urls: [] });
+  const files = fs.readdirSync(dir).filter(f => /\.(jpe?g|png|webp)$/i.test(f)).sort();
+  const urls = files.map(f => `/tools/skin-assets/ref-imgs/${skinId}/${f}`);
+  res.json({ urls });
+});
+
+// POST /api/ref-imgs/:skinId  body: { images: ['data:image/jpeg;base64,...'] }  → { urls: [...] }
+app.post('/api/ref-imgs/:skinId', (req, res) => {
+  const { skinId } = req.params;
+  if (!/^[\w-]+$/.test(skinId)) return res.status(400).json({ error: 'invalid skinId' });
+  const { images } = req.body || {};
+  if (!Array.isArray(images) || !images.length) return res.status(400).json({ error: 'no images' });
+  const dir = path.join(REF_IMGS_DIR, skinId);
+  fs.mkdirSync(dir, { recursive: true });
+  const urls = [];
+  for (const b64 of images) {
+    const m = b64.match(/^data:image\/(\w+);base64,(.+)$/s);
+    if (!m) continue;
+    const ext = m[1] === 'png' ? 'png' : m[1] === 'webp' ? 'webp' : 'jpeg';
+    const fname = `ref-${Date.now()}-${Math.random().toString(36).slice(2,6)}.${ext}`;
+    const buf = Buffer.from(m[2], 'base64');
+    fs.writeFileSync(path.join(dir, fname), buf);
+    urls.push(`/tools/skin-assets/ref-imgs/${skinId}/${fname}`);
+  }
+  res.json({ urls });
+});
+
+// DELETE /api/ref-imgs/:skinId/:filename
+app.delete('/api/ref-imgs/:skinId/:filename', (req, res) => {
+  const { skinId, filename } = req.params;
+  if (!/^[\w-]+$/.test(skinId) || !/^[\w.\-]+$/.test(filename)) return res.status(400).json({ error: 'invalid params' });
+  const fpath = path.join(REF_IMGS_DIR, skinId, filename);
+  if (fs.existsSync(fpath)) fs.unlinkSync(fpath);
+  res.json({ ok: true });
+});
+
+
+// ─── Skin Studio: save generated asset to disk ───────────────────────────────
+const SKIN_GEN_DIR = path.join(__dirname, '../public/tools/skin-assets/generated');
+fs.mkdirSync(SKIN_GEN_DIR, { recursive: true });
+
+// POST /api/save-asset  body: { skinId, assetId, dataUrl } OR { skinId, assetId, url }
+app.post('/api/save-asset', async (req, res) => {
+  try {
+    const { skinId, assetId, url, dataUrl } = req.body || {};
+    if (!skinId || !assetId) return res.status(400).json({ error: 'missing params' });
+    if (!/^[\w-]+$/.test(skinId) || !/^[\w-]+$/.test(assetId)) return res.status(400).json({ error: 'invalid id' });
+    let buf, ext;
+    if (dataUrl) {
+      const m = dataUrl.match(/^data:image\/(\w+);base64,(.+)$/s);
+      if (!m) return res.status(400).json({ error: 'invalid dataUrl' });
+      ext = m[1] === 'png' ? 'png' : m[1] === 'webp' ? 'webp' : 'jpeg';
+      buf = Buffer.from(m[2], 'base64');
+    } else if (url) {
+      if (!/^https?:\/\//.test(url)) return res.status(400).json({ error: 'invalid url' });
+      const imgRes = await fetch(url, { signal: AbortSignal.timeout(30000) });
+      if (!imgRes.ok) return res.status(502).json({ error: `upstream ${imgRes.status}` });
+      buf = Buffer.from(await imgRes.arrayBuffer());
+      const ct = imgRes.headers.get('content-time') || 'image/jpeg';
+      ext = ct.includes('png') ? 'png' : ct.includes('webp') ? 'webp' : 'jpeg';
+    } else {
+      return res.status(400).json({ error: 'provide url or dataUrl' });
+    }
+    const dir = path.join(SKIN_GEN_DIR, skinId);
+    fs.mkdirSync(dir, { recursive: true });
+    const fname = `${assetId}-${Date.now()}.${ext}`;
+    fs.writeFileSync(path.join(dir, fname), buf);
+    res.json({ assetUrl: `/tools/skin-assets/generated/${skinId}/${fname}` });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+
+// GET /api/skin-generated/:skinId → { assets: { assetId: url } } (latest per assetId)
+app.get('/api/skin-generated/:skinId', (req, res) => {
+  const { skinId } = req.params;
+  if (!/^[\w-]+$/.test(skinId)) return res.status(400).json({ error: 'invalid skinId' });
+  const dir = path.join(SKIN_GEN_DIR, skinId);
+  // Built-in assets for dark-gold (default skin)
+  const DARK_GOLD_BUILTIN = {
+    'home-bg':       '/tools/skin-assets/dark-gold/assets/home-bg.jpg',
+    'in-game-bg':    '/tools/skin-assets/dark-gold/assets/in-game-bg.jpg',
+    'table':         '/tools/skin-assets/dark-gold/assets/table.png',
+    'quest-success': '/tools/skin-assets/dark-gold/assets/quest-success.png',
+    'quest-fail':    '/tools/skin-assets/dark-gold/assets/quest-fail.png',
+    'kill-icon':     '/tools/skin-assets/dark-gold/assets/kill-icon.png',
+    'history-icon':  '/tools/skin-assets/dark-gold/assets/history-icon.png',
+    'stats-icon':    '/tools/skin-assets/dark-gold/assets/stats-icon.png',
+    'merlin':        '/tools/skin-assets/dark-gold/roles/merlin.png',
+    'percival':      '/tools/skin-assets/dark-gold/roles/percival.png',
+    'arthur_loyal':  '/tools/skin-assets/dark-gold/roles/arthur_loyal.png',
+    'lancelot_good': '/tools/skin-assets/dark-gold/roles/lancelot_good.png',
+    'assassin':      '/tools/skin-assets/dark-gold/roles/assassin.png',
+    'morgana':       '/tools/skin-assets/dark-gold/roles/morgana.png',
+    'mordred':       '/tools/skin-assets/dark-gold/roles/mordred.png',
+    'oberon':        '/tools/skin-assets/dark-gold/roles/oberon.png',
+    'minion':        '/tools/skin-assets/dark-gold/roles/minion.png',
+    'lancelot_evil': '/tools/skin-assets/dark-gold/roles/lancelot_evil.png',
+  };
+  const assets = skinId === 'dark-gold' ? { ...DARK_GOLD_BUILTIN } : {};
+  if (fs.existsSync(dir)) {
+    const files = fs.readdirSync(dir).filter(f => /\.(jpe?g|png|webp)$/i.test(f));
+    const latest = {};
+    for (const f of files) {
+      const m = f.match(/^(.+)-\d+\.(jpe?g|png|webp)$/i);
+      if (!m) continue;
+      const id = m[1];
+      if (!latest[id] || f > latest[id]) latest[id] = f;
+    }
+    for (const [id, fname] of Object.entries(latest)) {
+      assets[id] = `/tools/skin-assets/generated/${skinId}/${fname}`;
+    }
+  }
+  res.json({ assets });
+});
+
+
+
+// ── AI 配色中继 ──────────────────────────────────────────────────────────────
+// 浏览器 → POST /api/ai-analyze → 服务器存队列
+// 本地客户端轮询 GET /api/ai-pending → 取任务 → 处理
+// 本地客户端 → POST /api/ai-result → 服务器存结果
+// 浏览器轮询 GET /api/ai-result/:skinId → 取结果
+// aiQueue key = `${skinId}:${type}`，type = 'theme' | 'qa'
+const aiQueue = {};
+
+app.post('/api/ai-analyze', (req, res) => {
+  const { skinId, type = 'theme', styleDesc } = req.body || {};
+  if (!skinId) return res.status(400).json({ error: 'missing skinId' });
+  const key = `${skinId}:${type}`;
+  aiQueue[key] = { skinId, type, styleDesc, ts: Date.now(), status: 'pending' };
+  res.json({ ok: true, status: 'pending' });
+});
+
+app.get('/api/ai-pending', (req, res) => {
+  const pending = Object.values(aiQueue).filter(v => v.status === 'pending');
+  res.json({ pending });
+});
+
+app.post('/api/ai-progress', (req, res) => {
+  const { skinId, type = 'qa', progress } = req.body || {};
+  if (!skinId) return res.status(400).json({ error: 'missing skinId' });
+  const key = `${skinId}:${type}`;
+  if (aiQueue[key]) aiQueue[key].progress = progress;
+  res.json({ ok: true });
+});
+
+app.post('/api/ai-result', (req, res) => {
+  const { skinId, type = 'theme', ok, result, error } = req.body || {};
+  if (!skinId) return res.status(400).json({ error: 'missing skinId' });
+  const key = `${skinId}:${type}`;
+  aiQueue[key] = { skinId, type, ts: Date.now(), status: ok ? 'done' : 'error', result, error };
+  res.json({ ok: true });
+});
+
+app.get('/api/ai-result/:skinId', (req, res) => {
+  const { skinId } = req.params;
+  const type = req.query.type || 'theme';
+  const entry = aiQueue[`${skinId}:${type}`];
+  if (!entry) return res.json({ status: 'none' });
+  res.json(entry);
 });
 
 app.post('/api/admin/set-mode', (req, res) => {
