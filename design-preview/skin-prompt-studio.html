@@ -1587,6 +1587,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderPreview();
     // Auto-load all skins' generated assets from server on startup (non-blocking)
     autoLoadAllSkinsFromServer();
+    initQAHistoryBtn();
   });
 });
 
@@ -1739,6 +1740,7 @@ function selectSkin(id) {
   if (currentAsset) selectAsset(currentAsset);
   if (isMobile()) switchMobilePanel('preview');
   renderPreview();
+  initQAHistoryBtn();
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -1808,6 +1810,7 @@ function renderRefImgSection() {
   <div style="padding:0 10px 8px;display:flex;gap:6px">
     <button id="btnAiColor" class="panel-batch-btn" style="flex:1;text-align:center;background:linear-gradient(135deg,rgba(139,92,246,.18),rgba(59,130,246,.12));border-color:rgba(139,92,246,.4);color:#c4b5fd" onclick="aiAnalyzeSkin('theme')" title="AI 分析图片 → 生成完整 CSS 主题配色">🎨 主题</button>
     <button id="btnAiQA" class="panel-batch-btn" style="flex:1;text-align:center;background:linear-gradient(135deg,rgba(251,146,60,.12),rgba(234,179,8,.08));border-color:rgba(251,146,60,.4);color:#fbbf24" onclick="aiAnalyzeSkin('qa')" title="AI 质检所有资产图片，找出弱图并改写 prompt">🔍 质检</button>
+    <button id="btnQAHistory" class="panel-batch-btn" style="flex:0 0 auto;padding:0 10px;background:rgba(251,146,60,.06);border-color:rgba(251,146,60,.25);color:#9ca3af" onclick="showQAHistory()" title="查看历史质检报告">📋</button>
   </div>
   <div style="padding:4px 12px 4px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
@@ -2973,10 +2976,136 @@ function showThemeDiff(skinId, suggestion, oldVars, newVars) {
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
 }
 
+// ── 质检报告持久化 ────────────────────────────────────────────────────────────
+const QA_HISTORY_MAX = 10; // 每个皮肤最多保存条数
+
+function qaHistoryKey(skinId) { return `qa-history:${skinId}`; }
+
+async function saveQAReport(skinId, report) {
+  try {
+    const db = await idbOpen();
+    const key = qaHistoryKey(skinId);
+    const existing = await new Promise(r => {
+      const req = db.transaction('assets').objectStore('assets').get(key);
+      req.onsuccess = e => r(e.target.result || []);
+      req.onerror = () => r([]);
+    });
+    const entry = { ts: Date.now(), report };
+    const updated = [entry, ...existing].slice(0, QA_HISTORY_MAX);
+    db.transaction('assets', 'readwrite').objectStore('assets').put(updated, key);
+    updateQAHistoryBtn(skinId, updated.length);
+  } catch(_) {}
+}
+
+async function loadQAHistory(skinId) {
+  try {
+    const db = await idbOpen();
+    return await new Promise(r => {
+      const req = db.transaction('assets').objectStore('assets').get(qaHistoryKey(skinId));
+      req.onsuccess = e => r(e.target.result || []);
+      req.onerror = () => r([]);
+    });
+  } catch(_) { return []; }
+}
+
+async function deleteQAEntry(skinId, ts) {
+  try {
+    const db = await idbOpen();
+    const key = qaHistoryKey(skinId);
+    const list = await new Promise(r => {
+      const req = db.transaction('assets').objectStore('assets').get(key);
+      req.onsuccess = e => r(e.target.result || []);
+      req.onerror = () => r([]);
+    });
+    const updated = list.filter(e => e.ts !== ts);
+    db.transaction('assets', 'readwrite').objectStore('assets').put(updated, key);
+    updateQAHistoryBtn(skinId, updated.length);
+    return updated;
+  } catch(_) { return []; }
+}
+
+function updateQAHistoryBtn(skinId, count) {
+  if (skinId !== currentSkin) return;
+  const btn = document.getElementById('btnQAHistory');
+  if (!btn) return;
+  btn.textContent = count > 0 ? `📋${count}` : '📋';
+  btn.style.color = count > 0 ? '#fbbf24' : '#9ca3af';
+}
+
+async function initQAHistoryBtn() {
+  const list = await loadQAHistory(currentSkin);
+  updateQAHistoryBtn(currentSkin, list.length);
+}
+
+async function showQAHistory() {
+  const list = await loadQAHistory(currentSkin);
+  const existing = document.getElementById('qaHistoryOverlay');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'qaHistoryOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:3000;display:flex;align-items:center;justify-content:center';
+
+  function renderList() {
+    if (!list.length) {
+      overlay.querySelector('#qaHistoryList').innerHTML =
+        '<div style="color:#6b7080;font-size:13px;text-align:center;padding:24px">暂无历史报告</div>';
+      return;
+    }
+    overlay.querySelector('#qaHistoryList').innerHTML = list.map((e, i) => {
+      const d = new Date(e.ts);
+      const dateStr = `${d.getMonth()+1}/${d.getDate()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+      const weak = e.report.weakAssets?.length || 0;
+      const passed = e.report.passedAssets?.length || 0;
+      return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid rgba(255,255,255,.07);border-radius:7px;cursor:pointer;background:rgba(255,255,255,.03);margin-bottom:6px"
+        onclick="document.getElementById('qaHistoryOverlay').remove();showQAReport('${currentSkin}',${JSON.stringify(e.report).replace(/</g,'\\u003c').replace(/>/g,'\\u003e').replace(/&/g,'\\u0026')},${e.ts})">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:600;color:#eef1f7">${currentSkin} · ${dateStr}</div>
+          <div style="font-size:11px;color:#6b7080;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.report.summary?.slice(0,60) || '—'}</div>
+          <div style="font-size:10px;margin-top:3px">
+            ${weak ? `<span style="color:#fbbf24">⚠ ${weak} 张需改进</span>` : ''}
+            ${passed ? `<span style="color:#4ade80;margin-left:6px">✅ ${passed} 张通过</span>` : ''}
+          </div>
+        </div>
+        <button onclick="event.stopPropagation();deleteAndRefresh_${i}()" style="flex-shrink:0;padding:3px 8px;border-radius:4px;border:1px solid rgba(239,68,68,.3);background:transparent;color:#f87171;font-size:11px;cursor:pointer">删除</button>
+      </div>`;
+    }).join('');
+
+    // 绑定删除按钮（用闭包避免内联 eval）
+    list.forEach((e, i) => {
+      window[`deleteAndRefresh_${i}`] = async () => {
+        const updated = await deleteQAEntry(currentSkin, e.ts);
+        list.splice(0, list.length, ...updated);
+        renderList();
+      };
+    });
+  }
+
+  overlay.innerHTML = `
+    <div style="width:460px;max-height:80vh;display:flex;flex-direction:column;background:#1a1f2e;border:1px solid rgba(255,255,255,.1);border-radius:10px;overflow:hidden">
+      <div style="padding:16px 20px 12px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+        <span style="font-size:14px;font-weight:700;color:#eef1f7">📋 历史质检报告 · ${currentSkin}</span>
+        <button onclick="document.getElementById('qaHistoryOverlay').remove()"
+          style="padding:3px 10px;border-radius:5px;border:1px solid rgba(255,255,255,.15);background:transparent;color:#aeb6c7;cursor:pointer">✕</button>
+      </div>
+      <div id="qaHistoryList" style="flex:1;overflow-y:auto;padding:12px 16px"></div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  renderList();
+}
+
 // ── 质检报告面板 ──────────────────────────────────────────────────────────────
-function showQAReport(skinId, report) {
+function showQAReport(skinId, report, savedTs) {
   const existing = document.getElementById('qaReportOverlay');
   if (existing) existing.remove();
+
+  // 自动保存（仅在初次展示时保存，从历史打开时传 savedTs 跳过）
+  if (!savedTs) saveQAReport(skinId, report);
+
+  const tsLabel = savedTs
+    ? (() => { const d = new Date(savedTs); return ` · ${d.getMonth()+1}/${d.getDate()} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`; })()
+    : ` · ${new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'})}`;
 
   const weakHtml = (report.weakAssets || []).map(a => `
     <div style="padding:10px 12px;border:1px solid rgba(251,146,60,.3);border-radius:6px;background:rgba(251,146,60,.06);margin-bottom:8px">
@@ -3005,7 +3134,7 @@ function showQAReport(skinId, report) {
   overlay.innerHTML = `
     <div style="width:480px;max-height:80vh;overflow-y:auto;background:#1a1f2e;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:20px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-        <span style="font-size:15px;font-weight:700;color:#eef1f7">🔍 质检报告 · ${skinId}</span>
+        <span style="font-size:15px;font-weight:700;color:#eef1f7">🔍 质检报告 · ${skinId}${tsLabel}</span>
         <button onclick="document.getElementById('qaReportOverlay').remove()"
           style="padding:3px 10px;border-radius:5px;border:1px solid rgba(255,255,255,.15);background:transparent;color:#aeb6c7;cursor:pointer">✕</button>
       </div>
