@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>队长皇冠设计</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Noto+Serif+SC:wght@400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  min-height: 100vh;
+  background: #060910;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60px 32px 80px;
+  gap: 64px;
+  font-family: 'Noto Serif SC', serif;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 15% 20%, rgba(255,255,255,.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 72% 12%, rgba(255,255,255,.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 40% 70%, rgba(255,255,255,.35) 0%, transparent 100%),
+    radial-gradient(1px 1px at 88% 55%, rgba(255,255,255,.25) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.page-title {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 5px;
+  color: rgba(212,168,85,.4);
+  text-transform: uppercase;
+}
+
+.options-row {
+  display: flex;
+  gap: 72px;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+.option-label {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: rgba(212,168,85,.45);
+  text-transform: uppercase;
+}
+.option-desc {
+  font-size: 11px;
+  color: rgba(150,180,220,.4);
+  text-align: center;
+  line-height: 1.7;
+  max-width: 110px;
+  letter-spacing: .3px;
+}
+
+/* divider */
+.divider {
+  width: 240px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212,168,85,.18), transparent);
+}
+
+
+/* ════════════════════════════════
+   SEAT CARD  (context)
+   ════════════════════════════════ */
+.seat-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.seat-avatar-wrap {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  overflow: visible;
+}
+
+.seat-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(7, 50, 120, 0.35);
+  border: 1.5px solid rgba(78,158,255,.85);
+  box-shadow: 0 0 18px rgba(78,158,255,.45);
+  font-size: 28px;
+  position: relative;
+  z-index: 2;
+}
+
+.seat-no {
+  position: absolute;
+  right: -6px; bottom: -2px;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: rgba(10,8,20,.95);
+  border: 1px solid rgba(180,140,60,.42);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: #e6c17d;
+  font-family: 'Cinzel', serif;
+  z-index: 5;
+}
+
+.seat-name {
+  font-size: 12px;
+  color: rgba(191,219,254,.85);
+  white-space: nowrap;
+}
+
+/* current (emoji only) */
+.crown-current {
+  position: absolute;
+  top: -32px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 22px;
+  z-index: 10;
+  filter: drop-shadow(0 2px 4px rgba(72,42,8,.55));
+}
+
+
+/* ════════════════════════════════
+   OPTION A — Hover + Aura
+   SVG crown, gentle bob, gold glow beneath
+   ════════════════════════════════ */
+
+.crown-a {
+  position: absolute;
+  top: -42px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  animation: crown-bob 2.8s ease-in-out infinite;
+}
+
+.crown-a svg {
+  width: 26px;
+  height: 20px;
+  filter: drop-shadow(0 0 6px rgba(212,168,85,.7)) drop-shadow(0 0 14px rgba(212,168,85,.35));
+}
+
+.crown-a-aura {
+  width: 28px;
+  height: 6px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(212,168,85,.5) 0%, transparent 70%);
+  margin-top: 2px;
+  animation: aura-pulse 2.8s ease-in-out infinite;
+}
+
+@keyframes crown-bob {
+  0%, 100% { transform: translateX(-50%) translateY(0px);    }
+  50%       { transform: translateX(-50%) translateY(-5px);  }
+}
+
+@keyframes aura-pulse {
+  0%, 100% { transform: scaleX(1);   opacity: .6; }
+  50%       { transform: scaleX(.6); opacity: .25; }
+}
+
+
+/* ════════════════════════════════
+   OPTION B — Orbit Ring
+   Crown center + 4 gold dots orbiting
+   ════════════════════════════════ */
+
+.crown-b {
+  position: absolute;
+  top: -46px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.crown-b-icon {
+  font-size: 20px;
+  filter: drop-shadow(0 0 5px rgba(212,168,85,.8));
+  position: relative;
+  z-index: 2;
+  animation: crown-bob 3s ease-in-out infinite;
+}
+
+.crown-b-orbit {
+  position: absolute;
+  inset: 0;
+  animation: orbit-spin 4s linear infinite;
+}
+
+.crown-b-dot {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #d4a855;
+  box-shadow: 0 0 6px rgba(212,168,85,.9), 0 0 12px rgba(212,168,85,.4);
+  top: 50%; left: 50%;
+  transform-origin: 0 0;
+}
+.crown-b-dot:nth-child(1) { transform: rotate(0deg)   translateX(18px) translate(-50%,-50%); }
+.crown-b-dot:nth-child(2) { transform: rotate(90deg)  translateX(18px) translate(-50%,-50%); }
+.crown-b-dot:nth-child(3) { transform: rotate(180deg) translateX(18px) translate(-50%,-50%); }
+.crown-b-dot:nth-child(4) { transform: rotate(270deg) translateX(18px) translate(-50%,-50%); }
+
+/* counter-rotate each dot to keep them round-facing (optional: remove for trailing comet effect) */
+.crown-b-dot::after {
+  content: '';
+  display: block;
+  width: 100%; height: 100%;
+  border-radius: 50%;
+}
+
+@keyframes orbit-spin {
+  from { transform: rotate(0deg);   }
+  to   { transform: rotate(360deg); }
+}
+
+/* Trail variant — alternating dot sizes for comet feel */
+.crown-b-orbit.trail .crown-b-dot:nth-child(2) { width: 3.5px; height: 3.5px; opacity: .7; }
+.crown-b-orbit.trail .crown-b-dot:nth-child(3) { width: 2.5px; height: 2.5px; opacity: .45; }
+.crown-b-orbit.trail .crown-b-dot:nth-child(4) { width: 1.5px; height: 1.5px; opacity: .25; }
+
+
+/* ════════════════════════════════
+   OPTION C — Ray Halo
+   Rotating spokes around a fixed crown
+   ════════════════════════════════ */
+
+.crown-c {
+  position: absolute;
+  top: -50px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.crown-c-icon {
+  font-size: 20px;
+  filter: drop-shadow(0 0 6px rgba(212,168,85,.8));
+  position: relative;
+  z-index: 2;
+}
+
+/* rotating ray ring */
+.crown-c-rays {
+  position: absolute;
+  inset: 0;
+  animation: ray-spin 8s linear infinite;
+}
+
+.crown-c-ray {
+  position: absolute;
+  width: 1.5px;
+  top: 50%; left: 50%;
+  transform-origin: 0 0;
+  background: linear-gradient(to top, rgba(212,168,85,.6), transparent);
+}
+/* 8 rays */
+.crown-c-ray:nth-child(1)  { height: 20px; transform: rotate(0deg)    translateX(-50%) translateY(-100%); }
+.crown-c-ray:nth-child(2)  { height: 14px; transform: rotate(45deg)   translateX(-50%) translateY(-100%); opacity: .5; }
+.crown-c-ray:nth-child(3)  { height: 20px; transform: rotate(90deg)   translateX(-50%) translateY(-100%); }
+.crown-c-ray:nth-child(4)  { height: 14px; transform: rotate(135deg)  translateX(-50%) translateY(-100%); opacity: .5; }
+.crown-c-ray:nth-child(5)  { height: 20px; transform: rotate(180deg)  translateX(-50%) translateY(-100%); }
+.crown-c-ray:nth-child(6)  { height: 14px; transform: rotate(225deg)  translateX(-50%) translateY(-100%); opacity: .5; }
+.crown-c-ray:nth-child(7)  { height: 20px; transform: rotate(270deg)  translateX(-50%) translateY(-100%); }
+.crown-c-ray:nth-child(8)  { height: 14px; transform: rotate(315deg)  translateX(-50%) translateY(-100%); opacity: .5; }
+
+/* pulsing glow ring behind rays */
+.crown-c-ring {
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  border: 1px solid rgba(212,168,85,.2);
+  box-shadow: 0 0 8px rgba(212,168,85,.15), inset 0 0 6px rgba(212,168,85,.08);
+  animation: ring-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes ray-spin {
+  from { transform: rotate(0deg);   }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes ring-pulse {
+  0%, 100% { opacity: .5; transform: scale(1);    }
+  50%       { opacity: 1;  transform: scale(1.08); }
+}
+
+
+/* ════════════════════════════════
+   OPTION D — SVG Crown, geometric
+   CSS-drawn crown (no emoji), sharp & regal
+   ════════════════════════════════ */
+
+.crown-d {
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  animation: crown-bob 3.2s ease-in-out infinite;
+}
+
+.crown-d svg {
+  width: 32px;
+  height: 22px;
+  overflow: visible;
+}
+
+.crown-d-aura {
+  width: 36px;
+  height: 7px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(212,168,85,.45) 0%, transparent 70%);
+  margin-top: 3px;
+  animation: aura-pulse 3.2s ease-in-out infinite;
+}
+
+/* ════════════════════════════════
+   COMPARISON ROW  (actual size vs preview)
+   ════════════════════════════════ */
+.compare-row {
+  display: flex;
+  gap: 60px;
+  align-items: center;
+  justify-content: center;
+}
+
+.compare-label {
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: rgba(150,150,150,.35);
+  text-transform: uppercase;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* miniprogram scale: 84rpx ≈ 42px */
+.mini-scale .seat-avatar-wrap { width: 42px; height: 42px; }
+.mini-scale .seat-avatar { width: 42px; height: 42px; font-size: 22px; }
+.mini-scale .seat-no { width: 16px; height: 16px; font-size: 9px; right: -5px; }
+.mini-scale .crown-b { top: -36px; width: 34px; height: 34px; }
+.mini-scale .crown-b-icon { font-size: 16px; }
+.mini-scale .crown-b-dot { width: 4px; height: 4px; }
+.mini-scale .crown-b-dot:nth-child(1) { transform: rotate(0deg)   translateX(14px) translate(-50%,-50%); }
+.mini-scale .crown-b-dot:nth-child(2) { transform: rotate(90deg)  translateX(14px) translate(-50%,-50%); }
+.mini-scale .crown-b-dot:nth-child(3) { transform: rotate(180deg) translateX(14px) translate(-50%,-50%); }
+.mini-scale .crown-b-dot:nth-child(4) { transform: rotate(270deg) translateX(14px) translate(-50%,-50%); }
+.mini-scale .seat-name { font-size: 10px; }
+</style>
+</head>
+<body>
+
+<div class="page-title">Leader Crown · 队长标志设计</div>
+
+<!-- ════ OPTIONS ROW ════ -->
+<div class="options-row">
+
+  <!-- CURRENT -->
+  <div class="option">
+    <div class="option-label">现在</div>
+    <div class="seat-card">
+      <div class="seat-avatar-wrap">
+        <div class="crown-current">👑</div>
+        <div class="seat-avatar">🧙</div>
+        <div class="seat-no">6</div>
+      </div>
+      <div class="seat-name">梅林看穿你了</div>
+    </div>
+    <div class="option-desc">静态 emoji<br>无动画</div>
+  </div>
+
+  <!-- A: Hover + Aura -->
+  <div class="option">
+    <div class="option-label">A · 悬浮光晕</div>
+    <div class="seat-card">
+      <div class="seat-avatar-wrap">
+        <div class="crown-a">
+          <!-- SVG Crown -->
+          <svg viewBox="0 0 52 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="cg-a" x1="0" y1="0" x2="52" y2="38" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stop-color="#f5d289"/>
+                <stop offset="50%" stop-color="#d4a855"/>
+                <stop offset="100%" stop-color="#a07830"/>
+              </linearGradient>
+            </defs>
+            <!-- base band -->
+            <rect x="4" y="24" width="44" height="10" rx="2" fill="url(#cg-a)"/>
+            <!-- left spike -->
+            <path d="M6 24 L2 6 L16 18 Z" fill="url(#cg-a)"/>
+            <!-- mid spike -->
+            <path d="M26 24 L26 2 L36 18 L16 18 Z" fill="#f5d289"/>
+            <!-- right spike -->
+            <path d="M46 24 L50 6 L36 18 Z" fill="url(#cg-a)"/>
+            <!-- gems -->
+            <circle cx="26" cy="3" r="3" fill="#fff8e0" opacity=".9"/>
+            <circle cx="4"  cy="6" r="2" fill="#ffd970" opacity=".8"/>
+            <circle cx="48" cy="6" r="2" fill="#ffd970" opacity=".8"/>
+            <!-- base highlight -->
+            <rect x="4" y="24" width="44" height="2" rx="1" fill="rgba(255,255,255,.25)"/>
+          </svg>
+          <div class="crown-a-aura"></div>
+        </div>
+        <div class="seat-avatar">🧙</div>
+        <div class="seat-no">6</div>
+      </div>
+      <div class="seat-name">梅林看穿你了</div>
+    </div>
+    <div class="option-desc">轻盈上下浮动<br>金色阴影跟随<br>柔和清晰</div>
+  </div>
+
+  <!-- B: Orbit Ring -->
+  <div class="option">
+    <div class="option-label">B · 轨道光点</div>
+    <div class="seat-card">
+      <div class="seat-avatar-wrap">
+        <div class="crown-b">
+          <div class="crown-b-icon">👑</div>
+          <div class="crown-b-orbit trail">
+            <div class="crown-b-dot"></div>
+            <div class="crown-b-dot"></div>
+            <div class="crown-b-dot"></div>
+            <div class="crown-b-dot"></div>
+          </div>
+        </div>
+        <div class="seat-avatar">🧙</div>
+        <div class="seat-no">6</div>
+      </div>
+      <div class="seat-name">梅林看穿你了</div>
+    </div>
+    <div class="option-desc">4颗金点绕轨旋转<br>拖尾渐淡彗星感<br>权威·动态</div>
+  </div>
+
+  <!-- C: Ray Halo -->
+  <div class="option">
+    <div class="option-label">C · 光芒环</div>
+    <div class="seat-card">
+      <div class="seat-avatar-wrap">
+        <div class="crown-c">
+          <div class="crown-c-ring"></div>
+          <div class="crown-c-rays">
+            <div class="crown-c-ray"></div>
+            <div class="crown-c-ray"></div>
+            <div class="crown-c-ray"></div>
+            <div class="crown-c-ray"></div>
+            <div class="crown-c-ray"></div>
+            <div class="crown-c-ray"></div>
+            <div class="crown-c-ray"></div>
+            <div class="crown-c-ray"></div>
+          </div>
+          <div class="crown-c-icon">👑</div>
+        </div>
+        <div class="seat-avatar">🧙</div>
+        <div class="seat-no">6</div>
+      </div>
+      <div class="seat-name">梅林看穿你了</div>
+    </div>
+    <div class="option-desc">8条光芒缓慢旋转<br>脉冲光环<br>神圣·庄严</div>
+  </div>
+
+  <!-- D: SVG Crown + geometry -->
+  <div class="option">
+    <div class="option-label">D · 浮动 SVG 皇冠</div>
+    <div class="seat-card">
+      <div class="seat-avatar-wrap">
+        <div class="crown-d">
+          <svg viewBox="0 0 52 38" fill="none" overflow="visible">
+            <defs>
+              <linearGradient id="cg-d1" x1="0" y1="38" x2="52" y2="0" gradientUnits="userSpaceOnUse">
+                <stop offset="0%"   stop-color="#b8860b"/>
+                <stop offset="40%"  stop-color="#f5d289"/>
+                <stop offset="100%" stop-color="#fffacd"/>
+              </linearGradient>
+              <filter id="glow-d">
+                <feGaussianBlur stdDeviation="1.5" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+            <!-- base band with rounded ends -->
+            <rect x="3" y="25" width="46" height="11" rx="3" fill="url(#cg-d1)" filter="url(#glow-d)"/>
+            <!-- left tall spike -->
+            <path d="M8 25 L3 4 L18 20 Z" fill="url(#cg-d1)" filter="url(#glow-d)"/>
+            <!-- center tall spike -->
+            <path d="M26 25 L26 0 L34 20 L18 20 Z" fill="#f7e08a" filter="url(#glow-d)"/>
+            <!-- right tall spike -->
+            <path d="M44 25 L49 4 L34 20 Z" fill="url(#cg-d1)" filter="url(#glow-d)"/>
+            <!-- gem tips -->
+            <circle cx="26" cy="1.5" r="2.8" fill="white" opacity=".95" filter="url(#glow-d)"/>
+            <circle cx="3.5" cy="5"   r="2"   fill="#ffd060" opacity=".9"/>
+            <circle cx="48.5" cy="5"  r="2"   fill="#ffd060" opacity=".9"/>
+            <!-- inner shine on base -->
+            <rect x="5" y="26" width="42" height="2" rx="1" fill="rgba(255,255,255,.3)"/>
+            <!-- base bottom edge -->
+            <rect x="3" y="34" width="46" height="1.5" rx=".75" fill="rgba(0,0,0,.2)"/>
+          </svg>
+          <div class="crown-d-aura"></div>
+        </div>
+        <div class="seat-avatar">🧙</div>
+        <div class="seat-no">6</div>
+      </div>
+      <div class="seat-name">梅林看穿你了</div>
+    </div>
+    <div class="option-desc">SVG 矢量皇冠<br>浮动 + 金色投影<br>最精致·替代 emoji</div>
+  </div>
+
+</div>
+
+<div class="divider"></div>
+
+<!-- ════ AB COMBO ════ -->
+<div style="display:flex;flex-direction:column;align-items:center;gap:20px;">
+  <div class="page-title" style="opacity:.7;">推荐组合：B轨道 + D皇冠</div>
+  <div class="seat-card">
+    <div class="seat-avatar-wrap">
+      <div class="crown-d" style="top:-46px;">
+        <!-- reuse crown-b orbit around SVG crown -->
+        <div style="position:relative;display:flex;flex-direction:column;align-items:center;">
+          <div style="position:relative;width:44px;height:44px;display:flex;align-items:center;justify-content:center;">
+            <!-- orbit -->
+            <div class="crown-b-orbit trail" style="position:absolute;inset:0;animation-duration:3.6s;">
+              <div class="crown-b-dot"></div>
+              <div class="crown-b-dot"></div>
+              <div class="crown-b-dot"></div>
+              <div class="crown-b-dot"></div>
+            </div>
+            <!-- SVG crown -->
+            <svg viewBox="0 0 52 38" fill="none" width="32" height="22" overflow="visible" style="position:relative;z-index:2;animation:crown-bob 3.2s ease-in-out infinite;">
+              <defs>
+                <linearGradient id="cg-combo" x1="0" y1="38" x2="52" y2="0" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%"   stop-color="#b8860b"/>
+                  <stop offset="40%"  stop-color="#f5d289"/>
+                  <stop offset="100%" stop-color="#fffacd"/>
+                </linearGradient>
+                <filter id="glow-combo">
+                  <feGaussianBlur stdDeviation="1.5" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+              <rect x="3" y="25" width="46" height="11" rx="3" fill="url(#cg-combo)" filter="url(#glow-combo)"/>
+              <path d="M8 25 L3 4 L18 20 Z" fill="url(#cg-combo)" filter="url(#glow-combo)"/>
+              <path d="M26 25 L26 0 L34 20 L18 20 Z" fill="#f7e08a" filter="url(#glow-combo)"/>
+              <path d="M44 25 L49 4 L34 20 Z" fill="url(#cg-combo)" filter="url(#glow-combo)"/>
+              <circle cx="26" cy="1.5" r="2.8" fill="white" opacity=".95" filter="url(#glow-combo)"/>
+              <circle cx="3.5" cy="5"   r="2"   fill="#ffd060" opacity=".9"/>
+              <circle cx="48.5" cy="5"  r="2"   fill="#ffd060" opacity=".9"/>
+              <rect x="5" y="26" width="42" height="2" rx="1" fill="rgba(255,255,255,.3)"/>
+            </svg>
+          </div>
+          <div class="crown-d-aura" style="animation-duration:3.2s;"></div>
+        </div>
+      </div>
+      <div class="seat-avatar">🧙</div>
+      <div class="seat-no">6</div>
+    </div>
+    <div class="seat-name">梅林看穿你了</div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ════ SIZE COMPARISON ════ -->
+<div style="display:flex;flex-direction:column;align-items:center;gap:20px;">
+  <div class="page-title" style="opacity:.5;">小程序实际尺寸对比</div>
+  <div class="compare-row">
+
+    <div>
+      <div class="compare-label">Preview (56px)</div>
+      <div class="seat-card">
+        <div class="seat-avatar-wrap">
+          <div class="crown-b">
+            <div class="crown-b-icon">👑</div>
+            <div class="crown-b-orbit trail">
+              <div class="crown-b-dot"></div>
+              <div class="crown-b-dot"></div>
+              <div class="crown-b-dot"></div>
+              <div class="crown-b-dot"></div>
+            </div>
+          </div>
+          <div class="seat-avatar">🧙</div>
+          <div class="seat-no">6</div>
+        </div>
+        <div class="seat-name">梅林看穿你了</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="compare-label">Miniprogram (42px)</div>
+      <div class="seat-card mini-scale">
+        <div class="seat-avatar-wrap">
+          <div class="crown-b">
+            <div class="crown-b-icon">👑</div>
+            <div class="crown-b-orbit trail">
+              <div class="crown-b-dot"></div>
+              <div class="crown-b-dot"></div>
+              <div class="crown-b-dot"></div>
+              <div class="crown-b-dot"></div>
+            </div>
+          </div>
+          <div class="seat-avatar">🧙</div>
+          <div class="seat-no">6</div>
+        </div>
+        <div class="seat-name" style="font-size:10px;">梅林看穿你了</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

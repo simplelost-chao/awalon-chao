@@ -30,7 +30,7 @@
   </nav-header>
 
   <view wx:if="{{!reviewMode}}" class="content {{room && !atHome ? 'content-game' : 'content-home'}}" style="padding-top: {{navTotalHeight + 20}}px;">
-    <view class="panel" wx:if="{{!room || atHome}}">
+    <panel-frame wx:if="{{!room || atHome}}" extraClass="panel-home">
       <!-- 未登录时显示轻提示条，不强制弹窗 -->
       <view class="guest-login-bar" wx:if="{{!loggedIn}}" bindtap="onWxLogin">
         <text class="guest-login-text">登录后可创建房间、查看历史战绩</text>
@@ -55,98 +55,281 @@
         </view>
       </view>
       <view class="home-action-grid" wx:if="{{loggedIn}}">
-        <button class="btn ghost home-action-btn" bindtap="openHistory">
-          <image class="home-action-icon" src="https://www.awalon.top/mp-assets/ui-icons/history_scroll.png" mode="aspectFill" />
-          <text class="home-action-text">历史对战</text>
-        </button>
-        <button class="btn ghost home-action-btn" bindtap="openRoleStats">
-          <image class="home-action-icon" src="https://www.awalon.top/mp-assets/ui-icons/stats_bars.png" mode="aspectFill" />
-          <text class="home-action-text">角色统计</text>
-        </button>
-        <button class="btn ghost home-action-btn" bindtap="openRules">
-          <text class="home-action-emoji">📖</text>
-          <text class="home-action-text">游戏规则</text>
-        </button>
+        <view class="home-action-frame">
+          <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+          <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+          <view class="cf cf-md cf-gold">
+            <button class="btn ghost home-action-btn cf-in-md" bindtap="openHistory">
+              <image class="home-action-icon" src="https://www.awalon.top/mp-assets/icons/nav-history.svg" mode="aspectFit" />
+              <text class="home-action-text">历史对战</text>
+            </button>
+          </view>
+        </view>
+        <view class="home-action-frame">
+          <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+          <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+          <view class="cf cf-md cf-gold">
+            <button class="btn ghost home-action-btn cf-in-md" bindtap="openRoleStats">
+              <image class="home-action-icon" src="https://www.awalon.top/mp-assets/icons/nav-stats.svg" mode="aspectFit" />
+              <text class="home-action-text">角色统计</text>
+            </button>
+          </view>
+        </view>
+        <view class="home-action-frame">
+          <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+          <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+          <view class="cf cf-md cf-gold">
+            <button class="btn ghost home-action-btn cf-in-md" bindtap="openRules">
+              <image class="home-action-icon" src="https://www.awalon.top/mp-assets/icons/nav-rules.svg" mode="aspectFit" />
+              <text class="home-action-text">游戏规则</text>
+            </button>
+          </view>
+        </view>
       </view>
-    </view>
 
+      <!-- 在房间时：重新进入 / 退出 -->
+      <view class="home-cta-wrap" wx:if="{{atHome && room}}">
+        <view class="btn-frame">
+          <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+          <view class="fb fb-left"></view><view class="fb fb-right"></view>
+          <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+          <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+          <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+          <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+          <text class="btn-diamond btn-diamond-l">◆</text>
+          <text class="btn-diamond btn-diamond-r">◆</text>
+          <view class="home-btn-create" bindtap="onResumeRoom">重新进入：{{room.code}}</view>
+        </view>
+        <view class="btn-frame btn-frame-ghost">
+          <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+          <view class="fb fb-left"></view><view class="fb fb-right"></view>
+          <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+          <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+          <view class="home-btn-join" bindtap="onLeaveRoomFromList">退出房间</view>
+        </view>
+      </view>
 
-    <view class="panel" wx:if="{{atHome && !room}}">
+      <!-- 配置区域（无房间时才显示） -->
+      <block wx:if="{{atHome && !room}}">
+      <view class="panel-divider" wx:if="{{loggedIn}}"></view>
+      <!-- 人数选择 -->
       <view class="count-options-row">
         <view
-          class="count-option {{maxPlayersIndex===index ? 'count-option-on' : ''}}"
+          class="cf cf-sm {{maxPlayersIndex===index ? 'cf-bright' : 'cf-subtle'}}"
           wx:for="{{maxPlayersOptions}}"
           wx:key="*this"
           data-idx="{{index}}"
           bindtap="onSelectMaxPlayers"
         >
-          {{item}}
+          <view class="count-option cf-in-sm {{maxPlayersIndex===index ? 'count-option-on' : ''}}">{{item}}</view>
         </view>
       </view>
-      <view class="current-role-chips">
+
+      <!-- 板子预设 -->
+      <view class="preset-row" wx:if="{{rolePresets.length > 1}}">
         <view
-          class="role-chip {{item.isEvil ? 'role-chip-evil' : 'role-chip-good'}} {{item.role === hostRole ? 'role-chip-selected' : ''}}"
-          wx:for="{{currentRoleChips}}"
-          wx:key="role"
-          data-role="{{item.role}}"
-          bindtap="onPickRoleChip"
-        >
-          <image class="role-chip-img" src="{{item.image}}" mode="aspectFill" />
-          <view class="role-chip-label">
-            <text class="role-chip-name">{{item.role}}</text>
-            <text class="role-chip-count" wx:if="{{item.count > 1}}">×{{item.count}}</text>
+          class="cf cf-sm preset-opt-wrap {{selectedPresetIndex===index ? 'cf-bright' : 'cf-subtle'}}"
+          wx:for="{{rolePresets}}" wx:key="name"
+          data-idx="{{index}}" bindtap="onSelectPreset">
+          <view class="preset-opt cf-in-sm {{selectedPresetIndex===index ? 'preset-opt-on' : ''}}">{{item.name}}</view>
+        </view>
+      </view>
+
+      <!-- 阵容配置 -->
+      <view class="cfg-section-hdr">
+        <view class="cfg-section-line"></view>
+        <text class="cfg-section-deco">◆</text>
+        <text class="cfg-section-title">阵容配置（{{maxPlayersOptions[maxPlayersIndex]}}）</text>
+        <text class="cfg-section-deco">◆</text>
+        <view class="cfg-section-line"></view>
+      </view>
+
+      <!-- 阵营区域 -->
+      <view class="faction-area">
+
+      <!-- 正义阵营 -->
+      <view class="faction-frame faction-frame-good">
+        <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+        <view class="fb fb-left"></view><view class="fb fb-right"></view>
+        <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+        <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+        <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+        <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+      <view class="faction-group faction-group-good">
+        <view class="faction-hdr faction-hdr-good">
+          <image class="faction-hdr-icon-img" src="https://www.awalon.top/mp-assets/icons/faction-good.svg" mode="aspectFit" />
+          <text class="faction-hdr-title">正义阵营</text>
+          <text class="faction-hdr-count {{goodChipCount===neededGood ? 'faction-hdr-count-ok' : ''}}">{{goodChipCount}}/{{neededGood}}</text>
+        </view>
+        <view class="faction-chips-row">
+          <block wx:for="{{currentRoleChips}}" wx:key="role">
+            <view wx:if="{{!item.isEvil}}" class="role-chip-sm role-chip-sm-good {{hostRole===item.role ? 'role-chip-sm-selected' : ''}}"
+              data-role="{{item.role}}" bindtap="onPickRoleChip">
+              <image class="role-chip-sm-img" src="{{item.image}}" mode="aspectFill" />
+              <text class="role-chip-tip" wx:if="{{item.roleBadgeText}}">{{item.roleBadgeText}}</text>
+              <text class="role-chip-sm-name">{{item.role}}</text>
+              <text class="role-chip-sm-cnt" wx:if="{{item.count > 1}}">×{{item.count}}</text>
+            </view>
+          </block>
+        </view>
+      </view>
+      </view><!-- end faction-frame good -->
+
+      <!-- 邪恶阵营 -->
+      <view class="faction-frame faction-frame-evil">
+        <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+        <view class="fb fb-left"></view><view class="fb fb-right"></view>
+        <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+        <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+        <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+        <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+      <view class="faction-group faction-group-evil">
+        <view class="faction-hdr faction-hdr-evil">
+          <image class="faction-hdr-icon-img" src="https://www.awalon.top/mp-assets/icons/faction-evil.svg" mode="aspectFit" />
+          <text class="faction-hdr-title">邪恶阵营</text>
+          <text class="faction-hdr-count {{evilChipCount===neededEvil ? 'faction-hdr-count-ok' : ''}}">{{evilChipCount}}/{{neededEvil}}</text>
+        </view>
+        <view class="faction-chips-row">
+          <block wx:for="{{currentRoleChips}}" wx:key="role">
+            <view wx:if="{{item.isEvil}}" class="role-chip-sm role-chip-sm-evil {{hostRole===item.role ? 'role-chip-sm-selected' : ''}}"
+              data-role="{{item.role}}" bindtap="onPickRoleChip">
+              <image class="role-chip-sm-img" src="{{item.image}}" mode="aspectFill" />
+              <text class="role-chip-tip" wx:if="{{item.roleBadgeText}}">{{item.roleBadgeText}}</text>
+              <text class="role-chip-sm-name">{{item.role}}</text>
+              <text class="role-chip-sm-cnt" wx:if="{{item.count > 1}}">×{{item.count}}</text>
+            </view>
+          </block>
+        </view>
+      </view>
+      </view><!-- end faction-frame evil -->
+
+      </view><!-- end faction-area -->
+
+      <!-- 游戏规则 -->
+      <view class="cfg-section-hdr">
+        <view class="cfg-section-line"></view>
+        <text class="cfg-section-deco">◆</text>
+        <text class="cfg-section-title">游戏规则</text>
+        <text class="cfg-section-deco">◆</text>
+        <view class="cfg-section-line"></view>
+      </view>
+
+      <view class="rules-list">
+        <!-- 湖中仙女 -->
+        <view class="rule-row">
+          <view class="rule-row-left">
+            <image class="rule-icon" src="https://www.awalon.top/mp-assets/icons/rule-lady.svg" mode="aspectFit" />
+            <text class="rule-name">湖中仙女</text>
+          </view>
+          <view class="rule-opts">
+            <view class="rule-opt {{!ladyOfLakeEnabled ? 'rule-opt-on' : ''}}"
+              data-enabled="0" bindtap="onToggleLadyDirect">关闭</view>
+            <view class="rule-opt {{ladyOfLakeEnabled ? 'rule-opt-on' : ''}}"
+              data-enabled="1" bindtap="onToggleLadyDirect">开启</view>
+          </view>
+        </view>
+
+        <!-- 强制失败 -->
+        <view class="rule-row">
+          <view class="rule-row-left">
+            <image class="rule-icon" src="https://www.awalon.top/mp-assets/icons/rule-force.svg" mode="aspectFit" />
+            <text class="rule-name">强制失败</text>
+          </view>
+          <view class="rule-opts">
+            <view class="rule-opt {{forceRoundMode==='fixed5' ? 'rule-opt-on' : ''}}"
+              data-value="fixed5" bindtap="onPickForceRoundDirect">第5次</view>
+            <view class="rule-opt {{forceRoundMode==='evil_plus_one' ? 'rule-opt-on' : ''}}"
+              data-value="evil_plus_one" bindtap="onPickForceRoundDirect">邪恶+1</view>
+          </view>
+        </view>
+
+        <!-- 邪恶互认 -->
+        <view class="rule-row">
+          <view class="rule-row-left">
+            <image class="rule-icon" src="https://www.awalon.top/mp-assets/icons/rule-evil.svg" mode="aspectFit" />
+            <text class="rule-name">邪恶互认</text>
+          </view>
+          <view class="rule-opts">
+            <view class="rule-opt {{!evilRoleVisibleEnabled ? 'rule-opt-on' : ''}}"
+              data-value="false" bindtap="onPickEvilVisibleDirect">隐藏</view>
+            <view class="rule-opt {{evilRoleVisibleEnabled ? 'rule-opt-on' : ''}}"
+              data-value="true" bindtap="onPickEvilVisibleDirect">显示</view>
+          </view>
+        </view>
+
+        <!-- 发言时长 -->
+        <view class="rule-row">
+          <view class="rule-row-left">
+            <image class="rule-icon" src="https://www.awalon.top/mp-assets/icons/rule-timer.svg" mode="aspectFit" />
+            <text class="rule-name">发言时长</text>
+          </view>
+          <view class="rule-opts">
+            <view class="rule-opt {{speakingSeconds===60 ? 'rule-opt-on' : ''}}"
+              data-value="60" bindtap="onPickSpeakingSecondsDirect">60s</view>
+            <view class="rule-opt {{speakingSeconds===90 ? 'rule-opt-on' : ''}}"
+              data-value="90" bindtap="onPickSpeakingSecondsDirect">90s</view>
+            <view class="rule-opt {{speakingSeconds===120 ? 'rule-opt-on' : ''}}"
+              data-value="120" bindtap="onPickSpeakingSecondsDirect">120s</view>
+            <view class="rule-opt {{speakingSeconds===180 ? 'rule-opt-on' : ''}}"
+              data-value="180" bindtap="onPickSpeakingSecondsDirect">180s</view>
+          </view>
+        </view>
+
+        <!-- AI语音 -->
+        <view class="rule-row">
+          <view class="rule-row-left">
+            <image class="rule-icon" src="https://www.awalon.top/mp-assets/icons/rule-voice.svg" mode="aspectFit" />
+            <text class="rule-name">AI语音</text>
+          </view>
+          <view class="rule-opts">
+            <view class="rule-opt {{!aiVoiceEnabled ? 'rule-opt-on' : ''}}"
+              data-enabled="0" bindtap="onToggleAiVoiceDirect">关闭</view>
+            <view class="rule-opt {{aiVoiceEnabled ? 'rule-opt-on' : ''}}"
+              data-enabled="1" bindtap="onToggleAiVoiceDirect">开启</view>
           </view>
         </view>
       </view>
 
-      <view class="advanced-toggle" bindtap="onToggleAdvancedSettings">
-        <text class="advanced-toggle-title">高级设置</text>
-        <text class="advanced-toggle-value">{{showAdvancedSettings ? '收起' : '展开'}}</text>
-      </view>
-      <advanced-settings wx:if="{{showAdvancedSettings}}"
-        selectedRoles="{{selectedRoles}}"
-        allRoleOptions="{{allRoleOptions}}"
-        ladyOfLakeEnabled="{{ladyOfLakeEnabled}}"
-        forceRoundMode="{{forceRoundMode}}"
-        forceRoundOptions="{{forceRoundOptions}}"
-        evilRoleVisibleEnabled="{{evilRoleVisibleEnabled}}"
-        oberonVisibleEnabled="{{oberonVisibleEnabled}}"
-        aiVoiceEnabled="{{aiVoiceEnabled}}"
-        speakingSeconds="{{speakingSeconds}}"
-        speakingSecondsOptions="{{speakingSecondsOptions}}"
-        maxPlayersIndex="{{maxPlayersIndex}}"
-        advancedRoleSummary="{{advancedRoleSummary}}"
-        advancedQuotaText="{{advancedQuotaText}}"
-        bind:addrole="onAddAdvancedRole"
-        bind:removerole="onRemoveAdvancedRole"
-        bind:resetroles="onResetAdvancedRoles"
-        bind:togglelady="onToggleLadyMode"
-        bind:pickforceround="onPickForceRoundMode"
-        bind:pickevilvision="onPickEvilRoleVisible"
-        bind:pickoberonvisible="onPickOberonVisible"
-        bind:pickseconds="onPickSpeakingSeconds"
-        bind:toggleaivoice="onToggleAiVoice">
-      </advanced-settings>
-
-      <view class="btn-row" wx:if="{{!room}}">
-        <button class="btn primary half" bindtap="onCreateRoom">创建房间</button>
-        <button class="btn ghost half" bindtap="onJoinRoomPrompt">加入房间</button>
+      <view class="config-hint-wrap" wx:if="{{goodChipCount!==neededGood || evilChipCount!==neededEvil}}">
+        <text class="config-hint-text config-hint-err">⚠ 配置有误，{{goodChipCount}} 正义 / {{evilChipCount}} 邪恶</text>
       </view>
 
-    </view>
-
-
-    <view class="panel" wx:if="{{atHome && room}}">
-      <view class="btn-row">
-        <button class="btn primary half" bindtap="onResumeRoom">重新进入：{{room.code}}</button>
-        <button class="btn ghost half" bindtap="onLeaveRoomFromList">退出房间</button>
+      <view class="home-cta-wrap">
+        <view class="btn-frame">
+          <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+          <view class="fb fb-left"></view><view class="fb fb-right"></view>
+          <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+          <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+          <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+          <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+          <text class="btn-diamond btn-diamond-l">◆</text>
+          <text class="btn-diamond btn-diamond-r">◆</text>
+          <view class="home-btn-create" bindtap="onCreateRoom">创建房间</view>
+        </view>
+        <view class="btn-frame btn-frame-ghost">
+          <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+          <view class="fb fb-left"></view><view class="fb fb-right"></view>
+          <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+          <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+          <view class="home-btn-join" bindtap="onJoinRoomPrompt">加入房间</view>
+        </view>
       </view>
-    </view>
+
+      </block><!-- end: atHome && !room -->
+
+    </panel-frame>
+
 
     <!-- 当前活跃房间列表：首页始终显示 -->
-    <view class="rl-wrap" wx:if="{{atHome}}">
-      <view class="section-title-row rl-header">
-        <text class="section-title section-title-small">当前房间</text>
+    <panel-frame wx:if="{{atHome}}" extraClass="rl-panel">
+
+      <!-- 装饰标题行 -->
+      <view class="rl-title-row">
+        <view class="rl-title-line"></view>
+        <text class="rl-title-deco">◆</text>
+        <text class="rl-title-text">当前房间</text>
+        <text class="rl-title-deco">◆</text>
+        <view class="rl-title-line"></view>
         <view class="speak-inline-btn {{activeRoomsLoading ? 'speak-inline-disabled' : ''}}" bindtap="onRefreshRooms">
           <text class="rl-refresh-icon {{activeRoomsLoading ? 'rl-spinning' : ''}}">↻</text>
         </view>
@@ -155,42 +338,74 @@
       <view class="rl-cards" wx:if="{{activeRooms.length}}">
         <room-card wx:for="{{activeRooms}}" wx:key="code"
           roomData="{{item}}"
-          isCurrentRoom="{{room && item.code === room.code}}"
+          isCurrentRoom="{{item.isCurrentRoom}}"
           bind:resume="onResumeRoom"
           bind:join="onJoinPublicRoom">
         </room-card>
       </view>
 
       <view wx:else class="rl-empty">
+        <image class="rl-empty-icon-img" src="https://www.awalon.top/mp-assets/icons/room-empty.svg" mode="aspectFit" />
         <text class="rl-empty-title">暂无房间</text>
         <text class="rl-empty-sub">快去创建一局吧</text>
       </view>
-    </view>
+    </panel-frame>
 
-    <view class="panel room-panel" wx:if="{{room && !atHome}}" style="{{phase==='speaking' && !isSpectator ? 'padding-bottom:420rpx;' : ((['team','voting','mission'].indexOf(phase)>=0 && !isSpectator) ? 'padding-bottom:240rpx;' : '')}}">
+    <panel-frame wx:if="{{room && !atHome}}" extraClass="room-panel" extraStyle="{{phase==='speaking' && !isSpectator ? 'padding-bottom:420rpx;' : ((['team','voting','mission'].indexOf(phase)>=0 && !isSpectator) ? 'padding-bottom:240rpx;' : '')}}">
 
       <view class="control-wrap">
         <view class="btn-row">
-          <button class="btn ghost half room-toggle-btn" bindtap="togglePlayerList">
-            <text>{{showPlayerList ? ('收起 · ' + room.code) : ('房间 ' + room.code)}}</text>
-            <text class="toggle-arrow">{{showPlayerList ? '▲' : '▼'}}</text>
-          </button>
-          <button class="btn ghost half role-toggle-btn {{!room.started ? 'btn-disabled' : ''}} {{identityMode ? 'role-toggle-open' : ''}}" bindtap="toggleRolePanel" disabled="{{!room.started}}">
-            <text>{{identityMode ? '收起身份' : '查看身份'}}</text>
-            <text class="toggle-arrow" wx:if="{{room.started}}">{{identityMode ? '▲' : '▼'}}</text>
-          </button>
+
+          <!-- 房间详情按钮 -->
+          <view class="btn-frame btn-frame-ghost top-btn-frame" bindtap="togglePlayerList">
+            <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+            <view class="fb fb-left"></view><view class="fb fb-right"></view>
+            <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+            <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+            <view class="top-btn-inner">
+              <text class="top-btn-icon">◈</text>
+              <text class="top-btn-label">{{showPlayerList ? ('收起 · ' + room.code) : ('房间 · ' + room.code)}}</text>
+              <text class="top-btn-arrow">{{showPlayerList ? '▲' : '▼'}}</text>
+            </view>
+          </view>
+
+          <!-- 查看身份/视野按钮 -->
+          <view class="btn-frame btn-frame-ghost top-btn-frame {{!canViewIdentity ? 'top-btn-disabled' : ''}} {{identityMode ? 'top-btn-open' : ''}}" bindtap="toggleRolePanel">
+            <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+            <view class="fb fb-left"></view><view class="fb fb-right"></view>
+            <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+            <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+            <view class="top-btn-inner">
+              <text class="top-btn-icon">{{canViewIdentity ? (identityRevealSeen ? '◈' : '◉') : '◌'}}</text>
+              <text class="top-btn-label">{{canViewIdentity ? (identityMode ? '收起' : (identityRevealSeen ? '视野' : '查看身份')) : '无身份'}}</text>
+            </view>
+          </view>
+
         </view>
       </view>
 
-      <identity-panel wx:if="{{showRolePanel}}"
-        roleInfo="{{roleInfo}}"
-        roleInfoLoading="{{roleInfoLoading}}"
-        roleVisibleSeats="{{roleVisibleSeats}}"
-        isAssassin="{{isAssassin}}"
-        assassinSeatNo="{{assassinSeatNo}}"
-        phase="{{phase}}"
-        bind:startassassination="onStartAssassination">
-      </identity-panel>
+      <view class="identity-modal-mask" wx:if="{{showRolePanel}}" bindtap="onCloseRolePanel">
+        <view class="identity-modal-sheet" catchtap="onNoop">
+          <view class="identity-modal-head">
+            <view class="identity-modal-title-wrap">
+              <text class="identity-modal-title">身份信息</text>
+              <text class="identity-modal-sub">圆桌身份显示</text>
+            </view>
+            <text class="identity-modal-close" bindtap="onCloseRolePanel">✕</text>
+          </view>
+          <scroll-view class="identity-modal-body" scroll-y>
+            <identity-panel
+              roleInfo="{{roleInfo}}"
+              roleInfoLoading="{{roleInfoLoading}}"
+              roleVisibleSeats="{{roleVisibleSeats}}"
+              isAssassin="{{isAssassin}}"
+              assassinSeatNo="{{assassinSeatNo}}"
+              phase="{{phase}}"
+              bind:startassassination="onStartAssassination">
+            </identity-panel>
+          </scroll-view>
+        </view>
+      </view>
 
       <room-players-panel wx:if="{{showPlayerList}}"
         roomRoleCards="{{roomRoleCards}}"
@@ -213,6 +428,7 @@
       </room-players-panel>
 
       <round-table
+        tableUrl="{{skinTableUrl}}"
         seats="{{roundSeats}}"
         identityMode="{{identityMode}}"
         seatNotes="{{seatNotes}}"
@@ -234,66 +450,163 @@
         bind:seattouchend="onSeatTouchEnd"
         bind:seattouchcancel="onSeatTouchCancel"
         bind:tapmedal="onTapMedal"
-        bind:redeal="onRedealIdentities"
         bind:leaderaction="onLeaderTeamAction"
         bind:startassassination="onStartAssassination"
-        bind:confirmassassinate="onConfirmAssassinate"
-        bind:startgame="onStartGame">
+        bind:confirmassassinate="onConfirmAssassinate">
       </round-table>
 
+      <view class="game-config-panel pf" wx:if="{{!room.started || phase==='end'}}">
+        <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+        <view class="fb fb-left"></view><view class="fb fb-right"></view>
+        <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+        <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+        <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+        <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+        <view class="game-config-head">
+          <view class="game-config-title-wrap mt-title-row">
+            <view class="mt-title-line"></view>
+            <text class="mt-title-deco">◆</text>
+            <text class="mt-title">当前配置</text>
+            <view class="game-config-help" bindtap="onOpenConfigHelp">?</view>
+            <text class="mt-title-deco">◆</text>
+            <view class="mt-title-line"></view>
+          </view>
+          <view wx:if="{{room.started && phase !== 'end'}}" class="game-config-lock">进行中</view>
+        </view>
+        <view class="game-role-strip" wx:if="{{roomRoleCards.length}}">
+          <view class="game-role-mini {{item.isEvil ? 'game-role-mini-evil' : 'game-role-mini-good'}} {{item.isHostRole ? 'game-role-mini-host' : ''}}" wx:for="{{roomRoleCards}}" wx:key="role" data-role="{{item.role}}" bindtap="onTapConfigRole">
+            <image class="game-role-mini-img" src="{{item.image}}" mode="aspectFill" />
+            <text class="game-role-mini-tip" wx:if="{{item.roleBadgeText}}">{{item.roleBadgeText}}</text>
+            <text class="game-role-mini-name">{{item.role}}</text>
+            <text class="game-role-mini-count" wx:if="{{item.count > 1}}">×{{item.count}}</text>
+          </view>
+        </view>
+        <view class="game-config-grid">
+          <view class="game-config-cell" wx:for="{{roomConfigLines}}" wx:key="label">
+            <view class="game-config-label-wrap">
+              <image class="game-config-icon" src="{{item.icon}}" mode="aspectFit" />
+              <text class="game-config-label">{{item.label}}</text>
+            </view>
+            <text class="game-config-value">{{item.value}}</text>
+          </view>
+        </view>
+        <view class="game-config-actions" wx:if="{{isHost}}">
+          <view class="btn-frame game-config-main-frame" wx:if="{{!room.started}}" bindtap="onStartGame">
+            <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+            <view class="fb fb-left"></view><view class="fb fb-right"></view>
+            <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+            <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+            <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+            <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+            <text class="btn-diamond btn-diamond-l">◆</text>
+            <text class="btn-diamond btn-diamond-r">◆</text>
+            <view class="game-config-main-btn ap-btn-primary">开始游戏</view>
+          </view>
+          <view class="btn-frame game-config-main-frame" wx:elif="{{phase==='end'}}" bindtap="onRedealIdentities">
+            <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+            <view class="fb fb-left"></view><view class="fb fb-right"></view>
+            <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+            <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+            <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+            <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+            <text class="btn-diamond btn-diamond-l">◆</text>
+            <text class="btn-diamond btn-diamond-r">◆</text>
+            <view class="game-config-main-btn ap-btn-primary">重新开始</view>
+          </view>
+          <view class="btn-frame btn-frame-ghost game-config-main-frame" bindtap="onOpenRoomSettings">
+            <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+            <view class="fb fb-left"></view><view class="fb fb-right"></view>
+            <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+            <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+            <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+            <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+            <view class="game-config-main-btn game-config-main-btn-ghost">修改配置</view>
+          </view>
+        </view>
+      </view>
 
       <view class="control-wrap" wx:if="{{room.game}}">
-        <text class="section-title section-title-small section-chip">任务进度</text>
         <mission-pills pills="{{missionPills}}" />
       </view>
 
-      <view class="force-round-banner force-round-banner-block" wx:if="{{isCurrentForcedAttempt && !showCenterResult}}">
-        <text class="force-round-banner-main">强制组队轮</text>
-        <text class="force-round-banner-sub">本次未发车则正义直接判负</text>
-      </view>
-
-      <view class="control-wrap" wx:if="{{room.game && phase==='lady'}}">
-        <text class="section-title section-title-small section-chip">验人阶段</text>
-        <view class="lady-current-player">
-          <text class="lady-current-label">当前验人</text>
-          <text class="lady-current-name">{{ladyHolderName || '未知玩家'}}</text>
-        </view>
-        <view class="lady-history-list" wx:if="{{ladyHistory.length}}">
-          <view class="lady-history-item" wx:for="{{ladyHistory}}" wx:key="key">
-            <text class="lady-history-round">第{{item.round}}轮</text>
-            <text class="lady-history-text">{{item.holderName}} 验了 {{item.targetName}}</text>
+      <view class="control-wrap" wx:if="{{room.game && phase==='lady' && ladyHistory.length}}">
+        <view class="phase-panel pf">
+          <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+          <view class="fb fb-left"></view><view class="fb fb-right"></view>
+          <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+          <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+          <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+          <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+          <view class="phase-panel-head mt-title-row">
+            <view class="mt-title-line"></view>
+            <text class="mt-title-deco">◆</text>
+            <text class="mt-title">验人记录</text>
+            <text class="mt-title-deco">◆</text>
+            <view class="mt-title-line"></view>
+          </view>
+          <view class="phase-panel-body">
+            <view class="lady-history-list">
+              <view class="lady-history-item" wx:for="{{ladyHistory}}" wx:key="key">
+                <text class="lady-history-round">第{{item.round}}轮</text>
+                <text class="lady-history-text">{{item.holderName}} 验了 {{item.targetName}}</text>
+              </view>
+            </view>
           </view>
         </view>
-        <view class="lady-action-hint lady-action-mine" wx:if="{{isLadyHolder}}">
-          <text class="lady-action-text">点击圆桌上的目标玩家进行验人</text>
-        </view>
-        <view class="lady-action-hint" wx:else>
-          <text class="lady-action-text">等待 {{ladyHolderName}} 选择目标…</text>
+      </view>
+
+      <view class="control-wrap" wx:if="{{isCurrentForcedAttempt && !showCenterResult}}">
+        <view class="phase-panel phase-force-panel pf">
+          <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+          <view class="fb fb-left"></view><view class="fb fb-right"></view>
+          <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+          <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+          <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+          <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+          <view class="phase-panel-head mt-title-row">
+            <view class="mt-title-line"></view>
+            <text class="mt-title-deco">◆</text>
+            <text class="mt-title">强制组队轮</text>
+            <text class="mt-title-deco">◆</text>
+            <view class="mt-title-line"></view>
+          </view>
+          <view class="phase-force-body">
+            <text class="phase-force-main">本轮继续失败，正义直接判负</text>
+            <text class="phase-force-sub">请谨慎选择队伍，别让本轮发车失败</text>
+          </view>
         </view>
       </view>
 
       <view class="control-wrap" wx:if="{{missionRows.length}}">
-        <text class="section-title section-title-small section-chip">任务详情</text>
-        <mission-table rows="{{missionRows}}" />
+        <mission-table rows="{{missionRows}}" maxPlayers="{{room.players.length}}" />
       </view>
 
-      <view class="control-wrap" wx:if="{{room.game}}">
-        <view class="speak-title-wrap">
-          <text class="section-title section-title-small section-chip">发言记录</text>
-          <view class="speak-inline-pager">
-            <view class="speak-inline-btn {{!speakKeys.length || speakRoundView===speakKeys[0] ? 'speak-inline-disabled' : ''}}" bindtap="prevSpeakRound">‹</view>
-            <text class="speak-title-round" wx:if="{{speakRoundView}}">第 {{speakRoundView}} 轮</text>
-            <view class="speak-inline-btn {{!speakKeys.length || speakRoundView===speakKeys[speakKeys.length-1] ? 'speak-inline-disabled' : ''}}" bindtap="nextSpeakRound">›</view>
+      <view class="control-wrap pf spk-rec-panel" wx:if="{{room.game}}">
+        <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+        <view class="fb fb-left"></view><view class="fb fb-right"></view>
+        <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+        <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+        <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+        <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+        <!-- 标题行 + 翻页 -->
+        <view class="spk-rec-title-row">
+          <view class="mt-title-line"></view>
+          <text class="mt-title-deco">◆</text>
+          <text class="mt-title">发言记录</text>
+          <view class="spk-rec-pager">
+            <view class="spk-rec-btn {{!speakKeys.length || speakRoundView===speakKeys[0] ? 'spk-rec-disabled' : ''}}" bindtap="prevSpeakRound">‹</view>
+            <text class="spk-rec-round" wx:if="{{speakRoundView}}">第 {{speakRoundView}} 轮</text>
+            <view class="spk-rec-btn {{!speakKeys.length || speakRoundView===speakKeys[speakKeys.length-1] ? 'spk-rec-disabled' : ''}}" bindtap="nextSpeakRound">›</view>
           </view>
+          <text class="mt-title-deco">◆</text>
+          <view class="mt-title-line"></view>
         </view>
-        <view wx:if="{{speakRoundView}}">
-          <speak-list messages="{{speakMessages}}" />
-        </view>
+        <speak-list messages="{{speakMessages}}" wx:if="{{speakRoundView}}" />
       </view>
 
-      <view class="bottom-spacer" wx:if="{{phase==='speaking' || (phase==='voting' && !myVoted) || (phase==='mission' && inTeam && !myMissionDone)}}"></view>
+      <view class="bottom-spacer" wx:if="{{phase==='speaking' || phase==='lady' || (phase==='voting' && !myVoted) || (phase==='mission' && inTeam && !myMissionDone)}}"></view>
 
-    </view>
+    </panel-frame>
 
   </view>
 
@@ -311,6 +624,13 @@
     team="{{currentVoteTeam}}"
     bind:success="onMissionSuccess"
     bind:fail="onMissionFail">
+  </action-panel>
+
+  <action-panel
+    wx:if="{{room && !atHome && !isSpectator && phase==='lady' && phasePrompt}}"
+    mode="lady"
+    prompt="{{phasePrompt}}"
+    bind:confirmlady="onConfirmLadyOfLake">
   </action-panel>
 
   <speak-panel
@@ -346,7 +666,8 @@
     <!-- 玩家信息 -->
     <view class="note-player-row">
       <view class="note-avatar-ring" style="{{noteModal.ringStyle}}">
-        <text class="note-avatar-seat">{{noteModal.seat}}</text>
+        <image wx:if="{{noteModal.avatarImage}}" class="note-avatar-img" src="{{noteModal.avatarImage}}" mode="aspectFill" />
+        <text wx:else class="note-avatar-seat">{{noteModal.avatarText}}</text>
       </view>
       <view class="note-player-info">
         <text class="note-player-name">{{noteModal.name}}</text>
@@ -404,7 +725,7 @@
 </view>
 
 <view class="mp-overlay" wx:if="{{showMissionProgress}}" bindtap="onCloseMissionProgress">
-  <view class="mp-card">
+  <view class="mp-overlay-card">
     <text class="mp-round-label">第 {{missionProgressRound}} 轮任务</text>
     <text class="mp-heading">出  征  中</text>
     <text class="mp-hint-text">队员正在秘密提交任务结果</text>
@@ -422,6 +743,191 @@
     <text class="mp-status-text">{{missionVotedCount}} / {{missionProgressTeam.length}} 已提交</text>
   </view>
   <text class="mp-close-hint">点击任意处关闭</text>
+</view>
+
+<view class="settings-mask" wx:if="{{showRoomSettings}}" bindtap="onCloseRoomSettings">
+  <view class="settings-sheet" catchtap="onNoop">
+    <view class="note-sheet-accent"></view>
+    <view class="note-drag-handle"></view>
+    <view class="settings-head">
+      <text class="settings-title">修改当前配置</text>
+      <text class="settings-close" bindtap="onCloseRoomSettings">✕</text>
+    </view>
+    <scroll-view class="settings-scroll" scroll-y>
+      <view class="count-options-row settings-count-row">
+        <view
+          class="cf cf-sm {{maxPlayersIndex===index ? 'cf-bright' : 'cf-subtle'}}"
+          wx:for="{{maxPlayersOptions}}"
+          wx:key="*this"
+          data-idx="{{index}}"
+          bindtap="onSelectMaxPlayers"
+        >
+          <view class="count-option cf-in-sm {{maxPlayersIndex===index ? 'count-option-on' : ''}}">{{item}}</view>
+        </view>
+      </view>
+
+      <view class="preset-row" wx:if="{{rolePresets.length > 1}}">
+        <view
+          class="cf cf-sm preset-opt-wrap {{selectedPresetIndex===index ? 'cf-bright' : 'cf-subtle'}}"
+          wx:for="{{rolePresets}}" wx:key="name"
+          data-idx="{{index}}" bindtap="onSelectPreset">
+          <view class="preset-opt cf-in-sm {{selectedPresetIndex===index ? 'preset-opt-on' : ''}}">{{item.name}}</view>
+        </view>
+      </view>
+
+      <view class="cfg-section-hdr">
+        <view class="cfg-section-line"></view>
+        <text class="cfg-section-deco">◆</text>
+        <text class="cfg-section-title">阵容配置</text>
+        <text class="cfg-section-deco">◆</text>
+        <view class="cfg-section-line"></view>
+      </view>
+
+      <view class="faction-area">
+        <view class="faction-frame faction-frame-good">
+          <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+          <view class="fb fb-left"></view><view class="fb fb-right"></view>
+          <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+          <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+          <view class="faction-group faction-group-good">
+            <view class="faction-hdr faction-hdr-good">
+              <image class="faction-hdr-icon-img" src="https://www.awalon.top/mp-assets/icons/faction-good.svg" mode="aspectFit" />
+              <text class="faction-hdr-title">正义阵营</text>
+              <text class="faction-hdr-count {{goodChipCount===neededGood ? 'faction-hdr-count-ok' : ''}}">{{goodChipCount}}/{{neededGood}}</text>
+            </view>
+            <view class="faction-chips-row">
+              <block wx:for="{{currentRoleChips}}" wx:key="role">
+                <view wx:if="{{!item.isEvil}}" class="role-chip-sm role-chip-sm-good {{hostRole===item.role ? 'role-chip-sm-selected' : ''}}"
+                  data-role="{{item.role}}" bindtap="onPickRoleChip">
+                  <image class="role-chip-sm-img" src="{{item.image}}" mode="aspectFill" />
+                  <text class="role-chip-tip" wx:if="{{item.roleBadgeText}}">{{item.roleBadgeText}}</text>
+                  <text class="role-chip-sm-name">{{item.role}}</text>
+                  <text class="role-chip-sm-cnt" wx:if="{{item.count > 1}}">×{{item.count}}</text>
+                </view>
+              </block>
+            </view>
+          </view>
+        </view>
+        <view class="faction-frame faction-frame-evil">
+          <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+          <view class="fb fb-left"></view><view class="fb fb-right"></view>
+          <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+          <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+          <view class="faction-group faction-group-evil">
+            <view class="faction-hdr faction-hdr-evil">
+              <image class="faction-hdr-icon-img" src="https://www.awalon.top/mp-assets/icons/faction-evil.svg" mode="aspectFit" />
+              <text class="faction-hdr-title">邪恶阵营</text>
+              <text class="faction-hdr-count {{evilChipCount===neededEvil ? 'faction-hdr-count-ok' : ''}}">{{evilChipCount}}/{{neededEvil}}</text>
+            </view>
+            <view class="faction-chips-row">
+              <block wx:for="{{currentRoleChips}}" wx:key="role">
+                <view wx:if="{{item.isEvil}}" class="role-chip-sm role-chip-sm-evil {{hostRole===item.role ? 'role-chip-sm-selected' : ''}}"
+                  data-role="{{item.role}}" bindtap="onPickRoleChip">
+                  <image class="role-chip-sm-img" src="{{item.image}}" mode="aspectFill" />
+                  <text class="role-chip-tip" wx:if="{{item.roleBadgeText}}">{{item.roleBadgeText}}</text>
+                  <text class="role-chip-sm-name">{{item.role}}</text>
+                  <text class="role-chip-sm-cnt" wx:if="{{item.count > 1}}">×{{item.count}}</text>
+                </view>
+              </block>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="rules-list">
+        <view class="rule-row">
+          <view class="rule-row-left"><image class="rule-icon" src="https://www.awalon.top/mp-assets/icons/rule-lady.svg" mode="aspectFit" /><text class="rule-name">湖中仙女</text></view>
+          <view class="rule-opts"><view class="rule-opt {{!ladyOfLakeEnabled ? 'rule-opt-on' : ''}}" data-enabled="0" bindtap="onToggleLadyDirect">关闭</view><view class="rule-opt {{ladyOfLakeEnabled ? 'rule-opt-on' : ''}}" data-enabled="1" bindtap="onToggleLadyDirect">开启</view></view>
+        </view>
+        <view class="rule-row">
+          <view class="rule-row-left"><image class="rule-icon" src="https://www.awalon.top/mp-assets/icons/rule-force.svg" mode="aspectFit" /><text class="rule-name">强制失败</text></view>
+          <view class="rule-opts"><view class="rule-opt {{forceRoundMode==='fixed5' ? 'rule-opt-on' : ''}}" data-value="fixed5" bindtap="onPickForceRoundDirect">第5次</view><view class="rule-opt {{forceRoundMode==='evil_plus_one' ? 'rule-opt-on' : ''}}" data-value="evil_plus_one" bindtap="onPickForceRoundDirect">邪恶+1</view></view>
+        </view>
+        <view class="rule-row">
+          <view class="rule-row-left"><image class="rule-icon" src="https://www.awalon.top/mp-assets/icons/rule-evil.svg" mode="aspectFit" /><text class="rule-name">邪恶互认</text></view>
+          <view class="rule-opts"><view class="rule-opt {{!evilRoleVisibleEnabled ? 'rule-opt-on' : ''}}" data-value="false" bindtap="onPickEvilVisibleDirect">隐藏</view><view class="rule-opt {{evilRoleVisibleEnabled ? 'rule-opt-on' : ''}}" data-value="true" bindtap="onPickEvilVisibleDirect">显示</view></view>
+        </view>
+        <view class="rule-row">
+          <view class="rule-row-left"><image class="rule-icon" src="https://www.awalon.top/mp-assets/icons/rule-timer.svg" mode="aspectFit" /><text class="rule-name">发言时长</text></view>
+          <view class="rule-opts"><view class="rule-opt {{speakingSeconds===60 ? 'rule-opt-on' : ''}}" data-value="60" bindtap="onPickSpeakingSecondsDirect">60s</view><view class="rule-opt {{speakingSeconds===90 ? 'rule-opt-on' : ''}}" data-value="90" bindtap="onPickSpeakingSecondsDirect">90s</view><view class="rule-opt {{speakingSeconds===120 ? 'rule-opt-on' : ''}}" data-value="120" bindtap="onPickSpeakingSecondsDirect">120s</view><view class="rule-opt {{speakingSeconds===180 ? 'rule-opt-on' : ''}}" data-value="180" bindtap="onPickSpeakingSecondsDirect">180s</view></view>
+        </view>
+        <view class="rule-row">
+          <view class="rule-row-left"><image class="rule-icon" src="https://www.awalon.top/mp-assets/icons/rule-voice.svg" mode="aspectFit" /><text class="rule-name">AI语音</text></view>
+          <view class="rule-opts"><view class="rule-opt {{!aiVoiceEnabled ? 'rule-opt-on' : ''}}" data-enabled="0" bindtap="onToggleAiVoiceDirect">关闭</view><view class="rule-opt {{aiVoiceEnabled ? 'rule-opt-on' : ''}}" data-enabled="1" bindtap="onToggleAiVoiceDirect">开启</view></view>
+        </view>
+      </view>
+    </scroll-view>
+    <view class="settings-actions">
+      <view class="btn-frame settings-btn-frame" bindtap="onApplyRoomSettings">
+        <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+        <view class="fb fb-left"></view><view class="fb fb-right"></view>
+        <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+        <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+        <view class="settings-btn-new settings-btn-save">保存配置</view>
+      </view>
+      <view class="btn-frame btn-frame-ghost settings-btn-frame" bindtap="onCloseRoomSettings">
+        <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+        <view class="fb fb-left"></view><view class="fb fb-right"></view>
+        <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+        <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+        <view class="settings-btn-new settings-btn-cancel">取消</view>
+      </view>
+    </view>
+  </view>
+</view>
+
+<view class="config-help-mask" wx:if="{{showConfigHelp}}" bindtap="onCloseConfigHelp">
+  <view class="config-help-sheet" catchtap="onNoop">
+    <view class="note-sheet-accent"></view>
+    <view class="config-help-head">
+      <text class="config-help-title">本局游戏配置</text>
+      <text class="config-help-close" bindtap="onCloseConfigHelp">✕</text>
+    </view>
+    <view class="config-help-scroll">
+      <view class="config-help-summary">
+        <text class="config-help-summary-title">{{room.maxPlayers || selectedRoles.length}}人局 · {{roomRoleCards.length}}种角色</text>
+        <text class="config-help-summary-text">先看本局规则，再看角色信息。只要记住：正义要完成任务，邪恶要让任务失败，刺客最后还可能翻盘。</text>
+      </view>
+      <view class="config-help-section" wx:if="{{roomConfigHelpLines.length}}">
+        <text class="config-help-section-title">配置说明</text>
+        <view class="config-help-config" wx:for="{{roomConfigHelpLines}}" wx:key="label">
+          <image class="config-help-config-icon" src="{{item.icon}}" mode="aspectFit" />
+          <text class="config-help-config-label">{{item.label}}</text>
+          <text class="config-help-config-text">{{item.text}}</text>
+        </view>
+      </view>
+      <view class="config-help-section" wx:if="{{roomRoleCards.length}}">
+        <text class="config-help-section-title">本局角色</text>
+        <view class="config-help-role-grid">
+          <view class="config-help-role-chip {{item.isEvil ? 'config-help-role-evil' : 'config-help-role-good'}} {{item.isHostRole ? 'config-help-role-host' : ''}}" wx:for="{{roomRoleCards}}" wx:key="role" data-role="{{item.role}}" bindtap="onTapConfigRole">
+            <image class="config-help-role-img" src="{{item.image}}" mode="aspectFill" />
+            <text class="config-help-role-name">{{item.role}}</text>
+            <text class="config-help-role-count" wx:if="{{item.count > 1}}">×{{item.count}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>
+
+<view class="role-guide-mask" wx:if="{{roleGuideModal && roleGuideModal.show}}" bindtap="onCloseRoleGuide">
+  <view class="role-guide-sheet" catchtap="onNoop">
+    <view class="note-sheet-accent"></view>
+    <view class="role-guide-head">
+      <image class="role-guide-img {{roleGuideModal.isEvil ? 'role-guide-img-evil' : 'role-guide-img-good'}}" src="{{roleGuideModal.image}}" mode="aspectFill" />
+      <view class="role-guide-title-wrap">
+        <text class="role-guide-title">{{roleGuideModal.role}}</text>
+        <text class="role-guide-sub">{{roleGuideModal.faction}}</text>
+      </view>
+      <text class="role-guide-close" bindtap="onCloseRoleGuide">✕</text>
+    </view>
+    <view class="role-guide-cards">
+      <view class="role-guide-card" wx:for="{{roleGuideModal.cards}}" wx:key="title">
+        <text class="role-guide-card-title">{{item.title}}</text>
+        <text class="role-guide-card-text">{{item.text}}</text>
+      </view>
+    </view>
+  </view>
 </view>
 
 <view class="mission-overlay {{missionAnimClass}}" wx:if="{{showMissionAnim}}" bindtap="onCloseMissionAnim">
@@ -524,6 +1030,51 @@
       <view class="hint-dismiss-btn" bindtap="onDismissHint">
         <text class="hint-dismiss-text">知道了</text>
       </view>
+    </view>
+  </view>
+</view>
+
+<view class="identity-reveal-mask" wx:if="{{identityRevealVisible}}" bindtap="onTapIdentityReveal">
+  <view class="identity-reveal-stage">
+    <view class="identity-card-stage" catchtap="onTapIdentityReveal">
+      <view class="identity-card-shell {{identityRevealPhase === 'revealed' ? 'identity-card-shell-revealed' : 'identity-card-shell-flip'}}">
+        <view class="identity-card-face identity-card-back">
+          <view class="identity-card-corner identity-card-corner-tl">
+            <text class="identity-card-corner-num">◆</text>
+            <text class="identity-card-corner-suit">身份</text>
+          </view>
+          <view class="identity-card-corner identity-card-corner-br">
+            <text class="identity-card-corner-num">◆</text>
+            <text class="identity-card-corner-suit">身份</text>
+          </view>
+          <view class="identity-card-back-emblem">
+            <image class="identity-card-back-icon" src="https://www.awalon.top/mp-assets/icons/nav-rules.svg" mode="aspectFit" />
+          </view>
+          <text class="identity-card-back-title">身份卡</text>
+          <text class="identity-card-back-sub">{{roleInfoLoading && !roleInfo ? '正在获取身份' : '点击翻牌'}}</text>
+        </view>
+        <view class="identity-card-face identity-card-front {{(roleFactionText || (isAssassin ? '邪恶阵营' : '正义阵营')) === '邪恶阵营' ? 'identity-card-front-evil' : 'identity-card-front-good'}}">
+          <view class="identity-card-corner identity-card-corner-tl">
+            <text class="identity-card-corner-num">◆</text>
+            <text class="identity-card-corner-suit">{{isAssassin ? '邪恶' : '正义'}}</text>
+          </view>
+          <view class="identity-card-corner identity-card-corner-br">
+            <text class="identity-card-corner-num">◆</text>
+            <text class="identity-card-corner-suit">{{isAssassin ? '邪恶' : '正义'}}</text>
+          </view>
+          <view class="identity-card-portrait-wrap">
+            <image wx:if="{{roleInfoImage}}" class="identity-card-portrait" src="{{roleInfoImage}}" mode="aspectFill" />
+            <view wx:else class="identity-card-portrait identity-card-portrait-fallback">
+              <text class="identity-card-portrait-text">{{myRole || '未知'}}</text>
+            </view>
+          </view>
+          <view class="identity-card-copy">
+            <text class="identity-card-role">{{myRole || (roleInfo && roleInfo.role) || '未知身份'}}</text>
+            <text class="identity-card-faction">{{roleFactionText || (isAssassin ? '邪恶阵营' : '正义阵营')}}</text>
+          </view>
+        </view>
+      </view>
+      <text class="identity-card-tip">{{roleInfoLoading && !roleInfo ? '请稍候，身份获取后才能翻牌' : (identityRevealPhase === 'revealed' ? '点击任意处回到圆桌' : '点击卡牌翻开身份')}}</text>
     </view>
   </view>
 </view>

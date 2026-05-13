@@ -113,9 +113,13 @@ function fetchJson(url) {
   return new Promise((resolve, reject) => {
     const proto = url.startsWith('https') ? https : http;
     proto.get(url, res => {
-      let data = '';
-      res.on('data', d => data += d);
-      res.on('end', () => { try { resolve(JSON.parse(data)); } catch(e) { reject(e); } });
+      const chunks = [];
+      res.on('data', d => chunks.push(d));
+      res.on('end', () => {
+        const data = Buffer.concat(chunks).toString('utf8');
+        try { resolve(JSON.parse(data)); }
+        catch(e) { reject(new Error(`中继响应非JSON(${res.statusCode}): ${data.slice(0,80)}`)); }
+      });
     }).on('error', reject);
   });
 }
@@ -127,9 +131,13 @@ function postJson(url, payload) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) },
     }, res => {
-      let data = '';
-      res.on('data', d => data += d);
-      res.on('end', () => { try { resolve(JSON.parse(data)); } catch(e) { reject(e); } });
+      const chunks = [];
+      res.on('data', d => chunks.push(d));
+      res.on('end', () => {
+        const data = Buffer.concat(chunks).toString('utf8');
+        try { resolve(JSON.parse(data)); }
+        catch(e) { reject(new Error(`中继响应非JSON(${res.statusCode}): ${data.slice(0,80)}`)); }
+      });
     });
     req.on('error', reject);
     req.write(body); req.end();
@@ -156,7 +164,27 @@ function runClaude(prompt, extraArgs = []) {
   return (result.stdout || '').trim();
 }
 
-// 从 claude 输出中提取并修复 JSON（处理代码块、未转义引号等）
+// 逐字符扫描，将 JSON 字符串值中的裸换行/回车转义（避免 JSON.parse 报 position error）
+function fixBareControlChars(jsonStr) {
+  let out = '';
+  let inStr = false;
+  let escaped = false;
+  for (let i = 0; i < jsonStr.length; i++) {
+    const ch = jsonStr[i];
+    if (escaped) { out += ch; escaped = false; continue; }
+    if (ch === '\\' && inStr) { out += ch; escaped = true; continue; }
+    if (ch === '"') { out += ch; inStr = !inStr; continue; }
+    if (inStr) {
+      if (ch === '\n') { out += '\\n'; continue; }
+      if (ch === '\r') { out += '\\r'; continue; }
+      if (ch === '\t') { out += '\\t'; continue; }
+    }
+    out += ch;
+  }
+  return out;
+}
+
+// 从 claude 输出中提取并修复 JSON（处理代码块、裸换行、未转义引号等）
 function extractJSON(output, requiredKey) {
   // 去掉 markdown 代码块
   let text = output.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
@@ -170,13 +198,15 @@ function extractJSON(output, requiredKey) {
   // 先尝试直接解析
   try { return JSON.parse(jsonStr); } catch(_) {}
 
-  // 修复字符串值中的未转义双引号：
-  // 策略：在 JSON 字符串值内，把 " 替换为 \"（排除 key 和结构符号）
+  // 修复字符串值内的裸控制字符（换行/回车/制表符）
+  jsonStr = fixBareControlChars(jsonStr);
+  try { return JSON.parse(jsonStr); } catch(_) {}
+
+  // 修复字符串值中的未转义双引号
   jsonStr = jsonStr.replace(
     /("(?:batchSummary|summary|issue|improvedPrompt|reasoning)"\s*:\s*")([\s\S]*?)("(?:\s*[,}\]]))/g,
     (_, key, val, end) => key + val.replace(/(?<!\\)"/g, '\\"') + end
   );
-
   try { return JSON.parse(jsonStr); } catch(_) {}
 
   // 最后尝试：把所有字符串值中的裸引号替换掉

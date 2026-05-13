@@ -150,8 +150,7 @@ set -euo pipefail
 cd '${REMOTE_DIR}'
 npm install --omit=dev --no-fund --no-audit
 npx expo export --platform web
-mkdir -p dist/mp-assets
-rsync -a --delete assets/ dist/mp-assets/
+node scripts/build-mp-assets.js
 if ! command -v pm2 >/dev/null 2>&1; then npm install -g pm2; fi
 if ! command -v serve >/dev/null 2>&1; then npm install -g serve; fi
 if pm2 describe '${PM2_NAME}' >/dev/null 2>&1; then

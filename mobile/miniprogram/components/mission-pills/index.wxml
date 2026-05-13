@@ -1,0 +1,80 @@
+<view>
+  <view class="mp-wrap {{embedded ? 'mp-embedded' : 'pf'}}">
+    <block wx:if="{{!embedded}}">
+      <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+      <view class="fb fb-left"></view><view class="fb fb-right"></view>
+      <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+      <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+      <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+      <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+    </block>
+
+    <!-- 标题 + 问号 -->
+    <view class="mp-title-row">
+      <view class="mp-title-line"></view>
+      <text class="mp-title-deco">◆</text>
+      <text class="mp-title">任务进度</text>
+      <view class="help-btn" bindtouchstart="onLegendShow" bindtouchend="onLegendHide">
+        <text class="help-btn-q">?</text>
+      </view>
+      <text class="mp-title-deco">◆</text>
+      <view class="mp-title-line"></view>
+    </view>
+
+    <!-- 五张卡片 -->
+    <view class="mp-row">
+      <view class="mp-card mp-card-{{item.isPast && item.success ? 'success' : item.isPast && !item.success ? 'fail' : item.isCurrent ? 'current' : 'future'}}"
+        wx:for="{{pills}}" wx:key="round">
+
+        <text class="mp-round-lbl">第{{item.round}}轮</text>
+
+        <view wx:if="{{item.isPast && item.success}}" class="mp-icon-wrap mp-icon-success">
+          <image class="mp-icon-img" src="https://www.awalon.top/mp-assets/icons/mission-success.svg" mode="aspectFit"/>
+        </view>
+        <view wx:elif="{{item.isPast && !item.success}}" class="mp-icon-wrap mp-icon-fail">
+          <image class="mp-icon-img" src="https://www.awalon.top/mp-assets/icons/mission-fail.svg" mode="aspectFit"/>
+        </view>
+        <view wx:elif="{{item.isCurrent}}" class="mp-icon-wrap mp-icon-current">
+          <image class="mp-icon-img" src="https://www.awalon.top/mp-assets/icons/mission-current.svg" mode="aspectFit"/>
+        </view>
+        <view wx:else class="mp-icon-wrap mp-icon-future">
+          <image class="mp-icon-img" src="https://www.awalon.top/mp-assets/icons/mission-future.svg" mode="aspectFit"/>
+        </view>
+
+        <view class="mp-size-row">
+          <text class="mp-size-lbl">{{item.size}}人</text>
+          <view wx:if="{{item.isProtected}}" class="mp-badge">双票</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 说明浮层：在 pf 之外，position:fixed 不受 backdrop-filter 影响 -->
+  <view class="help-popup {{showLegend ? 'help-popup-show' : ''}}">
+    <text class="mp-legend-title">任务进度说明</text>
+    <view class="mp-legend-item">
+      <view class="mp-legend-dot mp-dot-current"></view>
+      <text class="mp-legend-text">当前轮：金色高亮，显示出征队伍人数</text>
+    </view>
+    <view class="mp-legend-item">
+      <view class="mp-legend-dot mp-dot-success"></view>
+      <text class="mp-legend-text">蓝色：任务成功</text>
+    </view>
+    <view class="mp-legend-item">
+      <view class="mp-legend-dot mp-dot-fail"></view>
+      <text class="mp-legend-text">红色：任务失败</text>
+    </view>
+    <view class="mp-legend-item">
+      <view class="mp-legend-dot mp-dot-future"></view>
+      <text class="mp-legend-text">灰色：尚未进行的轮次</text>
+    </view>
+    <view class="mp-legend-divider"></view>
+    <view class="mp-legend-item">
+      <text class="mp-badge mp-legend-badge">双票</text>
+      <text class="mp-legend-text">需2票失败才算任务失败</text>
+    </view>
+    <view class="mp-legend-item">
+      <text class="mp-legend-text mp-legend-muted">正义先赢3轮获胜，邪恶先败3轮获胜</text>
+    </view>
+  </view>
+</view>

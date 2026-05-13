@@ -1,5 +1,10 @@
 App({
   onLaunch() {
+    const env = this.globalData.env || 'prod';
+    const cfg = this.globalData.envConfig[env] || this.globalData.envConfig.prod;
+    this.globalData.wsUrl = cfg.wsUrl;
+    this.globalData.apiBase = cfg.apiBase;
+
     let statusBarHeight = 20;
     let navBarHeight = 44;
     try {
@@ -61,21 +66,24 @@ App({
     });
   },
   globalData: {
-    wsUrl: "wss://www.awalon.top/ws",
-    apiBase: "https://www.awalon.top",
+    env: "prod",
+    envConfig: {
+      dev: {
+        wsUrl: "ws://127.0.0.1:8080/ws",
+        apiBase: "http://127.0.0.1:8080",
+      },
+      prod: {
+        wsUrl: "wss://www.awalon.top/ws",
+        apiBase: "https://www.awalon.top",
+      },
+    },
+    wsUrl: "",
+    apiBase: "",
     roleConfig: {},
     nav: {
       statusBarHeight: 20,
       navBarHeight: 44,
       navTotalHeight: 64
-    },
-    theme: {
-      bg: "#0f1115",
-      panel: "rgba(19,23,31,0.82)",
-      border: "rgba(255,255,255,0.1)",
-      text: "#eef1f7",
-      subText: "#aeb6c7",
-      accent: "#d9b36b"
     },
     skinId: 'dark-gold',
     skinChangeListener: null,

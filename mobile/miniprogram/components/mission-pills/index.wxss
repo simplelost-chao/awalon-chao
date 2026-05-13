@@ -1,57 +1,184 @@
-.mc-row {
-  display: flex;
-  gap: 8rpx;
+/* mp-wrap 覆盖 pf 的 margin/padding，贴合内容 */
+.mp-wrap {
   margin-top: 16rpx;
+  padding: 16rpx 16rpx 18rpx;
 }
-.mc-card {
+.mp-embedded {
+  margin-top: 0;
+  padding: 20rpx 20rpx 4rpx;
+}
+
+/* ── 标题 ── */
+.mp-title-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+.mp-title-line {
   flex: 1;
-  min-height: 110rpx;
-  border-radius: 16rpx;
-  border: 1rpx solid var(--aw-panel-border);
-  background: rgba(0,0,0,0.22);
+  height: 1rpx;
+  background: linear-gradient(to right, transparent, rgba(200,134,10,0.45), transparent);
+}
+.mp-title-deco {
+  color: #c8860a;
+  font-size: 16rpx;
+  margin: 0 8rpx;
+}
+.mp-title {
+  color: #f0d98a;
+  font-size: 26rpx;
+  font-weight: 700;
+  letter-spacing: 4rpx;
+  margin: 0 4rpx;
+}
+
+/* ── 卡片行 ── */
+.mp-row {
+  display: flex;
+  flex-direction: row;
+  gap: 10rpx;
+}
+
+.mp-card {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 12rpx 6rpx;
-  gap: 4rpx;
+  gap: 6rpx;
+  padding: 12rpx 4rpx 14rpx;
+  border-radius: 12rpx;
+  border: 1.5rpx solid rgba(255,255,255,0.1);
+  background: rgba(0,0,0,0.25);
 }
-.mc-past.mc-success {
-  background: rgba(60,160,100,0.18);
-  border-color: rgba(100,220,150,0.55);
+
+/* 状态颜色 */
+.mp-card-success {
+  border-color: rgba(80,160,240,0.6);
+  background: rgba(15,40,90,0.55);
 }
-.mc-past.mc-fail {
-  background: rgba(160,40,40,0.18);
-  border-color: rgba(230,90,90,0.55);
+.mp-card-fail {
+  border-color: rgba(220,70,70,0.6);
+  background: rgba(80,15,15,0.5);
 }
-.mc-current {
-  background: rgba(190,145,60,0.18);
-  border-color: rgba(220,180,90,0.7);
-  box-shadow: 0 0 0 2rpx rgba(220,180,90,0.15) inset;
+.mp-card-current {
+  border-color: rgba(240,200,60,0.75);
+  background: rgba(80,55,5,0.55);
+  box-shadow: 0 0 12rpx rgba(220,170,30,0.2);
 }
-.mc-future {
-  opacity: 0.6;
+.mp-card-future {
+  border-color: rgba(255,255,255,0.1);
+  background: rgba(0,0,0,0.18);
+  opacity: 0.65;
 }
-.mc-result-icon {
-  font-size: 36rpx;
-  font-weight: bold;
-  line-height: 1;
+
+/* ── 轮次标签 ── */
+.mp-round-lbl {
+  font-size: 20rpx;
+  font-weight: 700;
+  color: rgba(240,220,170,0.85);
+  letter-spacing: 1rpx;
 }
-.mc-past.mc-success .mc-result-icon { color: #72e0a0; }
-.mc-past.mc-fail    .mc-result-icon { color: #f07070; }
-.mc-round-num  { font-size: 20rpx; color: var(--aw-subtext); margin-top: 2rpx; }
-.mc-size-dim   { font-size: 18rpx; color: var(--aw-subtext); }
-.mc-cur-label  { font-size: 20rpx; color: var(--aw-accent); font-weight: 600; }
-.mc-cur-size   { font-size: 40rpx; font-weight: bold; color: #f0e0a0; line-height: 1.1; }
-.mc-cur-unit   { font-size: 20rpx; color: var(--aw-accent); }
-.mc-future-round { font-size: 20rpx; color: #8090aa; }
-.mc-future-size  { font-size: 26rpx; color: var(--aw-subtext); font-weight: 500; }
-.mc-protect-badge {
+.mp-card-future .mp-round-lbl { color: rgba(180,170,150,0.6); }
+
+/* ── 图标圆圈 ── */
+.mp-icon-wrap {
+  width: 68rpx;
+  height: 68rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mp-icon-img {
+  width: 44rpx;
+  height: 44rpx;
+}
+
+.mp-icon-success {
+  background: rgba(15,45,110,0.75);
+  border: 2rpx solid rgba(80,160,240,0.8);
+}
+.mp-icon-fail {
+  background: rgba(100,15,15,0.75);
+  border: 2rpx solid rgba(220,70,70,0.8);
+}
+.mp-icon-current {
+  background: rgba(80,55,5,0.75);
+  border: 2rpx solid rgba(240,200,60,0.85);
+}
+.mp-icon-future {
+  background: rgba(30,28,24,0.6);
+  border: 2rpx solid rgba(255,255,255,0.1);
+}
+
+/* ── 人数 ── */
+.mp-size-lbl {
+  font-size: 22rpx;
+  font-weight: 600;
+  color: rgba(230,210,160,0.9);
+}
+.mp-card-future .mp-size-lbl { color: rgba(160,150,130,0.6); }
+
+/* ── 人数行 ── */
+.mp-size-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6rpx;
+}
+
+/* ── 双票徽章 ── */
+.mp-badge {
   font-size: 18rpx;
-  color: #a0c8ff;
-  background: rgba(80,120,220,0.22);
+  color: #90c0ff;
+  background: rgba(60,100,220,0.22);
   border: 1rpx solid rgba(100,150,240,0.4);
   border-radius: 999rpx;
-  padding: 2rpx 8rpx;
-  margin-top: 4rpx;
+  padding: 2rpx 10rpx;
+  line-height: 1.4;
+}
+
+.mp-legend-title {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #f0d98a;
+  letter-spacing: 2rpx;
+  margin-bottom: 4rpx;
+}
+.mp-legend-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10rpx;
+}
+.mp-legend-dot {
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 4rpx;
+  flex-shrink: 0;
+}
+.mp-dot-current  { background: rgba(240,200,60,0.8); }
+.mp-dot-success  { background: rgba(80,160,240,0.8); }
+.mp-dot-fail     { background: rgba(220,70,70,0.8); }
+.mp-dot-future   { background: rgba(120,110,90,0.5); }
+.mp-legend-text {
+  font-size: 22rpx;
+  color: rgba(255,255,255,0.65);
+  line-height: 1.5;
+}
+.mp-legend-badge {
+  flex-shrink: 0;
+}
+.mp-legend-divider {
+  height: 1rpx;
+  background: rgba(200,134,10,0.2);
+  margin: 2rpx 0;
+}
+.mp-legend-rule {
+  align-items: flex-start;
+}
+.mp-legend-muted {
+  color: rgba(255,255,255,0.38);
+  font-size: 20rpx;
 }

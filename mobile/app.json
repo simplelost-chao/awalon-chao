@@ -1,37 +1,27 @@
 {
-  "expo": {
-    "name": "mobile",
-    "slug": "mobile",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
-    "ios": {
-      "supportsTablet": true
-    },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "edgeToEdgeEnabled": true
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
-    "extra": {
-      "eas": {
-        "projectId": "508f7de9-bebf-4d93-b139-20edc9ce4845"
-      }
-    },
-    "plugins": [
-      "expo-secure-store"
-    ]
-  }
+  "pages": [
+    "miniprogram/pages/index/index"
+  ],
+  "subPackages": [
+    {
+      "root": "miniprogram/subpkg",
+      "pages": [
+        "avatarcrop/index",
+        "rules/index/index",
+        "history/index/index",
+        "history-detail/index/index",
+        "role-stats/index/index"
+      ]
+    }
+  ],
+  "window": {
+    "navigationBarTitleText": "Awalon",
+    "navigationBarBackgroundColor": "#0f1115",
+    "navigationBarTextStyle": "white",
+    "navigationStyle": "custom",
+    "backgroundColor": "#0f1115",
+    "backgroundTextStyle": "light"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
 }

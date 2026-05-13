@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>仙女装饰 · 座位卡设计</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Noto+Serif+SC:wght@300;400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  min-height: 100vh;
+  background: #060910;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 32px 80px;
+  gap: 56px;
+  font-family: 'Noto Serif SC', serif;
+}
+
+/* starfield */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 15% 20%, rgba(255,255,255,.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 40% 65%, rgba(255,255,255,.3) 0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 60% 8%,  rgba(255,255,255,.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 80% 45%, rgba(255,255,255,.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 25% 80%, rgba(255,255,255,.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 88% 25%, rgba(255,255,255,.35) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+/* ─── Section labels ─── */
+.section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  width: 100%;
+  max-width: 900px;
+}
+.section-title {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: rgba(212,168,85,.45);
+  text-transform: uppercase;
+}
+.cards-row {
+  display: flex;
+  gap: 52px;
+  align-items: flex-start;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.card-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.card-label {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: rgba(150,180,220,.35);
+  text-transform: uppercase;
+  font-family: 'Cinzel', serif;
+}
+
+/* divider */
+.divider {
+  width: 200px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212,168,85,.2), transparent);
+}
+
+/* ═══════════════════════════════════════════
+   THE SEAT CARD  (matches miniprogram structure)
+   seat-card > seat-avatar-wrap > (seat-avatar + seat-fairy + seat-no)
+   ═══════════════════════════════════════════ */
+
+.seat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+/* avatar-wrap: fixed 84rpx → 56px in preview */
+.seat-avatar-wrap {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  overflow: visible; /* allows decorations to bleed out */
+}
+
+/* the avatar circle */
+.seat-avatar {
+  position: relative;
+  z-index: 2;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 11, 8, 0.55);
+  border: 1.5px solid rgba(255,255,255,.18);
+}
+
+/* role image inside */
+.seat-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+.seat-avatar .placeholder-icon {
+  font-size: 28px;
+  line-height: 1;
+}
+
+/* seat number */
+.seat-no {
+  position: absolute;
+  right: -6px;
+  bottom: -2px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #e6c17d;
+  background: rgba(10, 8, 20, 0.95);
+  border: 1px solid rgba(180,140,60,.42);
+  z-index: 5;
+  font-family: 'Cinzel', serif;
+}
+
+.seat-name {
+  font-size: 12px;
+  color: rgba(208,216,232,.8);
+  white-space: nowrap;
+}
+
+.seat-role-pill {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  color: #bfdbfe;
+  background: rgba(7,50,120,.55);
+  border: 1px solid rgba(78,158,255,.45);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.seat-role-pill img {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+}
+
+/* ── existing state styles ── */
+.seat-av-team {
+  border-color: rgba(100,220,140,.92) !important;
+  box-shadow: 0 0 18px rgba(80,200,120,.5), 0 0 0 3px rgba(80,200,120,.18) !important;
+  background: rgba(10,45,20,.88) !important;
+}
+.seat-av-me {
+  border-color: rgba(233,191,112,.95) !important;
+  box-shadow: 0 0 0 3px rgba(233,191,112,.22) !important;
+}
+.seat-av-kill {
+  border-color: rgba(239,80,80,.95) !important;
+  box-shadow: 0 0 18px rgba(220,50,50,.5), 0 0 0 3px rgba(220,50,50,.2) !important;
+  background: rgba(45,8,8,.9) !important;
+}
+.seat-av-assassinated {
+  opacity: .5;
+}
+
+/* faction glow (good/evil/merlin) */
+.seat-card.rev-good .seat-avatar {
+  border-color: rgba(78,158,255,.85);
+  box-shadow: 0 0 18px rgba(78,158,255,.45);
+  background: rgba(7,50,120,.35);
+}
+.seat-card.rev-evil .seat-avatar {
+  border-color: rgba(220,60,60,.8);
+  box-shadow: 0 0 16px rgba(200,40,40,.38);
+  background: rgba(35,6,6,.92);
+}
+
+
+/* ═══════════════════════════════════════════
+   FAIRY DECORATION  — positioned OUTSIDE avatar
+   sibling of .seat-avatar, inside .seat-avatar-wrap
+   z-index: 1 (below avatar z:2, above nothing)
+   ═══════════════════════════════════════════ */
+
+/* ── OPTION A: Butterfly Wings ── */
+.seat-fairy-wings {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* upper wing left */
+.seat-fairy-wings::before {
+  content: '';
+  position: absolute;
+  /* sits to the LEFT, slightly above center */
+  width: 22px;
+  height: 30px;
+  left: -18px;
+  top: 4px;
+  border-radius: 60% 40% 40% 60% / 55% 45% 55% 45%;
+  background: radial-gradient(
+    ellipse at 70% 40%,
+    rgba(91,240,216,.22) 0%,
+    rgba(123,159,255,.14) 50%,
+    transparent 80%
+  );
+  border: 1px solid rgba(91,240,216,.3);
+  box-shadow: 0 0 8px rgba(91,240,216,.12), inset 0 0 6px rgba(91,240,216,.08);
+  transform-origin: right center;
+  animation: wing-left 3.5s ease-in-out infinite;
+}
+
+/* lower wing left */
+.wing-lower-left {
+  position: absolute;
+  width: 16px;
+  height: 20px;
+  left: -14px;
+  top: 28px;
+  border-radius: 50% 40% 60% 40% / 40% 50% 50% 60%;
+  background: radial-gradient(
+    ellipse at 70% 30%,
+    rgba(123,159,255,.18) 0%,
+    rgba(192,132,252,.1) 60%,
+    transparent 85%
+  );
+  border: 1px solid rgba(123,159,255,.22);
+  transform-origin: right top;
+  animation: wing-left 3.5s ease-in-out infinite;
+  animation-delay: .15s;
+  pointer-events: none;
+}
+
+/* upper wing right */
+.seat-fairy-wings::after {
+  content: '';
+  position: absolute;
+  width: 22px;
+  height: 30px;
+  right: -18px;
+  top: 4px;
+  border-radius: 40% 60% 60% 40% / 45% 55% 45% 55%;
+  background: radial-gradient(
+    ellipse at 30% 40%,
+    rgba(91,240,216,.22) 0%,
+    rgba(123,159,255,.14) 50%,
+    transparent 80%
+  );
+  border: 1px solid rgba(91,240,216,.3);
+  box-shadow: 0 0 8px rgba(91,240,216,.12), inset 0 0 6px rgba(91,240,216,.08);
+  transform-origin: left center;
+  animation: wing-right 3.5s ease-in-out infinite;
+}
+
+/* lower wing right */
+.wing-lower-right {
+  position: absolute;
+  width: 16px;
+  height: 20px;
+  right: -14px;
+  top: 28px;
+  border-radius: 40% 50% 40% 60% / 50% 40% 60% 50%;
+  background: radial-gradient(
+    ellipse at 30% 30%,
+    rgba(123,159,255,.18) 0%,
+    rgba(192,132,252,.1) 60%,
+    transparent 85%
+  );
+  border: 1px solid rgba(123,159,255,.22);
+  transform-origin: left top;
+  animation: wing-right 3.5s ease-in-out infinite;
+  animation-delay: .15s;
+  pointer-events: none;
+}
+
+@keyframes wing-left {
+  0%, 100% { transform: scaleX(1)   skewY(0deg)  rotate(0deg);  opacity: .85; }
+  30%       { transform: scaleX(.55) skewY(4deg)  rotate(-3deg); opacity: .6;  }
+  60%       { transform: scaleX(.8)  skewY(-2deg) rotate(2deg);  opacity: .75; }
+}
+@keyframes wing-right {
+  0%, 100% { transform: scaleX(1)   skewY(0deg)  rotate(0deg);  opacity: .85; }
+  30%       { transform: scaleX(.55) skewY(-4deg) rotate(3deg);  opacity: .6;  }
+  60%       { transform: scaleX(.8)  skewY(2deg)  rotate(-2deg); opacity: .75; }
+}
+
+/* when team-selected: dim wings so green glow is dominant */
+.seat-fairy-wings.wings-dimmed::before,
+.seat-fairy-wings.wings-dimmed::after,
+.wings-dimmed ~ .wing-lower-left,
+.wings-dimmed ~ .wing-lower-right {
+  opacity: .35;
+  filter: saturate(.4);
+}
+
+/* when assassinated: wings fade out */
+.seat-av-assassinated ~ .seat-fairy-wings::before,
+.seat-av-assassinated ~ .seat-fairy-wings::after {
+  opacity: .15;
+}
+
+
+/* ── OPTION B: Petal Ring ── */
+.seat-petal-ring {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  animation: petal-orbit 12s linear infinite;
+}
+
+@keyframes petal-orbit {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.petal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform-origin: 0 0;
+}
+
+.petal::before {
+  content: '';
+  display: block;
+  width: 7px;
+  height: 11px;
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  background: radial-gradient(
+    ellipse at 50% 30%,
+    rgba(91,240,216,.55) 0%,
+    rgba(123,159,255,.3) 60%,
+    transparent 90%
+  );
+  border: .5px solid rgba(91,240,216,.4);
+  box-shadow: 0 0 4px rgba(91,240,216,.2);
+  /* counter-rotate to keep petals upright */
+  animation: petal-counter 12s linear infinite;
+}
+
+/* 6 petals evenly spaced, radius 34px from center */
+.petal:nth-child(1) { transform: rotate(0deg)   translateX(34px) translate(-50%, -50%); }
+.petal:nth-child(2) { transform: rotate(60deg)  translateX(34px) translate(-50%, -50%); }
+.petal:nth-child(3) { transform: rotate(120deg) translateX(34px) translate(-50%, -50%); }
+.petal:nth-child(4) { transform: rotate(180deg) translateX(34px) translate(-50%, -50%); }
+.petal:nth-child(5) { transform: rotate(240deg) translateX(34px) translate(-50%, -50%); }
+.petal:nth-child(6) { transform: rotate(300deg) translateX(34px) translate(-50%, -50%); }
+
+/* alternate petal color for shimmer variety */
+.petal:nth-child(2n)::before {
+  background: radial-gradient(ellipse at 50% 30%, rgba(192,132,252,.5) 0%, rgba(123,159,255,.2) 60%, transparent 90%);
+  border-color: rgba(192,132,252,.35);
+  box-shadow: 0 0 4px rgba(192,132,252,.2);
+}
+
+@keyframes petal-counter {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-360deg); }
+}
+
+/* petal pulse */
+.seat-petal-ring .petal::before {
+  animation: petal-counter 12s linear infinite, petal-pulse 2s ease-in-out infinite;
+}
+.petal:nth-child(2)::before { animation-delay: .33s, .33s; }
+.petal:nth-child(3)::before { animation-delay: .66s, .66s; }
+.petal:nth-child(4)::before { animation-delay: 1s, 1s; }
+.petal:nth-child(5)::before { animation-delay: 1.33s, 1.33s; }
+.petal:nth-child(6)::before { animation-delay: 1.66s, 1.66s; }
+
+@keyframes petal-pulse {
+  0%, 100% { opacity: .85; transform: rotate(0deg) scale(1); }
+  50%       { opacity: .45; transform: rotate(0deg) scale(.7); }
+}
+
+/* when team-selected: slow down and dim petals */
+.petal-ring-dimmed {
+  animation-duration: 22s;
+  opacity: .4;
+  filter: saturate(.3) brightness(.7);
+}
+
+
+/* ── OPTION C: Aura glow ring only ── */
+.seat-fairy-aura {
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  z-index: 0;
+  pointer-events: none;
+  background: transparent;
+  border: 1px solid transparent;
+  box-shadow:
+    0 0 0 1px rgba(91,240,216,.12),
+    0 0 12px rgba(91,240,216,.16),
+    0 0 24px rgba(91,240,216,.08);
+  animation: aura-breathe 3s ease-in-out infinite;
+}
+
+@keyframes aura-breathe {
+  0%, 100% { opacity: .6; transform: scale(1); }
+  50%       { opacity: 1;  transform: scale(1.06); }
+}
+
+/* ═══════════════════════════════════════════
+   CONFLICT NOTES — visual annotations
+   ═══════════════════════════════════════════ */
+.conflict-note {
+  margin-top: 4px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(255,200,80,.06);
+  border: 1px solid rgba(255,200,80,.15);
+  font-size: 9px;
+  color: rgba(255,200,80,.5);
+  letter-spacing: .5px;
+  max-width: 80px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.ok-note {
+  background: rgba(80,200,120,.06);
+  border-color: rgba(80,200,120,.15);
+  color: rgba(80,200,120,.5);
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ OPTION A: BUTTERFLY WINGS ═══════════════ -->
+<div class="section">
+  <div class="section-title">Option A — Butterfly Wings · 蝴蝶翅膀</div>
+
+  <div class="cards-row">
+
+    <!-- Normal -->
+    <div class="card-group">
+      <div class="card-label">普通</div>
+      <div class="seat-card rev-good">
+        <div class="seat-avatar-wrap">
+          <div class="seat-fairy-wings"></div>
+          <div class="wing-lower-left"></div>
+          <div class="wing-lower-right"></div>
+          <div class="seat-avatar">
+            <span class="placeholder-icon">🦋</span>
+          </div>
+          <div class="seat-no">4</div>
+        </div>
+        <div class="seat-name">帕西法尔</div>
+        <div class="seat-role-pill">帕西法尔</div>
+      </div>
+      <div class="conflict-note ok-note">✓ 无冲突</div>
+    </div>
+
+    <!-- Self (me) -->
+    <div class="card-group">
+      <div class="card-label">自己</div>
+      <div class="seat-card rev-good">
+        <div class="seat-avatar-wrap">
+          <div class="seat-fairy-wings"></div>
+          <div class="wing-lower-left"></div>
+          <div class="wing-lower-right"></div>
+          <div class="seat-avatar seat-av-me">
+            <span class="placeholder-icon">🦋</span>
+          </div>
+          <div class="seat-no">4</div>
+        </div>
+        <div class="seat-name">帕西法尔</div>
+        <div class="seat-role-pill">帕西法尔</div>
+      </div>
+      <div class="conflict-note ok-note">✓ 金边不冲突<br>翼在 z:1 不遮边</div>
+    </div>
+
+    <!-- In team -->
+    <div class="card-group">
+      <div class="card-label">队伍中</div>
+      <div class="seat-card rev-good">
+        <div class="seat-avatar-wrap">
+          <div class="seat-fairy-wings wings-dimmed"></div>
+          <div class="wing-lower-left"></div>
+          <div class="wing-lower-right"></div>
+          <div class="seat-avatar seat-av-team">
+            <span class="placeholder-icon">🦋</span>
+          </div>
+          <div class="seat-no">4</div>
+        </div>
+        <div class="seat-name seat-name-team" style="color:#6ee7a0;">帕西法尔</div>
+        <div class="seat-role-pill">帕西法尔</div>
+      </div>
+      <div class="conflict-note" style="color:rgba(255,200,80,.55);">翼变暗<br>绿光优先</div>
+    </div>
+
+    <!-- Self + in team -->
+    <div class="card-group">
+      <div class="card-label">自己+队伍</div>
+      <div class="seat-card rev-good">
+        <div class="seat-avatar-wrap">
+          <div class="seat-fairy-wings wings-dimmed"></div>
+          <div class="wing-lower-left"></div>
+          <div class="wing-lower-right"></div>
+          <div class="seat-avatar seat-av-team seat-av-me" style="border-color:rgba(100,220,140,.92) !important; box-shadow: 0 0 18px rgba(80,200,120,.5), 0 0 0 3px rgba(80,200,120,.18), 0 0 0 5px rgba(233,191,112,.18) !important;">
+            <span class="placeholder-icon">🦋</span>
+          </div>
+          <div class="seat-no">4</div>
+        </div>
+        <div class="seat-name" style="color:#6ee7a0;">帕西法尔</div>
+        <div class="seat-role-pill">帕西法尔</div>
+      </div>
+      <div class="conflict-note ok-note">✓ 可共存</div>
+    </div>
+
+    <!-- Assassinated -->
+    <div class="card-group">
+      <div class="card-label">被刺杀</div>
+      <div class="seat-card rev-good" style="opacity:.55;">
+        <div class="seat-avatar-wrap">
+          <div class="seat-fairy-wings" style="opacity:.2;animation:none;"></div>
+          <div class="wing-lower-left" style="opacity:.2;animation:none;"></div>
+          <div class="wing-lower-right" style="opacity:.2;animation:none;"></div>
+          <div class="seat-avatar seat-av-assassinated">
+            <span class="placeholder-icon">🦋</span>
+          </div>
+          <div class="seat-no">4</div>
+        </div>
+        <div class="seat-name">帕西法尔</div>
+        <div class="seat-role-pill">帕西法尔</div>
+      </div>
+      <div class="conflict-note ok-note">✓ 整体淡出</div>
+    </div>
+
+    <!-- Evil faction -->
+    <div class="card-group">
+      <div class="card-label">邪恶阵营</div>
+      <div class="seat-card rev-evil">
+        <div class="seat-avatar-wrap">
+          <!-- evil: no wing decoration, wings are a Good-only trait -->
+          <div class="seat-fairy-wings" style="display:none;"></div>
+          <div class="seat-avatar">
+            <span class="placeholder-icon">😈</span>
+          </div>
+          <div class="seat-no">7</div>
+        </div>
+        <div class="seat-name" style="color:rgba(255,175,175,.85);">莫德雷德</div>
+        <div class="seat-role-pill" style="background:rgba(110,12,12,.6);border-color:rgba(220,60,60,.4);color:#fca5a5;">莫德雷德</div>
+      </div>
+      <div class="conflict-note ok-note">✓ 不触发翼</div>
+    </div>
+
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ═══════════════ OPTION B: PETAL RING ═══════════════ -->
+<div class="section">
+  <div class="section-title">Option B — Petal Ring · 花瓣环</div>
+
+  <div class="cards-row">
+
+    <!-- Normal -->
+    <div class="card-group">
+      <div class="card-label">普通</div>
+      <div class="seat-card rev-good">
+        <div class="seat-avatar-wrap">
+          <div class="seat-petal-ring">
+            <div class="petal"></div>
+            <div class="petal"></div>
+            <div class="petal"></div>
+            <div class="petal"></div>
+            <div class="petal"></div>
+            <div class="petal"></div>
+          </div>
+          <div class="seat-avatar">
+            <span class="placeholder-icon">🦋</span>
+          </div>
+          <div class="seat-no">4</div>
+        </div>
+        <div class="seat-name">帕西法尔</div>
+        <div class="seat-role-pill">帕西法尔</div>
+      </div>
+      <div class="conflict-note ok-note">✓ 无冲突</div>
+    </div>
+
+    <!-- Self -->
+    <div class="card-group">
+      <div class="card-label">自己</div>
+      <div class="seat-card rev-good">
+        <div class="seat-avatar-wrap">
+          <div class="seat-petal-ring">
+            <div class="petal"></div><div class="petal"></div><div class="petal"></div>
+            <div class="petal"></div><div class="petal"></div><div class="petal"></div>
+          </div>
+          <div class="seat-avatar seat-av-me">
+            <span class="placeholder-icon">🦋</span>
+          </div>
+          <div class="seat-no">4</div>
+        </div>
+        <div class="seat-name">帕西法尔</div>
+        <div class="seat-role-pill">帕西法尔</div>
+      </div>
+      <div class="conflict-note ok-note">✓ 金边 + 花环</div>
+    </div>
+
+    <!-- In team -->
+    <div class="card-group">
+      <div class="card-label">队伍中</div>
+      <div class="seat-card rev-good">
+        <div class="seat-avatar-wrap">
+          <div class="seat-petal-ring petal-ring-dimmed">
+            <div class="petal"></div><div class="petal"></div><div class="petal"></div>
+            <div class="petal"></div><div class="petal"></div><div class="petal"></div>
+          </div>
+          <div class="seat-avatar seat-av-team">
+            <span class="placeholder-icon">🦋</span>
+          </div>
+          <div class="seat-no">4</div>
+        </div>
+        <div class="seat-name" style="color:#6ee7a0;">帕西法尔</div>
+        <div class="seat-role-pill">帕西法尔</div>
+      </div>
+      <div class="conflict-note" style="color:rgba(255,200,80,.55);">环变暗变慢<br>绿光优先</div>
+    </div>
+
+    <!-- Self + team -->
+    <div class="card-group">
+      <div class="card-label">自己+队伍</div>
+      <div class="seat-card rev-good">
+        <div class="seat-avatar-wrap">
+          <div class="seat-petal-ring petal-ring-dimmed">
+            <div class="petal"></div><div class="petal"></div><div class="petal"></div>
+            <div class="petal"></div><div class="petal"></div><div class="petal"></div>
+          </div>
+          <div class="seat-avatar seat-av-team" style="box-shadow: 0 0 18px rgba(80,200,120,.5), 0 0 0 3px rgba(80,200,120,.18), 0 0 0 5px rgba(233,191,112,.15) !important; border-color:rgba(100,220,140,.92) !important;">
+            <span class="placeholder-icon">🦋</span>
+          </div>
+          <div class="seat-no">4</div>
+        </div>
+        <div class="seat-name" style="color:#6ee7a0;">帕西法尔</div>
+        <div class="seat-role-pill">帕西法尔</div>
+      </div>
+      <div class="conflict-note ok-note">✓ 可共存</div>
+    </div>
+
+    <!-- Assassinated -->
+    <div class="card-group">
+      <div class="card-label">被刺杀</div>
+      <div class="seat-card rev-good">
+        <div class="seat-avatar-wrap">
+          <div class="seat-petal-ring" style="opacity:.1;animation:none;">
+            <div class="petal"></div><div class="petal"></div><div class="petal"></div>
+            <div class="petal"></div><div class="petal"></div><div class="petal"></div>
+          </div>
+          <div class="seat-avatar seat-av-assassinated">
+            <span class="placeholder-icon">🦋</span>
+          </div>
+          <div class="seat-no">4</div>
+        </div>
+        <div class="seat-name" style="opacity:.5;">帕西法尔</div>
+        <div class="seat-role-pill" style="opacity:.5;">帕西法尔</div>
+      </div>
+      <div class="conflict-note ok-note">✓ 花环停止</div>
+    </div>
+
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ═══════════════ SIZE COMPARISON ═══════════════ -->
+<div class="section">
+  <div class="section-title">实际大小对比 · Actual miniprogram scale (84rpx avatar)</div>
+  <div class="cards-row" style="align-items:center;gap:80px;">
+
+    <!-- preview scale -->
+    <div class="card-group">
+      <div class="card-label">预览尺寸 (56px)</div>
+      <div class="seat-card rev-good">
+        <div class="seat-avatar-wrap">
+          <div class="seat-fairy-wings"></div>
+          <div class="wing-lower-left"></div>
+          <div class="wing-lower-right"></div>
+          <div class="seat-avatar seat-av-me">
+            <span class="placeholder-icon">🦋</span>
+          </div>
+          <div class="seat-no">4</div>
+        </div>
+        <div class="seat-name">帕西法尔</div>
+        <div class="seat-role-pill">帕西法尔</div>
+      </div>
+    </div>
+
+    <!-- actual miniprogram scale: 84rpx ≈ 42px on 375px device -->
+    <div class="card-group">
+      <div class="card-label">小程序实际 (42px)</div>
+      <div class="seat-card rev-good" style="--s:42px;">
+        <div class="seat-avatar-wrap" style="width:42px;height:42px;">
+          <div class="seat-fairy-wings" style=""></div>
+          <div class="wing-lower-left" style="width:12px;height:15px;left:-11px;top:21px;"></div>
+          <div class="wing-lower-right" style="width:12px;height:15px;right:-11px;top:21px;"></div>
+          <div class="seat-avatar seat-av-me" style="width:42px;height:42px;">
+            <span class="placeholder-icon" style="font-size:20px;">🦋</span>
+          </div>
+          <div class="seat-no" style="font-size:9px;width:16px;height:16px;right:-5px;bottom:-2px;">4</div>
+        </div>
+        <div class="seat-name" style="font-size:10px;">帕西法尔</div>
+        <div class="seat-role-pill" style="font-size:9px;">帕西法尔</div>
+      </div>
+    </div>
+
+    <!-- petal at actual scale -->
+    <div class="card-group">
+      <div class="card-label">花环 小程序实际</div>
+      <div class="seat-card rev-good">
+        <div class="seat-avatar-wrap" style="width:42px;height:42px;">
+          <div class="seat-petal-ring" style="inset:0;">
+            <div class="petal" style="transform: rotate(0deg)   translateX(26px) translate(-50%,-50%);"></div>
+            <div class="petal" style="transform: rotate(60deg)  translateX(26px) translate(-50%,-50%);"></div>
+            <div class="petal" style="transform: rotate(120deg) translateX(26px) translate(-50%,-50%);"></div>
+            <div class="petal" style="transform: rotate(180deg) translateX(26px) translate(-50%,-50%);"></div>
+            <div class="petal" style="transform: rotate(240deg) translateX(26px) translate(-50%,-50%);"></div>
+            <div class="petal" style="transform: rotate(300deg) translateX(26px) translate(-50%,-50%);"></div>
+          </div>
+          <div class="seat-avatar seat-av-me" style="width:42px;height:42px;">
+            <span class="placeholder-icon" style="font-size:20px;">🦋</span>
+          </div>
+          <div class="seat-no" style="font-size:9px;width:16px;height:16px;right:-5px;bottom:-2px;">4</div>
+        </div>
+        <div class="seat-name" style="font-size:10px;">帕西法尔</div>
+        <div class="seat-role-pill" style="font-size:9px;">帕西法尔</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

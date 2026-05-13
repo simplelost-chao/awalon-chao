@@ -1,0 +1,38 @@
+<view class="chat-list">
+  <view class="speak-empty" wx:if="{{!messages.length}}">
+    <view class="speak-empty-icon-wrap">
+      <image class="speak-empty-icon-img" src="https://www.awalon.top/mp-assets/icons/speak-empty.svg" mode="aspectFit" />
+    </view>
+    <text class="speak-empty-text">本轮暂无发言</text>
+  </view>
+  <view
+    wx:for="{{messages}}"
+    wx:key="key"
+    class="chat-row {{item.mine ? 'chat-row-me' : ''}} {{item.system ? 'chat-row-system' : ''}}"
+  >
+    <!-- 系统消息 -->
+    <view wx:if="{{item.system}}" class="chat-bubble chat-bubble-system">
+      <text class="chat-text">{{item.text}}</text>
+    </view>
+
+    <!-- 普通发言 -->
+    <block wx:else>
+      <view class="chat-avatar-wrap">
+        <view class="chat-avatar-emoji {{item.mine ? 'mine-avatar' : ''}}">
+          <image wx:if="{{item.avatarImage}}" src="{{item.avatarImage}}" mode="aspectFill" style="width:100%;height:100%;border-radius:50%;" />
+          <text wx:else>{{item.avatarText || '🙂'}}</text>
+        </view>
+        <text class="chat-seat-num {{item.mine ? 'gold' : ''}}">{{item.seat}}号</text>
+      </view>
+      <view class="chat-content {{item.mine ? 'chat-content-me' : ''}}">
+        <view class="chat-header {{item.mine ? 'chat-header-me' : ''}}">
+          <text class="chat-name {{item.mine ? 'chat-name-mine' : ''}}">{{item.from}}</text>
+          <view wx:if="{{item.isAI}}" class="ai-badge"><text class="ai-badge-label">AI</text></view>
+        </view>
+        <view class="chat-bubble {{item.mine ? 'chat-bubble-me' : ''}}">
+          <text class="chat-text">{{item.text}}</text>
+        </view>
+      </view>
+    </block>
+  </view>
+</view>

@@ -1,0 +1,57 @@
+<view class="control-wrap">
+  <view class="role-action-header" wx:if="{{roomRoleCards.length}}">
+    <text class="section-title section-title-small">当前角色</text>
+    <view class="section-title-row-actions">
+      <view class="resend-role-btn" wx:if="{{isHost && roomStarted}}" bindtap="onRedealIdentities">重发身份</view>
+      <view class="resend-role-btn {{myAutoplay ? 'resend-role-btn-active' : ''}}"
+        wx:if="{{roomStarted && phase !== 'end' && phase !== 'lobby'}}"
+        bindtap="onToggleAutoplay">{{myAutoplay ? '取消托管' : '托管'}}</view>
+      <view class="assassin-target-chip" wx:if="{{myAutoplay && isAssassin && autoplayAssassinTarget}}">
+        🗡 {{autoplayAssassinTarget.seat}}号 · {{autoplayAssassinTarget.name}}
+      </view>
+    </view>
+  </view>
+  <view class="current-role-chips" wx:if="{{roomRoleCards.length}}">
+    <view class="role-chip {{item.roleClass === 'role-evil' ? 'role-chip-evil' : 'role-chip-good'}}"
+      wx:for="{{roomRoleCards}}" wx:key="role"
+      data-role="{{item.role}}" data-description="{{item.description}}"
+      bindtap="onTapRoleCard">
+      <image class="role-chip-img" wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFill" />
+      <view class="role-chip-label">
+        <text class="role-chip-name">{{item.role}}</text>
+        <text class="role-chip-count" wx:if="{{item.count > 1}}">×{{item.count}}</text>
+      </view>
+    </view>
+  </view>
+  <text class="section-title section-title-small section-chip">房间配置</text>
+  <view class="config-list" wx:if="{{roomConfigLines.length}}">
+    <view class="config-item" wx:for="{{roomConfigLines}}" wx:key="label">
+      <text class="config-label">{{item.label}}</text>
+      <text class="config-value">{{item.value}}</text>
+    </view>
+  </view>
+  <text class="section-title section-title-small section-chip">玩家列表</text>
+  <view class="player-list">
+    <view class="player-item-compact" wx:for="{{playerCards}}" wx:key="id">
+      <view class="player-item-compact-inner">
+        <view class="player-compact-main"
+          data-id="{{item.id}}" data-seat="{{item.seat}}"
+          bindtouchstart="onPlayerPressStart"
+          bindtouchend="onPlayerPressEnd"
+          bindtouchcancel="onPlayerPressEnd">
+          <text class="player-seat-badge {{item.spectator ? 'player-seat-badge-spectator' : ''}}">{{item.seatText}}</text>
+          <image class="player-avatar-img" wx:if="{{item.avatarImage}}" src="{{item.avatarImage}}" mode="aspectFill" />
+          <text class="player-avatar-fallback" wx:else>{{item.avatarText}}</text>
+          <text class="player-compact-name">{{item.nickname}}</text>
+        </view>
+        <text class="player-host-text" wx:if="{{item.isHost}}">房主</text>
+        <text class="player-kick-text" wx:if="{{isHost && !item.isMe}}"
+          data-id="{{item.id}}" data-name="{{item.nickname}}" catchtap="onKickPlayer">踢</text>
+        <view class="cheat-role-pill role-evil" wx:if="{{isHost && cheatRevealPlayerId===item.id && cheatRoles[item.id]}}">
+          <image class="role-pill-img" src="{{item.roleImage || 'https://www.awalon.top/mp-assets/icon.png'}}" mode="aspectFill" />
+          <text class="role-pill-text">底牌：{{cheatRoles[item.id]}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

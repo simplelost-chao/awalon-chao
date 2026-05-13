@@ -1,118 +1,269 @@
-.mission-table {
-  padding: 0 18rpx 16rpx;
+.mt-wrap {
+  margin-top: 16rpx;
+}
+.mt-embedded {
+  margin-top: 0;
+  padding: 4rpx 20rpx 20rpx;
 }
 
-/* 无 col-round 时：4列；有 col-round 时：5列 */
-.table-head,
-.table-row {
-  display: grid;
-  width: 100%;
-  grid-template-columns: 1fr 1.4fr 3fr 1.5fr;
-  gap: 8rpx;
-  align-items: center;
-  box-sizing: border-box;
-}
-
-.has-round .table-head,
-.has-round .table-row {
-  grid-template-columns: 1.1fr 1fr 1.4fr 3fr 1.5fr;
-}
-
-.table-head {
-  margin-top: 6rpx;
-  margin-bottom: 6rpx;
-}
-
-.table-head .col {
-  color: rgba(216, 176, 107, 0.8);
-  font-size: 26rpx;
-  font-weight: 700;
-  letter-spacing: 1rpx;
-  text-align: center;
-}
-
-.table-row {
-  min-height: 60rpx;
-  border-top: 1rpx solid var(--aw-input-bg);
-  padding-top: 12rpx;
-  padding-bottom: 12rpx;
-}
-
-.row-rejected {
-  opacity: 0.45;
-}
-
-.col {
-  font-size: 26rpx;
-  color: #b0bfd8;
-  overflow: hidden;
-  white-space: normal;
-  word-break: break-all;
-  line-height: 1.7;
-  text-align: center;
-}
-
-.col-round {
-  color: var(--aw-accent);
-  font-weight: 600;
-}
-
-.col-leader {
-  color: #e7cf95;
-  font-size: 26rpx;
-}
-
-.col-reject { color: #ff8f8f; }
-
-.vote-combo {
+/* ── 标题 ── */
+.mt-title-row {
   display: flex;
-  align-items: baseline;
-  justify-content: center;
-  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 16rpx;
   gap: 0;
 }
+.mt-title-line {
+  flex: 1;
+  height: 1rpx;
+  background: linear-gradient(to right, transparent, rgba(200,134,10,0.5), transparent);
+}
+.mt-title-deco {
+  color: #c8860a;
+  font-size: 18rpx;
+  margin: 0 8rpx;
+}
+.mt-title {
+  color: #f0d98a;
+  font-size: 28rpx;
+  font-weight: 700;
+  letter-spacing: 4rpx;
+  margin: 0 4rpx;
+}
 
-.vote-part { color: #6edea8; font-size: 26rpx; }
-.vote-sep { color: rgba(255, 255, 255, 0.3); }
-.vote-part.col-reject { color: #ff8f8f; }
+/* ── 表头 / 行 ── */
+.mt-head,
+.mt-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6rpx;
+}
+.mt-head {
+  padding-bottom: 8rpx;
+  border-bottom: 1rpx solid rgba(200,134,10,0.2);
+  margin-bottom: 2rpx;
+}
+.mt-row {
+  padding: 7rpx 0;
+  border-top: 1rpx solid rgba(228,194,129,0.08);
+}
+.mt-row-skipped {
+  opacity: 0.5;
+  background: rgba(0, 0, 0, 0.22);
+  border-radius: 6rpx;
+}
 
-.col-res-cell {
+.mt-hdr {
+  color: rgba(216,176,107,0.85);
+  font-size: 21rpx;
+  font-weight: 700;
+  text-align: center;
+}
+.mt-hdr-yes { color: #66d99b; }
+.mt-hdr-no { color: #ff8f8f; }
+.mt-hdr-sep {
+  color: rgba(216,176,107,0.48);
+  font-size: 18rpx;
+}
+
+/* ── 列宽 ── */
+.mt-col {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4rpx;
+}
+.mt-col-team   { width: 170rpx; flex-shrink: 0; }
+.mt-col-vote   { flex: 1; min-width: 0; }
+.mt-col-result { width: 60rpx;  flex-shrink: 0; }
+
+.mt-col-vote-split {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 6rpx;
+}
+
+.mt-vote-group {
+  width: auto;
   display: flex;
   align-items: center;
+  gap: 4rpx;
+}
+.mt-vote-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4rpx;
+}
+
+/* 当前队伍列左对齐 */
+.mt-col-team-left {
   justify-content: center;
 }
 
-.res-pill {
+/* ── 圆形数字芯片（统一 30rpx，border-box 保证宽度精确） ── */
+.mt-chip {
+  width: 30rpx;
+  height: 30rpx;
+  box-sizing: border-box;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 12rpx;
-  height: 38rpx;
-  border-radius: 20rpx;
+  flex-shrink: 0;
+}
+.mt-chip-text {
+  font-size: 17rpx;
+  line-height: 1;
+  text-align: center;
 }
 
-.res-pill-text {
-  font-size: 26rpx;
-  font-weight: 600;
+/* 队伍座位芯片 */
+.mt-chip-seat {
+  border: 1.5rpx solid rgba(200,134,10,0.55);
+  background: rgba(200,134,10,0.12);
+}
+.mt-chip-seat .mt-chip-text { color: #e8c870; font-weight: 600; }
+
+/* 投票芯片 — 支持（绿色） */
+.mt-chip-yes {
+  border: 1.5rpx solid #3ab870;
+  background: rgba(30, 110, 60, 0.55);
+}
+.mt-chip-yes .mt-chip-text { color: #8eeab4; font-weight: 600; }
+
+/* 投票芯片 — 不支持 */
+.mt-chip-no {
+  border: 1.5rpx solid #d94f4f;
+  background: rgba(150, 34, 34, 0.72);
+}
+.mt-chip-no .mt-chip-text { color: #ffb0b0; font-weight: 600; }
+
+/* 队长芯片：金色外圈加粗 */
+.mt-chip-leader-mark {
+  border-width: 2rpx;
+  border-color: #f5cc52;
+  box-shadow: 0 0 5rpx rgba(240,200,50,0.5);
+}
+
+/* 图例小芯片（与基础尺寸一致） */
+.mt-chip-sm {
+  width: 26rpx;
+  height: 26rpx;
+}
+.mt-chip-sm .mt-chip-text { font-size: 15rpx; }
+
+/* ── 结果列 ── */
+.mt-result {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+.mt-result-icon {
+  font-size: 24rpx;
   line-height: 1;
 }
+.mt-result-pending .mt-result-icon { color: rgba(216,176,107,0.7); }
 
-.pill-ok {
-  background: rgba(74, 210, 149, 0.15);
-  color: #4ad295;
+/* 结果徽标 */
+.mt-result-badge {
+  width: 48rpx;
+  height: 30rpx;
+  padding: 0;
+  box-sizing: border-box;
+  border-radius: 8rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.mt-result-badge-single {
+  width: 34rpx;
+}
+.mt-result-badge-success {
+  border: 1.5rpx solid rgba(80, 160, 255, 0.78);
+  background: rgba(28, 94, 175, 0.42);
+  box-shadow: 0 0 10rpx rgba(80, 160, 255, 0.22);
+}
+.mt-result-badge-fail {
+  border: 1.5rpx solid rgba(255, 104, 104, 0.84);
+  background: rgba(150, 34, 34, 0.62);
+  box-shadow: 0 0 10rpx rgba(255, 90, 90, 0.24);
+}
+.mt-result-cell {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-sizing: border-box;
+}
+.mt-result-symbol {
+  font-size: 21rpx;
+  font-weight: 900;
+  line-height: 30rpx;
+  color: rgba(236, 245, 255, 0.94);
+}
+.mt-result-symbol-success {
+  color: #bfe3ff;
+  text-shadow: 0 0 8rpx rgba(80, 160, 255, 0.5);
+}
+.mt-result-symbol-fail {
+  position: relative;
+}
+.mt-fail-mark-line {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 19rpx;
+  height: 4rpx;
+  margin-left: -9.5rpx;
+  margin-top: -2rpx;
+  border-radius: 999rpx;
+  background: #ffd5d5;
+  box-shadow: 0 0 8rpx rgba(255, 90, 90, 0.52);
+}
+.mt-fail-mark-line-a {
+  transform: rotate(45deg);
+}
+.mt-fail-mark-line-b {
+  transform: rotate(-45deg);
+}
+.mt-result-fail-count {
+  border-left: 1rpx solid rgba(255, 255, 255, 0.18);
+  font-size: 17rpx;
+  font-weight: 800;
+  line-height: 30rpx;
+  color: #ffd0d0;
+}
+.mt-result-fail-count-protected {
+  color: rgba(236, 245, 255, 0.58);
 }
 
-.pill-ng {
-  background: rgba(255, 95, 95, 0.15);
-  color: #ff5f5f;
+.mt-result-img {
+  width: 28rpx;
+  height: 28rpx;
+  flex-shrink: 0;
 }
 
-.pill-wait {
-  background: rgba(196, 168, 79, 0.15);
-  color: #c4a84f;
+/* ── 图例条目 ── */
+.mt-legend-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8rpx;
 }
-
-.res-rejected-text {
-  font-size: 24rpx;
-  color: rgba(255, 255, 255, 0.25);
+.mt-legend-text {
+  font-size: 22rpx;
+  color: rgba(255,255,255,0.6);
+  white-space: nowrap;
 }

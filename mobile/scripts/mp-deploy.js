@@ -155,48 +155,27 @@ async function upload() {
 // ─── 提交审核 ─────────────────────────────────────────────────────────────────
 
 async function submitReview() {
-  console.log('📋 获取 access_token...');
-  const token = await getAccessToken();
-  console.log('📋 提交审核...');
-  const res = await wxRequest(`/wxa/submit_audit?access_token=${token}`, {
-    item_list: [{
-      address: 'pages/index/index',
-      tag: '阿瓦隆联机',
-      first_class: '工具', first_id: 96,
-      second_class: '效率', second_id: 98,
-      title: '阿瓦隆联机',
-    }],
-  });
-  console.log(`✅ 审核已提交，auditId: ${res.auditid}`);
-  console.log('   审核通常需要 1-7 个工作日');
-  console.log('   通过后运行：npm run mp:release');
-  // 保存 auditId 供后续查询
-  fs.writeFileSync(path.join(__dirname, '.mp-auditid'), String(res.auditid));
+  // 微信限制：submit_audit 仅第三方平台服务商可调用，普通小程序只能在网页端手动提审
+  console.log('');
+  console.log('👉 请手动前往微信公众平台提交审核：');
+  console.log('   https://mp.weixin.qq.com → 版本管理 → 草稿箱 → 提交审核');
+  console.log(`   版本号：${version}，描述：${desc}`);
 }
 
 // ─── 查询审核状态 ─────────────────────────────────────────────────────────────
 
 async function checkStatus() {
-  const token = await getAccessToken();
-  const auditIdFile = path.join(__dirname, '.mp-auditid');
-  let auditid = process.argv[3];
-  if (!auditid && fs.existsSync(auditIdFile)) auditid = fs.readFileSync(auditIdFile, 'utf8').trim();
-  if (!auditid) { console.error('❌ 没有 auditId，请先提交审核'); process.exit(1); }
-  const res = await wxRequest(`/wxa/get_auditstatus?access_token=${token}&auditid=${auditid}`);
-  const statusMap = { 0: '✅ 审核通过', 1: '❌ 审核失败', 2: '⏳ 审核中' };
-  console.log(`审核状态：${statusMap[res.status] || res.status}`);
-  if (res.status === 1) console.log(`失败原因：${res.reason}`);
-  if (res.status === 0) console.log('可以运行：npm run mp:release');
-  return res.status;
+  // 微信限制：get_auditstatus / release 仅第三方平台服务商可调用
+  console.log('👉 请在微信公众平台查看审核状态：');
+  console.log('   https://mp.weixin.qq.com → 版本管理');
+  return -1;
 }
 
 // ─── 发布上线 ─────────────────────────────────────────────────────────────────
 
 async function release() {
-  const token = await getAccessToken();
-  console.log('🚀 发布上线...');
-  await wxRequest(`/wxa/release?access_token=${token}`, {});
-  console.log('✅ 发布成功，小程序已上线！');
+  console.log('👉 请在微信公众平台发布上线：');
+  console.log('   https://mp.weixin.qq.com → 版本管理 → 审核版本 → 发布');
 }
 
 // ─── 入口 ─────────────────────────────────────────────────────────────────────

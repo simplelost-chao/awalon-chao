@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>队长标志 · 全对比</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Noto+Serif+SC:wght@400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  min-height: 100vh;
+  background: #060910;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 24px 80px;
+  gap: 0;
+  font-family: 'Noto Serif SC', serif;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 15% 20%, rgba(255,255,255,.35) 0%, transparent 100%),
+    radial-gradient(1px 1px at 72% 12%, rgba(255,255,255,.28) 0%, transparent 100%),
+    radial-gradient(1px 1px at 40% 70%, rgba(255,255,255,.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 88% 55%, rgba(255,255,255,.22) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.page-title {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 5px;
+  color: rgba(212,168,85,.4);
+  text-transform: uppercase;
+  margin-bottom: 40px;
+}
+
+/* ── group header ── */
+.group {
+  width: 100%;
+  max-width: 1000px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  margin-bottom: 48px;
+}
+
+.group-title {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 900px;
+}
+.group-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212,168,85,.18));
+}
+.group-line.right {
+  background: linear-gradient(90deg, rgba(212,168,85,.18), transparent);
+}
+.group-name {
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  letter-spacing: 4px;
+  color: rgba(212,168,85,.4);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.cards-row {
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* ── individual card slot ── */
+.slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+.slot-label {
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  letter-spacing: 2.5px;
+  color: rgba(212,168,85,.38);
+  text-transform: uppercase;
+}
+.slot-desc {
+  font-size: 10px;
+  color: rgba(150,180,220,.32);
+  text-align: center;
+  line-height: 1.65;
+  max-width: 80px;
+}
+
+
+/* ══════════════════════════════════
+   SEAT CARD BASE
+   ══════════════════════════════════ */
+.seat-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.seat-avatar-wrap {
+  position: relative;
+  width: 56px; height: 56px;
+  overflow: visible;
+}
+.seat-avatar {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(7,50,120,.35);
+  border: 1.5px solid rgba(78,158,255,.85);
+  box-shadow: 0 0 18px rgba(78,158,255,.4);
+  font-size: 26px;
+  position: relative; z-index: 2;
+}
+.seat-no {
+  position: absolute; right: -6px; bottom: -2px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: rgba(10,8,20,.95);
+  border: 1px solid rgba(180,140,60,.42);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: #e6c17d;
+  font-family: 'Cinzel', serif; z-index: 5;
+}
+.seat-name { font-size: 11px; color: rgba(191,219,254,.75); white-space: nowrap; }
+
+
+/* ══════════════════════════════════
+   CROWN OPTIONS
+   ══════════════════════════════════ */
+
+/* 0 · Current (emoji, no animation) */
+.crown-current {
+  position: absolute;
+  top: -34px; left: 50%; transform: translateX(-50%);
+  font-size: 22px; z-index: 10;
+  filter: drop-shadow(0 2px 4px rgba(72,42,8,.5));
+}
+
+/* 1 · Float + aura */
+.crown-float {
+  position: absolute;
+  top: -44px; left: 50%; transform: translateX(-50%);
+  z-index: 10;
+  display: flex; flex-direction: column; align-items: center;
+  animation: bob 2.8s ease-in-out infinite;
+}
+.crown-float svg { width: 28px; height: 20px;
+  filter: drop-shadow(0 0 6px rgba(212,168,85,.7)) drop-shadow(0 0 14px rgba(212,168,85,.3)); }
+.aura {
+  width: 30px; height: 6px; border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(212,168,85,.5) 0%, transparent 70%);
+  margin-top: 2px;
+  animation: aura-p 2.8s ease-in-out infinite;
+}
+
+/* 2 · Orbit dots */
+.crown-orbit {
+  position: absolute;
+  top: -46px; left: 50%; transform: translateX(-50%);
+  z-index: 10;
+  width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+}
+.orbit-icon { font-size: 20px; filter: drop-shadow(0 0 5px rgba(212,168,85,.8)); position:relative;z-index:2; animation: bob 3s ease-in-out infinite; }
+.orbit-ring { position:absolute;inset:0; animation: spin 4s linear infinite; }
+.orbit-dot {
+  position:absolute; width:5px;height:5px;border-radius:50%;
+  background:#d4a855; box-shadow:0 0 6px rgba(212,168,85,.9),0 0 12px rgba(212,168,85,.4);
+  top:50%;left:50%;transform-origin:0 0;
+}
+.orbit-dot:nth-child(1){transform:rotate(0deg)   translateX(18px) translate(-50%,-50%);}
+.orbit-dot:nth-child(2){transform:rotate(90deg)  translateX(18px) translate(-50%,-50%); width:3.5px;height:3.5px;opacity:.65;}
+.orbit-dot:nth-child(3){transform:rotate(180deg) translateX(18px) translate(-50%,-50%); width:2.5px;height:2.5px;opacity:.4;}
+.orbit-dot:nth-child(4){transform:rotate(270deg) translateX(18px) translate(-50%,-50%); width:1.5px;height:1.5px;opacity:.2;}
+
+/* 3 · Ray halo */
+.crown-ray {
+  position:absolute;
+  top:-50px;left:50%;transform:translateX(-50%);
+  z-index:10; width:48px;height:48px;
+  display:flex;align-items:center;justify-content:center;
+}
+.ray-ring { position:absolute;inset:4px;border-radius:50%;
+  border:1px solid rgba(212,168,85,.2);
+  box-shadow:0 0 8px rgba(212,168,85,.15);
+  animation:ring-p 2.4s ease-in-out infinite; }
+.ray-spin { position:absolute;inset:0;animation:spin 8s linear infinite; }
+.ray { position:absolute;width:1.5px;top:50%;left:50%;transform-origin:0 0;
+  background:linear-gradient(to top,rgba(212,168,85,.6),transparent); }
+.ray:nth-child(1){height:20px;transform:rotate(0deg)   translateX(-50%) translateY(-100%);}
+.ray:nth-child(2){height:14px;transform:rotate(45deg)  translateX(-50%) translateY(-100%);opacity:.5;}
+.ray:nth-child(3){height:20px;transform:rotate(90deg)  translateX(-50%) translateY(-100%);}
+.ray:nth-child(4){height:14px;transform:rotate(135deg) translateX(-50%) translateY(-100%);opacity:.5;}
+.ray:nth-child(5){height:20px;transform:rotate(180deg) translateX(-50%) translateY(-100%);}
+.ray:nth-child(6){height:14px;transform:rotate(225deg) translateX(-50%) translateY(-100%);opacity:.5;}
+.ray:nth-child(7){height:20px;transform:rotate(270deg) translateX(-50%) translateY(-100%);}
+.ray:nth-child(8){height:14px;transform:rotate(315deg) translateX(-50%) translateY(-100%);opacity:.5;}
+.ray-icon { font-size:20px;filter:drop-shadow(0 0 6px rgba(212,168,85,.8));position:relative;z-index:2; }
+
+/* 4 · SVG crown float */
+.crown-svg {
+  position:absolute;
+  top:-42px;left:50%;transform:translateX(-50%);
+  z-index:10;display:flex;flex-direction:column;align-items:center;
+  animation:bob 3.2s ease-in-out infinite;
+}
+.crown-svg svg { width:32px;height:22px;overflow:visible;
+  filter:drop-shadow(0 0 6px rgba(212,168,85,.7)) drop-shadow(0 0 16px rgba(212,168,85,.3)); }
+.aura2 { width:36px;height:7px;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(212,168,85,.4) 0%,transparent 70%);
+  margin-top:3px;animation:aura-p 3.2s ease-in-out infinite; }
+
+
+/* ══════════════════════════════════
+   SYMBOL OPTIONS
+   ══════════════════════════════════ */
+
+/* Sword */
+.leader-sword {
+  position:absolute; top:-50px;left:50%;transform:translateX(-50%);
+  z-index:10; width:28px;height:48px;
+  display:flex;flex-direction:column;align-items:center;
+  animation:sword-bob 3s ease-in-out infinite;
+}
+.sword-blade {
+  width:5px;flex:1;position:relative;overflow:hidden;
+  border-radius:1px 1px 3px 3px;
+  background:linear-gradient(to bottom,#e8e8f8,#b0b8d0,#7080a0);
+  box-shadow:0 0 6px rgba(160,180,255,.4);
+}
+.sword-blade::after {
+  content:'';position:absolute;left:0;right:0;height:40%;
+  background:linear-gradient(to bottom,transparent,rgba(255,255,255,.7),transparent);
+  animation:shimmer 2.4s ease-in-out infinite;
+}
+.sword-tip { width:0;height:0;
+  border-left:2.5px solid transparent;border-right:2.5px solid transparent;
+  border-top:8px solid #7080a0;flex-shrink:0; }
+.sword-guard { width:26px;height:5px;border-radius:3px;
+  background:linear-gradient(90deg,#8a6020,#f5d289,#f5d289,#8a6020);
+  box-shadow:0 0 8px rgba(212,168,85,.5);flex-shrink:0;margin-top:2px; }
+.sword-pommel { width:10px;height:7px;border-radius:5px;
+  background:linear-gradient(135deg,#d4a855,#8a6020);
+  box-shadow:0 0 6px rgba(212,168,85,.4);flex-shrink:0; }
+.sword-glow {
+  position:absolute;bottom:-4px;left:50%;transform:translateX(-50%);
+  width:30px;height:8px;border-radius:50%;
+  background:radial-gradient(ellipse,rgba(180,200,255,.4) 0%,transparent 70%);
+  animation:aura-p 3s ease-in-out infinite;
+}
+
+/* Flame */
+.leader-flame {
+  position:absolute;top:-52px;left:50%;transform:translateX(-50%);
+  z-index:10;display:flex;flex-direction:column;align-items:center;
+}
+.flame-wrap { width:22px;height:38px;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-end; }
+.flame-outer {
+  width:18px;height:28px;
+  border-radius:50% 50% 20% 20%/60% 60% 40% 40%;
+  background:radial-gradient(ellipse at 50% 80%,#ff8c00 0%,#ff4500 40%,#dc143c 70%,transparent 100%);
+  box-shadow:0 0 12px rgba(255,100,0,.6),0 0 24px rgba(255,60,0,.3);
+  animation:flicker .8s ease-in-out infinite alternate;
+  position:absolute;bottom:0;
+}
+.flame-inner {
+  width:10px;height:18px;
+  border-radius:50% 50% 20% 20%/60% 60% 40% 40%;
+  background:radial-gradient(ellipse at 50% 80%,#fff176 0%,#ffcc00 50%,#ff8c00 100%);
+  animation:flicker-i .6s ease-in-out infinite alternate;
+  position:absolute;bottom:0;z-index:2;
+}
+.flame-core { width:5px;height:9px;border-radius:50% 50% 20% 20%/60% 60% 40% 40%;background:white;opacity:.7;position:absolute;bottom:2px;z-index:3;animation:flicker-i .4s ease-in-out infinite alternate-reverse; }
+.flame-handle { width:6px;height:12px;background:linear-gradient(to bottom,#8B4513,#5c3010);border-radius:1px;flex-shrink:0; }
+.flame-base  { width:10px;height:4px;border-radius:0 0 3px 3px;background:linear-gradient(to bottom,#8B4513,#3a1a08);flex-shrink:0; }
+
+/* Laurel */
+.leader-laurel {
+  position:absolute;top:-26px;left:50%;transform:translateX(-50%);
+  z-index:10;width:72px;height:32px;
+  animation:laurel-glow 3s ease-in-out infinite;
+}
+.leader-laurel svg { width:100%;height:100%;overflow:visible; }
+
+/* Compass star */
+.leader-star {
+  position:absolute;top:-44px;left:50%;transform:translateX(-50%);
+  z-index:10;width:36px;height:36px;
+  display:flex;align-items:center;justify-content:center;
+}
+.star-wrap { position:absolute;inset:0;animation:spin 12s linear infinite; }
+.star-wrap svg { width:100%;height:100%;filter:drop-shadow(0 0 5px rgba(212,168,85,.6)); }
+.star-center { width:8px;height:8px;border-radius:50%;
+  background:radial-gradient(circle,#fff8e0,#d4a855);
+  box-shadow:0 0 8px rgba(212,168,85,.8),0 0 16px rgba(212,168,85,.4);
+  position:relative;z-index:2;animation:star-p 2s ease-in-out infinite; }
+
+/* Banner */
+.leader-banner {
+  position:absolute;top:-52px;left:50%;transform:translateX(-50%);
+  z-index:10;display:flex;align-items:flex-start;
+}
+.banner-tip { position:absolute;top:0;left:-1px;width:5px;height:5px;border-radius:50%;background:#d4a855;box-shadow:0 0 6px rgba(212,168,85,.7); }
+.banner-pole { width:3px;height:46px;background:linear-gradient(to bottom,#d4a855,#8a6020);border-radius:1px;flex-shrink:0; }
+.banner-flag {
+  width:22px;height:16px;margin-top:2px;
+  border-radius:0 3px 3px 0;
+  background:linear-gradient(135deg,#8B0000,#cc0000,#8B0000);
+  border:1px solid rgba(255,100,100,.3);
+  box-shadow:0 0 8px rgba(180,0,0,.3);
+  transform-origin:left center;
+  animation:flag-wave 2.2s ease-in-out infinite;
+  position:relative;overflow:hidden;
+}
+.banner-flag::before { content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:8px;height:8px;border-radius:50%;border:1.5px solid rgba(212,168,85,.7); }
+.banner-flag::after  { content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(255,255,255,.12) 0%,transparent 60%); }
+
+
+/* ══════════════════════════════════
+   KEYFRAMES
+   ══════════════════════════════════ */
+@keyframes bob      { 0%,100%{transform:translateX(-50%) translateY(0)}    50%{transform:translateX(-50%) translateY(-5px)} }
+@keyframes aura-p   { 0%,100%{transform:scaleX(1);opacity:.6}               50%{transform:scaleX(.6);opacity:.2} }
+@keyframes spin     { from{transform:rotate(0deg)}  to{transform:rotate(360deg)} }
+@keyframes ring-p   { 0%,100%{opacity:.5;transform:scale(1)} 50%{opacity:1;transform:scale(1.08)} }
+@keyframes sword-bob{ 0%,100%{transform:translateX(-50%) translateY(0) rotate(-2deg)} 50%{transform:translateX(-50%) translateY(-6px) rotate(2deg)} }
+@keyframes shimmer  { 0%{top:100%;opacity:0} 30%{opacity:1} 100%{top:-40%;opacity:0} }
+@keyframes flicker  { 0%{transform:scaleX(1) scaleY(1) skewX(0deg)} 33%{transform:scaleX(.9) scaleY(1.05) skewX(-3deg)} 100%{transform:scaleX(.95) scaleY(1.03) skewX(-1deg)} }
+@keyframes flicker-i{ 0%{transform:scaleX(1) skewX(2deg)} 50%{transform:scaleX(.85) scaleY(1.08) skewX(-4deg)} 100%{transform:scaleX(1.1) scaleY(.95) skewX(3deg)} }
+@keyframes laurel-glow { 0%,100%{filter:drop-shadow(0 0 3px rgba(212,168,85,.4))} 50%{filter:drop-shadow(0 0 8px rgba(212,168,85,.85)) drop-shadow(0 0 16px rgba(212,168,85,.35))} }
+@keyframes star-p   { 0%,100%{box-shadow:0 0 8px rgba(212,168,85,.8),0 0 16px rgba(212,168,85,.4);transform:scale(1)} 50%{box-shadow:0 0 14px rgba(212,168,85,1),0 0 28px rgba(212,168,85,.6);transform:scale(1.25)} }
+@keyframes flag-wave{ 0%,100%{transform:skewY(0deg) scaleX(1)} 25%{transform:skewY(-4deg) scaleX(1.04)} 75%{transform:skewY(4deg) scaleX(.96)} }
+</style>
+</head>
+<body>
+
+<div class="page-title">队长标志 · 全量对比</div>
+
+<!-- ════ 皇冠系 ════ -->
+<div class="group">
+  <div class="group-title">
+    <div class="group-line"></div>
+    <div class="group-name">皇冠系</div>
+    <div class="group-line right"></div>
+  </div>
+  <div class="cards-row">
+
+    <div class="slot">
+      <div class="slot-label">现状</div>
+      <div class="seat-card">
+        <div class="seat-avatar-wrap">
+          <div class="crown-current">👑</div>
+          <div class="seat-avatar">🧙</div>
+          <div class="seat-no">6</div>
+        </div>
+        <div class="seat-name">梅林看穿你了</div>
+      </div>
+      <div class="slot-desc">静态 emoji<br>无动画</div>
+    </div>
+
+    <div class="slot">
+      <div class="slot-label">悬浮光晕</div>
+      <div class="seat-card">
+        <div class="seat-avatar-wrap">
+          <div class="crown-float">
+            <svg viewBox="0 0 52 38" fill="none">
+              <defs><linearGradient id="g1" x1="0" y1="0" x2="52" y2="38" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#f5d289"/><stop offset="50%" stop-color="#d4a855"/><stop offset="100%" stop-color="#a07830"/></linearGradient></defs>
+              <rect x="4" y="24" width="44" height="10" rx="2" fill="url(#g1)"/>
+              <path d="M6 24 L2 6 L16 18 Z" fill="url(#g1)"/>
+              <path d="M26 24 L26 2 L36 18 L16 18 Z" fill="#f5d289"/>
+              <path d="M46 24 L50 6 L36 18 Z" fill="url(#g1)"/>
+              <circle cx="26" cy="3" r="3" fill="#fff8e0" opacity=".9"/>
+              <circle cx="4"  cy="6" r="2" fill="#ffd970" opacity=".8"/>
+              <circle cx="48" cy="6" r="2" fill="#ffd970" opacity=".8"/>
+              <rect x="4" y="24" width="44" height="2" rx="1" fill="rgba(255,255,255,.25)"/>
+            </svg>
+            <div class="aura"></div>
+          </div>
+          <div class="seat-avatar">🧙</div>
+          <div class="seat-no">6</div>
+        </div>
+        <div class="seat-name">梅林看穿你了</div>
+      </div>
+      <div class="slot-desc">上下浮动<br>阴影跟随</div>
+    </div>
+
+    <div class="slot">
+      <div class="slot-label">轨道光点</div>
+      <div class="seat-card">
+        <div class="seat-avatar-wrap">
+          <div class="crown-orbit">
+            <div class="orbit-icon">👑</div>
+            <div class="orbit-ring">
+              <div class="orbit-dot"></div>
+              <div class="orbit-dot"></div>
+              <div class="orbit-dot"></div>
+              <div class="orbit-dot"></div>
+            </div>
+          </div>
+          <div class="seat-avatar">🧙</div>
+          <div class="seat-no">6</div>
+        </div>
+        <div class="seat-name">梅林看穿你了</div>
+      </div>
+      <div class="slot-desc">4点绕轨<br>彗星拖尾</div>
+    </div>
+
+    <div class="slot">
+      <div class="slot-label">光芒环</div>
+      <div class="seat-card">
+        <div class="seat-avatar-wrap">
+          <div class="crown-ray">
+            <div class="ray-ring"></div>
+            <div class="ray-spin">
+              <div class="ray"></div><div class="ray"></div><div class="ray"></div><div class="ray"></div>
+              <div class="ray"></div><div class="ray"></div><div class="ray"></div><div class="ray"></div>
+            </div>
+            <div class="ray-icon">👑</div>
+          </div>
+          <div class="seat-avatar">🧙</div>
+          <div class="seat-no">6</div>
+        </div>
+        <div class="seat-name">梅林看穿你了</div>
+      </div>
+      <div class="slot-desc">8芒缓转<br>脉冲光环</div>
+    </div>
+
+    <div class="slot">
+      <div class="slot-label">SVG 皇冠</div>
+      <div class="seat-card">
+        <div class="seat-avatar-wrap">
+          <div class="crown-svg">
+            <svg viewBox="0 0 52 38" fill="none" overflow="visible">
+              <defs>
+                <linearGradient id="g2" x1="0" y1="38" x2="52" y2="0" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#b8860b"/><stop offset="40%" stop-color="#f5d289"/><stop offset="100%" stop-color="#fffacd"/></linearGradient>
+                <filter id="gf"><feGaussianBlur stdDeviation="1.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              </defs>
+              <rect x="3" y="25" width="46" height="11" rx="3" fill="url(#g2)" filter="url(#gf)"/>
+              <path d="M8 25 L3 4 L18 20 Z" fill="url(#g2)" filter="url(#gf)"/>
+              <path d="M26 25 L26 0 L34 20 L18 20 Z" fill="#f7e08a" filter="url(#gf)"/>
+              <path d="M44 25 L49 4 L34 20 Z" fill="url(#g2)" filter="url(#gf)"/>
+              <circle cx="26" cy="1.5" r="2.8" fill="white" opacity=".95"/>
+              <circle cx="3.5" cy="5" r="2" fill="#ffd060" opacity=".9"/>
+              <circle cx="48.5" cy="5" r="2" fill="#ffd060" opacity=".9"/>
+              <rect x="5" y="26" width="42" height="2" rx="1" fill="rgba(255,255,255,.3)"/>
+            </svg>
+            <div class="aura2"></div>
+          </div>
+          <div class="seat-avatar">🧙</div>
+          <div class="seat-no">6</div>
+        </div>
+        <div class="seat-name">梅林看穿你了</div>
+      </div>
+      <div class="slot-desc">矢量皇冠<br>浮动+光晕<br>最精致</div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ════ 其他符号系 ════ -->
+<div class="group">
+  <div class="group-title">
+    <div class="group-line"></div>
+    <div class="group-name">其他符号</div>
+    <div class="group-line right"></div>
+  </div>
+  <div class="cards-row">
+
+    <div class="slot">
+      <div class="slot-label">圣剑</div>
+      <div class="seat-card">
+        <div class="seat-avatar-wrap">
+          <div class="leader-sword">
+            <div class="sword-glow"></div>
+            <div class="sword-blade"></div>
+            <div class="sword-tip"></div>
+            <div class="sword-guard"></div>
+            <div class="sword-pommel"></div>
+          </div>
+          <div class="seat-avatar">🧙</div>
+          <div class="seat-no">6</div>
+        </div>
+        <div class="seat-name">梅林看穿你了</div>
+      </div>
+      <div class="slot-desc">Excalibur<br>刃面光芒上行<br>斜向悬浮</div>
+    </div>
+
+    <div class="slot">
+      <div class="slot-label">火炬</div>
+      <div class="seat-card">
+        <div class="seat-avatar-wrap">
+          <div class="leader-flame">
+            <div class="flame-wrap">
+              <div class="flame-outer"></div>
+              <div class="flame-inner"></div>
+              <div class="flame-core"></div>
+            </div>
+            <div class="flame-handle"></div>
+            <div class="flame-base"></div>
+          </div>
+          <div class="seat-avatar">🧙</div>
+          <div class="seat-no">6</div>
+        </div>
+        <div class="seat-name">梅林看穿你了</div>
+      </div>
+      <div class="slot-desc">三层火焰<br>实时闪烁<br>最生动</div>
+    </div>
+
+    <div class="slot">
+      <div class="slot-label">月桂冠</div>
+      <div class="seat-card">
+        <div class="seat-avatar-wrap">
+          <div class="leader-laurel">
+            <svg viewBox="0 0 72 32" fill="none">
+              <path d="M8 28 C4 22, 2 16, 6 10" stroke="#8a6020" stroke-width="1.5" stroke-linecap="round"/>
+              <ellipse cx="5"  cy="24" rx="5" ry="3" transform="rotate(-40 5 24)"  fill="#c8a040" opacity=".9"/>
+              <ellipse cx="4"  cy="17" rx="5" ry="3" transform="rotate(-55 4 17)"  fill="#d4a855" opacity=".85"/>
+              <ellipse cx="6"  cy="11" rx="5" ry="3" transform="rotate(-70 6 11)"  fill="#c8a040" opacity=".9"/>
+              <ellipse cx="11" cy="6"  rx="5" ry="3" transform="rotate(-85 11 6)"  fill="#d4b870" opacity=".8"/>
+              <path d="M64 28 C68 22, 70 16, 66 10" stroke="#8a6020" stroke-width="1.5" stroke-linecap="round"/>
+              <ellipse cx="67" cy="24" rx="5" ry="3" transform="rotate(40 67 24)"  fill="#c8a040" opacity=".9"/>
+              <ellipse cx="68" cy="17" rx="5" ry="3" transform="rotate(55 68 17)"  fill="#d4a855" opacity=".85"/>
+              <ellipse cx="66" cy="11" rx="5" ry="3" transform="rotate(70 66 11)"  fill="#c8a040" opacity=".9"/>
+              <ellipse cx="61" cy="6"  rx="5" ry="3" transform="rotate(85 61 6)"   fill="#d4b870" opacity=".8"/>
+              <path d="M18 4 Q36 -2 54 4" stroke="#8a6020" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+              <ellipse cx="22" cy="3" rx="5" ry="2.5" transform="rotate(-20 22 3)" fill="#d4a855" opacity=".85"/>
+              <ellipse cx="36" cy="1" rx="5" ry="2.5"                              fill="#e0bb60" opacity=".9"/>
+              <ellipse cx="50" cy="3" rx="5" ry="2.5" transform="rotate(20 50 3)"  fill="#d4a855" opacity=".85"/>
+              <circle cx="36" cy="2" r="3" fill="#fff8e0" opacity=".8"/>
+            </svg>
+          </div>
+          <div class="seat-avatar">🧙</div>
+          <div class="seat-no">6</div>
+        </div>
+        <div class="seat-name">梅林看穿你了</div>
+      </div>
+      <div class="slot-desc">罗马月桂<br>金色脉冲<br>最低调</div>
+    </div>
+
+    <div class="slot">
+      <div class="slot-label">罗盘星</div>
+      <div class="seat-card">
+        <div class="seat-avatar-wrap">
+          <div class="leader-star">
+            <div class="star-wrap">
+              <svg viewBox="0 0 36 36" fill="none">
+                <defs><linearGradient id="sg" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#f5d289"/><stop offset="100%" stop-color="#a07830"/></linearGradient></defs>
+                <path d="M18 2 L20 16 L18 18 L16 16 Z" fill="url(#sg)"/>
+                <path d="M34 18 L20 20 L18 18 L20 16 Z" fill="url(#sg)"/>
+                <path d="M18 34 L16 20 L18 18 L20 20 Z" fill="url(#sg)"/>
+                <path d="M2 18 L16 16 L18 18 L16 20 Z" fill="url(#sg)"/>
+                <path d="M30 6 L20.5 16.5 L18 18 L19.5 15 Z" fill="#d4a855" opacity=".6"/>
+                <path d="M30 30 L19.5 21 L18 18 L21 19.5 Z" fill="#d4a855" opacity=".6"/>
+                <path d="M6 30 L15.5 19.5 L18 18 L16.5 21 Z" fill="#d4a855" opacity=".6"/>
+                <path d="M6 6 L17 15 L18 18 L15 16.5 Z" fill="#d4a855" opacity=".6"/>
+              </svg>
+            </div>
+            <div class="star-center"></div>
+          </div>
+          <div class="seat-avatar">🧙</div>
+          <div class="seat-no">6</div>
+        </div>
+        <div class="seat-name">梅林看穿你了</div>
+      </div>
+      <div class="slot-desc">缓慢旋转<br>中心脉冲<br>指引感</div>
+    </div>
+
+    <div class="slot">
+      <div class="slot-label">战旗</div>
+      <div class="seat-card">
+        <div class="seat-avatar-wrap">
+          <div class="leader-banner">
+            <div class="banner-tip"></div>
+            <div class="banner-pole"></div>
+            <div class="banner-flag"></div>
+          </div>
+          <div class="seat-avatar">🧙</div>
+          <div class="seat-no">6</div>
+        </div>
+        <div class="seat-name">梅林看穿你了</div>
+      </div>
+      <div class="slot-desc">中世纪战旗<br>风中飘扬<br>战场感</div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

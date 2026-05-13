@@ -27,6 +27,7 @@ const {
 } = require('./history');
 const {
   init: initGameAi,
+  AI_CHARACTERS,
   assassinAutoplayTimers,
   fillAiPlayers, autoSeatHumans,
   autoSpeakIfAi, aiSpeak, pushSpeak, canSpeak,
@@ -89,6 +90,36 @@ app.use(express.json({ limit: '30mb' }));
 app.get('/health', (req, res) => res.json({ ok: true, token: 'awalon-ok' }));
 let runtimeReviewMode = process.env.REVIEW_MODE === 'true';
 const ADMIN_KEY = process.env.ADMIN_KEY || '';
+const SKIN_TOOL_DIR = path.join(__dirname, '../public/tools/skin-assets');
+const REF_IMGS_DIR = path.join(SKIN_TOOL_DIR, 'ref-imgs');
+const SKIN_GEN_DIR = path.join(SKIN_TOOL_DIR, 'generated');
+
+function darkGoldToolAsset(kind, name) {
+  return `/tools/skin-assets/dark-gold/${kind}/${name}`;
+}
+
+function buildDarkGoldBuiltinAssets() {
+  return {
+    'home-bg':       darkGoldToolAsset('assets', 'home-bg.jpg'),
+    'in-game-bg':    darkGoldToolAsset('assets', 'in-game-bg.jpg'),
+    table:           darkGoldToolAsset('assets', 'table.png'),
+    'quest-success': darkGoldToolAsset('assets', 'quest-success.png'),
+    'quest-fail':    darkGoldToolAsset('assets', 'quest-fail.png'),
+    'kill-icon':     darkGoldToolAsset('assets', 'kill-icon.png'),
+    'history-icon':  darkGoldToolAsset('assets', 'history-icon.png'),
+    'stats-icon':    darkGoldToolAsset('assets', 'stats-icon.png'),
+    merlin:          darkGoldToolAsset('roles', 'merlin.png'),
+    percival:        darkGoldToolAsset('roles', 'percival.png'),
+    arthur_loyal:    darkGoldToolAsset('roles', 'arthur_loyal.png'),
+    lancelot_good:   darkGoldToolAsset('roles', 'lancelot_good.png'),
+    assassin:        darkGoldToolAsset('roles', 'assassin.png'),
+    morgana:         darkGoldToolAsset('roles', 'morgana.png'),
+    mordred:         darkGoldToolAsset('roles', 'mordred.png'),
+    oberon:          darkGoldToolAsset('roles', 'oberon.png'),
+    minion:          darkGoldToolAsset('roles', 'minion.png'),
+    lancelot_evil:   darkGoldToolAsset('roles', 'lancelot_evil.png'),
+  };
+}
 
 app.get('/api/review-mode', (req, res) => res.json({ reviewMode: runtimeReviewMode }));
 
@@ -123,7 +154,6 @@ app.post('/api/proxy-image', async (req, res) => {
 
 
 // ─── Skin Studio Ref Images ───────────────────────────────────────────────────
-const REF_IMGS_DIR = path.join(__dirname, '../public/tools/skin-assets/ref-imgs');
 fs.mkdirSync(REF_IMGS_DIR, { recursive: true });
 
 // GET  /api/ref-imgs/:skinId  → { urls: [...] }
@@ -169,7 +199,6 @@ app.delete('/api/ref-imgs/:skinId/:filename', (req, res) => {
 
 
 // ─── Skin Studio: save generated asset to disk ───────────────────────────────
-const SKIN_GEN_DIR = path.join(__dirname, '../public/tools/skin-assets/generated');
 fs.mkdirSync(SKIN_GEN_DIR, { recursive: true });
 
 // POST /api/save-asset  body: { skinId, assetId, dataUrl } OR { skinId, assetId, url }
@@ -211,26 +240,7 @@ app.get('/api/skin-generated/:skinId', (req, res) => {
   if (!/^[\w-]+$/.test(skinId)) return res.status(400).json({ error: 'invalid skinId' });
   const dir = path.join(SKIN_GEN_DIR, skinId);
   // Built-in assets for dark-gold (default skin)
-  const DARK_GOLD_BUILTIN = {
-    'home-bg':       '/tools/skin-assets/dark-gold/assets/home-bg.jpg',
-    'in-game-bg':    '/tools/skin-assets/dark-gold/assets/in-game-bg.jpg',
-    'table':         '/tools/skin-assets/dark-gold/assets/table.png',
-    'quest-success': '/tools/skin-assets/dark-gold/assets/quest-success.png',
-    'quest-fail':    '/tools/skin-assets/dark-gold/assets/quest-fail.png',
-    'kill-icon':     '/tools/skin-assets/dark-gold/assets/kill-icon.png',
-    'history-icon':  '/tools/skin-assets/dark-gold/assets/history-icon.png',
-    'stats-icon':    '/tools/skin-assets/dark-gold/assets/stats-icon.png',
-    'merlin':        '/tools/skin-assets/dark-gold/roles/merlin.png',
-    'percival':      '/tools/skin-assets/dark-gold/roles/percival.png',
-    'arthur_loyal':  '/tools/skin-assets/dark-gold/roles/arthur_loyal.png',
-    'lancelot_good': '/tools/skin-assets/dark-gold/roles/lancelot_good.png',
-    'assassin':      '/tools/skin-assets/dark-gold/roles/assassin.png',
-    'morgana':       '/tools/skin-assets/dark-gold/roles/morgana.png',
-    'mordred':       '/tools/skin-assets/dark-gold/roles/mordred.png',
-    'oberon':        '/tools/skin-assets/dark-gold/roles/oberon.png',
-    'minion':        '/tools/skin-assets/dark-gold/roles/minion.png',
-    'lancelot_evil': '/tools/skin-assets/dark-gold/roles/lancelot_evil.png',
-  };
+  const DARK_GOLD_BUILTIN = buildDarkGoldBuiltinAssets();
   const assets = skinId === 'dark-gold' ? { ...DARK_GOLD_BUILTIN } : {};
   if (fs.existsSync(dir)) {
     const files = fs.readdirSync(dir).filter(f => /\.(jpe?g|png|webp)$/i.test(f));
@@ -304,63 +314,38 @@ app.post('/api/admin/set-mode', (req, res) => {
   res.json({ ok: true, reviewMode: runtimeReviewMode });
 });
 
+// ── Admin Dashboard ──────────────────────────────────────────────
 app.get('/admin', (req, res) => {
-  if (!ADMIN_KEY || req.query.key !== ADMIN_KEY) return res.status(403).send('forbidden');
-  const mode = runtimeReviewMode ? 'review' : 'game';
-  const key = req.query.key;
-  res.send(`<!DOCTYPE html>
-<html lang="zh">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Awalon 管理</title>
-<style>
-  body{font-family:-apple-system,sans-serif;background:#0d1117;color:#e6edf3;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;margin:0;gap:24px}
-  h2{margin:0;font-size:20px;color:#8b949e}
-  .badge{padding:8px 22px;border-radius:999px;font-size:18px;font-weight:700}
-  .badge.review{background:#3d1a00;color:#f0883e;border:1px solid #f0883e55}
-  .badge.game{background:#0d2d0d;color:#3fb950;border:1px solid #3fb95055}
-  .btns{display:flex;gap:16px}
-  button{padding:12px 32px;border-radius:10px;border:none;font-size:16px;font-weight:600;cursor:pointer;transition:.15s}
-  .btn-review{background:#f0883e;color:#0d1117}
-  .btn-game{background:#3fb950;color:#0d1117}
-  button:hover{opacity:.85}
-  .hint{font-size:13px;color:#484f58;margin-top:8px}
-</style>
-</head>
-<body>
-<h2>Awalon 模式控制</h2>
-<div class="badge ${mode}">${mode === 'review' ? '🔒 审核模式' : '🎮 游戏模式'}</div>
-<div class="btns">
-  <button class="btn-review" onclick="setMode('review')">切换为审核模式</button>
-  <button class="btn-game" onclick="setMode('game')">切换为游戏模式</button>
-</div>
-<div class="hint">切换立即生效，无需重启服务</div>
-<script>
-async function setMode(mode){
-  const r=await fetch('/api/admin/set-mode?key=${key}',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode})});
-  if(r.ok) location.reload();
-}
-</script>
-</body>
-</html>`);
+  res.sendFile(path.join(__dirname, 'admin.html'));
 });
 app.get('/api/admin/ai-stats', (req, res) => {
   if (!ADMIN_KEY || req.query.key !== ADMIN_KEY) return res.status(403).json({ error: 'forbidden' });
   try { res.json(getAiLearningStats()); } catch (e) { res.status(500).json({ error: e.message }); }
-});
-app.get('/admin/ai', (req, res) => {
-  if (!ADMIN_KEY || req.query.key !== ADMIN_KEY) return res.status(403).send('forbidden');
-  res.sendFile(path.join(__dirname, 'ai-dashboard.html'));
 });
 app.post('/api/admin/trigger-meta', (req, res) => {
   if (!ADMIN_KEY || req.query.key !== ADMIN_KEY) return res.status(403).json({ error: 'forbidden' });
   maybeRunMetaAnalysis(true).then(() => res.json({ ok: true })).catch(e => res.status(500).json({ error: e.message }));
 });
 
+// Mount admin API routes
+const { adminRoutes } = require('./admin-api');
+adminRoutes(app, {
+  ADMIN_KEY,
+  getRooms: () => rooms,
+  getRuntimeReviewMode: () => runtimeReviewMode,
+  setRuntimeReviewMode: (v) => { runtimeReviewMode = v; },
+  SKIN_CATALOGUE,
+  AI_CHARACTERS,
+  getDefaultRoleConfig: () => DEFAULT_ROLE_CONFIG,
+});
+
 app.get('/api/role-config', (req, res) => res.json(DEFAULT_ROLE_CONFIG));
 app.get('/api/rooms', (req, res) => {
   const list = [];
+  const authHeader = String(req.headers.authorization || '');
+  const bearerToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+  const viewerToken = String((req.query && req.query.token) || bearerToken || '').trim();
+  const viewerPhone = viewerToken && sessions.has(viewerToken) ? sessions.get(viewerToken) : '';
   for (const room of rooms.values()) {
     if (room._historyMode) continue;
     if (!room.hostId || String(room.code).startsWith('hist')) continue;
@@ -368,6 +353,9 @@ app.get('/api/rooms', (req, res) => {
     const host = room.players.get(room.hostId);
     if (!host) continue; // 无有效房主的房间不展示
     const humanPlayers = Array.from(room.players.values()).filter(p => !p.isAI && !p.spectator);
+    const viewerPlayer = viewerPhone
+      ? Array.from(room.players.values()).find((p) => !p.isAI && p.phone === viewerPhone)
+      : null;
     const seatedCount = (room.seats || []).filter(Boolean).length;
     const joinable = !room.started && seatedCount < room.maxPlayers;
     const avatarRaw = host.avatar || '🐺';
@@ -386,7 +374,9 @@ app.get('/api/rooms', (req, res) => {
       seatedCount,
       maxPlayers: room.maxPlayers,
       started: !!room.started,
-      joinable,
+      joinable: !!(joinable && !viewerPlayer),
+      isMine: !!viewerPlayer,
+      isHostRoom: !!(viewerPlayer && viewerPlayer.id === room.hostId),
       missionSegs,
     });
   }
@@ -766,7 +756,7 @@ initGame({
   autoProposeIfAiLeader, autoplayPropose, autoplaySkipSpeak,
   autoSpeakIfAi, autoVoteIfAi, autoplayVote,
   autoMissionIfAi, autoplayMission,
-  autoAssassinateIfAi, scheduleAutoAssassinIfAutoplay,
+  autoAssassinateIfAi, scheduleAutoAssassinIfAutoplay, autoplayLady,
   generateRecaps, gatherEvilIntel,
   revealAll, revealEvilToAll,
 });
@@ -829,13 +819,14 @@ wss.on('connection', (ws) => {
     if (type !== 'LOGIN' && type !== 'AUTH' && !requireAuth(client)) {
       return error(client, 'NEED_LOGIN');
     }
-    switch (type) {
-      case 'LOGIN':
-        login(client, payload || {});
-        break;
-      case 'AUTH':
-        auth(client, payload || {});
-        break;
+    try {
+      switch (type) {
+        case 'LOGIN':
+          login(client, payload || {});
+          break;
+        case 'AUTH':
+          auth(client, payload || {});
+          break;
       case 'CREATE_ROOM':
         createRoom(client, payload || {});
         break;
@@ -970,8 +961,12 @@ wss.on('connection', (ws) => {
         generateRecaps(rrRoom);
         break;
       }
-      default:
-        break;
+        default:
+          break;
+      }
+    } catch (e) {
+      console.error(`[WS] handler error type=${type} client=${client.id}:`, e && (e.stack || e.message || e));
+      error(client, 'SERVER_ERROR');
     }
   });
 

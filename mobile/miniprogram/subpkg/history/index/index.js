@@ -1,5 +1,6 @@
 const { decorateMedals } = require("../../../utils/medals");
 const { getSkin } = require("../../../skins");
+const socket = require("../../../utils/socket");
 
 const EVIL_ROLES = new Set(['莫甘娜','刺客','莫德雷德','奥伯伦','爪牙','兰斯洛特（邪恶）']);
 
@@ -134,7 +135,11 @@ Page({
     const p = Math.max(1, Number(page) || 1);
     const indexPage = getIndexPage();
     if (!indexPage || typeof indexPage.requestHistoryList !== "function") {
-      wx.showToast({ title: "首页未就绪", icon: "none" });
+      const sent = socket.send({ type: "GET_GAME_HISTORY_LIST", payload: { limit: 10, offset: (p - 1) * 10 } });
+      if (!sent) {
+        this.setData({ loading: false });
+        wx.showToast({ title: "连接未就绪", icon: "none" });
+      }
       return;
     }
     this.setData({ loading: true });

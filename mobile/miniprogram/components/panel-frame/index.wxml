@@ -1,0 +1,11 @@
+<view class="pf {{extraClass}}" style="{{extraStyle}}">
+  <view class="fb fb-top"></view>
+  <view class="fb fb-bottom"></view>
+  <view class="fb fb-left"></view>
+  <view class="fb fb-right"></view>
+  <view class="fb fb-ctl"></view>
+  <view class="fb fb-ctr"></view>
+  <view class="fb fb-cbl"></view>
+  <view class="fb fb-cbr"></view>
+  <slot></slot>
+</view>

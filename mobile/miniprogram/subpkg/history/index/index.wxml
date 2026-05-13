@@ -2,7 +2,13 @@
   <image class="bg" src="{{skinInGameBg}}" mode="aspectFill" />
   <view class="mask"></view>
 
-  <nav-header title="历史对战" statusBarHeight="{{statusBarHeight}}" navBarHeight="{{navBarHeight}}" bind:back="onBackHome"></nav-header>
+  <view class="sub-nav" style="padding-top: {{statusBarHeight}}px; height: {{navBarHeight}}px;">
+    <view class="sub-nav-inner">
+      <view class="sub-nav-back" bindtap="onBackHome"><text class="sub-nav-back-arrow">‹</text></view>
+      <text class="sub-nav-title">历史对战</text>
+      <view class="sub-nav-placeholder"></view>
+    </view>
+  </view>
 
   <view class="content" style="padding-top: {{navTotalHeight + 8}}px;">
 
@@ -15,6 +21,7 @@
         wx:for="{{list}}" wx:key="gameId"
         bindtap="onOpenDetail" data-gameid="{{item.gameId}}"
       >
+        <view class="hc-inner">
         <text class="hc-watermark">#{{item.gameId}}</text>
         <view class="hc-body">
           <!-- 顶行 -->
@@ -54,6 +61,7 @@
             <text class="hc-time">{{item.friendlyTime}}</text>
           </view>
         </view>
+        </view><!-- hc-inner -->
       </view>
     </view>
 

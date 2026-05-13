@@ -1,0 +1,2297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>组件工坊 · AVALON SKIN STUDIO</title>
+<style>
+/* ── 全局变量 & 基础 ── */
+:root{
+  --bg:#0c0e14;--surface:#121520;--card:#181e2c;
+  --border:rgba(255,255,255,.1);--border-hi:rgba(255,255,255,.22);
+  --text:#eef1f7;--sub:#aeb6c7;--accent:#d9b36b;--good:#72e0a0;
+  --mono:'Courier New',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:13px;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── 主体双栏 ── */
+.layout{flex:1;min-height:0;display:flex;overflow:hidden}
+.layout-main{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+.layout-preview{width:320px;flex-shrink:0;border-left:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;align-items:center;padding:12px;gap:10px;overflow-y:auto}
+.phone-frame{width:240px;height:480px;border-radius:32px;border:7px solid #1a1e2a;box-shadow:0 0 0 1px rgba(255,255,255,.06),0 16px 48px rgba(0,0,0,.6);overflow:hidden;position:relative;flex-shrink:0}
+.phone-screen{width:100%;height:100%;position:relative;overflow:hidden;display:flex;flex-direction:column}
+.ph-bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+.ph-content{flex:1;overflow-y:auto;padding:6px 7px;display:flex;flex-direction:column;gap:6px;position:relative;z-index:5}
+.ph-act-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:5px}
+.ph-act-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 2px}
+.ph-chips{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:5px}
+.ph-rchip{display:inline-flex;align-items:center;gap:3px;padding:2px 6px 2px 3px;border-radius:999px;font-size:6.5px;font-weight:600}
+.ph-rchip.good-chip{background:rgba(7,50,120,.4);border:1px solid rgba(78,158,255,.35);color:#bfdbfe}
+.ph-rchip.evil-chip{background:rgba(110,12,12,.5);border:1px solid rgba(220,60,60,.35);color:#fca5a5}
+.ph-rchip-img{width:13px;height:13px;border-radius:50%;object-fit:cover;flex-shrink:0}
+.ph-crown{position:absolute;font-size:9px;line-height:1;z-index:5}
+.ph-seat-badge{position:absolute;top:-7px;left:50%;transform:translateX(-50%)}
+.ph-hist-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.05)}
+.ph-hist-item:last-child{border-bottom:none}
+.ph-hist-icon{width:28px;height:28px;border-radius:calc(6px * var(--aw-r,1));display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.ph-hist-icon.win{background:rgba(60,120,80,.35);border:1px solid rgba(100,200,140,.35)}
+.ph-hist-icon.lose{background:rgba(100,20,20,.35);border:1px solid rgba(200,60,60,.3)}
+.ph-hist-mseg{display:flex;gap:2px;margin-top:3px}
+.ph-hist-dot{width:8px;height:8px;border-radius:50%}
+.ph-hist-dot.s{background:rgba(100,220,150,.8)}
+.ph-hist-dot.f{background:rgba(230,90,90,.8)}
+
+/* ── 顶栏 ── */
+.hd{height:50px;background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;padding:0 18px;flex-shrink:0}
+.hd-title{font-size:14px;font-weight:700;letter-spacing:1px}
+.hd-sub{font-size:11px;color:var(--sub)}
+.btn-finish{margin-left:auto;padding:7px 20px;background:var(--accent);border:none;
+  border-radius:7px;color:#1a1200;font-size:13px;font-weight:700;cursor:pointer}
+.btn-finish:hover{filter:brightness(1.12)}
+.btn-back{padding:5px 14px;background:rgba(255,255,255,.06);border:1px solid var(--border);
+  border-radius:6px;color:var(--sub);font-size:12px;cursor:pointer}
+.btn-back:hover{color:var(--text);background:rgba(255,255,255,.1)}
+
+/* ── 配置区 ── */
+.cfg{padding:12px 18px 10px;border-bottom:1px solid var(--border);
+  background:rgba(255,255,255,.02);flex-shrink:0;display:flex;flex-direction:column;gap:8px}
+.cfg-row{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+.cfg-field{display:flex;flex-direction:column;gap:3px;flex:1;min-width:120px}
+.cfg-lbl{font-size:10px;color:var(--sub);text-transform:uppercase;letter-spacing:.5px}
+.cfg-input{background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:6px;
+  color:var(--text);font-size:12px;padding:6px 9px;outline:none;width:100%;font-family:inherit}
+.cfg-input:focus{border-color:rgba(217,179,107,.5)}
+textarea.cfg-input{resize:none}
+.tone-btn{font-size:11px;padding:4px 10px;background:rgba(255,255,255,.05);
+  border:1px solid var(--border);border-radius:5px;color:var(--sub);cursor:pointer}
+.tone-btn.active{background:rgba(217,179,107,.15);border-color:rgba(217,179,107,.5);color:var(--accent)}
+.prog-row{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.prog-label{font-size:11px;color:var(--sub)}
+.prog-dots{display:flex;gap:4px}
+.prog-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.15);transition:background .3s}
+.prog-dot.done{background:var(--good)}
+.prog-dot.run{background:#60a0f8;animation:pulse .7s infinite alternate}
+@keyframes pulse{from{opacity:.35}to{opacity:1}}
+
+/* ── 主体 ── */
+.body{flex:1;min-height:0;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:20px}
+
+/* ── 组件区块 ── */
+.section{background:var(--card);border:1px solid var(--border);border-radius:10px}
+.sec-hd{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.06)}
+.sec-title{font-size:13px;font-weight:600;flex:1}
+.batch-btn{font-size:10px;padding:3px 10px;background:rgba(96,160,248,.1);
+  border:1px solid rgba(96,160,248,.28);border-radius:4px;color:#60a0f8;cursor:pointer}
+.batch-btn:hover:not(:disabled){background:rgba(96,160,248,.22)}
+.batch-btn:disabled{opacity:.45;cursor:default}
+.comp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;padding:14px}
+
+/* ── 组件卡片 ── */
+.comp-card{border:1px solid var(--border);border-radius:8px;overflow:visible;background:var(--surface);display:flex;flex-direction:column}
+.comp-preview{border-radius:8px 8px 0 0;overflow:hidden;background:#0a0d14}
+.comp-footer{padding:7px 10px;border-top:1px solid rgba(255,255,255,.06);
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-height:36px}
+.comp-name{font-size:11px;color:var(--sub);flex:1}
+.gen-btn{font-size:10px;padding:3px 9px;background:rgba(96,160,248,.1);
+  border:1px solid rgba(96,160,248,.28);border-radius:4px;color:#60a0f8;cursor:pointer;white-space:nowrap}
+.gen-btn:hover:not(:disabled){background:rgba(96,160,248,.2)}
+.gen-btn.done{color:var(--good);border-color:rgba(110,222,168,.3);background:rgba(110,222,168,.05)}
+.gen-btn.running{opacity:.6;pointer-events:none}
+
+/* ── ph-* 组件样式（从 skin-prompt-studio 提取）── */
+.ph-nav{position:relative;z-index:10;height:28px;flex-shrink:0;display:flex;align-items:center;padding:0 8px;background:var(--aw-nav-bg,rgba(12,16,24,.88));border-bottom:1px solid var(--aw-nav-border,rgba(255,255,255,.08))}
+.ph-nav-title{position:absolute;left:50%;transform:translateX(-50%);font-size:9px;font-weight:700;color:var(--aw-text,#eef1f7);letter-spacing:2px;white-space:nowrap}
+.ph-panel{background:var(--aw-panel,#131720);border:1px solid var(--aw-panel-border,rgba(255,255,255,.1));border-radius:calc(7px * var(--aw-r,1));padding:7px;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+.ph-user-row{display:flex;align-items:center;gap:5px;padding:4px 5px;border-left:2px solid var(--aw-accent,#d9b36b);background:linear-gradient(90deg,rgba(216,176,107,.14),transparent);margin-bottom:5px}
+.ph-av{width:22px;height:22px;border-radius:calc(50% * var(--aw-r,1));background:var(--aw-bg-2,#161b24);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;border:1px solid rgba(255,255,255,.15)}
+.ph-logout{margin-left:auto;font-size:6px;color:rgba(106,122,154,.9);padding:1px 5px;border:1px solid rgba(106,122,154,.3);border-radius:calc(999px * var(--aw-r,1))}
+.ph-count-row{display:flex;gap:2px;margin-bottom:5px}
+.ph-cnt{flex:1;padding:2px 0;border-radius:calc(3px * var(--aw-r,1));font-size:6px;text-align:center;background:rgba(0,0,0,.16);border:1px solid rgba(255,255,255,.12);color:var(--aw-subtext,#aeb6c7)}
+.ph-cnt.on{background:rgba(216,176,107,.18);border-color:rgba(216,176,107,.55);color:var(--aw-accent,#d9b36b);font-weight:700}
+.ph-btn-row{display:flex;gap:4px}
+.ph-btn-p{flex:1;padding:6px 0;border-radius:calc(6px * var(--aw-r,1));font-size:8px;font-weight:700;text-align:center;background:var(--aw-btn-primary-bg,linear-gradient(180deg,#e4c281,#c89b52));color:var(--aw-btn-primary-text,#1a1510)}
+.ph-btn-g{flex:1;padding:6px 0;border-radius:calc(6px * var(--aw-r,1));font-size:8px;text-align:center;background:transparent;border:1px solid var(--aw-btn-ghost-border,rgba(255,255,255,.2));color:var(--aw-text,#eef1f7)}
+/* 圆桌 */
+.ph-table-area{position:relative;width:100%;padding-bottom:86%}
+.ph-table-inner{position:absolute;inset:8px}/* 内缩 8px，给边缘座位留空间，不被 overflow:hidden 剪 */
+.ph-table-circle{position:absolute;width:52%;height:52%;left:50%;top:50%;transform:translate(-50%,-50%);border-radius:50%;overflow:hidden;border:2px solid var(--aw-panel-border,rgba(255,255,255,.15))}
+.ph-table-circle img{width:100%;height:100%;object-fit:cover}
+.ph-seat{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:2px;width:40px}
+.ph-seat-av{width:28px;height:28px;border-radius:calc(50% * var(--aw-r,1));background:rgba(15,11,8,.55);border:1px solid rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:14px;overflow:hidden}
+.ph-seat-no{position:absolute;right:-4px;bottom:-2px;min-width:13px;height:13px;padding:0 2px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:6px;font-weight:700;color:#e6c17d;background:rgba(10,8,20,.95);border:1px solid rgba(180,140,60,.42)}
+.ph-seat-name{font-size:6.5px;color:#d0d8e8;text-align:center;white-space:nowrap}
+.ph-seat.good .ph-seat-av{border-color:var(--aw-good-glow,rgba(78,158,255,.85));box-shadow:0 0 6px var(--aw-good-shadow,rgba(78,158,255,.45));background:var(--aw-good-seat-bg,rgba(7,50,120,.35))}
+.ph-seat.evil .ph-seat-av{border-color:var(--aw-evil-glow,rgba(220,60,60,.8));box-shadow:0 0 5px var(--aw-evil-shadow,rgba(200,40,40,.38));background:var(--aw-evil-seat-bg,rgba(35,6,6,.92))}
+.ph-seat.me .ph-seat-av{border-color:rgba(233,191,112,.95)!important;box-shadow:0 0 0 2px rgba(233,191,112,.22)!important}
+.ph-center-result{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;z-index:2}
+.ph-center-result-title{font-size:8px;font-weight:700;letter-spacing:1px;color:var(--aw-accent,#fbbf24)}
+.ph-center-result-sub{font-size:6px;color:rgba(255,255,255,.5)}
+.ph-seat-role-pill{padding:1px 5px;border-radius:999px;font-size:6.5px;border:1px solid transparent;white-space:nowrap;margin-top:2px}
+.ph-seat-role-pill.good{background:rgba(7,50,120,.55);border-color:rgba(78,158,255,.45);color:#bfdbfe}
+.ph-seat-role-pill.evil{background:rgba(110,12,12,.6);border-color:rgba(220,60,60,.4);color:#fca5a5}
+/* 发言面板 */
+.ph-spk-card{flex-shrink:0;background:var(--aw-panel,rgba(19,23,31,.95));border-top:1px solid var(--aw-nav-border,rgba(255,255,255,.08));padding:6px 8px 14px}
+.ph-spk-accent{height:2px;background:linear-gradient(90deg,transparent,var(--aw-accent,#d9b36b) 50%,transparent);margin:-6px -8px 5px}
+.ph-spk-top{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.ph-spk-av{width:22px;height:22px;border-radius:calc(50% * var(--aw-r,1));background:rgba(12,10,8,.5);border:1px solid var(--aw-panel-border,rgba(255,255,255,.1));display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;position:relative}
+.ph-spk-dot{position:absolute;right:-2px;top:-2px;width:6px;height:6px;border-radius:50%;background:#4ade80;border:1px solid rgba(0,0,0,.5)}
+.ph-spk-nm{font-size:8px;font-weight:700;color:var(--aw-text,#eef1f7)}
+.ph-spk-hint{font-size:5.5px;color:var(--aw-subtext,#aeb6c7)}
+.ph-spk-timer{font-size:9px;font-weight:700;color:var(--aw-accent,#d9b36b);flex-shrink:0;margin-left:auto}
+.ph-spk-track{height:3px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden;margin-bottom:5px}
+.ph-spk-fill{height:100%;border-radius:999px;background:var(--aw-accent,#d9b36b)}
+.ph-spk-input{flex:1;background:var(--aw-input-bg,rgba(255,255,255,.06));border:1px solid var(--aw-input-border,rgba(255,255,255,.14));border-radius:calc(4px * var(--aw-r,1));color:var(--aw-subtext,#aeb6c7);font-size:7px;padding:3px 5px}
+.ph-spk-send{background:linear-gradient(180deg,#e4c281,#c89b52);color:#1a1510;border-radius:calc(4px * var(--aw-r,1));padding:3px 8px;font-size:7px;font-weight:700;flex-shrink:0}
+.ph-spk-end{width:100%;background:transparent;border:1px solid var(--aw-btn-ghost-border,rgba(255,255,255,.2));color:var(--aw-text,#eef1f7);border-radius:calc(4px * var(--aw-r,1));padding:4px;font-size:7px;text-align:center;margin-top:4px}
+/* 投票 / 出征 */
+.ph-action-panel{flex-shrink:0;background:var(--aw-panel,rgba(19,23,31,.95));border-top:1px solid var(--aw-nav-border,rgba(255,255,255,.08));padding:7px 8px 14px}
+.ph-vote-title{font-size:7px;color:var(--aw-subtext,#aeb6c7);text-align:center;margin-bottom:5px}
+.ph-vote-team{display:flex;gap:12px;justify-content:center;margin-bottom:5px}
+.ph-vote-av{width:22px;height:22px;border-radius:calc(50% * var(--aw-r,1));background:rgba(12,10,8,.5);border:1px solid var(--aw-panel-border,rgba(255,255,255,.1));display:flex;align-items:center;justify-content:center;font-size:11px}
+.ph-vote-name{font-size:5.5px;color:var(--aw-subtext,#aeb6c7);text-align:center;margin-top:2px}
+.ph-vote-divider{width:100%;height:1px;background:rgba(255,255,255,.06);margin:4px 0}
+.ph-vote-btns{display:flex;gap:4px}
+.ph-vote-yes{flex:1;background:var(--aw-btn-primary-bg,linear-gradient(180deg,#e4c281,#c89b52));color:var(--aw-btn-primary-text,#1a1510);border-radius:calc(5px * var(--aw-r,1));padding:5px 0;font-size:8px;font-weight:700;text-align:center}
+.ph-vote-no{flex:1;background:transparent;border:1px solid var(--aw-btn-ghost-border,rgba(255,255,255,.2));color:var(--aw-text,#eef1f7);border-radius:calc(5px * var(--aw-r,1));padding:5px 0;font-size:8px;text-align:center}
+/* 任务进度 */
+.ph-pills-row{display:flex;gap:3px}
+.ph-pill{flex:1;min-height:36px;border-radius:calc(5px * var(--aw-r,1));border:1px solid var(--aw-panel-border,rgba(255,255,255,.1));background:rgba(0,0,0,.22);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3px 1px;gap:1px}
+.ph-pill.success{background:rgba(60,160,100,.18);border-color:rgba(100,220,150,.55)}
+.ph-pill.fail{background:rgba(160,40,40,.18);border-color:rgba(230,90,90,.55)}
+.ph-pill.current{background:rgba(190,145,60,.18);border-color:rgba(220,180,90,.7)}
+.ph-pill.future{opacity:.6}
+.ph-pill-icon{font-size:9px;font-weight:bold;line-height:1}
+.ph-panel-hd{display:flex;align-items:center;justify-content:space-between;padding:5px 7px;border-left:2px solid #d8b06b;background:linear-gradient(90deg,rgba(216,176,107,.16),transparent);border-bottom:1px solid rgba(216,176,107,.1)}
+.ph-panel-title{color:#f2e5c8;font-size:8px;font-weight:700;letter-spacing:1px}
+.ph-panel-sub{color:rgba(216,176,107,.5);font-size:6.5px}
+.ph-ghc-medal{display:flex;align-items:center;gap:2px;padding:2px 6px;border-radius:999px;background:var(--aw-medal-bg,rgba(200,144,42,.15));border:1px solid var(--aw-medal-border,rgba(200,144,42,.35));font-size:6px;color:var(--aw-medal-color,#d4a043)}
+/* ── 发言记录 ── */
+.ph-chat-wrap{display:flex;flex-direction:column;gap:5px;padding:8px}
+.ph-chat-sys{text-align:center;font-size:6px;color:var(--aw-subtext,#aeb6c7);padding:2px 0}
+.ph-chat-row{display:flex;gap:5px;align-items:flex-start}
+.ph-chat-row.mine{flex-direction:row-reverse}
+.ph-chat-bubble{background:var(--aw-panel,rgba(19,23,31,.95));border:1px solid var(--aw-panel-border,rgba(255,255,255,.1));border-radius:2px 6px 6px 6px;padding:4px 6px;font-size:6.5px;color:var(--aw-text,#eef1f7);max-width:150px;line-height:1.45}
+.ph-chat-row.mine .ph-chat-bubble{border-radius:6px 2px 6px 6px;background:rgba(216,176,107,.12);border-color:rgba(216,176,107,.28)}
+.ph-chat-nm{font-size:5.5px;color:var(--aw-subtext,#aeb6c7);margin-bottom:2px}
+.ph-chat-row.mine .ph-chat-nm{text-align:right}
+/* ── 任务表格 ── */
+.ph-mtable{width:100%;border-collapse:collapse}
+.ph-mtable th{font-size:5.5px;color:var(--aw-subtext,#aeb6c7);padding:3px 4px;border-bottom:1px solid rgba(255,255,255,.08);text-align:left;font-weight:500}
+.ph-mtable td{font-size:6px;padding:3px 4px;border-bottom:1px solid rgba(255,255,255,.04)}
+.ph-res-pill{display:inline-flex;align-items:center;padding:1px 5px;border-radius:999px;font-size:5.5px;font-weight:700;white-space:nowrap}
+.ph-res-pill.success{background:rgba(60,160,100,.18);color:#72e0a0;border:1px solid rgba(100,220,150,.3)}
+.ph-res-pill.fail{background:rgba(160,40,40,.18);color:#f07070;border:1px solid rgba(230,90,90,.3)}
+.ph-res-pill.rej{color:var(--aw-subtext,#aeb6c7)}
+/* ── 玩家列表 ── */
+.ph-player-row{display:flex;align-items:center;gap:5px;padding:3px 5px}
+.ph-seat-no-badge{width:16px;height:16px;border-radius:999px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:6.5px;font-weight:700;color:#e6c17d;background:rgba(10,8,20,.9);border:1px solid rgba(180,140,60,.42)}
+.ph-role-chip-sm{display:inline-flex;align-items:center;padding:1px 5px;border-radius:999px;font-size:5.5px;white-space:nowrap}
+.ph-role-chip-sm.good{background:rgba(7,50,120,.5);border:1px solid rgba(78,158,255,.4);color:#bfdbfe}
+.ph-role-chip-sm.evil{background:rgba(110,12,12,.55);border:1px solid rgba(220,60,60,.35);color:#fca5a5}
+/* ── 房间卡片 ── */
+.ph-room-card{border:1px solid var(--aw-panel-border,rgba(255,255,255,.12));border-radius:calc(8px * var(--aw-r,1));overflow:hidden;background:var(--aw-panel,rgba(19,23,31,.95))}
+.ph-room-stripe{height:3px}
+.ph-room-stripe.lobby{background:linear-gradient(90deg,#4e9eff,#72e0a0)}
+.ph-room-stripe.ingame{background:linear-gradient(90deg,var(--aw-accent,#d9b36b),#f59e0b)}
+.ph-room-body{display:flex;align-items:center;gap:7px;padding:7px 8px}
+.ph-room-badge{font-size:6px;padding:2px 7px;border-radius:999px;font-weight:600;white-space:nowrap}
+.ph-room-badge.lobby{background:rgba(78,158,255,.12);color:#60a0f8;border:1px solid rgba(78,158,255,.25)}
+.ph-room-badge.ingame{background:rgba(217,179,107,.12);color:var(--aw-accent,#d9b36b);border:1px solid rgba(217,179,107,.28)}
+.ph-room-join{padding:4px 10px;border-radius:calc(4px * var(--aw-r,1));font-size:7px;font-weight:700;background:var(--aw-btn-primary-bg,linear-gradient(180deg,#e4c281,#c89b52));color:var(--aw-btn-primary-text,#1a1510);white-space:nowrap;flex-shrink:0}
+/* ── 座位状态徽章 ── */
+.ph-seat-status{position:absolute;top:-7px;left:50%;transform:translateX(-50%);background:rgba(12,14,20,.92);border:1px solid var(--aw-accent,#d9b36b);border-radius:999px;font-size:5px;padding:1px 4px;white-space:nowrap;color:var(--aw-accent,#d9b36b);font-weight:700}
+.ph-seat-status.voted{border-color:rgba(78,158,255,.6);color:#60a0f8}
+/* ── 桌面精调面板 ── */
+.tune-hd{display:flex;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid var(--border);cursor:pointer;user-select:none;font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--sub)}
+.tune-hd:hover{background:rgba(255,255,255,.03)}
+.tune-body{padding:10px 14px 12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px;background:rgba(0,0,0,.18)}
+.tune-row{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap}
+.tune-label{font-size:10px;color:var(--sub);min-width:52px;padding-top:6px;flex-shrink:0}
+.tune-file{font-size:11px;color:var(--sub);cursor:pointer}
+.tune-file::-webkit-file-upload-button{background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:5px;color:var(--sub);font-size:11px;padding:3px 8px;cursor:pointer}
+.tune-url{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:11px;padding:4px 8px;outline:none;min-width:0}
+.tune-url:focus{border-color:rgba(217,179,107,.4)}
+.tune-desc{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:11px;padding:6px 8px;outline:none;resize:vertical;min-height:52px;font-family:inherit}
+.tune-desc:focus{border-color:rgba(217,179,107,.4)}
+.tune-css-out{width:100%;background:rgba(0,0,0,.35);border:1px solid var(--border);border-radius:5px;color:#7abf8a;font-size:10px;padding:6px 8px;outline:none;resize:vertical;min-height:60px;font-family:var(--mono);line-height:1.5}
+.tune-btns{display:flex;gap:6px;flex-wrap:wrap}
+.btn-tune-ai{padding:5px 14px;background:rgba(217,179,107,.15);border:1px solid rgba(217,179,107,.4);border-radius:5px;color:var(--accent);font-size:11px;font-weight:700;cursor:pointer}
+.btn-tune-ai:hover{background:rgba(217,179,107,.25)}
+.btn-tune-ai:disabled{opacity:.45;cursor:default}
+.btn-tune-apply{padding:5px 14px;background:rgba(72,220,140,.12);border:1px solid rgba(72,220,140,.35);border-radius:5px;color:#48dc8c;font-size:11px;font-weight:700;cursor:pointer}
+.btn-tune-apply:hover{background:rgba(72,220,140,.22)}
+.btn-tune-clear{padding:5px 10px;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:5px;color:var(--sub);font-size:11px;cursor:pointer}
+.tune-status{font-size:10px;color:var(--sub);padding-top:2px}
+/* ── 10人紧凑座位 ── */
+.ph-seat.sm{width:32px}
+.ph-seat.sm .ph-seat-av{width:24px;height:24px;font-size:12px}
+.ph-seat.sm .ph-seat-name{font-size:5px}
+.ph-seat.sm .ph-seat-no{font-size:5px;min-width:11px;height:11px}
+.ph-seat.in-team .ph-seat-av{box-shadow:0 0 0 2px rgba(233,191,112,.9),0 0 8px rgba(233,191,112,.4)!important;border-color:rgba(233,191,112,.9)!important}
+.ph-seat.crown-seat::before{content:'👑';position:absolute;top:-12px;left:50%;transform:translateX(-50%);font-size:9px;line-height:1}
+/* ── 历史列表 ── */
+.ph-hist-item{display:flex;align-items:center;gap:8px;padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.05)}
+.ph-hist-item:last-child{border-bottom:none}
+.ph-hist-icon{width:28px;height:28px;border-radius:calc(6px * var(--aw-r,1));display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.ph-hist-icon.win{background:rgba(60,120,80,.35);border:1px solid rgba(100,200,140,.35)}
+.ph-hist-icon.lose{background:rgba(100,20,20,.35);border:1px solid rgba(200,60,60,.3)}
+.ph-hist-mseg{display:flex;gap:2px;margin-top:3px}
+.ph-hist-dot{width:8px;height:8px;border-radius:50%}
+.ph-hist-dot.s{background:rgba(100,220,150,.8)}
+.ph-hist-dot.f{background:rgba(230,90,90,.8)}
+.ph-hist-dot.p{background:rgba(255,255,255,.18)}
+
+/* ── AI 风格生成面板 ── */
+.ai-drawer{background:rgba(150,120,255,.06);border:1px solid rgba(150,120,255,.2);border-radius:8px;padding:10px 14px;margin-top:8px;display:flex;flex-direction:column;gap:8px}
+.ai-status{font-size:11px;display:flex;align-items:center;gap:8px;color:var(--sub);min-height:18px}
+.ai-spinner{width:12px;height:12px;border:2px solid rgba(150,120,255,.25);border-top-color:#a78bfa;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ai-swatches{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.ai-swatch{width:20px;height:20px;border-radius:4px;border:1px solid rgba(255,255,255,.18);cursor:help;flex-shrink:0;transition:transform .15s}
+.ai-swatch:hover{transform:scale(1.25)}
+.ai-prompts{background:rgba(0,0,0,.3);border-radius:6px;padding:8px 10px;font-size:10px;font-family:var(--mono);color:var(--sub);max-height:130px;overflow-y:auto;line-height:1.7;white-space:pre-wrap;word-break:break-word}
+.btn-ai{padding:5px 12px;background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.38);border-radius:6px;color:#c4b5fd;font-size:11px;cursor:pointer;white-space:nowrap;transition:background .2s}
+.btn-ai:hover:not(:disabled){background:rgba(167,139,250,.24)}
+.btn-ai:disabled,.btn-ai.running{opacity:.45;cursor:default;pointer-events:none}
+details>summary{font-size:10px;color:var(--sub);cursor:pointer;user-select:none;list-style:none;padding:2px 0}
+details>summary::before{content:'▸ ';font-size:9px}
+details[open]>summary::before{content:'▾ '}
+
+/* ── 移动端底部 Tab ── */
+.mob-tabs{display:none}
+@media(max-width:768px){
+  /* 底部 tab 栏 */
+  .mob-tabs{display:flex;height:52px;flex-shrink:0;background:var(--surface);border-top:1px solid var(--border)}
+  .mob-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:10px;color:var(--sub);cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none;transition:color .15s}
+  .mob-tab.active{color:var(--accent)}
+  .mob-tab-icon{font-size:18px;line-height:1}
+
+  /* 整体布局切换为单列，保持 body 固定高度不滚动 */
+  .layout{flex-direction:column}
+  .layout-main{flex:1;min-height:0;overflow:hidden}
+
+  /* 预览面板在移动端默认隐藏，tab 切换显示 */
+  .layout-preview{display:none;width:100%;flex:1;min-height:0;border-left:none;border-top:1px solid var(--border);padding:16px 12px 20px;overflow-y:auto}
+  .layout-preview.mob-active{display:flex}
+  .layout-main.mob-hidden{display:none}
+
+  /* 顶栏：精简 */
+  .hd{height:auto;padding:10px 14px;flex-wrap:wrap;gap:8px}
+  .hd>div:first-child{flex:1;min-width:0}
+  .hd-title{font-size:13px}
+  .hd-sub{display:none}
+  .btn-back{padding:8px 14px;font-size:12px}
+  .btn-finish{padding:8px 16px;font-size:12px}
+  .prog-dots{order:99;width:100%}
+
+  /* 配置区：折叠 */
+  .cfg-field{min-width:0;flex:1 1 140px}
+  .cfg-input{font-size:14px;padding:8px 10px}
+  textarea.cfg-input{font-size:14px}
+
+  /* 触摸目标：所有按钮 min-height 44px */
+  .tone-btn{padding:8px 14px;font-size:12px}
+  .batch-btn{padding:6px 14px;font-size:11px}
+  .gen-btn{padding:6px 12px;font-size:11px;min-height:36px}
+  .btn-ai{padding:8px 14px;font-size:12px}
+  .btn-finish,.btn-back,.btn-tune-ai,.btn-tune-apply,.btn-tune-clear{min-height:40px}
+
+  /* 组件网格：移动端单列 */
+  .comp-grid{grid-template-columns:1fr;gap:10px;padding:10px}
+
+  /* 手机预览：居中 */
+  .phone-frame{margin:0 auto}
+
+  /* 配置展开/折叠 toggle */
+  .cfg-collapse-btn{display:flex}
+}
+@media(min-width:769px){
+  .cfg-collapse-btn{display:none!important}
+  .cfg-collapsible{display:flex!important;flex-direction:column;gap:8px}
+}
+/* 配置折叠按钮 */
+.cfg-collapse-btn{align-items:center;gap:6px;padding:4px 0;background:none;border:none;color:var(--sub);font-size:11px;cursor:pointer;width:100%;text-align:left;-webkit-tap-highlight-color:transparent;display:none}
+</style>
+</head>
+<body>
+
+<!-- 顶栏 -->
+<div class="hd">
+  <div>
+    <div class="hd-title">新建皮肤 · 组件工坊</div>
+    <div class="hd-sub" id="progLabel">配置皮肤风格，按需生成各组件素材</div>
+  </div>
+  <div class="prog-dots" id="progDots"></div>
+  <button class="btn-back" onclick="history.back()">← 返回</button>
+  <button class="btn-finish" onclick="finishSkin()">完成 ✓</button>
+</div>
+
+<!-- 配置区 -->
+<div class="cfg">
+  <button class="cfg-collapse-btn" id="cfgToggle" onclick="toggleCfg()">
+    <span id="cfgToggleIcon">▾</span> 皮肤配置
+  </button>
+  <div id="cfgCollapsible" class="cfg-collapsible">
+  <div class="cfg-row">
+    <div class="cfg-field">
+      <label class="cfg-lbl">皮肤名称</label>
+      <input class="cfg-input" id="cfgName" placeholder="如：星空幻境" oninput="autoId();refreshPreviews()">
+    </div>
+    <div class="cfg-field">
+      <label class="cfg-lbl">皮肤 ID</label>
+      <input class="cfg-input" id="cfgId" placeholder="如：starry-dream" style="font-family:var(--mono)">
+    </div>
+    <div class="cfg-field" style="flex:0 0 auto">
+      <label class="cfg-lbl">强调色</label>
+      <div style="display:flex;align-items:center;gap:6px">
+        <input type="color" id="cfgAccent" value="#d9b36b" style="width:34px;height:34px;border:none;border-radius:6px;cursor:pointer;padding:0" oninput="refreshPreviews()">
+        <span id="cfgAccentHex" style="font-size:11px;color:var(--sub);font-family:var(--mono)">#d9b36b</span>
+      </div>
+    </div>
+    <div class="cfg-field" style="flex:0 0 auto">
+      <label class="cfg-lbl">基调</label>
+      <div style="display:flex;gap:6px">
+        <button class="tone-btn active" id="toneDark" onclick="setTone(true)">深色</button>
+        <button class="tone-btn" id="toneLight" onclick="setTone(false)">浅色</button>
+      </div>
+    </div>
+    <div class="cfg-field" style="flex:0 0 auto">
+      <label class="cfg-lbl">API Key</label>
+      <input class="cfg-input" id="cfgKey" type="password" placeholder="自动读取 Skin Studio 的 key" style="width:160px" oninput="saveKey()">
+    </div>
+  </div>
+  <div class="cfg-field">
+    <label class="cfg-lbl" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px">
+      <span>风格描述 <span style="color:var(--sub);font-weight:400">— 描述视觉风格，AI 生成配色 + 图像提示词</span></span>
+      <button class="btn-ai" id="btnAiStyle" onclick="generateStyle()">✨ AI 生成配色</button>
+    </label>
+    <textarea class="cfg-input" id="cfgStyle" rows="2" placeholder="如：dark gothic dungeon, pen-and-ink etching, Inscryption inspired, amber candlelight, near-black background" oninput="refreshPreviews()"></textarea>
+  </div>
+  <!-- AI 配色结果抽屉 -->
+  <div id="aiDrawer" style="display:none" class="ai-drawer">
+    <div class="ai-status" id="aiStatus"></div>
+    <div id="aiResult" style="display:none;flex-direction:column;gap:8px">
+      <div>
+        <div style="font-size:10px;color:var(--sub);margin-bottom:5px">生成的配色方案 — 已实时应用到预览 ↓</div>
+        <div class="ai-swatches" id="aiSwatches"></div>
+      </div>
+      <details>
+        <summary>图像提示词（生图时自动使用）</summary>
+        <div class="ai-prompts" id="aiPrompts" style="margin-top:5px"></div>
+      </details>
+      <div style="display:flex;gap:6px">
+        <button class="btn-ai" onclick="resetAiVars()">✕ 撤销配色</button>
+        <button class="btn-ai" id="btnRegenStyle" onclick="generateStyle()">↺ 重新生成</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 参考图 → 全局风格生成 -->
+  <div class="cfg-field">
+    <label class="cfg-lbl" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px">
+      <span>参考图 <span style="color:var(--sub);font-weight:400">— 上传风格参考图，AI 分析并直接生成所有组件样式</span></span>
+      <button class="btn-ai" id="btnRefStyle" onclick="generateRefStyle()">🎨 根据参考图生成风格</button>
+    </label>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <input type="file" id="refStyleImg" accept="image/*" onchange="onRefStyleImg(event)"
+        style="font-size:11px;color:var(--sub);cursor:pointer;flex:1;min-width:0">
+      <span id="refStyleImgName" style="font-size:10px;color:var(--sub)"></span>
+    </div>
+  </div>
+  <!-- 参考图风格结果抽屉 -->
+  <div id="refStyleDrawer" style="display:none" class="ai-drawer" id="refStyleDrawer">
+    <div class="ai-status" id="refStyleStatus"></div>
+    <div id="refStyleResult" style="display:none;flex-direction:column;gap:8px">
+      <div style="font-size:10px;color:var(--sub)">已根据参考图生成风格 — 所有组件样式已应用到预览 ↓</div>
+      <details>
+        <summary>查看生成的 CSS</summary>
+        <pre id="refStyleCSS" style="font-size:9px;color:#7abf8a;background:rgba(0,0,0,.35);border-radius:5px;padding:8px;overflow-x:auto;max-height:150px;white-space:pre-wrap;margin-top:5px"></pre>
+      </details>
+      <div style="display:flex;gap:6px">
+        <button class="btn-ai" onclick="clearRefStyle()">✕ 撤销风格</button>
+        <button class="btn-ai" onclick="generateRefStyle()">↺ 重新生成</button>
+      </div>
+    </div>
+  </div>
+  </div><!-- /cfgCollapsible -->
+</div>
+
+<!-- 主体双栏 -->
+<div class="layout">
+  <!-- 左：组件网格 -->
+  <div class="layout-main" id="panelComponents">
+    <div class="body" id="mainBody"></div>
+  </div>
+  <!-- 右：手机预览 -->
+  <div class="layout-preview" id="previewPanel">
+    <div style="font-size:11px;font-weight:700;color:var(--sub);letter-spacing:1px;align-self:flex-start">手机预览</div>
+    <div id="ppTabBar"></div>
+    <div class="phone-frame" id="cwPhoneFrame"></div>
+  </div>
+</div>
+
+<!-- 移动端底部 Tab 栏 -->
+<div class="mob-tabs">
+  <div class="mob-tab active" id="mobTabComp" onclick="mobSwitch('comp')">
+    <div class="mob-tab-icon">🎨</div>
+    <div>组件</div>
+  </div>
+  <div class="mob-tab" id="mobTabPrev" onclick="mobSwitch('prev')">
+    <div class="mob-tab-icon">📱</div>
+    <div>预览</div>
+  </div>
+</div>
+
+<script src="phone-preview.js?v=9"></script>
+<script>
+// ── 常量 ──────────────────────────────────────────────────────
+const CDN = 'https://www.awalon.top/mp-assets';
+const SAVE_URL = 'https://www.awalon.top/api/save-asset';
+
+const DEFAULT_ASSETS = {
+  'home-bg':      CDN+'/home-bg-optimized.jpg',
+  'in-game-bg':   CDN+'/in-game-bg-optimized.jpg',
+  'table':        CDN+'/table.png',
+  'quest-success':CDN+'/quest-success-420x300.png',
+  'quest-fail':   CDN+'/quest-failed-420x300.png',
+  'kill-icon':    CDN+'/ui-icons/kill.png',
+  'history-icon': CDN+'/ui-icons/history_scroll.png',
+  'stats-icon':   CDN+'/ui-icons/stats_bars.png',
+  'merlin':       CDN+'/role-split/merlin.png',
+  'percival':     CDN+'/role-split/percival.png',
+  'arthur_loyal': CDN+'/role-split/arthur_loyal.png',
+  'lancelot_good':CDN+'/role-split/lancelot_good.png',
+  'assassin':     CDN+'/role-split/assassin.png',
+  'morgana':      CDN+'/role-split/morgana.png',
+  'mordred':      CDN+'/role-split/mordred.png',
+  'oberon':       CDN+'/role-split/oberon.png',
+  'minion':       CDN+'/role-split/minion.png',
+  'lancelot_evil':CDN+'/role-split/lancelot_evil.png',
+};
+
+// 自定义生成的资产（覆盖 DEFAULT_ASSETS）
+let customAssets = {};
+let runningIds   = {};
+let isDark = true;
+// AI 生成的 CSS 变量覆盖 & 资产提示词
+let aiVars = {};
+let aiAssetPrompts = {};
+let tableStyleCSS = '';      // applied CSS for table area
+let tablePendingCSS = '';    // generated but not yet applied
+let tableRefImgB64 = null;   // base64 of uploaded ref image
+let tableTuneOpen = false;
+
+// ── 读取 API Key（与 Skin Studio 共享 localStorage）──────────
+function getSelectedModel(){ return localStorage.getItem('selected_model') || 'auto'; }
+function getModelKey(m){ try{ return localStorage.getItem('api_key_'+m) || ''; }catch(_){ return ''; } }
+function getActiveKey(){
+  const inp = document.getElementById('cfgKey').value.trim();
+  if (inp) return inp;
+  const m = getSelectedModel();
+  if (m !== 'auto') return getModelKey(m);
+  return getModelKey('doubao') || getModelKey('gemini') || getModelKey('dalle') || '';
+}
+function getKey(){ return getActiveKey(); }
+function saveKey(){ try{ const k=document.getElementById('cfgKey').value.trim(); if(k) localStorage.setItem('api_key_'+getSelectedModel(), k); }catch(_){} }
+function isDoubaoKey(k){ return getSelectedModel()==='doubao' || (getSelectedModel()==='auto' && k.startsWith('ark-')); }
+function isGeminiKey(k){ return getSelectedModel()==='gemini' || (getSelectedModel()==='auto' && (k.startsWith('AIza')||k.startsWith('AQ.'))); }
+function isValidKey(k){ return k.length > 10; }
+
+// ── 获取有效资产 URL ──────────────────────────────────────────
+function getAsset(id){ return customAssets[id] || DEFAULT_ASSETS[id] || null; }
+function isCustom(id){ return !!customAssets[id]; }
+
+// ── 皮肤状态读取 ──────────────────────────────────────────────
+function readState() {
+  const name   = document.getElementById('cfgName').value.trim();
+  const rawId  = document.getElementById('cfgId').value.trim();
+  const style  = document.getElementById('cfgStyle').value.trim();
+  const accent = document.getElementById('cfgAccent').value;
+  const skinId = rawId || name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'') || 'new-skin';
+  return { skinName: name||'新皮肤', skinId, styleDesc: style, accentColor: accent,
+           bgColor: isDark ? '#0f1115' : '#f0f2f6', borderStyle:'round', isDark };
+}
+
+function autoId(){
+  const name = document.getElementById('cfgName').value.trim();
+  const idEl = document.getElementById('cfgId');
+  if (!idEl.dataset.manual)
+    idEl.value = name.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'');
+}
+function setTone(dark){
+  isDark = dark;
+  document.getElementById('toneDark').classList.toggle('active', dark);
+  document.getElementById('toneLight').classList.toggle('active', !dark);
+  refreshPreviews();
+}
+
+// ── 颜色工具（简化版 buildNWSkinEntry） ──────────────────────
+function hexToRgb(h){ const x=h.replace('#',''); return [parseInt(x.slice(0,2),16),parseInt(x.slice(2,4),16),parseInt(x.slice(4,6),16)]; }
+function rgba(h,a){ const[r,g,b]=hexToRgb(h); return `rgba(${r},${g},${b},${a})`; }
+function shift(h,d){ return '#'+hexToRgb(h).map(v=>Math.max(0,Math.min(255,v+d)).toString(16).padStart(2,'0')).join(''); }
+function lum(h){ return hexToRgb(h).reduce((s,v,i)=>s+v*[0.2126,0.7152,0.0722][i],0)/255; }
+
+function buildVarsStr(state){
+  const{accentColor:acc,bgColor:bg,borderStyle:bs,isDark:dk}=state;
+  const r = bs==='sharp'?'0':'1';
+  const bg2 = dk?shift(bg,10):shift(bg,-10);
+  const panelBg  = rgba(dk?shift(bg,8):bg, dk?0.85:0.90);
+  const navBg    = rgba(dk?shift(bg,-4):shift(bg,4), dk?0.92:0.94);
+  const textCol  = dk?'#eef1f7':'#1a1c24';
+  const subCol   = dk?'#aeb6c7':'#6b7080';
+  const panelBorder = rgba(acc, dk?0.45:0.30);
+  const navBorder   = rgba(acc, dk?0.20:0.14);
+  const inputBorder = rgba(acc, dk?0.28:0.22);
+  const btnBorder   = rgba(acc, dk?0.55:0.35);
+  const inputBg     = dk?rgba(acc,0.05):'rgba(255,255,255,.75)';
+  const accText     = lum(acc)>0.45?'#1a1200':'#ffffff';
+  const vars = {
+    '--aw-bg':bg,'--aw-bg-2':bg2,'--aw-panel':panelBg,'--aw-panel-border':panelBorder,
+    '--aw-text':textCol,'--aw-subtext':subCol,'--aw-accent':acc,'--aw-accent-text':accText,
+    '--aw-nav-bg':navBg,'--aw-nav-border':navBorder,
+    '--aw-input-bg':inputBg,'--aw-input-border':inputBorder,
+    '--aw-btn-ghost-border':btnBorder,'--aw-btn-ghost-text':textCol,'--aw-r':r,
+    '--aw-btn-primary-bg':`linear-gradient(180deg,${shift(acc,30)},${acc})`,
+    '--aw-btn-primary-text':lum(acc)>0.45?'#1a1200':'#ffffff',
+    '--aw-good-glow':'rgba(78,158,255,0.85)','--aw-good-shadow':'rgba(78,158,255,0.45)',
+    '--aw-good-seat-bg':'rgba(7,50,120,0.35)',
+    '--aw-evil-glow':'rgba(220,60,60,0.8)','--aw-evil-shadow':'rgba(200,40,40,0.38)',
+    '--aw-evil-seat-bg':'rgba(35,6,6,0.92)',
+    '--aw-success':dk?'#72e0a0':'#1a8c52','--aw-fail':dk?'#f07070':'#c03030',
+    '--aw-medal-color':acc,'--aw-medal-bg':rgba(acc,0.15),'--aw-medal-border':rgba(acc,0.35),
+    '--aw-faction-good':'linear-gradient(90deg,#2a6ab0,#4e9eff)',
+    '--aw-faction-evil':'linear-gradient(90deg,#c03030,#e05050)',
+  };
+  return Object.entries(vars).map(([k,v])=>`${k}:${v}`).join(';');
+}
+
+// ── 组件组定义 ────────────────────────────────────────────────
+const GROUPS = [
+
+  /* ── 1. 主页 & 大厅 ─────────────────────────────────────────── */
+  { id:'home', title:'主页 & 大厅', icon:'🏠', comps:[
+    { id:'c-home-ui', title:'主页核心', assetIds:[],
+      render: () => `<div style="padding:7px;background:var(--aw-bg)">
+        <div class="ph-panel">
+          <div class="ph-user-row">
+            <div class="ph-av">👤</div>
+            <div>
+              <div style="font-size:8px;font-weight:700;color:var(--aw-text)">龙影</div>
+              <div style="font-size:5.5px;color:var(--aw-subtext)">Win 62% · 68局</div>
+            </div>
+            <div style="margin-left:auto;display:flex;gap:4px">
+              <div style="font-size:6px;padding:2px 6px;border:1px solid rgba(255,255,255,.1);border-radius:999px;color:var(--aw-subtext)">历史</div>
+              <div style="font-size:6px;padding:2px 6px;border:1px solid rgba(255,255,255,.1);border-radius:999px;color:var(--aw-subtext)">统计</div>
+              <div class="ph-logout">退出</div>
+            </div>
+          </div>
+          <div class="ph-count-row">
+            <div class="ph-cnt">5人</div><div class="ph-cnt on">6人</div>
+            <div class="ph-cnt">7人</div><div class="ph-cnt">8人</div>
+            <div class="ph-cnt">9人</div><div class="ph-cnt">10人</div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:5px">
+            <div style="padding:1px 6px;border-radius:999px;font-size:6px;background:rgba(7,50,120,.4);border:1px solid rgba(78,158,255,.35);color:#bfdbfe">梅林 ×1</div>
+            <div style="padding:1px 6px;border-radius:999px;font-size:6px;background:rgba(110,12,12,.5);border:1px solid rgba(220,60,60,.35);color:#fca5a5">刺客 ×1</div>
+            <div style="padding:1px 6px;border-radius:999px;font-size:6px;background:rgba(110,12,12,.5);border:1px solid rgba(220,60,60,.35);color:#fca5a5">摩根娜 ×1</div>
+            <div style="padding:1px 6px;border-radius:999px;font-size:6px;border:1px solid rgba(255,255,255,.1);color:var(--aw-subtext)">+ 配置</div>
+          </div>
+          <div class="ph-btn-row">
+            <div class="ph-btn-p">发起游戏</div>
+            <div class="ph-btn-g">加入游戏</div>
+          </div>
+        </div>
+      </div>`
+    },
+    { id:'c-room-cards', title:'房间列表', assetIds:[],
+      render: () => `<div style="padding:8px;background:var(--aw-bg);display:flex;flex-direction:column;gap:6px">
+        <div class="ph-room-card">
+          <div class="ph-room-stripe lobby"></div>
+          <div class="ph-room-body">
+            <div style="width:26px;height:26px;border-radius:calc(6px * var(--aw-r,1));background:rgba(78,158,255,.1);border:1px solid rgba(78,158,255,.22);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">🏰</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:8px;font-weight:700;color:var(--aw-text)">龙影的房间</div>
+              <div style="font-size:6px;color:var(--aw-subtext);margin-top:1px">4 / 6 人 · 等待开始</div>
+            </div>
+            <div class="ph-room-badge lobby">大厅</div>
+            <div class="ph-room-join">加入</div>
+          </div>
+        </div>
+        <div class="ph-room-card">
+          <div class="ph-room-stripe ingame"></div>
+          <div class="ph-room-body">
+            <div style="width:26px;height:26px;border-radius:calc(6px * var(--aw-r,1));background:rgba(217,179,107,.1);border:1px solid rgba(217,179,107,.22);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">⚔️</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:8px;font-weight:700;color:var(--aw-text)">月影的房间</div>
+              <div style="font-size:6px;color:var(--aw-subtext);margin-top:1px">7 / 7 人 · 游戏中 第3局</div>
+            </div>
+            <div class="ph-room-badge ingame">进行中</div>
+            <div class="ph-room-join" style="background:transparent;border:1px solid rgba(255,255,255,.18);color:var(--aw-text)">观战</div>
+          </div>
+        </div>
+        <div class="ph-room-card" style="opacity:.55">
+          <div class="ph-room-stripe" style="background:rgba(255,255,255,.1)"></div>
+          <div class="ph-room-body">
+            <div style="width:26px;height:26px;border-radius:calc(6px * var(--aw-r,1));background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">🔒</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:8px;font-weight:700;color:var(--aw-text)">剑客的房间</div>
+              <div style="font-size:6px;color:var(--aw-subtext);margin-top:1px">8 / 8 人 · 已满</div>
+            </div>
+            <div class="ph-room-join" style="background:rgba(255,255,255,.06);color:var(--aw-subtext)">已满</div>
+          </div>
+        </div>
+      </div>`
+    },
+  ]},
+
+  /* ── 2. 圆桌状态 ─────────────────────────────────────────────── */
+  { id:'table', title:'圆桌状态', icon:'⭕', comps:[
+    { id:'c-table-team', title:'组队选人', assetIds:['table','merlin'],
+      render: () => {
+        const tUrl = getAsset('table');
+        // 10 seats, seat index 1 (龙影) is leader, seats 0,2,5 in team
+        const teamIdxs = new Set([0,2,5]);
+        const seats = [
+          {no:1, l:50, t:6,  cls:'me',   e:'👤', nm:'我',   inTeam:true},
+          {no:2, l:72, t:14, cls:'good', e:'⚔️', nm:'龙影', leader:true},
+          {no:3, l:86, t:36, cls:'good', e:'🛡️', nm:'月影', inTeam:true},
+          {no:4, l:86, t:64, cls:'good', e:'🌸', nm:'星辰'},
+          {no:5, l:72, t:86, cls:'good', e:'🗡️', nm:'剑客'},
+          {no:6, l:50, t:94, cls:'good', e:'🏹', nm:'勇士', inTeam:true},
+          {no:7, l:28, t:86, cls:'evil', e:'🌙', nm:'暗羽'},
+          {no:8, l:14, t:64, cls:'evil', e:'💀', nm:'铁血'},
+          {no:9, l:14, t:36, cls:'evil', e:'🐺', nm:'玄武'},
+          {no:10,l:28, t:14, cls:'evil', e:'🎭', nm:'幻影'},
+        ];
+        const merlinImg = getAsset('merlin');
+        return `<div style="background:var(--aw-bg);padding:4px">
+          <div class="ph-table-area">
+            <div class="ph-table-inner">
+              <div class="ph-table-circle">${tUrl?`<img src="${tUrl}">`:`<div style="width:100%;height:100%;background:var(--aw-bg-2)"></div>`}</div>
+              <div class="ph-center-result">
+                <div class="ph-center-result-title" style="font-size:7px">👑 龙影 选人中</div>
+                <div class="ph-center-result-sub">已选 3/4 人</div>
+              </div>
+              ${seats.map(s=>`<div class="ph-seat sm ${s.cls}${s.inTeam?' in-team':''}${s.leader?' crown-seat':''}" style="left:${s.l}%;top:${s.t}%;position:absolute">
+                <div style="position:relative;display:inline-block">
+                  <div class="ph-seat-av">${s.cls==='me'&&merlinImg?`<img src="${merlinImg}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`:s.e}</div>
+                  <span class="ph-seat-no">${s.no}</span>
+                </div>
+                <div class="ph-seat-name">${s.nm}</div>
+              </div>`).join('')}
+            </div>
+          </div>
+        </div>`;
+      }
+    },
+    { id:'c-table-speak', title:'发言进行中', assetIds:['table'],
+      render: () => {
+        const tUrl = getAsset('table');
+        const seats = [
+          {no:1, l:50, t:6,  cls:'me',   e:'👤', nm:'我'},
+          {no:2, l:72, t:14, cls:'good', e:'⚔️', nm:'龙影'},
+          {no:3, l:86, t:36, cls:'good', e:'🛡️', nm:'月影', speaking:true},
+          {no:4, l:86, t:64, cls:'good', e:'🌸', nm:'星辰', done:true},
+          {no:5, l:72, t:86, cls:'good', e:'🗡️', nm:'剑客', done:true},
+          {no:6, l:50, t:94, cls:'good', e:'🏹', nm:'勇士', done:true},
+          {no:7, l:28, t:86, cls:'evil', e:'🌙', nm:'暗羽'},
+          {no:8, l:14, t:64, cls:'evil', e:'💀', nm:'铁血'},
+          {no:9, l:14, t:36, cls:'evil', e:'🐺', nm:'玄武'},
+          {no:10,l:28, t:14, cls:'evil', e:'🎭', nm:'幻影'},
+        ];
+        return `<div style="background:var(--aw-bg);padding:4px">
+          <div class="ph-table-area">
+            <div class="ph-table-inner">
+              <div class="ph-table-circle">${tUrl?`<img src="${tUrl}">`:`<div style="width:100%;height:100%;background:var(--aw-bg-2)"></div>`}</div>
+              <div class="ph-center-result">
+                <div class="ph-center-result-title" style="font-size:7px">💬 发言中</div>
+                <div class="ph-center-result-sub">3 / 10</div>
+              </div>
+              ${seats.map(s=>`<div class="ph-seat sm ${s.cls}" style="left:${s.l}%;top:${s.t}%;position:absolute;opacity:${s.done?0.45:1}">
+                <div style="position:relative;display:inline-block">
+                  ${s.speaking?`<div class="ph-seat-status" style="font-size:4.5px">📢 发言</div>`:''}
+                  <div class="ph-seat-av" ${s.speaking?'style="border-color:var(--aw-accent,#d9b36b);box-shadow:0 0 6px rgba(217,179,107,.5)"':''}>${s.e}</div>
+                  <span class="ph-seat-no">${s.no}</span>
+                </div>
+                <div class="ph-seat-name">${s.nm}</div>
+              </div>`).join('')}
+            </div>
+          </div>
+        </div>`;
+      }
+    },
+    { id:'c-table-vote', title:'投票进行中', assetIds:['table'],
+      render: () => {
+        const tUrl = getAsset('table');
+        const seats = [
+          {no:1, l:50, t:6,  cls:'me',   e:'👤', nm:'我',   voted:true},
+          {no:2, l:72, t:14, cls:'good', e:'⚔️', nm:'龙影', voted:true},
+          {no:3, l:86, t:36, cls:'good', e:'🛡️', nm:'月影', voted:true},
+          {no:4, l:86, t:64, cls:'good', e:'🌸', nm:'星辰', voted:false},
+          {no:5, l:72, t:86, cls:'good', e:'🗡️', nm:'剑客', voted:true},
+          {no:6, l:50, t:94, cls:'good', e:'🏹', nm:'勇士', voted:false},
+          {no:7, l:28, t:86, cls:'evil', e:'🌙', nm:'暗羽', voted:true},
+          {no:8, l:14, t:64, cls:'evil', e:'💀', nm:'铁血', voted:false},
+          {no:9, l:14, t:36, cls:'evil', e:'🐺', nm:'玄武', voted:true},
+          {no:10,l:28, t:14, cls:'evil', e:'🎭', nm:'幻影', voted:true},
+        ];
+        return `<div style="background:var(--aw-bg);padding:4px">
+          <div class="ph-table-area">
+            <div class="ph-table-inner">
+              <div class="ph-table-circle">${tUrl?`<img src="${tUrl}">`:`<div style="width:100%;height:100%;background:var(--aw-bg-2)"></div>`}</div>
+              <div class="ph-center-result">
+                <div class="ph-center-result-title" style="font-size:7px">📋 投票中</div>
+                <div class="ph-center-result-sub">7 / 10 已投</div>
+              </div>
+              ${seats.map(s=>`<div class="ph-seat sm ${s.cls}" style="left:${s.l}%;top:${s.t}%;position:absolute">
+                <div style="position:relative;display:inline-block">
+                  ${s.voted
+                    ?`<div class="ph-seat-status voted" style="font-size:4.5px">✓ 已投</div>`
+                    :`<div class="ph-seat-status" style="font-size:4.5px">投票中</div>`}
+                  <div class="ph-seat-av">${s.e}</div>
+                  <span class="ph-seat-no">${s.no}</span>
+                </div>
+                <div class="ph-seat-name">${s.nm}</div>
+              </div>`).join('')}
+            </div>
+          </div>
+        </div>`;
+      }
+    },
+    { id:'c-table-lady', title:'湖中仙女', assetIds:['table'],
+      render: () => {
+        const tUrl = getAsset('table');
+        const seats = [
+          {no:1, l:50, t:6,  cls:'me',   e:'👤', nm:'我'},
+          {no:2, l:72, t:14, cls:'good', e:'⚔️', nm:'龙影', lady:true},
+          {no:3, l:86, t:36, cls:'good', e:'🛡️', nm:'月影'},
+          {no:4, l:86, t:64, cls:'good', e:'🌸', nm:'星辰'},
+          {no:5, l:72, t:86, cls:'good', e:'🗡️', nm:'剑客'},
+          {no:6, l:50, t:94, cls:'good', e:'🏹', nm:'勇士'},
+          {no:7, l:28, t:86, cls:'evil', e:'🌙', nm:'暗羽'},
+          {no:8, l:14, t:64, cls:'evil', e:'💀', nm:'铁血'},
+          {no:9, l:14, t:36, cls:'evil', e:'🐺', nm:'玄武'},
+          {no:10,l:28, t:14, cls:'evil', e:'🎭', nm:'幻影'},
+        ];
+        return `<div style="background:var(--aw-bg);padding:4px">
+          <div class="ph-table-area">
+            <div class="ph-table-inner">
+              <div class="ph-table-circle">${tUrl?`<img src="${tUrl}">`:`<div style="width:100%;height:100%;background:var(--aw-bg-2)"></div>`}</div>
+              <div class="ph-center-result">
+                <div class="ph-center-result-title" style="font-size:7px">🦋 验人阶段</div>
+                <div class="ph-center-result-sub">点击目标验人</div>
+              </div>
+              ${seats.map(s=>`<div class="ph-seat sm ${s.cls}" style="left:${s.l}%;top:${s.t}%;position:absolute">
+                <div style="position:relative;display:inline-block">
+                  ${s.lady?`<div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-size:11px;line-height:1;white-space:nowrap">🦋</div>`:''}
+                  <div class="ph-seat-av" ${s.lady?'style="border-color:rgba(200,160,255,.9);box-shadow:0 0 8px rgba(180,120,255,.5)"':''}>${s.e}</div>
+                  <span class="ph-seat-no">${s.no}</span>
+                </div>
+                <div class="ph-seat-name">${s.nm}</div>
+                ${s.lady?`<div style="font-size:5px;color:rgba(200,160,255,.9);text-align:center;white-space:nowrap">湖中仙女</div>`:''}
+              </div>`).join('')}
+            </div>
+          </div>
+        </div>`;
+      }
+    },
+    { id:'c-table-end', title:'游戏结束·揭露身份', assetIds:['table','merlin','percival','arthur_loyal','lancelot_good','assassin','morgana','mordred','minion'],
+      render: () => {
+        const tUrl = getAsset('table');
+        const seats = [
+          {no:1, l:50, t:6,  cls:'me',   e:'👤', nm:'我',   role:'梅林',    rCls:'good', aid:'merlin'},
+          {no:2, l:72, t:14, cls:'good', e:'⚔️', nm:'龙影', role:'派西维尔',rCls:'good', aid:'percival'},
+          {no:3, l:86, t:36, cls:'good', e:'🛡️', nm:'月影', role:'忠诚骑士',rCls:'good', aid:'arthur_loyal'},
+          {no:4, l:86, t:64, cls:'good', e:'🌸', nm:'星辰', role:'兰斯洛特',rCls:'good', aid:'lancelot_good'},
+          {no:5, l:72, t:86, cls:'good', e:'🗡️', nm:'剑客', role:'忠诚骑士',rCls:'good', aid:'arthur_loyal'},
+          {no:6, l:50, t:94, cls:'good', e:'🏹', nm:'勇士', role:'忠诚骑士',rCls:'good', aid:'arthur_loyal'},
+          {no:7, l:28, t:86, cls:'evil', e:'🌙', nm:'暗羽', role:'刺客',    rCls:'evil', aid:'assassin'},
+          {no:8, l:14, t:64, cls:'evil', e:'💀', nm:'铁血', role:'摩根娜',  rCls:'evil', aid:'morgana'},
+          {no:9, l:14, t:36, cls:'evil', e:'🐺', nm:'玄武', role:'莫德雷德',rCls:'evil', aid:'mordred'},
+          {no:10,l:28, t:14, cls:'evil', e:'🎭', nm:'幻影', role:'爪牙',    rCls:'evil', aid:'minion'},
+        ];
+        return `<div style="background:var(--aw-bg);padding:4px">
+          <div class="ph-table-area">
+            <div class="ph-table-inner">
+              <div class="ph-table-circle">${tUrl?`<img src="${tUrl}">`:`<div style="width:100%;height:100%;background:var(--aw-bg-2)"></div>`}</div>
+              <div class="ph-center-result">
+                <div class="ph-center-result-title" style="color:#72e0a0">正义获胜</div>
+                <div class="ph-center-result-sub">梅林幸存</div>
+              </div>
+              ${seats.map(s=>{
+                const ri = getAsset(s.aid);
+                return `<div class="ph-seat sm ${s.rCls}" style="left:${s.l}%;top:${s.t}%;position:absolute">
+                  <div style="position:relative;display:inline-block">
+                    <div class="ph-seat-av">${s.e}</div>
+                    <span class="ph-seat-no">${s.no}</span>
+                  </div>
+                  <div class="ph-seat-name">${s.nm}</div>
+                  <div class="ph-seat-role-pill ${s.rCls}" style="font-size:5px;padding:1px 3px;display:flex;align-items:center;gap:2px;max-width:52px">
+                    ${ri?`<img src="${ri}" style="width:10px;height:10px;border-radius:2px;object-fit:cover;flex-shrink:0">`:''}
+                    <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.role}</span>
+                  </div>
+                </div>`;
+              }).join('')}
+            </div>
+          </div>
+        </div>`;
+      }
+    },
+    { id:'c-role-card', title:'角色卡片', assetIds:['merlin','assassin','percival','morgana'],
+      render: () => {
+        const cards = [
+          {id:'merlin',   e:'🧙', nm:'梅林',    cls:'good'},
+          {id:'percival', e:'⚔️', nm:'派西维尔', cls:'good'},
+          {id:'assassin', e:'🗡️', nm:'刺客',    cls:'evil'},
+          {id:'morgana',  e:'🌙', nm:'摩根娜',  cls:'evil'},
+        ];
+        return `<div style="padding:8px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;background:var(--aw-bg)">
+          ${cards.map(c=>{
+            const img = getAsset(c.id);
+            return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+              <div style="width:44px;height:44px;border-radius:calc(7px * var(--aw-r,1));border:2px solid ${c.cls==='good'?'rgba(78,158,255,.7)':'rgba(220,60,60,.7)'};overflow:hidden;background:var(--aw-bg-2);display:flex;align-items:center;justify-content:center;font-size:20px">
+                ${img?`<img src="${img}" style="width:100%;height:100%;object-fit:cover">`:`<span>${c.e}</span>`}
+              </div>
+              <div class="ph-seat-role-pill ${c.cls}">${c.nm}</div>
+            </div>`;
+          }).join('')}
+        </div>`;
+      }
+    },
+  ]},
+
+  /* ── 3. 身份 & 角色 ─────────────────────────────────────────── */
+  { id:'identity', title:'身份 & 角色', icon:'🎭', comps:[
+    { id:'c-my-role', title:'我的身份卡', assetIds:['merlin'],
+      render: () => {
+        const ri = getAsset('merlin');
+        return `<div style="padding:12px 8px;background:var(--aw-bg);text-align:center">
+          <div style="font-size:6.5px;color:var(--aw-subtext);letter-spacing:1px;margin-bottom:6px">你的身份</div>
+          <div style="width:64px;height:64px;margin:0 auto 7px;border-radius:calc(10px * var(--aw-r,1));border:2px solid rgba(78,158,255,.7);overflow:hidden;background:var(--aw-bg-2);display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 0 16px rgba(78,158,255,.3)">
+            ${ri?`<img src="${ri}" style="width:100%;height:100%;object-fit:cover">`:'🧙'}
+          </div>
+          <div style="font-size:14px;font-weight:700;color:var(--aw-text);margin-bottom:5px">梅林</div>
+          <div style="font-size:6.5px;color:rgba(78,158,255,.9);background:rgba(7,50,120,.3);border:1px solid rgba(78,158,255,.3);border-radius:999px;padding:2px 12px;display:inline-block;margin-bottom:7px">正义阵营</div>
+          <div style="font-size:6px;color:var(--aw-subtext);line-height:1.6">你知道所有邪恶玩家的身份<br>但不要暴露自己！</div>
+        </div>`;
+      }
+    },
+    { id:'c-identity', title:'全局身份揭示', assetIds:['merlin','percival','arthur_loyal','assassin','morgana','oberon'],
+      render: () => {
+        const roles=[
+          {no:1,e:'👤',nm:'我',   role:'梅林',   cls:'good',self:true, aid:'merlin'},
+          {no:2,e:'⚔️',nm:'龙影', role:'刺客',   cls:'evil',           aid:'assassin'},
+          {no:3,e:'🌙',nm:'月影', role:'摩根娜', cls:'evil',           aid:'morgana'},
+          {no:4,e:'🛡️',nm:'剑客', role:'派西',   cls:'good',           aid:'percival'},
+          {no:5,e:'🎭',nm:'幻影', role:'奥伯伦', cls:'evil',           aid:'oberon'},
+          {no:6,e:'🏹',nm:'勇士', role:'忠诚骑士',cls:'good',          aid:'arthur_loyal'},
+        ];
+        return `<div style="padding:4px;background:var(--aw-bg)">
+          ${roles.map(p=>{
+            const ri = getAsset(p.aid);
+            return `<div class="ph-player-row" style="${p.self?'background:rgba(217,179,107,.06);border-radius:calc(5px * var(--aw-r,1))':''}">
+              <div class="ph-seat-no-badge">${p.no}</div>
+              <div style="width:20px;height:20px;border-radius:calc(4px * var(--aw-r,1));overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;background:var(--aw-bg-2)">${p.e}</div>
+              <div style="font-size:7.5px;color:var(--aw-text)">${p.nm}${p.self?` <span style="font-size:5.5px;color:var(--aw-accent,#d9b36b)">← 我</span>`:''}</div>
+              <div class="ph-role-chip-sm ${p.cls}" style="margin-left:auto;display:flex;align-items:center;gap:2px">
+                ${ri?`<img src="${ri}" style="width:12px;height:12px;border-radius:2px;object-fit:cover;flex-shrink:0">`:''}
+                <span>${p.role}</span>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>`;
+      }
+    },
+    { id:'c-note-modal', title:'便签标注', assetIds:[],
+      render: () => `<div style="background:rgba(0,0,0,.45);padding:8px">
+        <div style="background:var(--aw-panel,rgba(19,23,31,.98));border:1px solid var(--aw-panel-border,rgba(255,255,255,.12));border-radius:calc(10px * var(--aw-r,1));padding:9px">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:7px;padding-bottom:6px;border-bottom:1px solid rgba(255,255,255,.06)">
+            <div class="ph-av" style="border-color:rgba(78,158,255,.5)">⚔️</div>
+            <div>
+              <div style="font-size:8px;font-weight:700;color:var(--aw-text)">龙影 · 2号位</div>
+              <div style="font-size:6px;color:var(--aw-subtext)">添加判断标注</div>
+            </div>
+          </div>
+          <div style="font-size:6px;color:rgba(78,158,255,.8);margin-bottom:4px">倾向正义</div>
+          <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:7px">
+            ${['梅林','派西维尔','偏好人','忠诚骑士'].map((l,i)=>
+              `<div style="padding:2px 7px;border-radius:999px;font-size:6.5px;${i===0?'background:rgba(7,50,120,.5);border:1px solid rgba(78,158,255,.5);color:#bfdbfe':'background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:var(--aw-subtext)'}">${l}</div>`
+            ).join('')}
+          </div>
+          <div style="font-size:6px;color:rgba(220,60,60,.8);margin-bottom:4px">倾向邪恶</div>
+          <div style="display:flex;flex-wrap:wrap;gap:3px">
+            ${['刺客','摩根娜','偏坏人','奥伯伦'].map(l=>
+              `<div style="padding:2px 7px;border-radius:999px;font-size:6.5px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:var(--aw-subtext)">${l}</div>`
+            ).join('')}
+          </div>
+        </div>
+      </div>`
+    },
+    { id:'c-role-card', title:'角色卡片组', assetIds:['merlin','assassin','percival','morgana'],
+      render: () => {
+        const cards = [
+          {id:'merlin',   e:'🧙', nm:'梅林',    cls:'good'},
+          {id:'percival', e:'⚔️', nm:'派西维尔', cls:'good'},
+          {id:'assassin', e:'🗡️', nm:'刺客',    cls:'evil'},
+          {id:'morgana',  e:'🌙', nm:'摩根娜',  cls:'evil'},
+        ];
+        return `<div style="padding:8px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;background:var(--aw-bg)">
+          ${cards.map(c=>{
+            const img = getAsset(c.id);
+            return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+              <div style="width:44px;height:44px;border-radius:calc(7px * var(--aw-r,1));border:2px solid ${c.cls==='good'?'rgba(78,158,255,.7)':'rgba(220,60,60,.7)'};overflow:hidden;background:var(--aw-bg-2);display:flex;align-items:center;justify-content:center;font-size:20px">
+                ${img?`<img src="${img}" style="width:100%;height:100%;object-fit:cover">`:`<span>${c.e}</span>`}
+              </div>
+              <div class="ph-seat-role-pill ${c.cls}">${c.nm}</div>
+            </div>`;
+          }).join('')}
+        </div>`;
+      }
+    },
+  ]},
+
+  /* ── 4. 操作面板 ─────────────────────────────────────────────── */
+  { id:'panels', title:'操作面板', icon:'🎮', comps:[
+    { id:'c-speak-watch', title:'观看他人发言', assetIds:[],
+      render: () => `<div class="ph-spk-card">
+        <div class="ph-spk-accent"></div>
+        <div class="ph-spk-top">
+          <div class="ph-spk-av">⚔️<span class="ph-spk-dot"></span></div>
+          <div><div class="ph-spk-nm">月影 · 发言中</div><div class="ph-spk-hint">第 3 / 5 位 · 共 60 秒</div></div>
+          <div class="ph-spk-timer" style="color:#ef4444">0:09</div>
+        </div>
+        <div class="ph-spk-track"><div class="ph-spk-fill" style="width:15%;background:linear-gradient(90deg,#991b1b,#f87171)"></div></div>
+        <div style="display:flex;gap:4px;margin-top:4px">
+          <div class="ph-spk-end" style="flex:1">跳过发言</div>
+          <div class="ph-spk-end" style="flex:1;border-color:var(--aw-accent,#d9b36b);color:var(--aw-accent,#d9b36b)">直接投票</div>
+        </div>
+      </div>`
+    },
+    { id:'c-speak', title:'我的发言回合', assetIds:[],
+      render: () => `<div class="ph-spk-card">
+        <div class="ph-spk-accent"></div>
+        <div class="ph-spk-top">
+          <div class="ph-spk-av">👤<span class="ph-spk-dot"></span></div>
+          <div><div class="ph-spk-nm">轮到你了！</div><div class="ph-spk-hint">共 60 秒 · 说出你的判断</div></div>
+          <div class="ph-spk-timer">0:45</div>
+        </div>
+        <div class="ph-spk-track"><div class="ph-spk-fill" style="width:75%"></div></div>
+        <div style="display:flex;gap:3px;margin-bottom:3px">
+          <div class="ph-spk-input" style="color:var(--aw-text);font-style:normal">我觉得3号位有问题…</div>
+          <div class="ph-spk-send">发送</div>
+        </div>
+        <div class="ph-spk-end">结束发言</div>
+      </div>`
+    },
+    { id:'c-vote', title:'投票面板', assetIds:[],
+      render: () => `<div class="ph-action-panel">
+        <div class="ph-vote-title">请对当前提名队伍投票</div>
+        <div class="ph-vote-team">
+          <div style="text-align:center"><div class="ph-vote-av">⚔️</div><div class="ph-vote-name">龙影</div></div>
+          <div style="text-align:center"><div class="ph-vote-av">🌙</div><div class="ph-vote-name">月影</div></div>
+          <div style="text-align:center"><div class="ph-vote-av">🛡️</div><div class="ph-vote-name">剑客</div></div>
+        </div>
+        <div class="ph-vote-divider"></div>
+        <div class="ph-vote-btns"><div class="ph-vote-yes">✓ 同意</div><div class="ph-vote-no">✗ 反对</div></div>
+      </div>`
+    },
+    { id:'c-mission', title:'出征操作面板', assetIds:[],
+      render: () => `<div class="ph-action-panel">
+        <div class="ph-vote-title">你在出征队中 · 请选择行动</div>
+        <div class="ph-vote-team">
+          <div style="text-align:center"><div class="ph-vote-av" style="border-color:rgba(233,191,112,.7)">👤</div><div class="ph-vote-name">我</div></div>
+          <div style="text-align:center"><div class="ph-vote-av">⚔️</div><div class="ph-vote-name">龙影</div></div>
+          <div style="text-align:center"><div class="ph-vote-av">🌙</div><div class="ph-vote-name">月影</div></div>
+        </div>
+        <div class="ph-vote-divider"></div>
+        <div class="ph-vote-btns"><div class="ph-vote-yes">✓ 任务成功</div><div class="ph-vote-no">✗ 任务失败</div></div>
+      </div>`
+    },
+    { id:'c-assassin-panel', title:'刺杀选人面板', assetIds:['assassin'],
+      render: () => {
+        const ai = getAsset('assassin');
+        return `<div class="ph-action-panel" style="border-top:1px solid rgba(220,60,60,.3)">
+          <div class="ph-vote-title" style="color:#f87171">🗡️ 刺杀阶段 · 你认为谁是梅林？</div>
+          <div style="display:flex;justify-content:center;gap:14px;margin-bottom:6px">
+            <div style="text-align:center">
+              <div style="font-size:5.5px;color:var(--aw-subtext);margin-bottom:2px">刺客</div>
+              <div class="ph-vote-av" style="width:28px;height:28px;border-color:rgba(220,60,60,.6)">
+                ${ai?`<img src="${ai}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`:'🌙'}
+              </div>
+              <div class="ph-vote-name">暗羽</div>
+            </div>
+            <div style="display:flex;align-items:center;font-size:14px;color:rgba(220,60,60,.6)">🗡️</div>
+            <div style="text-align:center">
+              <div style="font-size:5.5px;color:#f87171;margin-bottom:2px">目标</div>
+              <div class="ph-vote-av" style="width:28px;height:28px;border-color:rgba(220,60,60,.8);box-shadow:0 0 8px rgba(220,60,60,.4)">⚔️</div>
+              <div class="ph-vote-name" style="color:#f87171">龙影</div>
+            </div>
+          </div>
+          <div class="ph-vote-divider"></div>
+          <div class="ph-vote-btns">
+            <div class="ph-vote-yes" style="background:linear-gradient(180deg,#d44444,#a22020)">🗡️ 执行刺杀</div>
+            <div class="ph-vote-no">重新选择</div>
+          </div>
+        </div>`;
+      }
+    },
+  ]},
+
+  /* ── 5. 发言记录 ─────────────────────────────────────────────── */
+  { id:'chats', title:'发言记录', icon:'💬', comps:[
+    { id:'c-round-selector', title:'轮次切换器', assetIds:[],
+      render: () => `<div style="background:var(--aw-bg)">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.06)">
+          <div style="font-size:7px;color:var(--aw-subtext);padding:3px 8px;border:1px solid rgba(255,255,255,.1);border-radius:4px">← 上一轮</div>
+          <div style="text-align:center">
+            <div style="font-size:9px;font-weight:700;color:var(--aw-text)">第 2 轮发言</div>
+            <div style="font-size:6px;color:var(--aw-subtext)">共 5 轮 · 10条消息</div>
+          </div>
+          <div style="font-size:7px;color:var(--aw-accent,#d9b36b);padding:3px 8px;border:1px solid rgba(217,179,107,.3);border-radius:4px">下一轮 →</div>
+        </div>
+        <div style="display:flex;gap:4px;padding:5px 10px">
+          ${[1,2,3,4,5].map(i=>`<div style="flex:1;height:3px;border-radius:999px;background:${i<=2?'var(--aw-accent,#d9b36b)':'rgba(255,255,255,.12)'}"></div>`).join('')}
+        </div>
+      </div>`
+    },
+    { id:'c-chat', title:'发言列表', assetIds:[],
+      render: () => `<div class="ph-chat-wrap" style="background:var(--aw-bg)">
+        <div class="ph-chat-sys">── 第 2 轮发言 ──</div>
+        <div class="ph-chat-row">
+          <div class="ph-av" style="flex-shrink:0">🧙</div>
+          <div>
+            <div class="ph-chat-nm">龙影 · 3号</div>
+            <div class="ph-chat-bubble">我觉得5号位很可疑，一直在装好人，上一局他的投票也对不上</div>
+          </div>
+        </div>
+        <div class="ph-chat-row">
+          <div class="ph-av" style="flex-shrink:0">⚔️</div>
+          <div>
+            <div class="ph-chat-nm">月影 · 2号</div>
+            <div class="ph-chat-bubble">同意，而且他投票逻辑也对不上</div>
+          </div>
+        </div>
+        <div class="ph-chat-row mine">
+          <div class="ph-av" style="flex-shrink:0;border-color:rgba(233,191,112,.7)">👤</div>
+          <div>
+            <div class="ph-chat-nm">我 · 1号</div>
+            <div class="ph-chat-bubble">我觉得龙影才值得怀疑，上局表现太明显了</div>
+          </div>
+        </div>
+        <div class="ph-chat-sys">系统：轮到 剑客 发言</div>
+      </div>`
+    },
+    { id:'c-speak-watch', title:'观看他人发言', assetIds:[],
+      render: () => `<div class="ph-spk-card">
+        <div class="ph-spk-accent"></div>
+        <div class="ph-spk-top">
+          <div class="ph-spk-av">⚔️<span class="ph-spk-dot"></span></div>
+          <div><div class="ph-spk-nm">月影 · 发言中</div><div class="ph-spk-hint">第 3 / 5 位 · 共 60 秒</div></div>
+          <div class="ph-spk-timer" style="color:#ef4444">0:09</div>
+        </div>
+        <div class="ph-spk-track"><div class="ph-spk-fill" style="width:15%;background:linear-gradient(90deg,#991b1b,#f87171)"></div></div>
+        <div style="display:flex;gap:4px;margin-top:4px">
+          <div class="ph-spk-end" style="flex:1">跳过发言</div>
+          <div class="ph-spk-end" style="flex:1;border-color:var(--aw-accent,#d9b36b);color:var(--aw-accent,#d9b36b)">直接投票</div>
+        </div>
+      </div>`
+    },
+  ]},
+
+  /* ── 6. 任务追踪 ─────────────────────────────────────────────── */
+  { id:'mission-detail', title:'任务追踪', icon:'⚔️', comps:[
+    { id:'c-pills-detail', title:'进度条详版', assetIds:[],
+      render: () => `<div style="padding:8px;background:var(--aw-bg)">
+        <div class="ph-pills-row">
+          <div class="ph-pill success" style="gap:2px">
+            <div class="ph-pill-icon" style="color:#72e0a0;font-size:8px">✓</div>
+            <div style="font-size:5.5px;color:var(--aw-subtext)">第1局</div>
+            <div style="font-size:5px;color:var(--aw-subtext)">2人</div>
+          </div>
+          <div class="ph-pill fail" style="gap:2px">
+            <div class="ph-pill-icon" style="color:#f07070;font-size:8px">✗</div>
+            <div style="font-size:5.5px;color:var(--aw-subtext)">第2局</div>
+            <div style="font-size:5px;color:var(--aw-subtext)">3人</div>
+          </div>
+          <div class="ph-pill current" style="gap:2px">
+            <div style="font-size:5px;font-weight:700;color:var(--aw-accent,#d9b36b);background:rgba(220,180,90,.18);padding:0 3px;border-radius:3px">本轮</div>
+            <div style="font-size:5.5px;color:var(--aw-subtext)">3人出征</div>
+            <div style="font-size:5px;color:#f59e0b;background:rgba(245,158,11,.1);border-radius:3px;padding:0 3px">🛡需2败</div>
+          </div>
+          <div class="ph-pill future" style="gap:2px">
+            <div style="font-size:5.5px;color:var(--aw-subtext)">第4局</div>
+            <div style="font-size:5px;color:var(--aw-subtext)">4人</div>
+          </div>
+          <div class="ph-pill future" style="gap:2px">
+            <div style="font-size:5.5px;color:var(--aw-subtext)">第5局</div>
+            <div style="font-size:5px;color:var(--aw-subtext)">4人</div>
+          </div>
+        </div>
+      </div>`
+    },
+    { id:'c-mission-table', title:'任务记录表', assetIds:[],
+      render: () => `<div style="padding:6px 7px;background:var(--aw-bg)">
+        <table class="ph-mtable">
+          <thead><tr>
+            <th>局</th><th>队长</th><th>出征队</th><th style="text-align:center">票</th><th style="text-align:center">结果</th>
+          </tr></thead>
+          <tbody>
+            <tr>
+              <td style="color:var(--aw-subtext)">1</td>
+              <td style="color:var(--aw-text)">龙影</td>
+              <td style="color:var(--aw-subtext)">龙影,月影</td>
+              <td style="text-align:center;color:var(--aw-subtext)">4/1</td>
+              <td style="text-align:center"><span class="ph-res-pill success">✓成功</span></td>
+            </tr>
+            <tr>
+              <td style="color:var(--aw-subtext)">2</td>
+              <td style="color:var(--aw-text)">月影</td>
+              <td style="color:var(--aw-subtext)">月影,剑客,龙影</td>
+              <td style="text-align:center;color:var(--aw-subtext)">2/3</td>
+              <td style="text-align:center"><span class="ph-res-pill rej">否决</span></td>
+            </tr>
+            <tr>
+              <td style="color:var(--aw-subtext)">2</td>
+              <td style="color:var(--aw-text)">剑客</td>
+              <td style="color:var(--aw-subtext)">剑客,勇士,龙影</td>
+              <td style="text-align:center;color:var(--aw-subtext)">4/1</td>
+              <td style="text-align:center"><span class="ph-res-pill fail">✗失败</span></td>
+            </tr>
+            <tr>
+              <td style="color:var(--aw-subtext)">3</td>
+              <td style="color:var(--aw-text)">勇士</td>
+              <td style="color:var(--aw-subtext)">勇士,龙影,月影</td>
+              <td style="text-align:center;color:var(--aw-subtext)">5/0</td>
+              <td style="text-align:center"><span class="ph-res-pill success">✓成功</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>`
+    },
+    { id:'c-mission-progress', title:'出征进度浮层', assetIds:[],
+      render: () => `<div style="background:var(--aw-bg);padding:7px">
+        <div style="background:rgba(0,0,0,.6);border:1px solid var(--aw-panel-border,rgba(255,255,255,.1));border-radius:calc(9px * var(--aw-r,1));padding:11px 14px;text-align:center">
+          <div style="font-size:8px;color:var(--aw-accent,#d9b36b);font-weight:700;margin-bottom:8px;letter-spacing:1px">⚔ 任务进行中</div>
+          <div style="display:flex;justify-content:center;gap:8px;margin-bottom:8px">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+              <div class="ph-vote-av" style="border-color:rgba(233,191,112,.7)">👤</div>
+              <div class="ph-vote-name">我</div>
+              <div style="font-size:5.5px;color:#72e0a0">✓ 已提交</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+              <div class="ph-vote-av">⚔️</div>
+              <div class="ph-vote-name">龙影</div>
+              <div style="font-size:5.5px;color:var(--aw-subtext)">思考中…</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+              <div class="ph-vote-av">🌙</div>
+              <div class="ph-vote-name">月影</div>
+              <div style="font-size:5.5px;color:var(--aw-subtext)">思考中…</div>
+            </div>
+          </div>
+          <div style="font-size:7px;color:var(--aw-subtext)">已提交 1 / 3</div>
+          <div style="margin-top:5px;height:3px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden">
+            <div style="width:33%;height:100%;background:var(--aw-accent,#d9b36b);border-radius:999px"></div>
+          </div>
+        </div>
+      </div>`
+    },
+  ]},
+
+  /* ── 8. 玩家列表 ─────────────────────────────────────────────── */
+  { id:'players', title:'玩家列表', icon:'👥', comps:[
+    { id:'c-player-list', title:'游戏中玩家', assetIds:[],
+      render: () => `<div style="padding:4px;background:var(--aw-bg)">
+        ${[
+          {no:1,e:'👤',nm:'我',host:true,role:'梅林',cls:'good'},
+          {no:2,e:'⚔️',nm:'龙影',host:false,role:'刺客',cls:'evil'},
+          {no:3,e:'🌙',nm:'月影',host:false,role:'摩根娜',cls:'evil'},
+          {no:4,e:'🛡️',nm:'剑客',host:false,role:'',cls:''},
+          {no:5,e:'🎭',nm:'幻影',host:false,role:'',cls:''},
+        ].map(p=>`<div class="ph-player-row">
+          <div class="ph-seat-no-badge">${p.no}</div>
+          <div class="ph-av">${p.e}</div>
+          <div style="font-size:7.5px;color:var(--aw-text)">${p.nm}${p.host?` <span style="font-size:5.5px;color:var(--aw-accent,#d9b36b)">房主</span>`:''}</div>
+          ${p.role
+            ?`<div class="ph-role-chip-sm ${p.cls}" style="margin-left:auto">${p.role}</div>`
+            :`<div style="margin-left:auto;font-size:6px;color:var(--aw-subtext);padding:1px 7px;border:1px solid rgba(255,255,255,.1);border-radius:999px">踢</div>`}
+        </div>`).join('')}
+      </div>`
+    },
+  ]},
+
+  /* ── 7. 浮层 & 动效 ─────────────────────────────────────────── */
+  { id:'overlays', title:'浮层 & 动效', icon:'🎬', comps:[
+    { id:'c-mission-result', title:'任务结果动效', assetIds:[],
+      render: () => `<div style="background:var(--aw-bg);padding:6px;display:flex;flex-direction:column;gap:6px">
+        <div style="background:rgba(20,70,45,.45);border:1px solid rgba(100,200,140,.28);border-radius:calc(9px * var(--aw-r,1));padding:12px;text-align:center">
+          <div style="font-size:7px;color:var(--aw-subtext);margin-bottom:4px">第3局任务结果</div>
+          <div style="font-size:20px;margin-bottom:3px">✨</div>
+          <div style="font-size:12px;font-weight:700;color:#72e0a0;letter-spacing:2px;margin-bottom:6px">任务成功！</div>
+          <div style="display:flex;justify-content:center;gap:4px;margin-bottom:4px">
+            <div style="width:9px;height:9px;border-radius:50%;background:#72e0a0"></div>
+            <div style="width:9px;height:9px;border-radius:50%;background:#72e0a0"></div>
+            <div style="width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.15)"></div>
+          </div>
+          <div style="font-size:6px;color:var(--aw-subtext)">2 成功票 · 1 失败票</div>
+        </div>
+        <div style="background:rgba(70,15,15,.45);border:1px solid rgba(200,60,60,.25);border-radius:calc(9px * var(--aw-r,1));padding:12px;text-align:center">
+          <div style="font-size:7px;color:var(--aw-subtext);margin-bottom:4px">第2局任务结果</div>
+          <div style="font-size:20px;margin-bottom:3px">💀</div>
+          <div style="font-size:12px;font-weight:700;color:#f07070;letter-spacing:2px;margin-bottom:6px">任务失败！</div>
+          <div style="display:flex;justify-content:center;gap:4px;margin-bottom:4px">
+            <div style="width:9px;height:9px;border-radius:50%;background:#f07070"></div>
+            <div style="width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.15)"></div>
+            <div style="width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.15)"></div>
+          </div>
+          <div style="font-size:6px;color:var(--aw-subtext)">1 失败票</div>
+        </div>
+      </div>`
+    },
+    { id:'c-vote-progress', title:'投票等待浮层', assetIds:[],
+      render: () => `<div style="background:var(--aw-bg);padding:7px">
+        <div style="background:rgba(0,0,0,.6);border:1px solid var(--aw-panel-border,rgba(255,255,255,.1));border-radius:calc(9px * var(--aw-r,1));padding:10px 14px;text-align:center">
+          <div style="font-size:8px;color:var(--aw-accent,#d9b36b);font-weight:700;margin-bottom:7px;letter-spacing:1px">📋 等待投票</div>
+          <div style="display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:7px">
+            ${[
+              {e:'👤',nm:'我',done:true},
+              {e:'⚔️',nm:'龙影',done:true},
+              {e:'🌙',nm:'月影',done:false},
+              {e:'🛡️',nm:'剑客',done:false},
+              {e:'🎭',nm:'幻影',done:true},
+            ].map(p=>`<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
+              <div class="ph-vote-av" style="opacity:${p.done?1:.45}">${p.e}</div>
+              <div class="ph-vote-name">${p.nm}</div>
+              <div style="font-size:5.5px;color:${p.done?'#72e0a0':'var(--aw-subtext)'}">${p.done?'✓ 已投':'…'}</div>
+            </div>`).join('')}
+          </div>
+          <div style="font-size:7px;color:var(--aw-subtext)">已投票 3 / 5</div>
+        </div>
+      </div>`
+    },
+    { id:'c-assassin-overlay', title:'刺杀结果浮层', assetIds:[],
+      render: () => `<div style="background:var(--aw-bg);padding:7px;display:flex;flex-direction:column;gap:6px">
+        <div style="background:rgba(120,20,20,.55);border:1px solid rgba(220,60,60,.35);border-radius:calc(9px * var(--aw-r,1));padding:12px 14px;text-align:center">
+          <div style="font-size:20px;margin-bottom:5px">🗡️</div>
+          <div style="font-size:10px;font-weight:700;color:#f07070;letter-spacing:2px;margin-bottom:3px">刺杀命中！</div>
+          <div style="font-size:6.5px;color:rgba(255,255,255,.55)">刺客 · 月影 猜中了梅林</div>
+          <div style="font-size:7px;color:#f07070;margin-top:5px;font-weight:600">邪恶阵营获胜</div>
+        </div>
+        <div style="background:rgba(20,60,40,.5);border:1px solid rgba(78,158,255,.3);border-radius:calc(9px * var(--aw-r,1));padding:12px 14px;text-align:center">
+          <div style="font-size:20px;margin-bottom:5px">🛡️</div>
+          <div style="font-size:10px;font-weight:700;color:#72e0a0;letter-spacing:2px;margin-bottom:3px">刺杀落空！</div>
+          <div style="font-size:6.5px;color:rgba(255,255,255,.55)">刺客猜测失误，梅林幸存</div>
+          <div style="font-size:7px;color:#72e0a0;margin-top:5px;font-weight:600">正义阵营获胜</div>
+        </div>
+      </div>`
+    },
+  ]},
+
+  /* ── 10. 对战历史 ────────────────────────────────────────────── */
+  { id:'history', title:'对战历史', icon:'📜', comps:[
+    { id:'c-hist-list', title:'历史列表', assetIds:[],
+      render: () => {
+        const games = [
+          {win:true,  title:'正义阵营获胜', sub:'8人局 · 42分钟 · 梅林幸存', date:'04-28', segs:['s','s','f','s']},
+          {win:false, title:'邪恶阵营获胜', sub:'7人局 · 28分钟 · 刺杀命中', date:'04-27', segs:['s','f','f']},
+          {win:true,  title:'正义阵营获胜', sub:'6人局 · 35分钟',             date:'04-26', segs:['s','f','s','s']},
+          {win:false, title:'邪恶阵营获胜', sub:'10人局 · 51分钟',            date:'04-25', segs:['f','s','f','f']},
+        ];
+        return `<div style="background:var(--aw-bg)">
+          ${games.map(g=>`<div class="ph-hist-item">
+            <div class="ph-hist-icon ${g.win?'win':'lose'}">${g.win?'🏆':'💀'}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:8px;font-weight:700;color:${g.win?'#72e0a0':'#f07070'};margin-bottom:2px">${g.title}</div>
+              <div style="font-size:6px;color:var(--aw-subtext);margin-bottom:3px">${g.sub}</div>
+              <div class="ph-hist-mseg">${g.segs.map(x=>`<div class="ph-hist-dot ${x}"></div>`).join('')}</div>
+            </div>
+            <div style="font-size:6.5px;color:var(--aw-subtext);flex-shrink:0">${g.date}</div>
+          </div>`).join('')}
+        </div>`;
+      }
+    },
+    { id:'c-hist-detail', title:'历史详情', assetIds:['merlin','assassin','percival','morgana','mordred','arthur_loyal'],
+      render: () => {
+        const roles=[
+          {no:1,e:'👤',nm:'我',   role:'梅林',    cls:'good', aid:'merlin'},
+          {no:2,e:'⚔️',nm:'龙影', role:'派西维尔',cls:'good', aid:'percival'},
+          {no:3,e:'🌙',nm:'月影', role:'刺客',    cls:'evil', aid:'assassin'},
+          {no:4,e:'🛡️',nm:'星辰', role:'摩根娜',  cls:'evil', aid:'morgana'},
+          {no:5,e:'🗡️',nm:'剑客', role:'忠诚骑士',cls:'good', aid:'arthur_loyal'},
+          {no:6,e:'🏹',nm:'勇士', role:'莫德雷德',cls:'evil', aid:'mordred'},
+        ];
+        return `<div style="background:var(--aw-bg)">
+          <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.06)">
+            <div style="font-size:9px;font-weight:700;color:#72e0a0;margin-bottom:1px">✓ 正义阵营获胜</div>
+            <div style="font-size:6px;color:var(--aw-subtext)">2025-04-28 · 6人局 · 42分钟</div>
+            <div style="display:flex;gap:3px;margin-top:4px">
+              <div class="ph-hist-dot s"></div><div class="ph-hist-dot f"></div>
+              <div class="ph-hist-dot s"></div><div class="ph-hist-dot s"></div>
+            </div>
+          </div>
+          <div style="padding:5px">
+            <div style="font-size:6.5px;color:var(--aw-subtext);margin-bottom:4px;padding:0 2px">玩家身份</div>
+            ${roles.map(p=>{
+              const ri = getAsset(p.aid);
+              return `<div class="ph-player-row" style="padding:2px 4px">
+                <div class="ph-seat-no-badge" style="width:14px;height:14px;font-size:6px">${p.no}</div>
+                <div style="font-size:7px;color:var(--aw-text)">${p.e} ${p.nm}</div>
+                <div class="ph-role-chip-sm ${p.cls}" style="margin-left:auto;display:flex;align-items:center;gap:2px">
+                  ${ri?`<img src="${ri}" style="width:12px;height:12px;border-radius:2px;object-fit:cover;flex-shrink:0">`:''}
+                  <span>${p.role}</span>
+                </div>
+              </div>`;
+            }).join('')}
+          </div>
+          <div style="padding:4px 8px 6px;border-top:1px solid rgba(255,255,255,.06)">
+            <div style="display:flex;flex-wrap:wrap;gap:3px">
+              ${['🎯先知','⚔击杀','🛡护卫'].map(m=>`<div class="ph-ghc-medal">${m}</div>`).join('')}
+            </div>
+          </div>
+        </div>`;
+      }
+    },
+  ]},
+
+  /* ── 9. 通用 UI ──────────────────────────────────────────────── */
+  { id:'ui', title:'通用 UI', icon:'🧩', comps:[
+    { id:'c-buttons', title:'按钮', assetIds:[],
+      render: () => `<div style="padding:12px;display:flex;flex-direction:column;gap:6px;background:var(--aw-bg)">
+        <div class="ph-btn-row"><div class="ph-btn-p">主要操作</div><div class="ph-btn-g">次要操作</div></div>
+        <div class="ph-btn-row"><div class="ph-btn-p">确认出征</div><div class="ph-btn-g">取消</div></div>
+      </div>`
+    },
+    { id:'c-panel', title:'内容面板', assetIds:[],
+      render: () => `<div style="padding:7px;background:var(--aw-bg)">
+        <div class="ph-panel">
+          <div class="ph-panel-hd"><span class="ph-panel-title">游戏公告</span><span class="ph-panel-sub">第3局</span></div>
+          <div style="padding:6px 0;display:flex;flex-direction:column;gap:4px">
+            <div style="display:flex;gap:4px;align-items:center">
+              <div class="ph-av">🧙</div>
+              <div style="font-size:7px;color:var(--aw-text)">龙影 提名了出征队伍</div>
+            </div>
+            <div style="display:flex;gap:4px;align-items:center">
+              <div class="ph-av">⚔️</div>
+              <div style="font-size:7px;color:var(--aw-text)">月影 投票赞成</div>
+            </div>
+            <div style="display:flex;gap:4px;align-items:center">
+              <div class="ph-av">🌙</div>
+              <div style="font-size:7px;color:var(--aw-subtext)">剑客 正在投票…</div>
+            </div>
+          </div>
+        </div>
+      </div>`
+    },
+    { id:'c-nav', title:'底部导航', assetIds:['history-icon','stats-icon','kill-icon'],
+      render: () => {
+        const tabs = [
+          {id:'home',    icon:null, emoji:'🏠', label:'主页',   active:true},
+          {id:'history', icon:'history-icon', emoji:'📜', label:'历史'},
+          {id:'stats',   icon:'stats-icon',   emoji:'📊', label:'统计'},
+          {id:'kill',    icon:'kill-icon',     emoji:'🗡️', label:'刺杀'},
+        ];
+        return `<div style="background:var(--aw-nav-bg,rgba(12,16,24,.92));border-top:1px solid var(--aw-nav-border,rgba(255,255,255,.08));padding:4px 0 6px;display:flex">
+          ${tabs.map(t=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding-top:3px">
+            <div style="width:20px;height:20px;display:flex;align-items:center;justify-content:center;overflow:hidden">
+              ${getAsset(t.id)?`<img src="${getAsset(t.id)}" style="width:100%;height:100%;object-fit:contain;${t.active?'':'opacity:.45'}">`
+              :`<span style="font-size:13px;${t.active?'':'opacity:.45'}">${t.emoji}</span>`}
+            </div>
+            <div style="font-size:6px;${t.active?`color:var(--aw-accent,#d9b36b);font-weight:700`:'color:var(--aw-subtext,#aeb6c7)'}">${t.label}</div>
+          </div>`).join('')}
+        </div>`;
+      }
+    },
+    { id:'c-medals', title:'勋章展示', assetIds:[],
+      render: () => `<div style="padding:7px;background:var(--aw-bg)">
+        <div class="ph-panel">
+          <div style="display:flex;flex-wrap:wrap;gap:4px;padding:4px">
+            ${['🎯先知','⚔击杀','🛡护卫','👁洞察','🐺狼王','🎭伪装'].map(m=>
+              `<div class="ph-ghc-medal">${m}</div>`
+            ).join('')}
+          </div>
+        </div>
+      </div>`
+    },
+    { id:'c-mission-track', title:'任务进度', assetIds:[],
+      render: () => `<div style="padding:8px;background:var(--aw-bg)">
+        <div class="ph-pills-row">
+          <div class="ph-pill success"><div class="ph-pill-icon" style="color:#72e0a0">✓</div><div style="font-size:5.5px;color:var(--aw-subtext)">成功</div></div>
+          <div class="ph-pill fail"><div class="ph-pill-icon" style="color:#f07070">✗</div><div style="font-size:5.5px;color:var(--aw-subtext)">失败</div></div>
+          <div class="ph-pill current"><div class="ph-pill-icon" style="color:var(--aw-accent)">⚔</div><div style="font-size:5.5px;color:var(--aw-subtext)">出征</div></div>
+          <div class="ph-pill future"><div class="ph-pill-icon" style="color:var(--aw-subtext)">·</div><div style="font-size:5.5px;color:var(--aw-subtext)">待定</div></div>
+          <div class="ph-pill future"><div class="ph-pill-icon" style="color:var(--aw-subtext)">·</div><div style="font-size:5.5px;color:var(--aw-subtext)">待定</div></div>
+        </div>
+      </div>`
+    },
+  ]},
+
+  /* ── 11. 结果 & 图标 ─────────────────────────────────────────── */
+  { id:'results', title:'结果 & 图标', icon:'🏆', comps:[
+    { id:'c-success', title:'任务成功', assetIds:['quest-success'],
+      render: () => {
+        const img = getAsset('quest-success');
+        return `<div style="position:relative;overflow:hidden;min-height:90px;display:flex;align-items:center;justify-content:center;background:rgba(30,80,50,.3)">
+          ${img?`<img src="${img}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.65">`:''}
+          <div style="position:relative;z-index:1;text-align:center;padding:16px 0">
+            <div style="font-size:22px">✨</div>
+            <div style="font-size:11px;font-weight:700;color:#72e0a0;letter-spacing:2px;margin-top:4px">任务成功</div>
+            <div style="font-size:7px;color:rgba(255,255,255,.6);margin-top:3px">正义的力量获得胜利</div>
+          </div>
+        </div>`;
+      }
+    },
+    { id:'c-fail', title:'任务失败', assetIds:['quest-fail'],
+      render: () => {
+        const img = getAsset('quest-fail');
+        return `<div style="position:relative;overflow:hidden;min-height:90px;display:flex;align-items:center;justify-content:center;background:rgba(80,20,20,.35)">
+          ${img?`<img src="${img}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.65">`:''}
+          <div style="position:relative;z-index:1;text-align:center;padding:16px 0">
+            <div style="font-size:22px">💀</div>
+            <div style="font-size:11px;font-weight:700;color:#f07070;letter-spacing:2px;margin-top:4px">任务失败</div>
+            <div style="font-size:7px;color:rgba(255,255,255,.6);margin-top:3px">黑暗势力蔓延</div>
+          </div>
+        </div>`;
+      }
+    },
+    { id:'c-icons', title:'UI 图标', assetIds:['kill-icon','history-icon','stats-icon'],
+      render: () => {
+        const icons=[{id:'kill-icon',l:'刺杀',e:'🗡️'},{id:'history-icon',l:'历史',e:'📜'},{id:'stats-icon',l:'统计',e:'📊'}];
+        return `<div style="padding:12px;display:flex;justify-content:space-around;background:var(--aw-bg)">
+          ${icons.map(ic=>`<div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+            <div style="width:36px;height:36px;border-radius:calc(7px * var(--aw-r,1));border:1px solid var(--aw-panel-border,rgba(255,255,255,.12));overflow:hidden;background:var(--aw-bg-2);display:flex;align-items:center;justify-content:center;font-size:18px">
+              ${getAsset(ic.id)?`<img src="${getAsset(ic.id)}" style="width:100%;height:100%;object-fit:contain">`:ic.e}
+            </div>
+            <span style="font-size:7px;color:var(--aw-subtext)">${ic.l}</span>
+          </div>`).join('')}
+        </div>`;
+      }
+    },
+    { id:'c-heads', title:'角色头像组', assetIds:['merlin','percival','arthur_loyal','lancelot_good','assassin','morgana','mordred','oberon'],
+      render: () => {
+        const roles=[
+          {id:'merlin',cls:'good'},{id:'percival',cls:'good'},
+          {id:'arthur_loyal',cls:'good'},{id:'lancelot_good',cls:'good'},
+          {id:'assassin',cls:'evil'},{id:'morgana',cls:'evil'},
+          {id:'mordred',cls:'evil'},{id:'oberon',cls:'evil'},
+        ];
+        return `<div style="padding:8px;background:var(--aw-bg)">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px">
+            ${roles.map(r=>{
+              const img = getAsset(r.id);
+              return `<div style="aspect-ratio:1;border-radius:calc(5px * var(--aw-r,1));border:1.5px solid ${r.cls==='good'?'rgba(78,158,255,.5)':'rgba(220,60,60,.5)'};overflow:hidden;background:var(--aw-bg-2);display:flex;align-items:center;justify-content:center">
+                ${img?`<img src="${img}" style="width:100%;height:100%;object-fit:cover">`:'<span style="font-size:12px;opacity:.3">👤</span>'}
+              </div>`;
+            }).join('')}
+          </div>
+        </div>`;
+      }
+    },
+  ]},
+];
+
+// ── 渲染 ──────────────────────────────────────────────────────
+function refreshPreviews() {
+  document.getElementById('cfgAccentHex').textContent = document.getElementById('cfgAccent').value;
+  render();
+}
+
+function getVarsStr() {
+  try {
+    const base = buildVarsStr(readState());
+    if (!Object.keys(aiVars).length) return base;
+    // AI 覆盖层叠在计算值之上
+    return base + ';' + Object.entries(aiVars).map(([k,v])=>`${k}:${v}`).join(';');
+  } catch(_) { return ''; }
+}
+
+function render() {
+  const allIds = [...new Set(GROUPS.flatMap(g=>g.comps.flatMap(c=>c.assetIds)))];
+  const done = allIds.filter(id => isCustom(id)).length;
+  document.getElementById('progLabel').textContent =
+    `已自定义 ${done} / ${allIds.length} 个资产 · 其余使用默认皮肤图片`;
+  const dots = document.getElementById('progDots');
+  if (dots) dots.innerHTML = allIds.map(id=>
+    `<div class="prog-dot ${runningIds[id]?'run':isCustom(id)?'done':''}"></div>`).join('');
+
+  const vars = getVarsStr();
+  document.getElementById('mainBody').innerHTML =
+    GROUPS.map(g => renderGroup(g, vars)).join('');
+}
+
+function renderGroup(g, vars) {
+  const ids = [...new Set(g.comps.flatMap(c=>c.assetIds))];
+  const anyRun = ids.some(id => runningIds[id]);
+  const tunePanel = g.id === 'table' ? `
+    <div class="tune-hd" onclick="toggleTableTune(this)">
+      🎨 桌面区域精调 <span style="margin-left:auto;font-size:9px;opacity:.6">${tableTuneOpen?'▲':'▼'}</span>
+    </div>
+    <div class="tune-body" id="tableTuneBody" style="display:${tableTuneOpen?'flex':'none'}">
+      <div class="tune-row">
+        <span class="tune-label">参考图</span>
+        <input class="tune-file" type="file" accept="image/*" onchange="onTableRefImg(event)">
+        <input class="tune-url" type="url" id="tableRefUrl" placeholder="或粘贴图片 URL（可选）">
+      </div>
+      <div class="tune-row">
+        <span class="tune-label">风格描述</span>
+        <textarea class="tune-desc" id="tableStyleDesc" placeholder="描述桌面想要的风格，例如：赛博朋克，蓝紫色光圈边框，数字标签霓虹发光效果，邪恶阵营红色扭曲描边"></textarea>
+      </div>
+      <div class="tune-btns">
+        <button class="btn-tune-ai" id="btnTuneAI" onclick="analyzeTableStyle()">✨ AI 分析</button>
+        <button class="btn-tune-apply" id="btnTuneApply" onclick="applyTableStyle()" style="display:none">✓ 应用</button>
+        <button class="btn-tune-clear" id="btnTuneClear" onclick="clearTableStyle()" style="display:${tableStyleCSS?'inline-flex':'none'}">✕ 清除覆盖</button>
+      </div>
+      <div class="tune-status" id="tableTuneStatus"></div>
+      <textarea class="tune-css-out" id="tableCSSOut" readonly placeholder="AI 生成的 CSS 将显示在这里…" style="display:${tablePendingCSS?'block':'none'}">${tablePendingCSS}</textarea>
+    </div>` : '';
+  return `<div class="section">
+    <div class="sec-hd">
+      <span>${g.icon}</span>
+      <span class="sec-title">${g.title}</span>
+      ${ids.length?`<button class="batch-btn" id="bb-${g.id}" onclick="batchGroup('${g.id}')" ${anyRun?'disabled':''}>
+        ${anyRun?'生成中…':'批量生成素材'}
+      </button>`:''}
+    </div>
+    <div class="comp-grid">${g.comps.map(c=>renderCard(c,vars)).join('')}</div>
+    ${tunePanel}
+  </div>`;
+}
+
+function renderCard(c, vars) {
+  const preview = c.render(customAssets);
+  const btns = c.assetIds.map(id => {
+    const run = runningIds[id];
+    const custom = isCustom(id);
+    const labels = {
+      'home-bg':'主页背景','in-game-bg':'游戏背景','table':'圆桌','quest-success':'任务成功图',
+      'quest-fail':'任务失败图','kill-icon':'刺杀图标','history-icon':'历史图标','stats-icon':'统计图标',
+      'merlin':'梅林','percival':'派西维尔','arthur_loyal':'忠诚骑士','lancelot_good':'兰斯洛特',
+      'assassin':'刺客','morgana':'摩根娜','mordred':'莫德雷德','oberon':'奥伯伦',
+      'minion':'爪牙','lancelot_evil':'堕落兰斯洛特',
+    };
+    return `<button class="gen-btn ${run?'running':custom?'done':''}" id="gb-${id}"
+      onclick="generateOne('${id}')" ${run?'disabled':''}>
+      ${run?'生成中…':custom?'重生成':labels[id]||id}
+    </button>`;
+  }).join('');
+  return `<div class="comp-card">
+    <div class="comp-preview" style="${vars}">${preview}</div>
+    <div class="comp-footer">
+      <span class="comp-name">${c.title}</span>
+      ${btns?`<div style="display:flex;flex-wrap:wrap;gap:4px">${btns}</div>`:''}
+    </div>
+  </div>`;
+}
+
+// ── AI 风格生成 ──────────────────────────────────────────────
+function isClaudeKey(k){ return k.startsWith('sk-ant-'); }
+
+function setAiStatus(state, data) {
+  const drawer = document.getElementById('aiDrawer');
+  const statusEl = document.getElementById('aiStatus');
+  const resultEl = document.getElementById('aiResult');
+  drawer.style.display = 'flex';
+
+  if (state === 'loading') {
+    statusEl.innerHTML = `<div class="ai-spinner"></div><span>${data}</span>`;
+    resultEl.style.display = 'none';
+    document.getElementById('btnAiStyle').classList.add('running');
+    if (document.getElementById('btnRegenStyle'))
+      document.getElementById('btnRegenStyle').classList.add('running');
+  } else if (state === 'done') {
+    statusEl.innerHTML = `<span style="color:#a78bfa">✦</span><span style="color:var(--text)">配色已应用 — 所有组件预览已更新</span>`;
+    document.getElementById('btnAiStyle').classList.remove('running');
+    // 展示色块
+    const swatchKeys = ['--aw-bg','--aw-accent','--aw-panel-border','--aw-text','--aw-success','--aw-fail'];
+    const swatchLabels = {'--aw-bg':'背景','--aw-accent':'强调色','--aw-panel-border':'面板边框','--aw-text':'文字','--aw-success':'成功','--aw-fail':'失败'};
+    document.getElementById('aiSwatches').innerHTML = swatchKeys.map(k => {
+      const v = aiVars[k]||'';
+      if (!v) return '';
+      // 取第一个 hex 颜色用于色块
+      const hex = v.match(/#[0-9a-fA-F]{3,6}/)?.[0] || v.match(/rgba?\([^)]+\)/)?.[0] || v;
+      return `<div class="ai-swatch" style="background:${hex}" title="${k}: ${v}"></div>
+              <span style="font-size:9px;color:var(--sub);margin-right:4px">${swatchLabels[k]||''}</span>`;
+    }).join('');
+    // 展示图像提示词
+    document.getElementById('aiPrompts').textContent =
+      Object.entries(aiAssetPrompts).map(([k,v])=>`[${k}]\n${v}`).join('\n\n');
+    resultEl.style.display = 'flex';
+  } else if (state === 'error') {
+    statusEl.innerHTML = `<span style="color:#f07070">✕ 生成失败: ${data}</span>`;
+    document.getElementById('btnAiStyle').classList.remove('running');
+  }
+}
+
+async function generateStyle() {
+  const key = getKey();
+  const desc = document.getElementById('cfgStyle').value.trim();
+  if (!desc) { alert('请先填写风格描述，例如：赛博朋克，霓虹蓝紫，科技感'); return; }
+  if (!isValidKey(key)) {
+    alert('请在顶部 API Key 字段填入你的 key（ark- 或 AIza...）');
+    return;
+  }
+
+  setAiStatus('loading', '正在分析风格，生成配色方案…');
+
+  const userPrompt = `You are a UI skin designer for a mobile card game called Avalon (social deduction).
+Output ONLY a valid JSON object — no markdown, no explanation, no code fences.
+
+Style description: "${desc}"
+
+Design a complete UI color scheme for this game skin. Output this exact JSON structure:
+{
+  "vars": {
+    "--aw-bg": "#hex (darkest background)",
+    "--aw-bg-2": "#hex (slightly lighter bg for cards)",
+    "--aw-panel": "rgba() (panel/card surface, semi-transparent, 0.85-0.95 opacity)",
+    "--aw-panel-border": "rgba() (panel border, accent-tinted, 0.3-0.5 opacity)",
+    "--aw-text": "#hex (primary text, high contrast on bg)",
+    "--aw-subtext": "#hex (secondary muted text)",
+    "--aw-accent": "#hex (primary accent — buttons, highlights, key UI)",
+    "--aw-accent-text": "#hex (text on accent bg — #000 or #fff for contrast)",
+    "--aw-nav-bg": "rgba() (navbar, slightly transparent)",
+    "--aw-nav-border": "rgba() (navbar bottom border, subtle)",
+    "--aw-input-bg": "rgba() (text input background)",
+    "--aw-input-border": "rgba() (input border)",
+    "--aw-btn-ghost-border": "rgba() (ghost/outline button border)",
+    "--aw-btn-ghost-text": "#hex (ghost button label)",
+    "--aw-r": "0 to 1 (0=sharp corners, 1=fully rounded — match style)",
+    "--aw-btn-primary-bg": "linear-gradient(180deg, lighter, darker) using accent color",
+    "--aw-btn-primary-text": "#hex",
+    "--aw-good-glow": "rgba() (good faction seat glow — blue-ish keeps readability)",
+    "--aw-good-shadow": "rgba()",
+    "--aw-good-seat-bg": "rgba()",
+    "--aw-evil-glow": "rgba() (evil faction seat glow — red-ish keeps readability)",
+    "--aw-evil-shadow": "rgba()",
+    "--aw-evil-seat-bg": "rgba()",
+    "--aw-success": "#hex (mission success color)",
+    "--aw-fail": "#hex (mission fail color)",
+    "--aw-medal-color": "#hex (medal/badge accent, can match --aw-accent)",
+    "--aw-medal-bg": "rgba()",
+    "--aw-medal-border": "rgba()",
+    "--aw-faction-good": "linear-gradient(90deg, ...) for good faction banner",
+    "--aw-faction-evil": "linear-gradient(90deg, ...) for evil faction banner"
+  },
+  "assetPrompts": {
+    "home-bg": "20-word English prompt for 9:16 home background",
+    "in-game-bg": "20-word English prompt for 9:16 in-game background",
+    "table": "20-word English prompt for overhead round game table",
+    "quest-success": "20-word English prompt for victory scene",
+    "quest-fail": "20-word English prompt for defeat scene",
+    "kill-icon": "15-word English prompt for dagger icon",
+    "history-icon": "15-word English prompt for scroll/records icon",
+    "stats-icon": "15-word English prompt for stats/trophy icon"
+  }
+}`;
+
+  try {
+    let text = '';
+    if (isDoubaoKey(key)) {
+      // Doubao / 豆包 chat completions
+      const res = await fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
+        body: JSON.stringify({
+          model: 'doubao-pro-4k',
+          messages: [{ role: 'user', content: userPrompt }],
+          temperature: 0.7, max_tokens: 2048
+        })
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error?.message || `Doubao HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      text = data.choices?.[0]?.message?.content || '';
+    } else {
+      // Gemini
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
+        {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: userPrompt }] }],
+            generationConfig: { temperature: 0.7, maxOutputTokens: 8192, responseMimeType: 'application/json' }
+          })
+        }
+      );
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error?.message || `Gemini HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    }
+
+    // 解析 JSON：先直接 parse，再 fallback 到提取 {} 块
+    text = text.replace(/```(?:json)?\s*/gi, '').replace(/```/g, '').trim();
+    let json;
+    try {
+      json = JSON.parse(text);
+    } catch(_) {
+      const match = text.match(/\{[\s\S]*\}/s);
+      if (!match) throw new Error('无法解析响应：' + text.slice(0, 120));
+      json = JSON.parse(match[0]);
+    }
+
+    aiVars = json.vars || {};
+    aiAssetPrompts = json.assetPrompts || {};
+
+    // 同步强调色 picker
+    if (aiVars['--aw-accent'] && /^#[0-9a-fA-F]{6}$/.test(aiVars['--aw-accent'])) {
+      document.getElementById('cfgAccent').value = aiVars['--aw-accent'];
+      document.getElementById('cfgAccentHex').textContent = aiVars['--aw-accent'];
+    }
+    // 同步深浅色
+    if (aiVars['--aw-bg']) {
+      const r = parseInt(aiVars['--aw-bg'].slice(1,3),16)||0;
+      if (r < 100 && !isDark) setTone(true);
+      if (r >= 150 && isDark) setTone(false);
+    }
+
+    refreshPreviews();
+    setAiStatus('done', json);
+
+  } catch(e) {
+    setAiStatus('error', e.message.slice(0, 80));
+  }
+}
+
+function resetAiVars() {
+  aiVars = {};
+  aiAssetPrompts = {};
+  document.getElementById('aiDrawer').style.display = 'none';
+  refreshPreviews();
+}
+
+// ── API 调用 ──────────────────────────────────────────────────
+const SIZES = {
+  'home-bg':'1440x2560','in-game-bg':'1440x2560','table':'1920x1920',
+  'quest-success':'2560x1440','quest-fail':'2560x1440',
+  'history-icon':'1920x1920','stats-icon':'1920x1920','kill-icon':'1920x1920',
+  'merlin':'1920x1920','percival':'1920x1920','arthur_loyal':'1920x1920',
+  'lancelot_good':'1920x1920','assassin':'1920x1920','morgana':'1920x1920',
+  'mordred':'1920x1920','oberon':'1920x1920','minion':'1920x1920','lancelot_evil':'1920x1920',
+};
+
+function buildPrompts() {
+  // 如果 AI 已生成提示词，直接返回（再合并缺失的 key）
+  if (Object.keys(aiAssetPrompts).length) {
+    const base = _buildBasePrompts();
+    return {...base, ...aiAssetPrompts};
+  }
+  return _buildBasePrompts();
+}
+function _buildBasePrompts() {
+  const {styleDesc:s, accentColor:acc, isDark} = readState();
+  const tone = isDark?'dark moody tone, deep shadows':'bright airy tone';
+  const BG = `Mobile game environment background. Style: ${s}. ${tone}. Accent ${acc}. No text, no UI, no figures.`;
+  const CH = `Single character bust portrait. Art style: ${s}. Head and upper chest, face fills 70-80% of frame. ${tone}. Accent ${acc}. Square 1:1. No text.`;
+  const UI = `Mobile game UI icon. Style: ${s}. ${tone}. Accent ${acc}. Isolated. No text.`;
+  return {
+    'home-bg':       BG+' Grand home screen scenery. Vertical 9:16.',
+    'in-game-bg':    BG+' In-game playing screen, immersive atmosphere. Vertical 9:16.',
+    'table':         `Top-down overhead view of round game table. Style: ${s}. ${tone}. Table circle fills 96% of frame. Square 1:1.`,
+    'quest-success': BG+' Triumphant victory scene, glorious light. Landscape 16:9.',
+    'quest-fail':    BG+' Somber defeat scene, melancholy palette. Landscape 16:9.',
+    'history-icon':  UI+' Historical records — scroll or tome motif.',
+    'stats-icon':    UI+' Achievement stats — trophy or pillar bars motif.',
+    'kill-icon':     UI+' Assassination — elegant dagger motif.',
+    'merlin':        CH+' Merlin — elderly sage, long white beard, wise eyes, ornate robes.',
+    'percival':      CH+' Percival — young earnest knight, armor, bright sincere eyes.',
+    'arthur_loyal':  CH+' Loyal Knight — plain silver armor, calm honest face.',
+    'lancelot_good': CH+' Lancelot — heroic knight, gleaming golden armor, strong eyes.',
+    'assassin':      CH+' Assassin — dark hood over lower face, ONLY sharp cold eyes visible.',
+    'morgana':       CH+' Morgana — cold beauty, dark hair, striking violet eyes, dark gown.',
+    'mordred':       CH+' Mordred — dark armored, cunning narrowed eyes, scheming.',
+    'oberon':        CH+' Oberon — worn travel clothes, hollow suspicious eyes.',
+    'minion':        CH+' Minion — full hood, ONLY two glowing eyes visible inside dark void.',
+    'lancelot_evil': CH+' Evil Lancelot — blackened cracked armor, tormented expression.',
+  };
+}
+
+async function callApi(key, prompt, size) {
+  if (isDoubaoKey(key)) {
+    const body = JSON.stringify({model:'doubao-seedream-5-0-260128', prompt, n:1, size});
+    const res = await fetch('https://ark.cn-beijing.volces.com/api/v3/images/generations', {
+      method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`}, body
+    });
+    if (!res.ok) throw new Error((await res.json().catch(()=>({}))).error?.message||res.status);
+    const data = await res.json();
+    const item = data.data?.[0];
+    if (!item) throw new Error('空响应');
+    if (item.b64_json) return {b64:item.b64_json, mimeType:'image/jpeg'};
+    if (item.url) {
+      const pr = await fetch('https://www.awalon.top/api/proxy-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:item.url})});
+      if (!pr.ok) throw new Error('proxy failed');
+      const pd = await pr.json();
+      return {b64:pd.b64, mimeType:pd.mimeType||'image/jpeg'};
+    }
+    throw new Error('无图片数据');
+  }
+  if (isGeminiKey(key)) {
+    const ar = size.includes('2560x1440')||size.includes('1792x1024')?'16:9':size.includes('1440x2560')||size.includes('1024x1792')?'9:16':'1:1';
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${key}`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({instances:[{prompt}],parameters:{sampleCount:1,aspectRatio:ar,personGeneration:'allow_all'}})
+    });
+    if (!res.ok) throw new Error((await res.json().catch(()=>({}))).error?.message||res.status);
+    const data = await res.json();
+    const item = data.predictions?.[0];
+    if (!item?.bytesBase64Encoded) throw new Error('Gemini 安全过滤拦截');
+    return {b64:item.bytesBase64Encoded, mimeType:item.mimeType||'image/png'};
+  }
+  // OpenAI / DALL-E
+  const dSize = size.includes('2560x1440')||size.includes('1792x1024')?'1792x1024':size.includes('1440x2560')||size.includes('1024x1792')?'1024x1792':'1024x1024';
+  const res = await fetch('https://api.openai.com/v1/images/generations',{
+    method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
+    body:JSON.stringify({model:'dall-e-3',prompt,n:1,size:dSize,response_format:'b64_json'})
+  });
+  if (!res.ok) throw new Error((await res.json().catch(()=>({}))).error?.message||res.status);
+  const data = await res.json();
+  const item = data.data?.[0];
+  return {b64:item.b64_json, mimeType:'image/png'};
+}
+
+async function generateOne(id) {
+  const key = getKey();
+  if (!isValidKey(key)) { alert('请先在顶部填写 API Key'); return; }
+  if (runningIds[id]) return;
+  runningIds[id] = true;
+  updateBtn(id);
+  try {
+    const prompts = buildPrompts();
+    const {b64, mimeType} = await callApi(key, prompts[id]||`Generate: ${id}`, SIZES[id]||'1920x1920');
+    customAssets[id] = `data:${mimeType||'image/jpeg'};base64,${b64}`;
+    render(); // 重新渲染让图片出现在预览里
+  } catch(e) {
+    alert(`生成失败：${e.message.slice(0,100)}`);
+  }
+  delete runningIds[id];
+  updateBtn(id);
+}
+
+async function batchGroup(groupId) {
+  const g = GROUPS.find(x=>x.id===groupId);
+  if (!g) return;
+  const ids = [...new Set(g.comps.flatMap(c=>c.assetIds))];
+  for (const id of ids) if (!runningIds[id]) await generateOne(id);
+}
+
+function updateBtn(id) {
+  const btn = document.getElementById(`gb-${id}`);
+  if (!btn) return;
+  const run = runningIds[id];
+  const custom = isCustom(id);
+  btn.className = `gen-btn ${run?'running':custom?'done':''}`;
+  btn.disabled = !!run;
+  btn.textContent = run?'生成中…':custom?'重生成':btn.textContent;
+  // 更新进度点
+  const allIds = [...new Set(GROUPS.flatMap(g=>g.comps.flatMap(c=>c.assetIds)))];
+  const dots = document.getElementById('progDots');
+  if (dots) dots.innerHTML = allIds.map(id2=>
+    `<div class="prog-dot ${runningIds[id2]?'run':isCustom(id2)?'done':''}"></div>`).join('');
+}
+
+// ── 完成皮肤 ─────────────────────────────────────────────────
+async function finishSkin() {
+  const state = readState();
+  if (!state.skinId) { alert('请填写皮肤名称'); return; }
+
+  // 把自定义资产存 localStorage（让 studio 检测到）
+  const skin = {
+    state, customAssets,
+    savedAt: Date.now(),
+  };
+  try { localStorage.setItem('cw_pending_skin', JSON.stringify(skin)); } catch(_) {}
+
+  // 尝试上传到服务器
+  for (const [id, dataUrl] of Object.entries(customAssets)) {
+    try {
+      await fetch(SAVE_URL,{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({skinId:state.skinId,assetId:id,dataUrl})});
+    } catch(_) {}
+  }
+
+  alert(`皮肤「${state.skinName}」配置已保存！\n返回皮肤工坊即可看到新皮肤。`);
+  window.close();
+}
+
+// ── 桌面精调函数 ──────────────────────────────────────────────
+function toggleTableTune(el) {
+  tableTuneOpen = !tableTuneOpen;
+  render();
+}
+
+function onTableRefImg(evt) {
+  const file = evt.target.files[0];
+  if (!file) { tableRefImgB64 = null; return; }
+  const reader = new FileReader();
+  reader.onload = e => { tableRefImgB64 = e.target.result; }; // data URL
+  reader.readAsDataURL(file);
+}
+
+async function analyzeTableStyle() {
+  const key = document.getElementById('cfgKey')?.value?.trim() || '';
+  if (!isValidKey(key)) { alert('请先填写 API Key'); return; }
+  const desc = document.getElementById('tableStyleDesc')?.value?.trim() || '';
+  const urlVal = document.getElementById('tableRefUrl')?.value?.trim() || '';
+  if (!desc && !tableRefImgB64 && !urlVal) { alert('请填写风格描述或上传参考图'); return; }
+
+  document.getElementById('btnTuneAI').disabled = true;
+  document.getElementById('tableTuneStatus').textContent = '分析中…';
+  document.getElementById('btnTuneApply').style.display = 'none';
+
+  const tableStructure = `The table area HTML structure:
+- .ph-table-area: outer container (position:relative, padding-bottom:86%)
+- .ph-table-inner: inner container (position:absolute, inset:8px)
+- .ph-table-circle: circular table image (position:absolute, centered, 52% size, border-radius:50%, border:2px solid var(--aw-panel-border))
+- .ph-seat: each player seat (position:absolute)
+  - .ph-seat.good — good faction
+  - .ph-seat.evil — evil faction
+  - .ph-seat.me — current player
+  - .ph-seat.in-team — selected for mission (bright glow)
+  - .ph-seat.crown-seat — leader (::before shows 👑)
+  - .ph-seat-av: avatar circle (width:24px, height:24px, border-radius:calc(50%*var(--aw-r)))
+  - .ph-seat-no: seat number badge (position:absolute, bottom-right of avatar, small circle)
+  - .ph-seat-name: player name text below avatar
+  - .ph-seat-status: status label above avatar (speaking/voted)
+- .ph-center-result: center overlay text (result display)
+- .ph-crown: leader crown icon (position:absolute, above avatar)`;
+
+  const sysPrompt = `You are a CSS designer for a mobile game (Avalon social deduction game).
+Output ONLY a valid JSON object with a single "css" field containing CSS override rules.
+Rules:
+- Only target selectors starting with: .ph-seat, .ph-table, .ph-crown, .ph-center-result
+- Use valid CSS syntax
+- Use rgba() for colors with transparency
+- You can use box-shadow for glows, border for outlines, background for fills
+- Keep it concise — only override what visually changes from default dark theme
+- No !important unless absolutely needed for specificity
+
+${tableStructure}
+
+${desc ? `Style description: "${desc}"` : ''}
+
+Output format:
+{"css": ".ph-seat-av { ... } .ph-seat.good .ph-seat-av { ... } ..."}`;
+
+  try {
+    let text = '';
+    if (isGeminiKey(key)) {
+      // Gemini — supports vision
+      const parts = [{ text: sysPrompt }];
+      if (tableRefImgB64) {
+        const mime = tableRefImgB64.split(';')[0].split(':')[1];
+        parts.push({ inlineData: { mimeType: mime, data: tableRefImgB64.split(',')[1] } });
+      } else if (urlVal) {
+        parts.push({ text: `Reference image URL: ${urlVal}` });
+      }
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
+        { method:'POST', headers:{'content-type':'application/json'},
+          body: JSON.stringify({ contents:[{parts}], generationConfig:{temperature:0.4, maxOutputTokens:4096, responseMimeType:'application/json'} }) }
+      );
+      if (!res.ok) throw new Error(`Gemini ${res.status}`);
+      const data = await res.json();
+      text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    } else {
+      // Doubao — text only
+      const userMsg = sysPrompt + (urlVal ? `\nReference image URL: ${urlVal}` : '');
+      const res = await fetch('https://ark.cn-beijing.volces.com/api/v3/chat/completions', {
+        method:'POST', headers:{'Content-Type':'application/json','Authorization':`Bearer ${key}`},
+        body: JSON.stringify({ model:'doubao-pro-4k', messages:[{role:'user',content:userMsg}], temperature:0.4, max_tokens:2048 })
+      });
+      if (!res.ok) throw new Error(`Doubao ${res.status}`);
+      const data = await res.json();
+      text = data.choices?.[0]?.message?.content || '';
+    }
+
+    text = text.replace(/```(?:json|css)?\s*/gi,'').replace(/```/g,'').trim();
+    let json;
+    try { json = JSON.parse(text); } catch(_) {
+      const m = text.match(/\{[\s\S]*\}/s);
+      if (!m) throw new Error('无法解析响应');
+      json = JSON.parse(m[0]);
+    }
+
+    tablePendingCSS = (json.css || '').trim();
+    if (!tablePendingCSS) throw new Error('AI 未返回 CSS');
+
+    const out = document.getElementById('tableCSSOut');
+    if (out) { out.value = tablePendingCSS; out.style.display = 'block'; }
+    document.getElementById('btnTuneApply').style.display = 'inline-flex';
+    document.getElementById('tableTuneStatus').textContent = '✓ 分析完成，点击「应用」预览效果';
+  } catch(e) {
+    document.getElementById('tableTuneStatus').textContent = '❌ ' + e.message;
+  } finally {
+    document.getElementById('btnTuneAI').disabled = false;
+  }
+}
+
+function applyTableStyle() {
+  tableStyleCSS = tablePendingCSS;
+  let el = document.getElementById('aw-table-css');
+  if (!el) { el = document.createElement('style'); el.id = 'aw-table-css'; document.head.appendChild(el); }
+  el.textContent = tableStyleCSS;
+  document.getElementById('btnTuneClear').style.display = 'inline-flex';
+  document.getElementById('tableTuneStatus').textContent = '✓ 已应用到预览';
+}
+
+function clearTableStyle() {
+  tableStyleCSS = '';
+  tablePendingCSS = '';
+  const el = document.getElementById('aw-table-css');
+  if (el) el.remove();
+  const out = document.getElementById('tableCSSOut');
+  if (out) { out.value = ''; out.style.display = 'none'; }
+  document.getElementById('btnTuneClear').style.display = 'none';
+  document.getElementById('btnTuneApply').style.display = 'none';
+  document.getElementById('tableTuneStatus').textContent = '';
+}
+
+// ── 参考图 → 全局风格生成 ─────────────────────────────────────
+let refStyleImgB64 = null;
+let refStyleCSS_applied = '';
+
+function onRefStyleImg(evt) {
+  const file = evt.target.files[0];
+  if (!file) { refStyleImgB64 = null; return; }
+  document.getElementById('refStyleImgName').textContent = file.name;
+  const reader = new FileReader();
+  reader.onload = e => { refStyleImgB64 = e.target.result; };
+  reader.readAsDataURL(file);
+}
+
+async function generateRefStyle() {
+  const key = document.getElementById('cfgKey')?.value?.trim() || '';
+  if (!isValidKey(key)) { alert('请先填写 API Key'); return; }
+  if (!isGeminiKey(key)) { alert('参考图分析需要 Gemini API Key（以 AIza 开头）'); return; }
+  if (!refStyleImgB64) { alert('请先上传参考图'); return; }
+
+  const drawer = document.getElementById('refStyleDrawer');
+  const status = document.getElementById('refStyleStatus');
+  const result = document.getElementById('refStyleResult');
+  const btn = document.getElementById('btnRefStyle');
+  drawer.style.display = 'block';
+  result.style.display = 'none';
+  status.innerHTML = '<div class="ai-spinner"></div> 分析参考图，生成组件风格…';
+  btn.disabled = true;
+
+  const PROMPT = `You are a CSS designer for a mobile card game UI (Avalon social deduction game).
+Analyze the provided reference image and extract its visual style (colors, textures, mood, border treatment, glow effects, etc.).
+Then generate CSS to make the game UI match that style.
+
+The game UI uses these CSS custom properties (override any that should change):
+--aw-bg: main background color
+--aw-bg-2: secondary background
+--aw-panel: panel/card background (rgba)
+--aw-panel-border: panel border color (rgba)
+--aw-text: primary text color
+--aw-subtext: secondary text color
+--aw-accent: main accent color (used for highlights, active states, gold/special elements)
+--aw-nav-bg: navigation bar background (rgba)
+--aw-nav-border: navigation bar bottom border (rgba)
+--aw-input-bg: input field background (rgba)
+--aw-input-border: input field border (rgba)
+--aw-btn-ghost-border: ghost button border (rgba)
+--aw-btn-primary-bg: primary button background (CSS gradient or color)
+--aw-btn-primary-text: primary button text color
+--aw-good-glow: good faction avatar border/glow color (rgba)
+--aw-good-shadow: good faction avatar shadow color (rgba)
+--aw-good-seat-bg: good faction avatar background (rgba)
+--aw-evil-glow: evil faction avatar border/glow color (rgba)
+--aw-evil-shadow: evil faction avatar shadow color (rgba)
+--aw-evil-seat-bg: evil faction avatar background (rgba)
+--aw-success: success/win color
+--aw-fail: fail/lose color
+--aw-medal-color: medal/badge accent color
+--aw-medal-bg: medal background (rgba)
+--aw-medal-border: medal border (rgba)
+--aw-r: border-radius multiplier (0 = sharp corners, 1 = default rounded)
+
+Additionally generate component-specific CSS overrides for these selectors:
+.ph-nav — navigation bar
+.ph-panel — content panels/cards
+.ph-btn-p — primary buttons
+.ph-btn-g — ghost buttons
+.ph-seat-av — player avatar circles on round table
+.ph-seat.good .ph-seat-av — good faction avatars
+.ph-seat.evil .ph-seat-av — evil faction avatars
+.ph-seat.me .ph-seat-av — current player avatar
+.ph-table-circle — center table circle
+.ph-pill — mission progress pills
+.ph-pill.success — successful mission pill
+.ph-pill.fail — failed mission pill
+.ph-spk-card — speaking panel at bottom
+.ph-action-panel — voting/action panel at bottom
+
+Output ONLY a JSON object (no markdown, no explanation):
+{
+  "vars": { "--aw-bg": "#...", "--aw-accent": "#...", ... },
+  "css": ".ph-nav { ... } .ph-panel { ... } ..."
+}
+
+Rules:
+- vars: only include properties that differ from a generic dark theme
+- css: only include selectors listed above, keep rules concise
+- Match the reference image's mood as closely as possible`;
+
+  try {
+    const mime = refStyleImgB64.split(';')[0].split(':')[1];
+    const b64data = refStyleImgB64.split(',')[1];
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
+      { method:'POST', headers:{'content-type':'application/json'},
+        body: JSON.stringify({
+          contents: [{ parts: [
+            { text: PROMPT },
+            { inlineData: { mimeType: mime, data: b64data } }
+          ]}],
+          generationConfig: { temperature: 0.3, maxOutputTokens: 4096, responseMimeType: 'application/json' }
+        })
+      }
+    );
+    if (!res.ok) throw new Error(`Gemini ${res.status}: ${(await res.text()).slice(0,100)}`);
+    const data = await res.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    let parsed;
+    try { parsed = JSON.parse(text); } catch(e) {
+      const m = text.match(/\{[\s\S]*\}/);
+      if (m) parsed = JSON.parse(m[0]); else throw new Error('JSON 解析失败');
+    }
+
+    // 应用 CSS 变量覆盖
+    if (parsed.vars && typeof parsed.vars === 'object') {
+      Object.assign(aiVars, parsed.vars);
+    }
+
+    // 应用组件 CSS
+    refStyleCSS_applied = parsed.css || '';
+    let styleEl = document.getElementById('aw-ref-style');
+    if (!styleEl) { styleEl = document.createElement('style'); styleEl.id = 'aw-ref-style'; document.head.appendChild(styleEl); }
+    styleEl.textContent = refStyleCSS_applied;
+
+    // 显示结果
+    document.getElementById('refStyleCSS').textContent =
+      (parsed.vars ? '/* CSS Variables */\n' + Object.entries(parsed.vars).map(([k,v])=>`${k}: ${v};`).join('\n') + '\n\n' : '') +
+      (refStyleCSS_applied || '');
+    result.style.display = 'flex';
+    status.innerHTML = '';
+
+    // 更新预览
+    if (window._phonePreview) { window._phonePreview.invalidateCache(); window._phonePreview.render(); }
+    render();
+
+  } catch(e) {
+    status.textContent = '❌ ' + e.message.slice(0, 80);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function clearRefStyle() {
+  refStyleCSS_applied = '';
+  const el = document.getElementById('aw-ref-style');
+  if (el) el.remove();
+  // 清除 aiVars 里来自参考图的变量（重置为空）
+  Object.keys(aiVars).forEach(k => delete aiVars[k]);
+  document.getElementById('refStyleDrawer').style.display = 'none';
+  document.getElementById('refStyleImgName').textContent = '';
+  document.getElementById('refStyleImg').value = '';
+  refStyleImgB64 = null;
+  if (window._phonePreview) { window._phonePreview.invalidateCache(); window._phonePreview.render(); }
+  render();
+}
+
+// ── 初始化 ────────────────────────────────────────────────────
+(function init(){
+  // 读取 API Key
+  try {
+    const k = getActiveKey();
+    if (k) document.getElementById('cfgKey').value = k;
+  } catch(_) {}
+  document.getElementById('cfgId').oninput = () => {
+    document.getElementById('cfgId').dataset.manual = '1';
+  };
+  document.getElementById('cfgAccent').oninput = () => {
+    document.getElementById('cfgAccentHex').textContent = document.getElementById('cfgAccent').value;
+    refreshPreviews();
+  };
+  render();
+  // ── 手机预览初始化 ──────────────────────────────────────────
+  const _ppFrame = document.getElementById('cwPhoneFrame');
+  const _ppTabBar = document.getElementById('ppTabBar');
+  if (_ppFrame && window.PhonePreview) {
+    window._phonePreview = new PhonePreview(_ppFrame);
+    window._phonePreview.setConfig({
+      getVars:  () => getVarsStr(),
+      getAsset: (id) => getAsset(id),
+    });
+    PhonePreview.buildTabBar(window._phonePreview, _ppTabBar);
+    window._phonePreview.render();
+  }
+
+  // 每次配色/资产更新时同步手机预览
+  const _origRender = render;
+  render = function() {
+    _origRender();
+    if (window._phonePreview) window._phonePreview.render();
+  };
+})();
+
+// ── 移动端切换 ────────────────────────────────────────────────
+function mobSwitch(tab) {
+  const isMob = window.innerWidth <= 768;
+  const comp = document.getElementById('panelComponents');
+  const prev = document.getElementById('previewPanel');
+  const tComp = document.getElementById('mobTabComp');
+  const tPrev = document.getElementById('mobTabPrev');
+  if (!isMob) return;
+  if (tab === 'comp') {
+    comp.classList.remove('mob-hidden');
+    prev.classList.remove('mob-active');
+    tComp.classList.add('active');
+    tPrev.classList.remove('active');
+  } else {
+    comp.classList.add('mob-hidden');
+    prev.classList.add('mob-active');
+    tComp.classList.remove('active');
+    tPrev.classList.add('active');
+    // 切换到预览时触发一次 render，避免空白
+    if (window._phonePreview) window._phonePreview.render();
+  }
+}
+
+// 窗口 resize 时恢复桌面布局
+window.addEventListener('resize', () => {
+  if (window.innerWidth > 768) {
+    const comp = document.getElementById('panelComponents');
+    const prev = document.getElementById('previewPanel');
+    comp.classList.remove('mob-hidden');
+    prev.classList.remove('mob-active');
+  }
+});
+
+// ── 配置区折叠（移动端）────────────────────────────────────────
+let _cfgOpen = true;
+function toggleCfg() {
+  _cfgOpen = !_cfgOpen;
+  const col = document.getElementById('cfgCollapsible');
+  const icon = document.getElementById('cfgToggleIcon');
+  col.style.display = _cfgOpen ? '' : 'none';
+  icon.textContent = _cfgOpen ? '▾' : '▸';
+}
+// 移动端默认折叠配置区节省空间
+if (window.innerWidth <= 768) {
+  _cfgOpen = false;
+  const col = document.getElementById('cfgCollapsible');
+  if (col) col.style.display = 'none';
+  const icon = document.getElementById('cfgToggleIcon');
+  if (icon) icon.textContent = '▸';
+}
+</script>
+</body>
+</html>

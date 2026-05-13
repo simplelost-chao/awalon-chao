@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 进化后台 · 阿瓦隆</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0a0e18; color: #dde3f0; font-family: 'SF Pro Display', -apple-system, sans-serif; font-size: 14px; min-height: 100vh; }
+
+/* ── 顶部栏 ── */
+.topbar { background: rgba(10,14,28,.95); border-bottom: 1px solid rgba(255,255,255,.08); padding: 0 24px; height: 52px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 100; }
+.logo { font-size: 18px; font-weight: 800; color: #d9b36b; letter-spacing: 1px; }
+.tag { font-size: 11px; background: rgba(217,179,107,.15); border: 1px solid rgba(217,179,107,.4); color: #d9b36b; border-radius: 6px; padding: 2px 10px; }
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+#key-input { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.15); border-radius: 8px; color: #dde3f0; padding: 6px 12px; font-size: 13px; width: 160px; outline: none; }
+#load-btn { background: rgba(217,179,107,.18); border: 1px solid rgba(217,179,107,.45); color: #d9b36b; border-radius: 8px; padding: 6px 16px; cursor: pointer; font-size: 13px; font-weight: 600; }
+#load-btn:hover { background: rgba(217,179,107,.28); }
+#status { font-size: 12px; color: rgba(255,255,255,.4); }
+
+/* ── 布局 ── */
+.page { padding: 24px; max-width: 1400px; margin: 0 auto; }
+.section { margin-bottom: 32px; }
+.section-title { font-size: 11px; font-weight: 700; color: rgba(217,179,107,.75); letter-spacing: 4px; margin-bottom: 14px; padding-left: 2px; }
+
+/* ── 卡片网格 ── */
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.stat-card { background: rgba(19,23,40,.85); border: 1px solid rgba(255,255,255,.1); border-radius: 14px; padding: 18px 16px; }
+.stat-val { font-size: 30px; font-weight: 800; color: #eef1f7; line-height: 1; margin-bottom: 6px; }
+.stat-val.gold { color: #d9b36b; }
+.stat-val.blue { color: #7ac7ff; }
+.stat-val.red  { color: #ff9ea4; }
+.stat-label { font-size: 11px; color: rgba(255,255,255,.4); }
+
+/* ── 胜率条 ── */
+.winbar-wrap { background: rgba(19,23,40,.85); border: 1px solid rgba(255,255,255,.1); border-radius: 14px; padding: 20px; margin-bottom: 24px; }
+.winbar-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 8px; }
+.winbar-good { color: #7ac7ff; }
+.winbar-evil { color: #ff9ea4; }
+.winbar { height: 8px; border-radius: 4px; background: rgba(255,255,255,.08); overflow: hidden; position: relative; }
+.winbar-fill-good { position: absolute; left: 0; top: 0; height: 100%; border-radius: 4px; background: linear-gradient(90deg, #4e9eff, #7ac7ff); transition: width .6s ease; }
+.winbar-fill-evil { position: absolute; right: 0; top: 0; height: 100%; border-radius: 4px; background: linear-gradient(90deg, #ff9ea4, #dc5060); transition: width .6s ease; }
+
+/* ── 两栏布局 ── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+@media (max-width: 900px) { .two-col, .three-col { grid-template-columns: 1fr; } }
+
+/* ── 面板 ── */
+.panel { background: rgba(19,23,40,.85); border: 1px solid rgba(255,255,255,.1); border-radius: 14px; overflow: hidden; }
+.panel-head { background: rgba(10,14,28,.6); padding: 12px 16px; font-size: 12px; font-weight: 700; color: rgba(217,179,107,.85); border-bottom: 1px solid rgba(255,255,255,.07); display: flex; align-items: center; justify-content: space-between; }
+.panel-body { padding: 14px 16px; max-height: 420px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+.panel-body::-webkit-scrollbar { width: 4px; } .panel-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,.15); border-radius: 2px; }
+
+/* ── 条目 ── */
+.item { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07); border-radius: 10px; padding: 12px 14px; }
+.item-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
+.badge { font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: 700; flex-shrink: 0; }
+.badge-good { background: rgba(78,158,255,.15); color: #7ac7ff; border: 1px solid rgba(78,158,255,.3); }
+.badge-evil { background: rgba(220,80,90,.15); color: #ff9ea4; border: 1px solid rgba(220,80,90,.3); }
+.badge-gold { background: rgba(217,179,107,.15); color: #d9b36b; border: 1px solid rgba(217,179,107,.3); }
+.badge-gray { background: rgba(255,255,255,.08); color: rgba(255,255,255,.5); border: 1px solid rgba(255,255,255,.12); }
+.badge-conf { background: rgba(92,208,138,.15); color: #5cd08a; border: 1px solid rgba(92,208,138,.3); }
+.item-text { font-size: 13px; color: #bcc8df; line-height: 1.65; }
+.item-meta { font-size: 11px; color: rgba(255,255,255,.3); margin-top: 5px; }
+
+/* ── 玩家画像表格 ── */
+.profile-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.profile-table th { color: rgba(217,179,107,.8); font-weight: 700; font-size: 11px; padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,.08); text-align: left; }
+.profile-table td { padding: 9px 10px; border-bottom: 1px solid rgba(255,255,255,.05); color: #bcc8df; vertical-align: top; }
+.profile-table tr:last-child td { border-bottom: none; }
+.bar-mini { height: 5px; border-radius: 3px; background: rgba(255,255,255,.08); overflow: hidden; margin-top: 4px; }
+.bar-mini-fill { height: 100%; border-radius: 3px; }
+
+/* ── 选项卡 ── */
+.tabs { display: flex; gap: 0; border-bottom: 1px solid rgba(255,255,255,.08); margin-bottom: 0; overflow-x: auto; }
+.tab { padding: 10px 18px; font-size: 12px; font-weight: 600; color: rgba(255,255,255,.4); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; }
+.tab.active { color: #d9b36b; border-bottom-color: #d9b36b; }
+
+/* ── AI 记忆选择器 ── */
+.mem-grid { display: flex; flex-wrap: wrap; gap: 8px; padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,.07); }
+.mem-chip { font-size: 11px; padding: 4px 12px; border-radius: 999px; cursor: pointer; border: 1px solid rgba(255,255,255,.12); color: rgba(255,255,255,.5); background: rgba(255,255,255,.04); }
+.mem-chip.active { background: rgba(217,179,107,.15); color: #d9b36b; border-color: rgba(217,179,107,.4); }
+.mem-chip.ai-persona { border-color: rgba(78,158,255,.25); }
+
+/* ── 空态 ── */
+.empty { text-align: center; padding: 40px; color: rgba(255,255,255,.25); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="logo">AVALON</span>
+  <span class="tag">AI 进化后台</span>
+  <div class="topbar-right">
+    <input id="key-input" type="password" placeholder="管理员密钥">
+    <button id="load-btn" onclick="loadData()">加载数据</button>
+    <span id="status">未加载</span>
+  </div>
+</div>
+
+<div class="page">
+
+  <!-- 总览数字 -->
+  <div class="section">
+    <div class="section-title">OVERVIEW</div>
+    <div class="stat-grid" id="stat-grid">
+      <div class="stat-card"><div class="stat-val">—</div><div class="stat-label">历史对局</div></div>
+    </div>
+    <div class="winbar-wrap" id="winbar-wrap" style="display:none">
+      <div class="winbar-label">
+        <span class="winbar-good" id="good-rate-label">好人 —%</span>
+        <span style="color:rgba(255,255,255,.3);font-size:11px">历史胜率</span>
+        <span class="winbar-evil" id="evil-rate-label">坏人 —%</span>
+      </div>
+      <div class="winbar">
+        <div class="winbar-fill-good" id="winbar-good" style="width:50%"></div>
+        <div class="winbar-fill-evil" id="winbar-evil" style="width:50%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 元学习 + 进化日志 -->
+  <div class="section">
+    <div class="section-title">META LEARNING</div>
+    <div class="two-col">
+      <div class="panel">
+        <div class="panel-head">元学习结论 <span style="color:rgba(255,255,255,.3);font-weight:400">每10局自动生成</span></div>
+        <div class="panel-body" id="meta-list"><div class="empty">暂无元学习数据（需满10局触发）</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">进化日志</div>
+        <div class="panel-body" id="evo-list"><div class="empty">暂无进化记录</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 策略模式 -->
+  <div class="section">
+    <div class="section-title">STRATEGY PATTERNS</div>
+    <div class="panel">
+      <div class="panel-head">
+        有效策略模式（经置信度反馈筛选）
+        <div style="display:flex;gap:6px" id="pattern-filter">
+          <span class="badge badge-gray" onclick="filterPatterns('all')" data-f="all" style="cursor:pointer">全部</span>
+          <span class="badge badge-good" onclick="filterPatterns('good')" data-f="good" style="cursor:pointer">好人</span>
+          <span class="badge badge-evil" onclick="filterPatterns('evil')" data-f="evil" style="cursor:pointer">坏人</span>
+        </div>
+      </div>
+      <div class="panel-body" id="pattern-list" style="max-height:500px"><div class="empty">加载中…</div></div>
+    </div>
+  </div>
+
+  <!-- 高分发言 -->
+  <div class="section">
+    <div class="section-title">GOOD SPEECHES</div>
+    <div class="panel">
+      <div class="panel-head">高分发言库（score ≥ 4）</div>
+      <div class="panel-body" id="speech-list" style="max-height:500px"><div class="empty">加载中…</div></div>
+    </div>
+  </div>
+
+  <!-- AI 记忆 -->
+  <div class="section">
+    <div class="section-title">AI MEMORY</div>
+    <div class="panel">
+      <div class="panel-head">个人记忆（选择角色/玩家）</div>
+      <div class="mem-grid" id="mem-chips"></div>
+      <div class="panel-body" id="mem-list" style="max-height:480px"><div class="empty">点击上方角色查看记忆</div></div>
+    </div>
+  </div>
+
+  <!-- 人类玩家画像 -->
+  <div class="section">
+    <div class="section-title">HUMAN PROFILES</div>
+    <div class="panel">
+      <div class="panel-head">人类玩家行为画像</div>
+      <div class="panel-body" id="profile-list" style="max-height:420px;padding:0">
+        <table class="profile-table">
+          <thead><tr><th>玩家</th><th>跟风率</th><th>立场翻转率</th><th>理性响应</th><th>情绪响应</th><th>观察局数</th><th>复盘标注</th></tr></thead>
+          <tbody id="profile-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 对局日志 -->
+  <div class="section">
+    <div class="section-title">GAME LOGS</div>
+    <div class="panel">
+      <div class="panel-head">最近对局</div>
+      <div class="panel-body" id="game-list"><div class="empty">加载中…</div></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const API = 'https://awalon.top/api/admin/ai-stats';
+let _data = null;
+let _patternFilter = 'all';
+let _activeMem = null;
+
+const AI_PERSONAS = ['莫甘娜的微笑','梅林看穿你了','奥伯龙没朋友','我知道你知道','背刺有理','沉默即答案','任务失败不是我','帕西法尔的直觉','三号位可疑','不解释'];
+
+async function loadData() {
+  const key = document.getElementById('key-input').value.trim();
+  if (!key) { alert('请输入管理员密钥'); return; }
+  document.getElementById('status').textContent = '加载中…';
+  try {
+    const res = await fetch(`${API}?key=${encodeURIComponent(key)}`);
+    if (res.status === 403) { document.getElementById('status').textContent = '密钥错误'; return; }
+    _data = await res.json();
+    render();
+    document.getElementById('status').textContent = `已加载 · ${new Date().toLocaleTimeString()}`;
+  } catch(e) {
+    document.getElementById('status').textContent = '加载失败: ' + e.message;
+  }
+}
+
+function fmt(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  return `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+function render() {
+  const d = _data;
+  renderStats(d.counts);
+  renderMeta(d.metaLessons || []);
+  renderEvo(d.evolutionLog || []);
+  renderPatterns(d.patterns || []);
+  renderSpeeches(d.speeches || []);
+  renderMemChips(d.memories || {});
+  renderProfiles(d.humanProfiles || []);
+  renderGames(d.gameLogs || []);
+}
+
+function renderStats(c) {
+  const total = (c.goodWins||0) + (c.evilWins||0);
+  const goodRate = total ? Math.round(c.goodWins/total*100) : 50;
+  const evilRate = 100 - goodRate;
+
+  document.getElementById('stat-grid').innerHTML = `
+    <div class="stat-card"><div class="stat-val gold">${c.games||0}</div><div class="stat-label">历史对局</div></div>
+    <div class="stat-card"><div class="stat-val blue">${c.goodWins||0}</div><div class="stat-label">好人胜</div></div>
+    <div class="stat-card"><div class="stat-val red">${c.evilWins||0}</div><div class="stat-label">坏人胜</div></div>
+    <div class="stat-card"><div class="stat-val">${c.speeches||0}</div><div class="stat-label">高分发言</div></div>
+    <div class="stat-card"><div class="stat-val">${c.patterns||0}</div><div class="stat-label">策略模式</div></div>
+    <div class="stat-card"><div class="stat-val">${c.journals||0}</div><div class="stat-label">行为日记</div></div>
+    <div class="stat-card"><div class="stat-val">${c.recaps||0}</div><div class="stat-label">复盘推理</div></div>
+  `;
+
+  const wb = document.getElementById('winbar-wrap');
+  wb.style.display = 'block';
+  document.getElementById('good-rate-label').textContent = `好人 ${goodRate}%`;
+  document.getElementById('evil-rate-label').textContent = `坏人 ${evilRate}%`;
+  document.getElementById('winbar-good').style.width = goodRate + '%';
+  document.getElementById('winbar-evil').style.width = evilRate + '%';
+}
+
+function renderMeta(list) {
+  const el = document.getElementById('meta-list');
+  if (!list.length) { el.innerHTML = '<div class="empty">暂无元学习数据（需满10局触发）</div>'; return; }
+  el.innerHTML = list.map(m => {
+    const text = m.summary.replace(/^\[元学习\|[^\]]+\]\s*/, '');
+    const faction = m.summary.includes('|good') ? 'good' : m.summary.includes('|evil') ? 'evil' : 'both';
+    const badge = faction === 'good' ? 'badge-good' : faction === 'evil' ? 'badge-evil' : 'badge-gold';
+    const label = faction === 'good' ? '好人' : faction === 'evil' ? '坏人' : '通用';
+    return `<div class="item">
+      <div class="item-head"><span class="badge ${badge}">${label}</span></div>
+      <div class="item-text">${text}</div>
+      <div class="item-meta">${fmt(m.created_at)}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderEvo(list) {
+  const el = document.getElementById('evo-list');
+  if (!list.length) { el.innerHTML = '<div class="empty">暂无进化记录</div>'; return; }
+  el.innerHTML = list.map(e => {
+    const total = e.good_wins + e.evil_wins;
+    const goodR = total ? Math.round(e.good_wins/total*100) : 50;
+    return `<div class="item">
+      <div class="item-head">
+        <span class="badge badge-gold">第${e.total_games}局</span>
+        <span class="badge badge-good">好人${e.good_wins}胜</span>
+        <span class="badge badge-evil">坏人${e.evil_wins}胜</span>
+      </div>
+      <div class="item-text">${e.meta_lesson || '—'}</div>
+      <div class="item-meta">${fmt(e.created_at)}</div>
+    </div>`;
+  }).join('');
+}
+
+let _allPatterns = [];
+function renderPatterns(list) {
+  _allPatterns = list;
+  applyPatternFilter();
+}
+function filterPatterns(f) {
+  _patternFilter = f;
+  document.querySelectorAll('#pattern-filter .badge').forEach(b => {
+    b.style.opacity = b.dataset.f === f ? '1' : '0.4';
+  });
+  applyPatternFilter();
+}
+function applyPatternFilter() {
+  const list = _patternFilter === 'all' ? _allPatterns : _allPatterns.filter(p => p.faction === _patternFilter);
+  const el = document.getElementById('pattern-list');
+  if (!list.length) { el.innerHTML = '<div class="empty">暂无策略模式</div>'; return; }
+  el.innerHTML = list.map(p => {
+    const sitMap = { early_game:'早局', info_available:'中局', first_failure:'首次失败', consecutive_fails:'连续失败', good_leading:'好人领先', evil_needs_one:'坏人临胜', pre_assassination:'刺杀前', under_suspicion:'被怀疑' };
+    const badgeFac = p.faction === 'good' ? 'badge-good' : 'badge-evil';
+    const isAvoid = p.pattern.includes('[发言禁忌]');
+    const isNextPlan = p.pattern.includes('[下局计划]');
+    const isMoment = p.pattern.includes('[第');
+    return `<div class="item">
+      <div class="item-head">
+        <span class="badge ${badgeFac}">${p.faction==='good'?'好人':'坏人'}</span>
+        <span class="badge badge-gray">${p.role}</span>
+        <span class="badge badge-gray">${sitMap[p.situation_type]||p.situation_type}</span>
+        <span class="badge badge-conf">× ${p.confidence}</span>
+        ${isAvoid ? '<span class="badge" style="background:rgba(255,100,100,.15);color:#ff9ea4;border-color:rgba(255,100,100,.3)">禁忌</span>' : ''}
+        ${isNextPlan ? '<span class="badge badge-gold">下局计划</span>' : ''}
+      </div>
+      <div class="item-text">${p.pattern}</div>
+      <div class="item-meta">${fmt(p.created_at)}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderSpeeches(list) {
+  const el = document.getElementById('speech-list');
+  if (!list.length) { el.innerHTML = '<div class="empty">暂无高分发言</div>'; return; }
+  el.innerHTML = list.map(s => {
+    const badgeFac = s.faction === 'good' ? 'badge-good' : 'badge-evil';
+    const stars = '★'.repeat(s.score||0);
+    return `<div class="item">
+      <div class="item-head">
+        <span class="badge ${badgeFac}">${s.faction==='good'?'好人':'坏人'}</span>
+        <span class="badge badge-gray">${s.role}</span>
+        <span class="badge badge-gray">${s.intent||'—'}</span>
+        ${s.persona_name ? `<span class="badge badge-gold">${s.persona_name}</span>` : ''}
+        <span style="color:#d9b36b;font-size:12px;margin-left:auto">${stars}</span>
+      </div>
+      <div class="item-text">${s.text}</div>
+      <div class="item-meta">${s.context||''} · ${fmt(s.created_at)}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderMemChips(memories) {
+  const chips = document.getElementById('mem-chips');
+  const names = Object.keys(memories);
+  if (!names.length) { chips.innerHTML = '<span style="color:rgba(255,255,255,.3);font-size:12px">暂无记忆数据</span>'; return; }
+  chips.innerHTML = names.map(n => {
+    const isPersona = AI_PERSONAS.includes(n);
+    return `<span class="mem-chip ${isPersona?'ai-persona':''}" onclick="selectMem('${n}')">${n}</span>`;
+  }).join('');
+}
+
+function selectMem(name) {
+  _activeMem = name;
+  document.querySelectorAll('.mem-chip').forEach(c => {
+    c.classList.toggle('active', c.textContent === name);
+  });
+  const m = _data.memories[name];
+  const el = document.getElementById('mem-list');
+  if (!m) { el.innerHTML = '<div class="empty">暂无记忆</div>'; return; }
+  const items = [];
+  for (const j of (m.journals||[])) {
+    const text = j.summary.replace(/^\[日记\|[^\]]+\]\s*/, '');
+    items.push({ tag:'日记', cls:'badge-gold', text, ts: j.created_at });
+  }
+  for (const o of (m.others||[])) {
+    const isRecap = o.summary.startsWith('[复盘推理');
+    const text = o.summary.replace(/^\[[^\]]+\]\s*/, '');
+    items.push({ tag: isRecap?'复盘推理':'记忆', cls: isRecap?'badge-gray':'badge-gold', text, ts: o.created_at });
+  }
+  if (!items.length) { el.innerHTML = '<div class="empty">暂无记忆</div>'; return; }
+  el.innerHTML = items.map(i => `<div class="item">
+    <div class="item-head"><span class="badge ${i.cls}">${i.tag}</span></div>
+    <div class="item-text">${i.text}</div>
+    <div class="item-meta">${fmt(i.ts)}</div>
+  </div>`).join('');
+}
+
+function renderProfiles(list) {
+  const tbody = document.getElementById('profile-tbody');
+  if (!list.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:rgba(255,255,255,.25)">暂无人类玩家数据</td></tr>'; return; }
+  tbody.innerHTML = list.map(p => {
+    const followPct = Math.round((p.vote_follow_rate||0)*100);
+    const flipPct = Math.round((p.vote_flip_rate||0)*100);
+    const logicPct = Math.round((p.logic_responsive||5)*10);
+    const emotionPct = Math.round((p.emotion_responsive||5)*10);
+    const followColor = followPct > 65 ? '#ff9ea4' : followPct < 35 ? '#5cd08a' : '#7ac7ff';
+    const notes = p.notes ? p.notes.split('\n').slice(-2).join(' | ') : '—';
+    return `<tr>
+      <td style="color:#eef1f7;font-weight:600">${p.nickname||'—'}</td>
+      <td><span style="color:${followColor}">${followPct}%</span><div class="bar-mini"><div class="bar-mini-fill" style="width:${followPct}%;background:${followColor}"></div></div></td>
+      <td>${flipPct}%<div class="bar-mini"><div class="bar-mini-fill" style="width:${flipPct}%;background:#d9b36b"></div></div></td>
+      <td>${logicPct}%</td>
+      <td>${emotionPct}%</td>
+      <td style="text-align:center">${p.games_observed||0}</td>
+      <td style="color:rgba(255,255,255,.45);font-size:11px;max-width:200px">${notes}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderGames(list) {
+  const el = document.getElementById('game-list');
+  if (!list.length) { el.innerHTML = '<div class="empty">暂无对局记录</div>'; return; }
+  el.innerHTML = list.map(g => {
+    const badgeCls = g.winner === 'good' ? 'badge-good' : 'badge-evil';
+    const label = g.winner === 'good' ? '好人胜' : '坏人胜';
+    return `<div class="item">
+      <div class="item-head">
+        <span class="badge badge-gray">${g.room_code}</span>
+        <span class="badge ${badgeCls}">${label}</span>
+        <span class="item-meta" style="margin-left:auto">${fmt(g.created_at)}</span>
+      </div>
+      <div class="item-text" style="font-size:12px;color:rgba(255,255,255,.35)">${g.summary||''}</div>
+    </div>`;
+  }).join('');
+}
+
+// 初始化 filter 状态
+filterPatterns('all');
+
+// 回车触发加载
+document.getElementById('key-input').addEventListener('keydown', e => { if (e.key==='Enter') loadData(); });
+
+// 自动从 URL 读取 key 并加载
+(function() {
+  const urlKey = new URLSearchParams(location.search).get('key');
+  if (urlKey) {
+    document.getElementById('key-input').value = urlKey;
+    loadData();
+  }
+})();
+</script>
+</body>
+</html>

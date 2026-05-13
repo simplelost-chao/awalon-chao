@@ -1,0 +1,17 @@
+<view class="advanced-panel">
+  <text class="advanced-section-label">角色配置</text>
+  <text class="meta">{{advancedRoleSummary || '未设置'}}</text>
+  <text class="meta">{{advancedQuotaText}}</text>
+  <view class="advanced-selected-grid">
+    <view class="advanced-selected-chip" wx:for="{{selectedRoles}}" wx:key="index"
+      data-idx="{{index}}" bindtap="onRemoveRole">{{item}}</view>
+  </view>
+  <view class="host-role-grid advanced-role-grid">
+    <view class="host-role-item" wx:for="{{allRoleOptions}}" wx:key="role"
+      data-role="{{item.role}}" bindtap="onAddRole">
+      <image class="host-role-icon" src="{{item.image}}" mode="aspectFill" />
+      <text class="host-role-text">{{item.role}}</text>
+    </view>
+  </view>
+  <button class="btn ghost" bindtap="onResetRoles">恢复默认配置</button>
+</view>

@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>队长标志 · 更多方案</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Noto+Serif+SC:wght@400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  min-height: 100vh;
+  background: #060910;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 56px 32px 80px;
+  gap: 60px;
+  font-family: 'Noto Serif SC', serif;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 12% 18%, rgba(255,255,255,.38) 0%, transparent 100%),
+    radial-gradient(1px 1px at 78% 22%, rgba(255,255,255,.28) 0%, transparent 100%),
+    radial-gradient(1px 1px at 45% 75%, rgba(255,255,255,.32) 0%, transparent 100%),
+    radial-gradient(1px 1px at 90% 60%, rgba(255,255,255,.22) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.page-title {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 5px;
+  color: rgba(212,168,85,.4);
+  text-transform: uppercase;
+}
+
+.row {
+  display: flex;
+  gap: 64px;
+  align-items: flex-start;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+.option-label {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: rgba(212,168,85,.5);
+  text-transform: uppercase;
+}
+.option-desc {
+  font-size: 11px;
+  color: rgba(150,180,220,.38);
+  text-align: center;
+  line-height: 1.75;
+  max-width: 100px;
+  letter-spacing: .3px;
+}
+
+.divider {
+  width: 300px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212,168,85,.15), transparent);
+}
+
+/* ── Seat card base ── */
+.seat-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.seat-avatar-wrap {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  overflow: visible;
+}
+.seat-avatar {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(7,50,120,.35);
+  border: 1.5px solid rgba(78,158,255,.85);
+  box-shadow: 0 0 18px rgba(78,158,255,.4);
+  font-size: 28px;
+  position: relative; z-index: 2;
+}
+.seat-no {
+  position: absolute; right: -6px; bottom: -2px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: rgba(10,8,20,.95);
+  border: 1px solid rgba(180,140,60,.42);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: #e6c17d;
+  font-family: 'Cinzel', serif; z-index: 5;
+}
+.seat-name { font-size: 12px; color: rgba(191,219,254,.8); white-space: nowrap; }
+
+
+/* ════════════════════════════════════════
+   A · EXCALIBUR SWORD
+   Glowing blade, shimmer running up it
+   ════════════════════════════════════════ */
+.leader-sword {
+  position: absolute;
+  top: -50px; left: 50%; transform: translateX(-50%);
+  z-index: 10;
+  width: 28px; height: 48px;
+  display: flex; flex-direction: column; align-items: center;
+  animation: sword-hover 3s ease-in-out infinite;
+}
+
+/* crossguard */
+.sword-guard {
+  width: 26px; height: 5px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #8a6020, #f5d289, #f5d289, #8a6020);
+  box-shadow: 0 0 8px rgba(212,168,85,.5);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* blade */
+.sword-blade {
+  width: 5px;
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  border-radius: 1px 1px 3px 3px;
+  background: linear-gradient(to bottom, #e8e8f8, #b0b8d0, #7080a0);
+  box-shadow: 0 0 6px rgba(160,180,255,.4), 0 0 14px rgba(160,180,255,.15);
+}
+/* shimmer travelling up the blade */
+.sword-blade::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  height: 40%;
+  background: linear-gradient(to bottom, transparent, rgba(255,255,255,.7), transparent);
+  animation: blade-shimmer 2.4s ease-in-out infinite;
+}
+/* tip */
+.sword-tip {
+  width: 0; height: 0;
+  border-left: 2.5px solid transparent;
+  border-right: 2.5px solid transparent;
+  border-top: 8px solid #7080a0;
+  flex-shrink: 0;
+}
+
+/* pommel */
+.sword-pommel {
+  width: 10px; height: 7px;
+  border-radius: 5px;
+  background: linear-gradient(135deg, #d4a855, #8a6020);
+  box-shadow: 0 0 6px rgba(212,168,85,.4);
+  flex-shrink: 0;
+}
+
+/* glow beneath */
+.sword-glow {
+  position: absolute;
+  bottom: -4px; left: 50%;
+  transform: translateX(-50%);
+  width: 30px; height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(180,200,255,.4) 0%, transparent 70%);
+  animation: sword-glow-pulse 3s ease-in-out infinite;
+}
+
+@keyframes sword-hover {
+  0%,100% { transform: translateX(-50%) translateY(0) rotate(-2deg); }
+  50%      { transform: translateX(-50%) translateY(-6px) rotate(2deg); }
+}
+@keyframes blade-shimmer {
+  0%   { top: 100%; opacity: 0; }
+  30%  { opacity: 1; }
+  100% { top: -40%; opacity: 0; }
+}
+@keyframes sword-glow-pulse {
+  0%,100% { opacity: .5; transform: translateX(-50%) scaleX(1); }
+  50%      { opacity: .2; transform: translateX(-50%) scaleX(.5); }
+}
+
+
+/* ════════════════════════════════════════
+   B · FLAME TORCH
+   CSS-only animated flame
+   ════════════════════════════════════════ */
+.leader-flame {
+  position: absolute;
+  top: -52px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex; flex-direction: column; align-items: center;
+}
+
+.flame-wrap {
+  width: 22px; height: 38px;
+  position: relative;
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: flex-end;
+}
+
+.flame-outer {
+  width: 18px; height: 28px;
+  border-radius: 50% 50% 20% 20% / 60% 60% 40% 40%;
+  background: radial-gradient(ellipse at 50% 80%,
+    #ff8c00 0%, #ff4500 40%, #dc143c 70%, transparent 100%);
+  box-shadow: 0 0 12px rgba(255,100,0,.6), 0 0 24px rgba(255,60,0,.3);
+  animation: flame-flicker 0.8s ease-in-out infinite alternate;
+  position: absolute;
+  bottom: 0;
+}
+.flame-inner {
+  width: 10px; height: 18px;
+  border-radius: 50% 50% 20% 20% / 60% 60% 40% 40%;
+  background: radial-gradient(ellipse at 50% 80%,
+    #fff176 0%, #ffcc00 50%, #ff8c00 100%);
+  animation: flame-flicker-inner 0.6s ease-in-out infinite alternate;
+  position: absolute;
+  bottom: 0;
+  z-index: 2;
+}
+.flame-core {
+  width: 5px; height: 9px;
+  border-radius: 50% 50% 20% 20% / 60% 60% 40% 40%;
+  background: white;
+  opacity: .7;
+  position: absolute; bottom: 2px; z-index: 3;
+  animation: flame-flicker-inner .4s ease-in-out infinite alternate-reverse;
+}
+
+/* torch handle */
+.flame-handle {
+  width: 6px; height: 12px;
+  background: linear-gradient(to bottom, #8B4513, #5c3010);
+  border-radius: 1px;
+  border: 1px solid rgba(0,0,0,.3);
+  flex-shrink: 0;
+}
+.flame-base {
+  width: 10px; height: 4px;
+  border-radius: 0 0 3px 3px;
+  background: linear-gradient(to bottom, #8B4513, #3a1a08);
+  flex-shrink: 0;
+}
+
+@keyframes flame-flicker {
+  0%   { transform: scaleX(1)    scaleY(1)    skewX(0deg);  }
+  33%  { transform: scaleX(.9)   scaleY(1.05) skewX(-3deg); }
+  66%  { transform: scaleX(1.05) scaleY(.97)  skewX(2deg);  }
+  100% { transform: scaleX(.95)  scaleY(1.03) skewX(-1deg); }
+}
+@keyframes flame-flicker-inner {
+  0%   { transform: scaleX(1)   scaleY(1)    skewX(2deg);  }
+  50%  { transform: scaleX(.85) scaleY(1.08) skewX(-4deg); }
+  100% { transform: scaleX(1.1) scaleY(.95)  skewX(3deg);  }
+}
+
+
+/* ════════════════════════════════════════
+   C · LAUREL WREATH
+   Golden laurel arc above avatar
+   ════════════════════════════════════════ */
+.leader-laurel {
+  position: absolute;
+  top: -26px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  width: 72px; height: 32px;
+  animation: laurel-glow 3s ease-in-out infinite;
+}
+
+.leader-laurel svg {
+  width: 100%; height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 0 4px rgba(212,168,85,.55)) drop-shadow(0 0 10px rgba(212,168,85,.25));
+}
+
+@keyframes laurel-glow {
+  0%,100% { filter: drop-shadow(0 0 3px rgba(212,168,85,.4)); }
+  50%      { filter: drop-shadow(0 0 8px rgba(212,168,85,.8)) drop-shadow(0 0 16px rgba(212,168,85,.35)); }
+}
+
+
+/* ════════════════════════════════════════
+   D · COMPASS STAR
+   8-point star slowly rotating
+   ════════════════════════════════════════ */
+.leader-star {
+  position: absolute;
+  top: -44px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.star-svg-wrap {
+  position: absolute; inset: 0;
+  animation: star-spin 12s linear infinite;
+}
+.star-svg-wrap svg {
+  width: 100%; height: 100%;
+  filter: drop-shadow(0 0 5px rgba(212,168,85,.6)) drop-shadow(0 0 12px rgba(212,168,85,.25));
+}
+
+.star-center {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff8e0, #d4a855);
+  box-shadow: 0 0 8px rgba(212,168,85,.8), 0 0 16px rgba(212,168,85,.4);
+  position: relative; z-index: 2;
+  animation: star-pulse 2s ease-in-out infinite;
+}
+
+@keyframes star-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes star-pulse {
+  0%,100% { box-shadow: 0 0 8px rgba(212,168,85,.8), 0 0 16px rgba(212,168,85,.4); transform: scale(1); }
+  50%      { box-shadow: 0 0 12px rgba(212,168,85,1), 0 0 24px rgba(212,168,85,.6); transform: scale(1.2); }
+}
+
+
+/* ════════════════════════════════════════
+   E · WAVING BANNER / FLAG
+   ════════════════════════════════════════ */
+.leader-banner {
+  position: absolute;
+  top: -52px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex; align-items: flex-start;
+  gap: 0;
+}
+
+.banner-pole {
+  width: 3px;
+  height: 46px;
+  background: linear-gradient(to bottom, #d4a855, #8a6020);
+  border-radius: 1px;
+  box-shadow: 0 0 6px rgba(212,168,85,.3);
+  flex-shrink: 0;
+}
+
+.banner-flag {
+  width: 22px; height: 16px;
+  margin-top: 2px;
+  border-radius: 0 3px 3px 0;
+  background: linear-gradient(135deg, #8B0000, #cc0000, #8B0000);
+  border: 1px solid rgba(255,100,100,.3);
+  box-shadow: 0 0 8px rgba(180,0,0,.3);
+  transform-origin: left center;
+  animation: flag-wave 2.2s ease-in-out infinite;
+  position: relative;
+  overflow: hidden;
+}
+/* flag emblem */
+.banner-flag::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(212,168,85,.7);
+}
+.banner-flag::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, rgba(255,255,255,.12) 0%, transparent 60%);
+}
+
+.banner-tip {
+  position: absolute;
+  top: 0; left: -1px;
+  width: 5px; height: 5px;
+  background: #d4a855;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(212,168,85,.7);
+}
+
+@keyframes flag-wave {
+  0%,100% { transform: skewY(0deg)  scaleX(1);    }
+  25%      { transform: skewY(-4deg) scaleX(1.04); }
+  75%      { transform: skewY(4deg)  scaleX(.96);  }
+}
+
+</style>
+</head>
+<body>
+
+<div class="page-title">Leader Symbols · 队长标志更多方案</div>
+
+<div class="row">
+
+  <!-- A: Excalibur Sword -->
+  <div class="option">
+    <div class="option-label">A · 圣剑</div>
+    <div class="seat-card">
+      <div class="seat-avatar-wrap">
+        <div class="leader-sword">
+          <div class="sword-glow"></div>
+          <div class="sword-blade">
+          </div>
+          <div class="sword-tip"></div>
+          <div class="sword-guard"></div>
+          <div class="sword-pommel"></div>
+        </div>
+        <div class="seat-avatar">🧙</div>
+        <div class="seat-no">6</div>
+      </div>
+      <div class="seat-name">梅林看穿你了</div>
+    </div>
+    <div class="option-desc">亚瑟王圣剑<br>刃面光芒上行<br>斜向悬浮<br>最贴主题</div>
+  </div>
+
+  <!-- B: Flame -->
+  <div class="option">
+    <div class="option-label">B · 火炬</div>
+    <div class="seat-card">
+      <div class="seat-avatar-wrap">
+        <div class="leader-flame">
+          <div class="flame-wrap">
+            <div class="flame-outer"></div>
+            <div class="flame-inner"></div>
+            <div class="flame-core"></div>
+          </div>
+          <div class="flame-handle"></div>
+          <div class="flame-base"></div>
+        </div>
+        <div class="seat-avatar">🧙</div>
+        <div class="seat-no">6</div>
+      </div>
+      <div class="seat-name">梅林看穿你了</div>
+    </div>
+    <div class="option-desc">领路人持火炬<br>多层火焰闪烁<br>最生动热烈</div>
+  </div>
+
+  <!-- C: Laurel Wreath -->
+  <div class="option">
+    <div class="option-label">C · 月桂冠</div>
+    <div class="seat-card">
+      <div class="seat-avatar-wrap">
+        <div class="leader-laurel">
+          <svg viewBox="0 0 72 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- left branch -->
+            <path d="M8 28 C4 22, 2 16, 6 10" stroke="#8a6020" stroke-width="1.5" stroke-linecap="round"/>
+            <!-- left leaves -->
+            <ellipse cx="5"  cy="24" rx="5" ry="3" transform="rotate(-40 5 24)"  fill="#c8a040" opacity=".9"/>
+            <ellipse cx="4"  cy="17" rx="5" ry="3" transform="rotate(-55 4 17)"  fill="#d4a855" opacity=".85"/>
+            <ellipse cx="6"  cy="11" rx="5" ry="3" transform="rotate(-70 6 11)"  fill="#c8a040" opacity=".9"/>
+            <ellipse cx="11" cy="6"  rx="5" ry="3" transform="rotate(-85 11 6)"  fill="#d4b870" opacity=".8"/>
+
+            <!-- right branch -->
+            <path d="M64 28 C68 22, 70 16, 66 10" stroke="#8a6020" stroke-width="1.5" stroke-linecap="round"/>
+            <!-- right leaves -->
+            <ellipse cx="67" cy="24" rx="5" ry="3" transform="rotate(40 67 24)"  fill="#c8a040" opacity=".9"/>
+            <ellipse cx="68" cy="17" rx="5" ry="3" transform="rotate(55 68 17)"  fill="#d4a855" opacity=".85"/>
+            <ellipse cx="66" cy="11" rx="5" ry="3" transform="rotate(70 66 11)"  fill="#c8a040" opacity=".9"/>
+            <ellipse cx="61" cy="6"  rx="5" ry="3" transform="rotate(85 61 6)"   fill="#d4b870" opacity=".8"/>
+
+            <!-- center connecting stems -->
+            <path d="M18 4 Q36 -2 54 4" stroke="#8a6020" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+            <!-- top leaves -->
+            <ellipse cx="22" cy="3"  rx="5" ry="2.5" transform="rotate(-20 22 3)"  fill="#d4a855" opacity=".85"/>
+            <ellipse cx="36" cy="1"  rx="5" ry="2.5" transform="rotate(0 36 1)"    fill="#e0bb60" opacity=".9"/>
+            <ellipse cx="50" cy="3"  rx="5" ry="2.5" transform="rotate(20 50 3)"   fill="#d4a855" opacity=".85"/>
+
+            <!-- central gem -->
+            <circle cx="36" cy="2" r="3" fill="#fff8e0" opacity=".8"/>
+          </svg>
+        </div>
+        <div class="seat-avatar">🧙</div>
+        <div class="seat-no">6</div>
+      </div>
+      <div class="seat-name">梅林看穿你了</div>
+    </div>
+    <div class="option-desc">罗马月桂冠<br>金色脉冲发光<br>最文雅低调</div>
+  </div>
+
+  <!-- D: Compass Star -->
+  <div class="option">
+    <div class="option-label">D · 罗盘星</div>
+    <div class="seat-card">
+      <div class="seat-avatar-wrap">
+        <div class="leader-star">
+          <div class="star-svg-wrap">
+            <svg viewBox="0 0 36 36" fill="none">
+              <defs>
+                <linearGradient id="sg" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#f5d289"/>
+                  <stop offset="100%" stop-color="#a07830"/>
+                </linearGradient>
+              </defs>
+              <!-- 4 main points -->
+              <path d="M18 2 L20 16 L18 18 L16 16 Z" fill="url(#sg)"/>
+              <path d="M34 18 L20 20 L18 18 L20 16 Z" fill="url(#sg)"/>
+              <path d="M18 34 L16 20 L18 18 L20 20 Z" fill="url(#sg)"/>
+              <path d="M2 18 L16 16 L18 18 L16 20 Z" fill="url(#sg)"/>
+              <!-- 4 minor points -->
+              <path d="M30 6 L20.5 16.5 L18 18 L19.5 15 Z" fill="#d4a855" opacity=".6"/>
+              <path d="M30 30 L19.5 21 L18 18 L21 19.5 Z" fill="#d4a855" opacity=".6"/>
+              <path d="M6 30 L15.5 19.5 L18 18 L16.5 21 Z" fill="#d4a855" opacity=".6"/>
+              <path d="M6 6 L17 15 L18 18 L15 16.5 Z" fill="#d4a855" opacity=".6"/>
+            </svg>
+          </div>
+          <div class="star-center"></div>
+        </div>
+        <div class="seat-avatar">🧙</div>
+        <div class="seat-no">6</div>
+      </div>
+      <div class="seat-name">梅林看穿你了</div>
+    </div>
+    <div class="option-desc">航海罗盘星<br>缓慢旋转 + 中心脉冲<br>「指引方向」感</div>
+  </div>
+
+  <!-- E: Waving Banner -->
+  <div class="option">
+    <div class="option-label">E · 旗帜</div>
+    <div class="seat-card">
+      <div class="seat-avatar-wrap">
+        <div class="leader-banner">
+          <div class="banner-tip"></div>
+          <div class="banner-pole"></div>
+          <div class="banner-flag"></div>
+        </div>
+        <div class="seat-avatar">🧙</div>
+        <div class="seat-no">6</div>
+      </div>
+      <div class="seat-name">梅林看穿你了</div>
+    </div>
+    <div class="option-desc">中世纪战旗<br>风中飘扬动画<br>最有战场感</div>
+  </div>
+
+</div>
+
+<div class="divider"></div>
+
+<!-- size note -->
+<div style="font-family:'Cinzel',serif;font-size:9px;letter-spacing:3px;color:rgba(150,150,150,.28);text-transform:uppercase;">
+  All animations: CSS-only · WeChat miniprogram compatible
+</div>
+
+</body>
+</html>

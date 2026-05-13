@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "游戏规则",
+  "usingComponents": {
+    "nav-header": "/subpkg/components/nav-header/index"
+  }
+}

@@ -1,0 +1,136 @@
+<!-- mode: 'vote' | 'mission' | 'lady' -->
+<view class="vote-bottom-wrap" wx:if="{{mode === 'vote'}}">
+  <view class="vote-bottom-card">
+    <text class="vote-bottom-title">请对当前提名队伍投票</text>
+    <view class="vote-team-row" wx:if="{{team.length}}">
+      <view class="vote-team-chip" wx:for="{{team}}" wx:key="id">
+        <view class="vote-team-av-wrap">
+          <view class="vote-team-avatar">
+            <image class="vote-team-avatar-img" wx:if="{{item.avatarImage}}" src="{{item.avatarImage}}" mode="aspectFill" />
+            <text class="vote-team-avatar-text" wx:else>{{item.avatarText}}</text>
+          </view>
+          <text class="vote-team-seat-badge">{{item.seat}}</text>
+        </view>
+        <text class="vote-team-name">{{item.nickname}}</text>
+      </view>
+    </view>
+    <view class="vote-action-divider"></view>
+    <view class="vote-action-row">
+      <view class="btn-frame ap-btn ap-btn-approve" bindtap="onApprove">
+        <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+        <view class="fb fb-left"></view><view class="fb fb-right"></view>
+        <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+        <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+        <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+        <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+        <view class="ap-btn-text">
+          <image class="ap-btn-icon" src="https://www.awalon.top/mp-assets/icons/ap-approve.svg" mode="aspectFit"/>
+          <text class="ap-btn-label">同意</text>
+        </view>
+      </view>
+      <view class="btn-frame ap-btn ap-btn-reject" bindtap="onReject">
+        <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+        <view class="fb fb-left"></view><view class="fb fb-right"></view>
+        <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+        <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+        <view class="ap-btn-text">
+          <image class="ap-btn-icon" src="https://www.awalon.top/mp-assets/icons/ap-reject.svg" mode="aspectFit"/>
+          <text class="ap-btn-label">反对</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>
+
+<view class="vote-bottom-wrap" wx:if="{{mode === 'lady' && prompt}}">
+  <view class="vote-bottom-card lady-bottom-card lady-bottom-{{prompt.tone}}">
+    <view class="lady-bottom-head">
+      <text class="vote-bottom-title lady-bottom-title">{{prompt.title}}</text>
+    </view>
+    <view class="lady-flow-row" wx:if="{{prompt.isHolder}}">
+      <view class="lady-player-card">
+        <view class="lady-player-avatar">
+          <image class="lady-player-avatar-img" wx:if="{{prompt.holder.avatarImage}}" src="{{prompt.holder.avatarImage}}" mode="aspectFill" />
+          <text class="lady-player-avatar-text" wx:else>{{prompt.holder.avatarText}}</text>
+        </view>
+        <text class="lady-player-seat">{{prompt.holder.seat}}号</text>
+        <text class="lady-player-name">{{prompt.holder.name}}</text>
+      </view>
+      <view class="lady-flow-arrow">
+        <text class="lady-flow-arrow-text">传递</text>
+      </view>
+      <view class="lady-player-card lady-target-card {{prompt.target ? 'lady-target-selected' : ''}}">
+        <view class="lady-player-avatar lady-target-avatar">
+          <image class="lady-player-avatar-img" wx:if="{{prompt.target && prompt.target.avatarImage}}" src="{{prompt.target.avatarImage}}" mode="aspectFill" />
+          <text class="lady-player-avatar-text" wx:elif="{{prompt.target}}">{{prompt.target.avatarText}}</text>
+          <text class="lady-target-empty" wx:else>?</text>
+        </view>
+        <text class="lady-player-seat">{{prompt.target ? prompt.target.seat + '号' : '待选择'}}</text>
+        <text class="lady-player-name">{{prompt.target ? prompt.target.nickname : '点击圆桌选择'}}</text>
+      </view>
+    </view>
+    <view class="lady-waiting" wx:else>
+      <view class="lady-player-avatar lady-waiting-avatar">
+        <image class="lady-player-avatar-img" wx:if="{{prompt.holder.avatarImage}}" src="{{prompt.holder.avatarImage}}" mode="aspectFill" />
+        <text class="lady-player-avatar-text" wx:else>{{prompt.holder.avatarText}}</text>
+      </view>
+      <text class="lady-waiting-name">{{prompt.holder.name}}</text>
+      <text class="lady-waiting-text">正在验人</text>
+    </view>
+    <view class="lady-bottom-hint">
+      <text class="lady-bottom-hint-text">{{prompt.hint}}</text>
+    </view>
+    <view class="btn-frame lady-confirm-frame {{prompt.canConfirm ? '' : 'lady-confirm-disabled'}}" wx:if="{{prompt.isHolder}}" bindtap="onConfirmLady">
+      <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+      <view class="fb fb-left"></view><view class="fb fb-right"></view>
+      <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+      <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+      <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+      <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+      <view class="ap-btn-text ap-btn-primary">确认验人</view>
+    </view>
+  </view>
+</view>
+
+<view class="vote-bottom-wrap" wx:if="{{mode === 'mission'}}">
+  <view class="vote-bottom-card">
+    <text class="vote-bottom-title">你在任务队伍中，请提交任务结果</text>
+    <view class="vote-team-row" wx:if="{{team.length}}">
+      <view class="vote-team-chip" wx:for="{{team}}" wx:key="id">
+        <view class="vote-team-av-wrap">
+          <view class="vote-team-avatar">
+            <image class="vote-team-avatar-img" wx:if="{{item.avatarImage}}" src="{{item.avatarImage}}" mode="aspectFill" />
+            <text class="vote-team-avatar-text" wx:else>{{item.avatarText}}</text>
+          </view>
+          <text class="vote-team-seat-badge">{{item.seat}}</text>
+        </view>
+        <text class="vote-team-name">{{item.nickname}}</text>
+      </view>
+    </view>
+    <view class="vote-action-divider"></view>
+    <view class="vote-action-row">
+      <view class="btn-frame ap-btn ap-btn-approve" bindtap="onSuccess">
+        <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+        <view class="fb fb-left"></view><view class="fb fb-right"></view>
+        <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+        <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+        <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+        <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+        <view class="ap-btn-text">
+          <image class="ap-btn-icon" src="https://www.awalon.top/mp-assets/icons/ap-success.svg" mode="aspectFit"/>
+          <text class="ap-btn-label">任务成功</text>
+        </view>
+      </view>
+      <view class="btn-frame ap-btn ap-btn-reject" bindtap="onFail">
+        <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+        <view class="fb fb-left"></view><view class="fb fb-right"></view>
+        <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+        <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+        <view class="ap-btn-text">
+          <image class="ap-btn-icon" src="https://www.awalon.top/mp-assets/icons/ap-fail.svg" mode="aspectFit"/>
+          <text class="ap-btn-label">任务失败</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

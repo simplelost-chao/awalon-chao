@@ -135,17 +135,25 @@ Component({
       });
     },
 
-    onEnterTouchStart() {
-      this._holdTimer = setTimeout(() => {
-        this._holdTimer = null;
+    onEnterTap() {
+      const now = Date.now();
+      if (!this._enterTaps) this._enterTaps = [];
+      this._enterTaps = this._enterTaps.filter(t => now - t < 1500);
+      this._enterTaps.push(now);
+      if (this._enterTaps.length >= 3) {
+        this._enterTaps = [];
         this.triggerEvent('exitreview');
-      }, 1000);
+      }
     },
 
-    onEnterTouchEnd() {
-      if (this._holdTimer) {
-        clearTimeout(this._holdTimer);
-        this._holdTimer = null;
+    onLogoTap() {
+      const now = Date.now();
+      if (!this._logoTaps) this._logoTaps = [];
+      this._logoTaps = this._logoTaps.filter(t => now - t < 2000);
+      this._logoTaps.push(now);
+      if (this._logoTaps.length >= 5) {
+        this._logoTaps = [];
+        this.triggerEvent('exitreview');
       }
     },
   },

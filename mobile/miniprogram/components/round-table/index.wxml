@@ -1,0 +1,161 @@
+<view class="table-wrap {{identityMode ? 'identity-mode' : ''}}" style="position:relative;">
+  <image class="table-bg-img" src="{{tableUrl}}" mode="aspectFill" />
+  <view class="table-ring"></view>
+
+  <view class="seat-card {{item.factionClass}} {{identityMode ? item.identityClass : ''}}"
+    wx:for="{{seats}}"
+    wx:key="seat"
+    bindtap="onChooseSeat"
+    bindtouchstart="onSeatTouchStart"
+    bindtouchend="onSeatTouchEnd"
+    bindtouchmove="onSeatTouchCancel"
+    data-index="{{item.index}}"
+    style="{{item.leftStyle}}"
+  >
+    <view class="seat-leader-mark" wx:if="{{item.isLeader}}">
+      <image class="seat-leader-icon" src="https://www.awalon.top/mp-assets/icons/seat-leader.svg" mode="aspectFit" />
+    </view>
+    <view class="seat-avatar-wrap">
+      <view class="seat-id-aura"></view>
+      <view class="seat-status-badge seat-badge-{{item.badgeType}}" wx:if="{{item.badgeType}}">
+        <block wx:if="{{item.badgeType === 'speak'}}">
+          <view class="ssb-bar ssb-bar-1"></view>
+          <view class="ssb-bar ssb-bar-2"></view>
+          <view class="ssb-bar ssb-bar-3"></view>
+        </block>
+        <block wx:elif="{{item.badgeType === 'voting'}}">
+          <view class="ssb-ballot-box">
+            <view class="ssb-ballot-slip"></view>
+            <view class="ssb-ballot-slot"></view>
+          </view>
+        </block>
+        <block wx:elif="{{item.badgeType === 'voted'}}">
+          <view class="ssb-envelope">
+            <view class="ssb-env-v-left"></view>
+            <view class="ssb-env-v-right"></view>
+          </view>
+        </block>
+        <block wx:elif="{{item.badgeType === 'mission'}}">
+          <view class="ssb-mission-ring"></view>
+          <view class="ssb-mission-dot"></view>
+        </block>
+        <block wx:elif="{{item.badgeType === 'mission-done'}}">
+          <view class="ssb-seal-outer">
+            <view class="ssb-seal-inner"></view>
+          </view>
+        </block>
+        <block wx:elif="{{item.badgeType === 'autoplay'}}">
+          <view class="ssb-auto-infinity">
+            <view class="ssb-auto-left"></view>
+            <view class="ssb-auto-right"></view>
+            <view class="ssb-auto-dot-arm">
+              <view class="ssb-auto-dot"></view>
+            </view>
+          </view>
+        </block>
+      </view>
+      <view class="seat-avatar {{!item.playerId ? 'seat-avatar-empty' : ''}} {{item.isLadyHolder ? 'seat-avatar-lady' : ''}} {{item.isMe ? 'seat-av-me' : ''}} {{item.selectedTeam ? 'seat-av-team' : ''}} {{item.selectedLadyTarget ? 'seat-av-lady-target' : ''}} {{item.selectedAssassinate ? 'seat-av-kill' : ''}} {{item.isAssassinated ? 'seat-av-assassinated' : ''}}">
+        <image class="seat-avatar-img" wx:if="{{item.avatarImage}}" src="{{item.avatarImage}}" mode="aspectFill" />
+        <text class="seat-avatar-text" wx:elif="{{item.avatarText}}">{{item.avatarText}}</text>
+        <text class="seat-avatar-empty-text" wx:else>+</text>
+      </view>
+      <!-- 湖中仙女蝴蝶翅膀装饰 -->
+      <view class="seat-fairy-wings {{item.selectedTeam ? 'wings-in-team' : ''}} {{item.isAssassinated ? 'wings-dead' : ''}}"
+        wx:if="{{item.isLadyHolder}}">
+        <view class="seat-wing seat-wing-ul"></view>
+        <view class="seat-wing seat-wing-ur"></view>
+        <view class="seat-wing seat-wing-ll"></view>
+        <view class="seat-wing seat-wing-lr"></view>
+      </view>
+      <text class="seat-no">{{item.seat}}</text>
+      <!-- 刺杀目标标记 -->
+      <image class="seat-killed-icon" wx:if="{{item.selectedAssassinate}}" src="https://www.awalon.top/mp-assets/ui-icons/kill.png" mode="aspectFit" />
+      <view class="seat-note-badge" wx:if="{{seatNotes[item.index]}}" style="{{seatNotes[item.index].badgeStyle}}">
+        <text class="seat-note-badge-text" style="{{seatNotes[item.index].textStyle}}">{{seatNotes[item.index].label || '·'}}</text>
+      </view>
+    </view>
+    <text class="seat-name {{item.selectedTeam ? 'seat-name-team' : ''}}">{{item.name}}</text>
+    <view class="seat-below-wrap">
+      <view class="seat-id-tag" wx:if="{{identityMode && item.identityLabel}}">
+        <image class="seat-id-role-img" wx:if="{{item.identityRoleImage}}" src="{{item.identityRoleImage}}" mode="aspectFill" />
+        <text>{{item.identityLabel}}</text>
+      </view>
+      <view class="seat-role-pill {{item.roleClass}}" wx:if="{{item.roleLabel && !(identityMode && item.identityLabel)}}">
+        <image class="seat-role-img" wx:if="{{item.roleImage}}" src="{{item.roleImage}}" mode="aspectFill" />
+        <text class="seat-role">{{item.roleLabel}}</text>
+      </view>
+      <text class="seat-action {{item.actionDone ? 'seat-action-done' : 'seat-action-pending'}}" wx:if="{{!item.offline && !item.autoplay && item.action && !item.badgeType}}">{{item.action}}</text>
+      <text class="seat-offline" wx:if="{{item.offline && !item.autoplay}}">离线</text>
+    </view>
+    <image class="seat-killed-icon" wx:if="{{item.isAssassinated}}" src="https://www.awalon.top/mp-assets/ui-icons/kill.png" mode="aspectFit" />
+  </view>
+
+  <!-- 中心：结局结果 -->
+  <view class="center-result" wx:if="{{showCenterResult}}">
+    <text class="center-result-title">{{centerResultText}}</text>
+    <text class="center-result-sub">{{centerResultSub}}</text>
+    <view class="end-medal-wrap" wx:if="{{endMedals && endMedals.length}}">
+      <text class="end-medal-title">本局获得勋章</text>
+      <view class="end-medal-row">
+        <view class="end-medal-chip {{item.faction==='evil' ? 'end-medal-evil' : 'end-medal-good'}}"
+          wx:for="{{endMedals}}" wx:key="code"
+          catchtap="onTapMedal" data-name="{{item.name}}" data-description="{{item.description}}">
+          <image class="end-medal-image" wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFit" />
+          <text class="end-medal-icon" wx:else>🏅</text>
+          <text class="end-medal-name">{{item.name}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 中心：刺杀入口（身份模式） -->
+  <view class="center-leader-panel center-assassin-panel"
+    wx:if="{{identityMode && isAssassin && phase!=='assassination' && phase!=='end' && !showCenterResult}}">
+    <text class="center-assassin-hint">翻牌刺杀</text>
+    <view class="btn-frame center-assassin-frame" bindtap="onStartAssassination">
+      <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+      <view class="fb fb-left"></view><view class="fb fb-right"></view>
+      <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+      <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+      <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+      <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+      <text class="btn-diamond btn-diamond-l">◆</text>
+      <text class="btn-diamond btn-diamond-r">◆</text>
+      <view class="center-assassin-btn-text ap-btn-primary">发起刺杀</view>
+    </view>
+  </view>
+
+  <!-- 中心：队长操作 -->
+  <view class="center-leader-panel"
+    wx:if="{{!identityMode && isLeader && (phase==='team' || phase==='speaking') && !showCenterResult}}">
+    <view class="btn-frame center-leader-frame {{leaderActionDisabled ? 'center-leader-disabled' : ''}}"
+      bindtap="onLeaderAction">
+      <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+      <view class="fb fb-left"></view><view class="fb fb-right"></view>
+      <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+      <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+      <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+      <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+      <text class="btn-diamond btn-diamond-l">◆</text>
+      <text class="btn-diamond btn-diamond-r">◆</text>
+      <view class="center-leader-btn-text ap-btn-primary">{{leaderActionText}}</view>
+    </view>
+  </view>
+
+  <!-- 中心：执行刺杀 -->
+  <view class="center-leader-panel center-assassin-panel"
+    wx:if="{{isAssassin && phase==='assassination' && !showCenterResult}}">
+    <text class="center-assassin-count">{{selectedAssassinate ? 1 : 0}}/1</text>
+    <view class="btn-frame center-assassin-frame {{selectedAssassinate ? '' : 'center-assassin-disabled'}}" bindtap="onConfirmAssassinate">
+      <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+      <view class="fb fb-left"></view><view class="fb fb-right"></view>
+      <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+      <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+      <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+      <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+      <text class="btn-diamond btn-diamond-l">◆</text>
+      <text class="btn-diamond btn-diamond-r">◆</text>
+      <view class="center-assassin-btn-text ap-btn-primary">执行刺杀</view>
+    </view>
+  </view>
+</view>

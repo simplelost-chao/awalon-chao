@@ -17,9 +17,10 @@
   align-items: center;
   justify-content: center;
 }
-.speak-empty-icon {
-  font-size: 40rpx;
-  opacity: 0.35;
+.speak-empty-icon-img {
+  width: 72rpx;
+  height: 72rpx;
+  opacity: 0.7;
 }
 .speak-empty-text {
   font-size: 24rpx;

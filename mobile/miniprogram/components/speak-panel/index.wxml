@@ -1,0 +1,105 @@
+<view class="vote-bottom-wrap">
+  <view class="spk-card">
+    <view class="spk-accent"></view>
+
+    <!-- 观看状态 -->
+    <view class="spk-watching" wx:if="{{!isMyTurn}}">
+      <view class="spk-speaker-badge spk-speaker-badge-center" wx:if="{{speakingSeat}}">
+        <view class="spk-av-wrap">
+          <image class="spk-av-img" wx:if="{{speakingAvatarImage}}" src="{{speakingAvatarImage}}" mode="aspectFill" />
+          <text class="spk-av-text" wx:else>{{speakingAvatarText}}</text>
+          <view class="spk-dot"></view>
+        </view>
+        <text class="spk-speaker-text">{{speakingSeat}} 号正在发言</text>
+      </view>
+      <text class="spk-speaker-text spk-wait-text" wx:if="{{!speakingSeat}}">等待发言开始</text>
+      <view class="spk-divider"></view>
+      <view class="spk-progress-area">
+        <view class="spk-track">
+          <view class="spk-fill" style="width:{{speakingProgress}}%; background: {{speakingUrgent ? 'linear-gradient(90deg,#991b1b,#f87171)' : 'linear-gradient(90deg,#3d9a6a,#c9a227)'}};"></view>
+        </view>
+        <view class="spk-timer-row">
+          <text class="spk-timer-label">发言时间</text>
+          <text class="spk-timer-val {{speakingUrgent ? 'spk-urgent' : ''}}">{{speakingTimerText}}</text>
+        </view>
+      </view>
+      <view class="spk-host-row" wx:if="{{isHost && speakingSeat}}">
+        <view class="btn-frame btn-frame-ghost ap-btn" bindtap="onSkipSpeak">
+          <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+          <view class="fb fb-left"></view><view class="fb fb-right"></view>
+          <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+          <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+          <view class="ap-btn-text ap-btn-ghost">跳过发言</view>
+        </view>
+        <view class="btn-frame ap-btn" bindtap="onDirectVote">
+          <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+          <view class="fb fb-left"></view><view class="fb fb-right"></view>
+          <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+          <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+          <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+          <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+          <text class="btn-diamond btn-diamond-l">◆</text>
+          <text class="btn-diamond btn-diamond-r">◆</text>
+          <view class="ap-btn-text ap-btn-primary">直接投票</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 我的发言 -->
+    <view class="spk-my-turn" wx:if="{{isMyTurn}}">
+      <view class="spk-speaker-badge spk-speaker-badge-center">
+        <view class="spk-av-wrap">
+          <image class="spk-av-img" wx:if="{{speakingAvatarImage}}" src="{{speakingAvatarImage}}" mode="aspectFill" />
+          <text class="spk-av-text" wx:else>{{speakingAvatarText}}</text>
+          <view class="spk-dot"></view>
+        </view>
+        <view class="spk-speaker-info">
+          <text class="spk-speaker-text">{{speakingSeat}} 号正在发言</text>
+          <text class="spk-my-turn-hint">— 轮到你了 —</text>
+        </view>
+      </view>
+      <view class="spk-divider"></view>
+      <view class="spk-progress-area">
+        <view class="spk-track">
+          <view class="spk-fill" style="width:{{speakingProgress}}%; background: {{speakingUrgent ? 'linear-gradient(90deg,#991b1b,#f87171)' : 'linear-gradient(90deg,#3d9a6a,#c9a227)'}};"></view>
+        </view>
+        <view class="spk-timer-row">
+          <text class="spk-timer-label">发言时间</text>
+          <text class="spk-timer-val {{speakingUrgent ? 'spk-urgent' : ''}}">{{speakingTimerText}}</text>
+        </view>
+      </view>
+      <view class="spk-input-wrap">
+        <input
+          class="spk-input"
+          placeholder="说点什么…"
+          placeholder-class="spk-input-ph"
+          value="{{speakText}}"
+          bindinput="onInput"
+          maxlength="120"
+        />
+        <text class="spk-char-count">{{speakTextLen}}/120</text>
+      </view>
+      <view class="spk-btn-row">
+        <view class="btn-frame ap-btn" bindtap="onSend">
+          <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+          <view class="fb fb-left"></view><view class="fb fb-right"></view>
+          <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+          <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+          <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+          <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+          <text class="btn-diamond btn-diamond-l">◆</text>
+          <text class="btn-diamond btn-diamond-r">◆</text>
+          <view class="ap-btn-text ap-btn-primary">发送发言</view>
+        </view>
+        <view class="btn-frame btn-frame-ghost ap-btn" wx:if="{{!isLeader}}" bindtap="onEnd">
+          <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+          <view class="fb fb-left"></view><view class="fb fb-right"></view>
+          <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+          <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+          <view class="ap-btn-text ap-btn-ghost">结束发言</view>
+        </view>
+      </view>
+    </view>
+
+  </view>
+</view>

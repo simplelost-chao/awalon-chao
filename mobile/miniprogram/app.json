@@ -1,11 +1,11 @@
 {
   "pages": [
     "pages/index/index",
-    "pages/avatarcrop/index",
-    "pages/rules/index/index",
-    "pages/history/index/index",
-    "pages/history-detail/index/index",
-    "pages/role-stats/index/index"
+    "subpkg/avatarcrop/index",
+    "subpkg/rules/index/index",
+    "subpkg/history/index/index",
+    "subpkg/history-detail/index/index",
+    "subpkg/role-stats/index/index"
   ],
   "window": {
     "navigationBarTitleText": "Awalon",

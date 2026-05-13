@@ -1,0 +1,1681 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>阿瓦隆 · 管理后台</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0a0c14; color: #f2e5c8; font-family: 'SF Pro Display', -apple-system, sans-serif; font-size: 14px; min-height: 100vh; }
+
+/* ── Login ── */
+#login { display: flex; align-items: center; justify-content: center; min-height: 100vh; flex-direction: column; gap: 16px; }
+#login h1 { font-size: 22px; color: #d8b06b; font-weight: 800; letter-spacing: 2px; }
+#login input { background: rgba(255,255,255,.07); border: 1px solid rgba(216,176,107,.3); border-radius: 10px; color: #f2e5c8; padding: 12px 20px; font-size: 15px; width: 280px; outline: none; text-align: center; }
+#login input:focus { border-color: #d8b06b; }
+#login button { background: rgba(216,176,107,.2); border: 1px solid rgba(216,176,107,.5); color: #d8b06b; border-radius: 10px; padding: 10px 32px; font-size: 15px; font-weight: 700; cursor: pointer; }
+#login button:hover { background: rgba(216,176,107,.35); }
+#login .err { color: #e05050; font-size: 13px; min-height: 18px; }
+
+/* ── Layout ── */
+#app { display: none; }
+.sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 200px; background: rgba(12,14,22,.95); border-right: 1px solid rgba(216,176,107,.14); padding: 20px 0; z-index: 100; display: flex; flex-direction: column; }
+.sidebar .logo { padding: 0 20px 20px; font-size: 18px; font-weight: 800; color: #d8b06b; letter-spacing: 2px; border-bottom: 1px solid rgba(216,176,107,.1); margin-bottom: 8px; }
+.sidebar .nav-item { padding: 12px 20px; cursor: pointer; font-size: 14px; color: rgba(242,229,200,.5); transition: .15s; display: flex; align-items: center; gap: 10px; }
+.sidebar .nav-item:hover { color: #f2e5c8; background: rgba(216,176,107,.06); }
+.sidebar .nav-item.active { color: #d8b06b; background: rgba(216,176,107,.12); border-right: 3px solid #d8b06b; }
+.sidebar .nav-icon { font-size: 16px; width: 22px; text-align: center; }
+.sidebar-review { padding: 10px 20px 14px; border-bottom: 1px solid rgba(216,176,107,.1); margin-bottom: 8px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.main { margin-left: 200px; padding: 28px 32px; min-height: 100vh; }
+
+/* ── Section ── */
+.module { display: none; }
+.module.active { display: block; }
+.mod-title { font-size: 20px; font-weight: 800; color: #d8b06b; margin-bottom: 24px; letter-spacing: 1px; }
+.section-label { font-size: 11px; font-weight: 700; color: rgba(216,176,107,.6); letter-spacing: 3px; margin: 20px 0 10px; }
+
+/* ── Cards ── */
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; margin-bottom: 24px; }
+.stat-card { background: rgba(12,14,22,.85); border: 1px solid rgba(216,176,107,.14); border-radius: 14px; padding: 20px 18px; }
+.stat-val { font-size: 32px; font-weight: 800; line-height: 1; margin-bottom: 6px; }
+.stat-val.gold { color: #d8b06b; }
+.stat-val.blue { color: #4e9eff; }
+.stat-val.red { color: #e05050; }
+.stat-val.green { color: #3fb950; }
+.stat-label { font-size: 11px; color: rgba(242,229,200,.4); letter-spacing: 1px; }
+
+/* ── Table ── */
+.panel { background: rgba(12,14,22,.85); border: 1px solid rgba(216,176,107,.14); border-radius: 14px; overflow: hidden; margin-bottom: 20px; }
+.panel-header { padding: 14px 18px; border-bottom: 1px solid rgba(216,176,107,.1); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.panel-header select, .panel-header input { background: rgba(255,255,255,.06); border: 1px solid rgba(216,176,107,.2); border-radius: 8px; color: #f2e5c8; padding: 6px 12px; font-size: 13px; outline: none; }
+.panel-header select option { background: #0a0c14; }
+.panel-header button { background: rgba(216,176,107,.15); border: 1px solid rgba(216,176,107,.35); color: #d8b06b; border-radius: 8px; padding: 6px 16px; font-size: 13px; cursor: pointer; font-weight: 600; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 10px 16px; font-size: 11px; color: rgba(242,229,200,.4); letter-spacing: 1px; font-weight: 600; border-bottom: 1px solid rgba(216,176,107,.1); }
+td { padding: 10px 16px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,.04); }
+tr:hover td { background: rgba(216,176,107,.04); }
+tr.clickable { cursor: pointer; }
+.badge-good { background: rgba(78,158,255,.15); color: #4e9eff; padding: 2px 10px; border-radius: 6px; font-size: 12px; }
+.badge-evil { background: rgba(224,80,80,.15); color: #e05050; padding: 2px 10px; border-radius: 6px; font-size: 12px; }
+.badge-abort { background: rgba(255,255,255,.08); color: rgba(242,229,200,.45); padding: 2px 10px; border-radius: 6px; font-size: 12px; }
+.badge-win { color: #3fb950; }
+.badge-lose { color: #e05050; }
+.badge-status { background: rgba(216,176,107,.1); color: #d8b06b; padding: 2px 10px; border-radius: 6px; font-size: 12px; }
+
+/* ── Pagination ── */
+.pager { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 14px; }
+.pager button { background: rgba(216,176,107,.12); border: 1px solid rgba(216,176,107,.3); color: #d8b06b; border-radius: 8px; padding: 6px 18px; cursor: pointer; font-size: 13px; }
+.pager button:disabled { opacity: .3; cursor: default; }
+.pager span { font-size: 13px; color: rgba(242,229,200,.4); }
+
+/* ── Detail panel ── */
+.detail-panel { background: rgba(8,10,18,.9); border: 1px solid rgba(216,176,107,.2); border-radius: 12px; padding: 20px; margin: 10px 16px 16px; }
+.detail-panel h4 { color: #d8b06b; font-size: 14px; margin-bottom: 12px; }
+.detail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; margin-bottom: 16px; }
+.detail-item { font-size: 13px; padding: 6px 10px; background: rgba(255,255,255,.03); border-radius: 6px; }
+.detail-item .label { color: rgba(242,229,200,.4); font-size: 11px; }
+
+/* ── Toggle ── */
+.toggle-wrap { display: flex; align-items: center; gap: 12px; margin: 12px 0; }
+.toggle { width: 48px; height: 26px; border-radius: 13px; background: rgba(255,255,255,.1); cursor: pointer; position: relative; transition: .2s; }
+.toggle.on { background: rgba(216,176,107,.4); }
+.toggle::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 10px; background: #f2e5c8; transition: .2s; }
+.toggle.on::after { left: 25px; background: #d8b06b; }
+.toggle-label { font-size: 14px; }
+
+/* ── Config textarea ── */
+.config-area { background: rgba(255,255,255,.04); border: 1px solid rgba(216,176,107,.2); border-radius: 10px; color: #f2e5c8; font-family: 'SF Mono', monospace; font-size: 13px; padding: 14px; width: 100%; min-height: 120px; resize: vertical; outline: none; }
+.config-area:focus { border-color: #d8b06b; }
+
+/* ── Skins grid ── */
+.skin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+.skin-card { background: rgba(12,14,22,.85); border: 1px solid rgba(216,176,107,.14); border-radius: 14px; padding: 18px; }
+.skin-name { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+.skin-id { font-size: 11px; color: rgba(242,229,200,.35); margin-bottom: 12px; }
+.skin-status { display: inline-block; padding: 3px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; }
+.skin-status.published { background: rgba(63,185,80,.15); color: #3fb950; }
+.skin-status.draft { background: rgba(255,255,255,.06); color: rgba(242,229,200,.4); }
+.skin-toggle { margin-top: 12px; }
+
+/* ── Sub tabs ── */
+.sub-tabs { display: flex; gap: 4px; margin-bottom: 18px; flex-wrap: wrap; }
+.sub-tab { padding: 8px 16px; border-radius: 8px; font-size: 13px; cursor: pointer; color: rgba(242,229,200,.5); background: rgba(255,255,255,.04); transition: .15s; }
+.sub-tab:hover { color: #f2e5c8; }
+.sub-tab.active { color: #d8b06b; background: rgba(216,176,107,.15); }
+.sub-content { display: none; }
+.sub-content.active { display: block; }
+
+/* ── Toast ── */
+#toast { position: fixed; bottom: 30px; right: 30px; background: rgba(216,176,107,.9); color: #0a0c14; padding: 10px 24px; border-radius: 10px; font-size: 14px; font-weight: 600; transform: translateY(80px); opacity: 0; transition: .3s; z-index: 999; }
+#toast.show { transform: translateY(0); opacity: 1; }
+
+/* ── Misc ── */
+.text-muted { color: rgba(242,229,200,.35); }
+.text-gold { color: #d8b06b; }
+.mt-12 { margin-top: 12px; }
+.mb-16 { margin-bottom: 16px; }
+pre.json { background: rgba(255,255,255,.03); border-radius: 8px; padding: 12px; font-size: 12px; overflow-x: auto; max-height: 400px; color: rgba(242,229,200,.7); white-space: pre-wrap; word-break: break-all; }
+
+/* ── Active rooms table ── */
+.rooms-table th, .rooms-table td { padding: 8px 14px; }
+
+/* ── Player detail page ── */
+.back-btn { display: inline-flex; align-items: center; gap: 6px; background: rgba(216,176,107,.1); border: 1px solid rgba(216,176,107,.25); color: #d8b06b; border-radius: 8px; padding: 8px 18px; font-size: 13px; cursor: pointer; font-weight: 600; margin-bottom: 18px; }
+.back-btn:hover { background: rgba(216,176,107,.2); }
+.player-header { display: flex; align-items: center; gap: 18px; margin-bottom: 24px; }
+.player-header .avatar-lg { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(216,176,107,.3); }
+.player-header .avatar-emoji { font-size: 48px; line-height: 64px; width: 64px; height: 64px; text-align: center; display: inline-block; }
+.player-header .info { display: flex; flex-direction: column; gap: 4px; }
+.player-header .info .name { font-size: 20px; font-weight: 700; color: #f2e5c8; }
+.player-header .info .meta { font-size: 13px; color: rgba(242,229,200,.4); }
+.role-bar-wrap { display: flex; align-items: center; gap: 8px; }
+.role-bar { height: 6px; border-radius: 3px; background: rgba(255,255,255,.06); flex: 1; max-width: 120px; overflow: hidden; }
+.role-bar-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #d8b06b, #f2e5c8); }
+.medal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+.medal-item { background: rgba(255,255,255,.04); border: 1px solid rgba(216,176,107,.12); border-radius: 10px; padding: 12px; text-align: center; display: flex; flex-direction: column; align-items: center; }
+.medal-item .medal-name { font-size: 13px; color: #f2e5c8; margin-bottom: 4px; }
+.medal-item .medal-count { font-size: 20px; font-weight: 700; color: #d8b06b; margin-top: auto; padding-top: 6px; }
+
+/* ── AI character cards ── */
+.ai-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-bottom: 20px; }
+.ai-char-card { background: rgba(12,14,22,.85); border: 1px solid rgba(216,176,107,.14); border-radius: 14px; padding: 20px; cursor: pointer; transition: .15s; }
+.ai-char-card:hover { border-color: rgba(216,176,107,.4); background: rgba(12,14,22,.95); }
+.ai-char-card.selected { border-color: #d8b06b; box-shadow: 0 0 0 1px rgba(216,176,107,.3); }
+.ai-char-header { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+.ai-char-header .ai-avatar { font-size: 40px; line-height: 1; }
+.ai-char-header .ai-name { font-size: 16px; font-weight: 700; color: #f2e5c8; }
+.ai-char-header .ai-style { font-size: 12px; color: rgba(242,229,200,.4); margin-top: 2px; }
+.ai-char-stats { display: flex; gap: 16px; margin-bottom: 10px; }
+.ai-char-stats .ai-stat { font-size: 12px; color: rgba(242,229,200,.5); }
+.ai-char-stats .ai-stat b { color: #d8b06b; font-weight: 700; }
+.ai-char-tone { font-size: 12px; color: rgba(242,229,200,.35); margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ai-char-catch { font-size: 13px; color: rgba(216,176,107,.7); font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ai-edit-panel { background: rgba(8,10,18,.9); border: 1px solid rgba(216,176,107,.2); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+.ai-edit-panel h4 { color: #d8b06b; font-size: 15px; margin-bottom: 14px; }
+.ai-edit-row { margin-bottom: 12px; }
+.ai-edit-row label { display: block; font-size: 11px; color: rgba(242,229,200,.4); letter-spacing: 1px; margin-bottom: 4px; font-weight: 600; }
+.ai-edit-row input, .ai-edit-row textarea { width: 100%; background: rgba(255,255,255,.04); border: 1px solid rgba(216,176,107,.2); border-radius: 8px; color: #f2e5c8; padding: 8px 12px; font-size: 13px; outline: none; font-family: inherit; }
+.ai-edit-row textarea { min-height: 60px; resize: vertical; }
+.ai-edit-row input:focus, .ai-edit-row textarea:focus { border-color: #d8b06b; }
+.ai-save-btn { background: rgba(216,176,107,.15); border: 1px solid rgba(216,176,107,.35); color: #d8b06b; border-radius: 8px; padding: 8px 24px; font-size: 14px; cursor: pointer; font-weight: 600; }
+.ai-save-btn:hover { background: rgba(216,176,107,.25); }
+
+/* ── Config role pills ── */
+.role-config-section { margin-top: 20px; }
+.role-config-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+.role-config-label { font-size: 14px; font-weight: 600; color: #d8b06b; min-width: 60px; }
+.role-pill { display: inline-block; background: rgba(216,176,107,.12); border: 1px solid rgba(216,176,107,.2); color: #f2e5c8; padding: 3px 12px; border-radius: 14px; font-size: 12px; margin: 2px; }
+.role-config-note { font-size: 12px; color: rgba(242,229,200,.3); margin-top: 8px; font-style: italic; }
+
+/* ── Game result reason ── */
+.game-result-reason { display: inline-block; background: rgba(216,176,107,.1); border: 1px solid rgba(216,176,107,.15); color: #d8b06b; padding: 4px 14px; border-radius: 8px; font-size: 13px; margin-left: 10px; }
+
+@media (max-width: 768px) {
+  .sidebar { width: 60px; }
+  .sidebar .logo { font-size: 14px; padding: 0 8px 16px; }
+  .sidebar .nav-item { padding: 12px 8px; font-size: 12px; justify-content: center; }
+  .sidebar .nav-item span:not(.nav-icon) { display: none; }
+  .main { margin-left: 60px; padding: 16px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Login -->
+<div id="login">
+  <h1>阿瓦隆 · 管理后台</h1>
+  <input id="key-input" type="password" placeholder="输入管理密钥" autocomplete="off">
+  <button onclick="tryLogin()">进入</button>
+  <div class="err" id="login-err"></div>
+</div>
+
+<!-- App -->
+<div id="app">
+  <div class="sidebar">
+    <div class="logo">阿瓦隆</div>
+    <div class="sidebar-review" id="sidebar-review" onclick="toggleReview()">
+      <div class="toggle" id="sidebar-review-toggle"></div>
+      <span style="font-size:12px" id="sidebar-review-label">审核模式</span>
+    </div>
+    <div class="nav-item active" data-mod="dashboard"><span class="nav-icon">📊</span><span>仪表盘</span></div>
+    <div class="nav-item" data-mod="games"><span class="nav-icon">⚔️</span><span>对战记录</span></div>
+    <div class="nav-item" data-mod="players"><span class="nav-icon">👤</span><span>玩家管理</span></div>
+    <div class="nav-item" data-mod="ai"><span class="nav-icon">🤖</span><span>AI 管理</span></div>
+    <div class="nav-item" data-mod="config"><span class="nav-icon">⚙️</span><span>系统配置</span></div>
+    <div class="nav-item" data-mod="skins"><span class="nav-icon">🎨</span><span>皮肤管理</span></div>
+    <div class="nav-item" data-mod="assets"><span class="nav-icon">📁</span><span>资源管理</span></div>
+  </div>
+  <div class="main">
+
+    <!-- Dashboard -->
+    <div class="module active" id="mod-dashboard">
+      <div class="mod-title">仪表盘</div>
+      <div class="stat-grid" id="dash-stats"></div>
+      <div class="section-label">在线房间</div>
+      <div class="panel" id="dash-rooms"><table class="rooms-table" id="dash-rooms-table"><thead><tr><th>房间号</th><th>房主</th><th>人数</th><th>状态</th><th>阶段</th></tr></thead><tbody></tbody></table></div>
+      <div id="dash-room-detail"></div>
+      <div class="section-label">最近对局</div>
+      <div class="panel"><table id="dash-recent"><thead><tr><th>ID</th><th>房间号</th><th>人数</th><th>胜方</th><th>时间</th></tr></thead><tbody></tbody></table></div>
+    </div>
+
+    <!-- Games -->
+    <div class="module" id="mod-games">
+      <div class="mod-title">对战记录</div>
+      <div id="games-list-view">
+        <div class="panel">
+          <div class="panel-header">
+            <select id="games-status"><option value="">全部状态</option><option value="completed">已完成</option><option value="aborted">已中止</option></select>
+            <select id="games-winner"><option value="">全部胜负</option><option value="good">正义胜</option><option value="evil">邪恶胜</option></select>
+            <button onclick="loadGames(1)">筛选</button>
+          </div>
+          <table id="games-table"><thead><tr><th>ID</th><th>房间号</th><th>人数</th><th>胜方</th><th>状态</th><th>时间</th></tr></thead><tbody></tbody></table>
+          <div class="pager" id="games-pager"></div>
+        </div>
+      </div>
+      <div id="games-detail-view" style="display:none"></div>
+    </div>
+
+    <!-- Players -->
+    <div class="module" id="mod-players">
+      <div class="mod-title">玩家管理</div>
+      <div id="players-list-view">
+        <div class="panel">
+          <div class="panel-header">
+            <input id="players-search" type="text" placeholder="搜索昵称或手机号" style="width:220px">
+            <button onclick="loadPlayers(1)">搜索</button>
+          </div>
+          <table id="players-table"><thead><tr><th>头像</th><th>昵称</th><th>手机号</th><th>对局数</th><th>胜率</th><th>常用角色</th><th>勋章</th><th>注册时间</th></tr></thead><tbody></tbody></table>
+          <div class="pager" id="players-pager"></div>
+        </div>
+      </div>
+      <div id="players-detail-view" style="display:none"></div>
+    </div>
+
+    <!-- AI -->
+    <div class="module" id="mod-ai">
+      <div class="mod-title">AI 管理</div>
+      <div class="sub-tabs" id="ai-tabs">
+        <div class="sub-tab active" data-sub="ai-overview">概览</div>
+        <div class="sub-tab" data-sub="ai-evolution">进化日志</div>
+        <div class="sub-tab" data-sub="ai-speeches">发言库</div>
+        <div class="sub-tab" data-sub="ai-strategies">策略库</div>
+        <div class="sub-tab" data-sub="ai-profiles">玩家画像</div>
+      </div>
+      <div class="sub-content active" id="ai-overview"></div>
+      <div class="sub-content" id="ai-evolution"></div>
+      <div class="sub-content" id="ai-speeches"></div>
+      <div class="sub-content" id="ai-strategies"></div>
+      <div class="sub-content" id="ai-profiles"></div>
+    </div>
+
+    <!-- Config -->
+    <div class="module" id="mod-config">
+      <div class="mod-title">系统配置</div>
+
+      <!-- Game defaults -->
+      <div class="section-label">游戏默认设置</div>
+      <div class="panel" style="padding:20px;margin-bottom:20px" id="cfg-game-defaults"></div>
+
+      <!-- Role config tabs -->
+      <div class="section-label">角色配置</div>
+      <div class="sub-tabs" id="cfg-role-tabs" style="margin-bottom:12px"></div>
+      <div class="panel" style="padding:20px;margin-bottom:20px" id="cfg-role-editor"></div>
+
+      <!-- Raw JSON -->
+      <details style="margin-bottom:20px">
+        <summary style="cursor:pointer;color:rgba(216,176,107,.5);font-size:12px;margin-bottom:8px">高级：原始 JSON 配置</summary>
+        <textarea class="config-area" id="cfg-json" rows="6"></textarea>
+        <button class="mt-12" style="background:rgba(216,176,107,.15);border:1px solid rgba(216,176,107,.35);color:#d8b06b;border-radius:8px;padding:8px 24px;font-size:13px;cursor:pointer;font-weight:600;" onclick="saveConfig()">保存 JSON</button>
+      </details>
+    </div>
+
+    <!-- Skins -->
+    <div class="module" id="mod-skins">
+      <div class="mod-title">皮肤管理</div>
+      <div class="skin-grid" id="skins-grid"></div>
+    </div>
+
+    <!-- Assets -->
+    <div class="module" id="mod-assets">
+      <div class="mod-title">资源管理</div>
+      <div id="assets-content"></div>
+    </div>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────
+// Read key from cookie or localStorage (migrate)
+function getCookie(name) { const m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)')); return m ? decodeURIComponent(m[1]) : ''; }
+function setCookie(name, val, days) { const d = new Date(); d.setTime(d.getTime() + (days||30)*864e5); document.cookie = name+'='+encodeURIComponent(val)+';expires='+d.toUTCString()+';path=/'; }
+function delCookie(name) { document.cookie = name+'=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/'; }
+let KEY = getCookie('admin_key') || localStorage.getItem('admin_key') || '';
+let currentMod = 'dashboard';
+let gamesPage = 1, playersPage = 1;
+let expandedGameId = null;
+let selectedAiChar = null;
+
+// ── Phase name map ────────────────────────────────────────────────
+const PHASE_ZH = {
+  waiting: '等待', team: '组队', speaking: '发言', voting: '投票',
+  mission: '任务', assassination: '刺杀', end: '结束', ladyOfLake: '湖中仙女'
+};
+function phaseZh(p) { return PHASE_ZH[p] || p || '-'; }
+
+// ── Utils ──────────────────────────────────────────────────────────
+function api(path, opts) {
+  const sep = path.includes('?') ? '&' : '?';
+  return fetch(`${path}${sep}key=${encodeURIComponent(KEY)}`, opts).then(r => {
+    if (r.status === 403) { logout(); throw new Error('forbidden'); }
+    return r.json();
+  });
+}
+function ts(epoch) {
+  if (!epoch) return '-';
+  const d = new Date(typeof epoch === 'number' && epoch < 1e12 ? epoch * 1000 : epoch);
+  return d.toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+function winBadge(w) {
+  if (w === 'good') return '<span class="badge-good">正义</span>';
+  if (w === 'evil') return '<span class="badge-evil">邪恶</span>';
+  if (w === 'unknown') return '<span class="badge-abort">中断</span>';
+  return w || '-';
+}
+function winBadgeForGame(g) {
+  if (g.status === 'aborted' || g.winner === 'unknown') return '<span class="badge-abort">中断</span>';
+  return winBadge(g.winner);
+}
+function resultBadge(r) {
+  if (r === 'win') return '<span class="badge-win">胜</span>';
+  if (r === 'lose') return '<span class="badge-lose">负</span>';
+  return r || '-';
+}
+function gameResultReason(game, payload) {
+  if (game.status === 'aborted') return '对局中断';
+  const endReason = payload && payload.endReason;
+  const assassination = payload && payload.assassination;
+  if (endReason === 'assassination' && assassination) {
+    return assassination.hit ? '刺杀成功（邪恶胜）' : '刺杀失败（正义胜）';
+  }
+  if (endReason === 'three_fails') return '三次任务失败（邪恶胜）';
+  // Infer from mission results
+  const missionArr = payload && (payload.missionHistory || payload.missionResults);
+  if (missionArr) {
+    const fails = missionArr.filter(m => !m.success).length;
+    const successes = missionArr.filter(m => m.success).length;
+    if (game.winner === 'evil' && fails >= 3) return '三次任务失败（邪恶胜）';
+    if (game.winner === 'good' && successes >= 3) return '三次任务成功（正义胜）';
+  }
+  if (game.winner === 'good') return '正义胜';
+  if (game.winner === 'evil') return '邪恶胜';
+  if (game.winner === 'unknown') return '对局中断';
+  return game.winner || '';
+}
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2000);
+}
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+const ROLE_IMG_MAP = {
+  '梅林': 'merlin', '派西维尔': 'percival', '忠臣': 'arthur_loyal',
+  '莫甘娜': 'morgana', '刺客': 'assassin', '莫德雷德': 'mordred',
+  '奥伯伦': 'oberon', '爪牙': 'minion',
+};
+function roleImg(role, size) {
+  size = size || 24;
+  const file = ROLE_IMG_MAP[role];
+  if (!file) return esc(role);
+  return `<img src="https://www.awalon.top/mp-assets/role-split/${file}.png" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;vertical-align:middle"> <span style="vertical-align:middle">${esc(role)}</span>`;
+}
+const MEDAL_CDN = 'https://www.awalon.top/mp-assets/medals';
+function medalImg(code) {
+  const imgCode = code === 'good_first_round_clean_captain' ? 'good_protect_round_fail_captain' : code;
+  return `<img src="${MEDAL_CDN}/${imgCode}.svg" style="width:40px;height:40px" onerror="this.style.display='none'">`;
+}
+
+// ── Auth ───────────────────────────────────────────────────────────
+function tryLogin() {
+  KEY = document.getElementById('key-input').value.trim();
+  if (!KEY) return;
+  api('/api/admin/dashboard-stats').then(() => {
+    setCookie('admin_key', KEY, 30);
+    localStorage.setItem('admin_key', KEY);
+    showApp();
+  }).catch(() => {
+    document.getElementById('login-err').textContent = '密钥无效';
+  });
+}
+function logout() {
+  KEY = '';
+  delCookie('admin_key');
+  localStorage.removeItem('admin_key');
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login').style.display = 'flex';
+}
+function showApp() {
+  document.getElementById('login').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  // Load review mode state for sidebar
+  api('/api/admin/config').then(d => updateReviewToggle(d.reviewMode)).catch(() => {});
+  switchMod('dashboard');
+}
+// Auto-login
+const urlKey = new URLSearchParams(location.search).get('key');
+if (urlKey) { KEY = urlKey; setCookie('admin_key', KEY, 30); localStorage.setItem('admin_key', KEY); }
+if (KEY) {
+  api('/api/admin/dashboard-stats').then(() => showApp()).catch(() => {
+    document.getElementById('login').style.display = 'flex';
+  });
+} else {
+  if (false) {
+  }
+}
+
+// ── Navigation ────────────────────────────────────────────────────
+document.querySelectorAll('.nav-item').forEach(el => {
+  el.addEventListener('click', () => switchMod(el.dataset.mod));
+});
+function switchMod(mod) {
+  currentMod = mod;
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.toggle('active', el.dataset.mod === mod));
+  document.querySelectorAll('.module').forEach(el => el.classList.toggle('active', el.id === 'mod-' + mod));
+  if (mod === 'dashboard') loadDashboard();
+  else if (mod === 'games') loadGames(1);
+  else if (mod === 'players') { showPlayersList(); loadPlayers(1); }
+  else if (mod === 'ai') loadAiOverview();
+  else if (mod === 'config') loadConfig();
+  else if (mod === 'skins') loadSkins();
+  else if (mod === 'assets') loadAssets();
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────
+function loadDashboard() {
+  api('/api/admin/dashboard-stats').then(d => {
+    document.getElementById('dash-stats').innerHTML = `
+      <div class="stat-card"><div class="stat-val gold">${d.totalGames}</div><div class="stat-label">总对局</div></div>
+      <div class="stat-card"><div class="stat-val blue">${d.totalPlayers}</div><div class="stat-label">总玩家</div></div>
+      <div class="stat-card"><div class="stat-val green">${d.activeRooms}</div><div class="stat-label">在线房间</div></div>
+      <div class="stat-card"><div class="stat-val">${d.goodWinRate}%</div><div class="stat-label">正义胜率</div></div>
+    `;
+    // Active rooms list
+    const roomsTbody = document.querySelector('#dash-rooms-table tbody');
+    const rooms = d.activeRoomsList || [];
+    if (rooms.length === 0) {
+      roomsTbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:rgba(242,229,200,.3);padding:18px">暂无在线房间</td></tr>';
+    } else {
+      roomsTbody.innerHTML = rooms.map(r => {
+        const code = r.roomCode || r.code || '-';
+        return `<tr class="clickable" onclick="showRoomDetail('${esc(code)}')">
+          <td>${esc(code)}</td>
+          <td>${esc(r.hostName || r.hostNickname || r.host || '-')}</td>
+          <td>${r.playerCount || r.players || '-'}${r.maxPlayers ? '/' + r.maxPlayers : ''}</td>
+          <td><span class="badge-status">${r.started ? '进行中' : '等待中'}</span></td>
+          <td>${phaseZh(r.phase)}</td>
+        </tr>`;
+      }).join('');
+    }
+    // Recent games
+    const tbody = document.querySelector('#dash-recent tbody');
+    tbody.innerHTML = (d.recentGames || []).map(g => `
+      <tr><td>${g.id}</td><td>${esc(g.roomCode)}</td><td>${g.maxPlayers}</td><td>${winBadgeForGame(g)}</td><td>${ts(g.endedAt)}</td></tr>
+    `).join('');
+  });
+}
+
+// ── Room Detail ───────────────────────────────────────────────────
+function showRoomDetail(code) {
+  const container = document.getElementById('dash-room-detail');
+  container.innerHTML = '<div class="text-muted" style="padding:12px">加载中...</div>';
+  api(`/api/admin/rooms/${code}`).then(d => {
+    let html = '<div class="panel" style="padding:20px;margin-top:12px">';
+    html += `<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">`;
+    html += `<span style="font-size:20px;font-weight:800;color:#d8b06b">房间 ${esc(d.code)}</span>`;
+    html += `<span class="badge-status">${d.started ? '进行中' : '等待中'}</span>`;
+    html += `<span style="font-size:13px;color:rgba(242,229,200,.4)">阶段: ${phaseZh(d.phase)} · 第${d.round}轮 第${d.attempt}次</span>`;
+    if (d.leaderName) html += `<span style="font-size:13px;color:rgba(242,229,200,.4)">队长: ${esc(d.leaderName)}</span>`;
+    html += `<span onclick="document.getElementById('dash-room-detail').innerHTML=''" style="margin-left:auto;cursor:pointer;color:rgba(242,229,200,.3);font-size:18px" title="关闭">×</span>`;
+    html += `</div>`;
+
+    // Players in circle layout
+    const seated = d.players.filter(p => !p.spectator);
+    const spectators = d.players.filter(p => p.spectator);
+    const n = seated.length;
+    const teamIds = new Set((d.team || []).map(t => t.id));
+
+    html += `<div style="position:relative;min-height:280px;margin-bottom:16px">`;
+    // Center info
+    html += `<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center">`;
+    html += `<div style="font-size:14px;font-weight:700;color:#d8b06b">${phaseZh(d.phase)}</div>`;
+    html += `<div style="font-size:11px;color:rgba(242,229,200,.3)">R${d.round}-${d.attempt}</div>`;
+    html += `</div>`;
+
+    seated.forEach((p, i) => {
+      const angle = (2 * Math.PI * i / Math.max(5, n)) - Math.PI / 2;
+      const r = 38;
+      const left = 50 + r * Math.cos(angle);
+      const top = 50 + r * Math.sin(angle);
+      const isEvil = ['莫甘娜','刺客','莫德雷德','奥伯伦','爪牙'].includes(p.role);
+      const border = isEvil ? 'rgba(224,80,80,.6)' : p.role ? 'rgba(78,158,255,.6)' : 'rgba(216,176,107,.3)';
+      const bg = isEvil ? 'rgba(224,80,80,.1)' : p.role ? 'rgba(78,158,255,.1)' : 'rgba(255,255,255,.03)';
+      const isOnTeam = teamIds.has(p.id);
+      const isLeader = p.id === d.leaderId;
+      const file = ROLE_IMG_MAP[p.role];
+      const imgUrl = file ? `https://www.awalon.top/mp-assets/role-split/${file}.png` : '';
+      const avIsUrl = p.avatar && (p.avatar.startsWith('http') || p.avatar.startsWith('/'));
+
+      html += `<div style="position:absolute;left:${left.toFixed(1)}%;top:${top.toFixed(1)}%;transform:translate(-50%,-50%);width:85px;text-align:center;z-index:2">`;
+      // Avatar
+      html += `<div style="width:48px;height:48px;margin:0 auto;border-radius:50%;border:2px solid ${border};background:${bg};overflow:hidden;position:relative${isOnTeam ? ';box-shadow:0 0 8px rgba(216,176,107,.6)' : ''}">`;
+      if (imgUrl) html += `<img src="${imgUrl}" style="width:100%;height:100%;object-fit:cover">`;
+      else if (avIsUrl) html += `<img src="${p.avatar}" style="width:100%;height:100%;object-fit:cover">`;
+      else html += `<span style="font-size:20px;line-height:48px;display:block">${esc(p.avatar || (p.isAI ? '🤖' : '🐺'))}</span>`;
+      html += `</div>`;
+      // Badges
+      if (isLeader) html += `<div style="position:absolute;top:-2px;left:50%;margin-left:16px;font-size:12px">👑</div>`;
+      if (p.isAI) html += `<div style="position:absolute;top:-2px;left:50%;margin-left:-24px;font-size:10px">🤖</div>`;
+      // Info
+      html += `<div style="font-size:10px;color:rgba(242,229,200,.35);margin-top:2px">${p.seat != null ? p.seat + '号' : '未入座'}${p.isHost ? ' 房主' : ''}</div>`;
+      html += `<div style="font-size:11px;font-weight:600;color:#f2e5c8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(p.nickname)}</div>`;
+      if (p.role) html += `<div style="font-size:10px;color:${isEvil ? '#e05050' : '#4e9eff'}">${esc(p.role)}</div>`;
+      else html += `<div style="font-size:10px;color:rgba(242,229,200,.2)">未分配</div>`;
+      html += `</div>`;
+    });
+    html += `</div>`;
+
+    // Current team
+    if (d.team && d.team.length) {
+      html += `<div style="font-size:12px;color:rgba(216,176,107,.6);margin-bottom:6px">当前队伍</div>`;
+      html += `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">`;
+      d.team.forEach(t => {
+        html += `<span style="padding:3px 12px;border-radius:12px;font-size:12px;border:1px solid rgba(216,176,107,.3);background:rgba(216,176,107,.08);color:#f2e5c8">${esc(t.nickname)}</span>`;
+      });
+      html += `</div>`;
+    }
+
+    // Mission pills
+    if (d.missionHistory && d.missionHistory.length) {
+      html += `<div style="font-size:12px;color:rgba(216,176,107,.6);margin-bottom:6px">任务进度</div>`;
+      html += `<div style="display:flex;gap:6px;margin-bottom:12px">`;
+      for (let round = 1; round <= 5; round++) {
+        const m = d.missionHistory.find(x => x.round === round);
+        if (m) {
+          const c = m.success ? '#3fb950' : '#e05050';
+          html += `<span style="width:28px;height:28px;border-radius:50%;border:2px solid ${c};display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:${c}">${m.success ? '✓' : '✗'}</span>`;
+        } else {
+          html += `<span style="width:28px;height:28px;border-radius:50%;border:2px solid rgba(255,255,255,.08);display:inline-flex;align-items:center;justify-content:center;font-size:12px;color:rgba(242,229,200,.2)">${round}</span>`;
+        }
+      }
+      html += `</div>`;
+    }
+
+    // Spectators
+    if (spectators.length) {
+      html += `<div style="font-size:12px;color:rgba(242,229,200,.3);margin-top:8px">观战: ${spectators.map(s => esc(s.nickname)).join(', ')}</div>`;
+    }
+
+    // Settings
+    html += `<div style="display:flex;gap:12px;font-size:11px;color:rgba(242,229,200,.25);margin-top:10px;border-top:1px solid rgba(255,255,255,.04);padding-top:8px">`;
+    html += `<span>发言 ${d.speakingSeconds || 120}秒</span>`;
+    html += `<span>湖女 ${d.ladyOfLakeEnabled ? '开' : '关'}</span>`;
+    html += `<span>奥伯伦翻牌 ${d.oberonVisibleEnabled ? '开' : '关'}</span>`;
+    html += `</div>`;
+
+    html += `</div>`;
+    container.innerHTML = html;
+  }).catch(e => {
+    container.innerHTML = `<div class="text-muted" style="padding:12px">加载失败: ${esc(e.message || '')}</div>`;
+  });
+}
+
+// ── Games ──────────────────────────────────────────────────────────
+function loadGames(page) {
+  gamesPage = page;
+  const status = document.getElementById('games-status').value;
+  const winner = document.getElementById('games-winner').value;
+  let q = `/api/admin/games?page=${page}&limit=20`;
+  if (status) q += `&status=${status}`;
+  if (winner) q += `&winner=${winner}`;
+  api(q).then(d => {
+    const tbody = document.querySelector('#games-table tbody');
+    tbody.innerHTML = (d.games || []).map(g => `
+      <tr class="clickable" onclick="showGameDetail(${g.id})">
+        <td>${g.id}</td><td>${esc(g.roomCode)}</td><td>${g.playerCount || g.maxPlayers}</td>
+        <td>${winBadgeForGame(g)}</td><td><span class="badge-status">${g.status === 'aborted' ? '中断' : (g.status || 'completed')}</span></td><td>${ts(g.endedAt)}</td>
+      </tr>
+    `).join('');
+    renderPager('games-pager', d.page, d.total, d.limit, loadGames);
+  });
+}
+function showGamesList() {
+  document.getElementById('games-list-view').style.display = 'block';
+  document.getElementById('games-detail-view').style.display = 'none';
+}
+function showGameDetail(id) {
+  document.getElementById('games-list-view').style.display = 'none';
+  const container = document.getElementById('games-detail-view');
+  container.style.display = 'block';
+  container.innerHTML = '<div class="text-muted" style="padding:20px">加载中...</div>';
+  api(`/api/admin/games/${id}`).then(d => {
+    const p = d.payload || {};
+    const players = p.players || [];
+    const nameById = {}, roleById = {}, seatById = {}, factionById = {};
+    players.forEach(pl => { nameById[pl.id] = pl.nickname; roleById[pl.id] = pl.role; seatById[pl.id] = pl.seat; factionById[pl.id] = ROLE_FACTIONS_MAP[pl.role] || ''; });
+    (d.participants || []).forEach(pl => { nameById[pl.clientId] = pl.nickname; roleById[pl.clientId] = pl.role; seatById[pl.clientId] = pl.seat; factionById[pl.clientId] = pl.faction; });
+    const seatOf = id => seatById[id] != null ? seatById[id] : '?';
+    const maxPlayers = p.maxPlayers || (d.participants || []).filter(x => x.role && x.role !== '观战').length || 7;
+    const winner = p.winner || d.game.winner;
+    const reason = gameResultReason(d.game, p);
+    const missions = p.missionHistory || [];
+    const missionByRound = {};
+    missions.forEach(m => { missionByRound[m.round] = m; });
+
+    let html = `<button class="back-btn" onclick="showGamesList()">← 返回对战列表</button>`;
+
+    // ── 1. Header: winner banner ──
+    const winColor = winner === 'good' ? '#4e9eff' : winner === 'evil' ? '#e05050' : 'rgba(242,229,200,.4)';
+    const winBg = winner === 'good' ? 'rgba(78,158,255,.08)' : winner === 'evil' ? 'rgba(224,80,80,.08)' : 'rgba(255,255,255,.04)';
+    const winText = winner === 'good' ? '正义胜利' : winner === 'evil' ? '邪恶胜利' : '对局中断';
+    html += `<div class="panel" style="padding:28px 24px;margin-bottom:20px;text-align:center;background:${winBg};border-color:${winColor}33">`;
+    html += `<div style="font-size:24px;font-weight:800;color:${winColor};letter-spacing:2px">${winText}</div>`;
+    if (reason) html += `<div style="font-size:13px;color:${winColor};opacity:.7;margin-top:6px">${esc(reason)}</div>`;
+    html += `<div style="margin-top:10px;font-size:12px;color:rgba(242,229,200,.35)">对局 #${d.game.id} · 房间 ${esc(d.game.roomCode)} · ${maxPlayers}人局 · ${ts(d.game.endedAt)}</div>`;
+    html += `</div>`;
+
+    // ── 2. Round table (circular layout) ──
+    const seated = (d.participants || []).filter(pl => pl.role && pl.role !== '观战' && pl.role !== '').sort((a,b) => a.seat - b.seat);
+    const assTargetId = p.assassination && (p.assassination.targetId || p.assassination.target);
+    html += '<div class="section-label">圆桌回放</div>';
+    html += '<div class="panel" style="padding:20px;margin-bottom:20px;position:relative;min-height:320px">';
+    // Center result
+    html += `<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:1">`;
+    html += `<div style="font-size:16px;font-weight:800;color:${winColor}">${winText}</div>`;
+    if (reason && reason !== winText) html += `<div style="font-size:11px;color:${winColor};opacity:.6;margin-top:2px">${esc(reason)}</div>`;
+    html += `</div>`;
+    // Seats in circle
+    const n = seated.length;
+    seated.forEach((pl, i) => {
+      const angle = (2 * Math.PI * i / Math.max(5, n)) - Math.PI / 2;
+      const r = 38;
+      const left = 50 + r * Math.cos(angle);
+      const top = 50 + r * Math.sin(angle);
+      const isEvil = pl.faction === 'evil';
+      const border = isEvil ? 'rgba(224,80,80,.6)' : 'rgba(78,158,255,.6)';
+      const bg = isEvil ? 'rgba(224,80,80,.12)' : 'rgba(78,158,255,.12)';
+      const isKilled = assTargetId === pl.clientId;
+      const isWin = pl.result === 'win';
+      const file = ROLE_IMG_MAP[pl.role];
+      const imgUrl = file ? `https://www.awalon.top/mp-assets/role-split/${file}.png` : '';
+      html += `<div style="position:absolute;left:${left.toFixed(1)}%;top:${top.toFixed(1)}%;transform:translate(-50%,-50%);width:80px;text-align:center;z-index:2">`;
+      // Avatar ring
+      html += `<div style="width:48px;height:48px;margin:0 auto;border-radius:50%;border:2px solid ${border};background:${bg};overflow:hidden;position:relative">`;
+      if (imgUrl) html += `<img src="${imgUrl}" style="width:100%;height:100%;object-fit:cover">`;
+      else html += `<span style="font-size:24px;line-height:48px;display:block">${esc(pl.role ? pl.role[0] : '?')}</span>`;
+      if (isKilled) html += `<div style="position:absolute;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center"><span style="font-size:20px">🗡️</span></div>`;
+      html += `</div>`;
+      // Seat number
+      html += `<div style="font-size:10px;color:rgba(242,229,200,.35);margin-top:2px">${pl.seat}号${isWin ? ' 👑' : ''}${pl.isAI ? ' 🤖' : ''}</div>`;
+      // Name
+      html += `<div style="font-size:11px;font-weight:600;color:#f2e5c8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(pl.nickname)}</div>`;
+      // Role pill
+      html += `<div style="font-size:10px;color:${isEvil ? '#e05050' : '#4e9eff'}">${esc(pl.role)}</div>`;
+      html += `</div>`;
+    });
+    html += '</div>';
+
+    // ── 3. Mission pills (like mobile) ──
+    html += '<div class="section-label">任务进度</div><div class="panel" style="padding:16px;margin-bottom:20px">';
+    html += '<div style="display:flex;gap:8px;justify-content:center">';
+    for (let round = 1; round <= 5; round++) {
+      const m = missionByRound[round];
+      let color, bg, border, icon;
+      if (m) {
+        color = m.success ? '#3fb950' : '#e05050';
+        bg = m.success ? 'rgba(63,185,80,.12)' : 'rgba(224,80,80,.12)';
+        border = m.success ? 'rgba(63,185,80,.4)' : 'rgba(224,80,80,.4)';
+        icon = m.success ? '✓' : '✗';
+      } else {
+        color = 'rgba(242,229,200,.25)'; bg = 'rgba(255,255,255,.03)'; border = 'rgba(255,255,255,.08)'; icon = round;
+      }
+      html += `<div style="width:52px;height:52px;border-radius:50%;border:2px solid ${border};background:${bg};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:${color}">${icon}</div>`;
+    }
+    html += '</div>';
+    // Mission details
+    if (missions.length) {
+      html += '<div style="margin-top:14px">';
+      missions.forEach(m => {
+        const teamNames = (m.team || []).map(id => `${seatOf(id)}号${esc(nameById[id] || '')}`);
+        const color = m.success ? '#3fb950' : '#e05050';
+        html += `<div style="padding:8px 0;border-top:1px solid rgba(255,255,255,.04);font-size:12px">`;
+        html += `<span style="color:${color};font-weight:700">第${m.round}轮 ${m.success ? '成功' : '失败'}</span>`;
+        html += `<span class="text-muted" style="margin-left:8px">失败票 ${m.fails || 0}</span>`;
+        html += `<div style="color:rgba(242,229,200,.4);margin-top:2px">队伍: ${teamNames.join(', ')}</div>`;
+        html += `</div>`;
+      });
+      html += '</div>';
+    }
+    html += '</div>';
+
+    // ── 4. Assassination ──
+    if (p.assassination) {
+      const assHit = p.assassination.success || p.assassination.hit;
+      const tName = nameById[assTargetId] || assTargetId;
+      const tRole = roleById[assTargetId] || '';
+      const tSeat = seatOf(assTargetId);
+      const assName = nameById[p.assassination.assassinId] || '刺客';
+      const assSeat = seatOf(p.assassination.assassinId);
+      const assColor = assHit ? '#e05050' : '#3fb950';
+      html += '<div class="section-label">刺杀</div><div class="panel" style="padding:18px;margin-bottom:20px">';
+      html += `<div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:14px">`;
+      html += `<div style="text-align:center"><div style="font-size:11px;color:rgba(242,229,200,.35)">${assSeat}号</div><div style="font-size:13px;font-weight:600">${esc(assName)}</div><div style="font-size:11px;color:#e05050">刺客</div></div>`;
+      html += `<div style="font-size:24px">🗡️</div>`;
+      html += `<div style="text-align:center">${tRole ? `<div>${roleImg(tRole, 32)}</div>` : ''}<div style="font-size:11px;color:rgba(242,229,200,.35)">${tSeat}号</div><div style="font-size:13px;font-weight:600">${esc(tName)}</div><div style="font-size:11px;color:#4e9eff">${esc(tRole)}</div></div>`;
+      html += `</div>`;
+      html += `<div style="text-align:center;font-size:16px;font-weight:700;color:${assColor};margin-bottom:14px">${assHit ? '刺杀命中' : '刺杀落空'}</div>`;
+      // Fix form
+      const goodPlayers = (d.participants || []).filter(pl => pl.faction === 'good' && pl.role !== '观战' && pl.role !== '');
+      html += `<details style="border-top:1px solid rgba(255,255,255,.06);padding-top:12px"><summary style="cursor:pointer;color:rgba(216,176,107,.5);font-size:12px">修改刺杀结果</summary>`;
+      html += `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px">`;
+      html += `<select id="fix-ass-target-${d.game.id}" style="background:rgba(255,255,255,.06);border:1px solid rgba(216,176,107,.2);border-radius:8px;color:#f2e5c8;padding:6px 12px;font-size:13px">`;
+      goodPlayers.forEach(pl => {
+        const sel = pl.clientId === assTargetId ? ' selected' : '';
+        html += `<option value="${esc(pl.clientId)}"${sel}>${pl.seat}号 ${esc(pl.nickname)} (${esc(pl.role)})</option>`;
+      });
+      html += `</select>`;
+      html += `<label style="font-size:13px;display:flex;align-items:center;gap:6px"><input type="checkbox" id="fix-ass-hit-${d.game.id}" ${assHit ? 'checked' : ''}> 刺中</label>`;
+      html += `<button onclick="fixAssassination(${d.game.id})" style="background:rgba(224,80,80,.15);border:1px solid rgba(224,80,80,.4);color:#e05050;border-radius:8px;padding:6px 16px;font-size:13px;cursor:pointer;font-weight:600">确认修改</button>`;
+      html += `</div></details></div>`;
+    }
+
+    // ── 5. Mission Table (matching mobile layout) ──
+    const votes = (p.voteHistory || []).slice().sort((a,b) => {
+      const rd = (a.round||0) - (b.round||0);
+      return rd !== 0 ? rd : (a.attempt||0) - (b.attempt||0);
+    });
+    if (votes.length) {
+      html += '<div class="section-label">任务详情</div>';
+      html += '<div class="panel" style="padding:16px 12px;margin-bottom:20px">';
+      // Table header
+      html += `<div style="display:flex;align-items:center;padding:0 4px 8px;border-bottom:1px solid rgba(200,134,10,.2);margin-bottom:4px">`;
+      html += `<div style="width:100px;flex-shrink:0;font-size:11px;color:rgba(216,176,107,.85);font-weight:700;text-align:center">当前队伍</div>`;
+      html += `<div style="flex:1;font-size:11px;text-align:center"><span style="color:#66d99b">赞成</span><span style="color:rgba(216,176,107,.48);margin:0 4px">/</span><span style="color:#ff8f8f">反对</span></div>`;
+      html += `<div style="width:56px;flex-shrink:0;font-size:11px;color:rgba(216,176,107,.85);font-weight:700;text-align:center">结果</div>`;
+      html += `</div>`;
+      // Rows
+      votes.forEach(v => {
+        const approved = v.approved !== undefined ? v.approved : false;
+        const mission = approved ? missionByRound[v.round] : null;
+        const isSkipped = !approved;
+        const rowOpacity = isSkipped ? 'opacity:.45;' : '';
+        const rowBg = isSkipped ? 'background:rgba(0,0,0,.15);border-radius:6px;' : '';
+
+        html += `<div style="display:flex;align-items:center;padding:6px 4px;border-top:1px solid rgba(228,194,129,.06);gap:6px;${rowOpacity}${rowBg}">`;
+
+        // Col 1: Team chips
+        html += `<div style="width:100px;flex-shrink:0;display:flex;flex-wrap:wrap;gap:3px;justify-content:center">`;
+        (v.team || []).map(id => seatOf(id)).sort((a,b) => a - b).forEach(seat => {
+          html += `<span style="width:22px;height:22px;border-radius:50%;border:1.5px solid rgba(200,134,10,.55);background:rgba(200,134,10,.12);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#e8c870">${seat}</span>`;
+        });
+        html += `</div>`;
+
+        // Col 2: Vote chips (green then red, centered)
+        html += `<div style="flex:1;display:flex;flex-wrap:wrap;gap:3px;justify-content:center;align-items:center">`;
+        if (v.votes) {
+          const entries = Object.entries(v.votes).sort(([a],[b]) => (seatById[a]||0) - (seatById[b]||0));
+          const yesChips = entries.filter(([,val]) => val === true || val === 'approve');
+          const noChips = entries.filter(([,val]) => val === false || val === 'reject');
+          yesChips.forEach(([id]) => {
+            const isLeader = id === v.leaderId;
+            const extra = isLeader ? 'border-color:#f5cc52;box-shadow:0 0 4px rgba(240,200,50,.5);border-width:2px;' : '';
+            html += `<span title="${esc(nameById[id]||id)}" style="width:22px;height:22px;border-radius:50%;border:1.5px solid #3ab870;background:rgba(30,110,60,.55);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#8eeab4;${extra}">${seatOf(id)}</span>`;
+          });
+          if (yesChips.length && noChips.length) html += `<span style="width:1px;height:18px;background:rgba(255,255,255,.12);margin:0 2px;flex-shrink:0"></span>`;
+          noChips.forEach(([id]) => {
+            const isLeader = id === v.leaderId;
+            const extra = isLeader ? 'border-color:#f5cc52;box-shadow:0 0 4px rgba(240,200,50,.5);border-width:2px;' : '';
+            html += `<span title="${esc(nameById[id]||id)}" style="width:22px;height:22px;border-radius:50%;border:1.5px solid #d94f4f;background:rgba(150,34,34,.72);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#ffb0b0;${extra}">${seatOf(id)}</span>`;
+          });
+        }
+        html += `</div>`;
+
+        // Col 3: Result
+        html += `<div style="width:56px;flex-shrink:0;display:flex;justify-content:center">`;
+        if (!approved) {
+          // Veto
+          html += `<img src="https://www.awalon.top/mp-assets/icons/mission-veto.svg" style="width:20px;height:20px">`;
+        } else if (mission) {
+          if (mission.success) {
+            html += `<span style="display:inline-flex;align-items:center;justify-content:center;border:1.5px solid rgba(80,160,255,.78);background:rgba(28,94,175,.42);border-radius:6px;padding:2px 6px;box-shadow:0 0 6px rgba(80,160,255,.2)">`;
+            html += `<span style="color:#bfe3ff;font-size:13px;font-weight:900">✦</span>`;
+            if (mission.fails > 0) html += `<span style="border-left:1px solid rgba(255,255,255,.18);padding-left:4px;margin-left:4px;font-size:11px;font-weight:800;color:rgba(236,245,255,.58)">${mission.fails}</span>`;
+            html += `</span>`;
+          } else {
+            html += `<span style="display:inline-flex;align-items:center;justify-content:center;border:1.5px solid rgba(255,104,104,.84);background:rgba(150,34,34,.62);border-radius:6px;padding:2px 6px;box-shadow:0 0 6px rgba(255,90,90,.24)">`;
+            html += `<span style="color:#ffd5d5;font-size:13px;font-weight:900">✗</span>`;
+            if (mission.fails > 0) html += `<span style="border-left:1px solid rgba(255,255,255,.18);padding-left:4px;margin-left:4px;font-size:11px;font-weight:800;color:#ffd0d0">${mission.fails}</span>`;
+            html += `</span>`;
+          }
+        } else {
+          html += `<span style="color:rgba(216,176,107,.7);font-size:14px">···</span>`;
+        }
+        html += `</div>`;
+
+        html += `</div>`;
+      });
+      html += '</div>'; // close panel
+    }
+
+    // ── 6. Medals ──
+    if (d.medals && d.medals.length) {
+      html += '<div class="section-label">本局勋章</div><div class="medal-grid" style="margin-bottom:20px">';
+      d.medals.forEach(m => {
+        html += `<div class="medal-item">${medalImg(m.code)}<div class="medal-name" style="margin-top:6px">${esc(m.name)}</div><div class="text-muted" style="font-size:11px">${esc(nameById[m.clientId] || '')}</div></div>`;
+      });
+      html += '</div>';
+    }
+
+    // ── 7. Speeches ──
+    const speakHistory = p.speakHistory || {};
+    const speakKeys = Object.keys(speakHistory).filter(k => speakHistory[k] && speakHistory[k].length).sort((a,b) => {
+      const [ar,aa] = a.split('-').map(Number); const [br,ba] = b.split('-').map(Number);
+      return ar !== br ? ar - br : aa - ba;
+    });
+    if (speakKeys.length) {
+      html += '<div class="section-label">发言记录</div>';
+      speakKeys.forEach(key => {
+        const [round, attempt] = key.split('-');
+        html += `<div class="panel" style="padding:14px 18px;margin-bottom:8px">`;
+        html += `<div class="text-gold" style="font-size:12px;font-weight:700;margin-bottom:10px">第 ${round} 轮 · 第 ${attempt} 次</div>`;
+        speakHistory[key].forEach(s => {
+          const sName = s.from || nameById[s.playerId] || '?';
+          const sRole = roleById[s.playerId] || '';
+          const sSeat = s.playerId ? seatOf(s.playerId) : '';
+          const isEvil = factionById[s.playerId] === 'evil';
+          const leftBorder = isEvil ? 'border-left:3px solid rgba(224,80,80,.4)' : 'border-left:3px solid rgba(78,158,255,.4)';
+          html += `<div style="margin-bottom:8px;padding:8px 12px;background:rgba(255,255,255,.02);border-radius:8px;${leftBorder}">`;
+          html += `<div style="font-size:12px;font-weight:600;color:rgba(242,229,200,.55);margin-bottom:4px">${sSeat ? sSeat + '号 ' : ''}${sRole ? roleImg(sRole, 16) + ' ' : ''}${esc(sName)}</div>`;
+          html += `<div style="font-size:13px;line-height:1.6;color:#f2e5c8">${esc(s.text || '')}</div>`;
+          html += `</div>`;
+        });
+        html += `</div>`;
+      });
+    }
+
+    // ── 8. Recaps ──
+    const recaps = p.recaps || [];
+    if (recaps.length) {
+      html += '<div class="section-label">AI 复盘</div>';
+      recaps.filter(r => r && (r.review || r.overview)).forEach(r => {
+        const player = players.find(pl => pl.id === r.playerId);
+        const nick = (player && player.nickname) || r.nickname || '?';
+        const role = (player && player.role) || r.role || '';
+        const seat = player ? player.seat : r.seat || '?';
+        const review = r.review || {};
+        html += `<div class="panel" style="padding:14px 18px;margin-bottom:8px">`;
+        html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">${role ? roleImg(role, 22) : ''}<span style="font-weight:700">${seat}号 ${esc(nick)}</span><span class="text-muted" style="font-size:12px">${esc(role)}</span></div>`;
+        if (review.overview) html += `<div style="font-size:13px;margin-bottom:8px;line-height:1.5">${esc(review.overview)}</div>`;
+        if (Array.isArray(review.keyMoments) && review.keyMoments.length) {
+          html += `<div style="font-size:11px;color:#d8b06b;margin:8px 0 4px">关键节点</div>`;
+          review.keyMoments.forEach(m => { html += `<div style="font-size:12px;margin-bottom:4px;color:rgba(242,229,200,.6)">R${m.round}: ${esc(m.decision)} → ${esc(m.outcome)}</div>`; });
+        }
+        if (review.nextGamePlan) html += `<div style="font-size:11px;color:#3fb950;margin-top:8px">下局计划: ${esc(review.nextGamePlan)}</div>`;
+        html += `</div>`;
+      });
+    }
+
+    container.innerHTML = html;
+  }).catch(e => {
+    container.innerHTML = `<button class="back-btn" onclick="showGamesList()">← 返回对战列表</button><div class="text-muted" style="padding:20px">加载失败: ${esc(e.message || '')}</div>`;
+  });
+}
+const ROLE_FACTIONS_MAP = { '梅林':'good','派西维尔':'good','忠臣':'good','亚瑟的忠臣':'good','莫甘娜':'evil','刺客':'evil','莫德雷德':'evil','奥伯伦':'evil','爪牙':'evil' };
+
+// ── Players ───────────────────────────────────────────────────────
+function showPlayersList() {
+  document.getElementById('players-list-view').style.display = 'block';
+  document.getElementById('players-detail-view').style.display = 'none';
+  document.getElementById('players-detail-view').innerHTML = '';
+}
+function loadPlayers(page) {
+  playersPage = page;
+  showPlayersList();
+  const search = document.getElementById('players-search').value;
+  let q = `/api/admin/players?page=${page}&limit=20`;
+  if (search) q += `&search=${encodeURIComponent(search)}`;
+  api(q).then(d => {
+    const tbody = document.querySelector('#players-table tbody');
+    tbody.innerHTML = (d.players || []).map(p => {
+      const av = p.avatar && (p.avatar.startsWith('http') || p.avatar.startsWith('/'))
+        ? `<img src="${esc(p.avatar)}" style="width:32px;height:32px;border-radius:50%;object-fit:cover">`
+        : `<span style="font-size:22px">${esc(p.avatar || '🐺')}</span>`;
+      return `<tr class="clickable" onclick="showPlayerDetail('${esc(p.phone)}')">
+        <td>${av}</td><td>${esc(p.nickname)}</td><td>${esc(p.phone)}</td>
+        <td>${p.totalGames}</td><td>${p.winRate}%</td><td class="text-muted" style="font-size:12px">${(p.topRoles||[]).map(r=>esc(r)).join(' ')}</td><td>${p.medalCount}</td><td>${ts(p.createdAt)}</td>
+      </tr>`;
+    }).join('');
+    renderPager('players-pager', d.page, d.total, d.limit, loadPlayers);
+  });
+}
+let _playerDetailData = null;
+let _playerDetailMode = 'pvp';
+function showPlayerDetail(phone) {
+  document.getElementById('players-list-view').style.display = 'none';
+  const container = document.getElementById('players-detail-view');
+  container.style.display = 'block';
+  container.innerHTML = '<div class="text-muted" style="padding:20px">加载中...</div>';
+  _playerDetailMode = 'pvp';
+  api(`/api/admin/players/${phone}`).then(d => {
+    _playerDetailData = d;
+    renderPlayerDetail();
+  }).catch(() => {
+    container.innerHTML = '<button class="back-btn" onclick="showPlayersList()">← 返回玩家列表</button><div class="text-muted" style="padding:20px">加载失败</div>';
+  });
+}
+function switchPlayerMode(mode) {
+  _playerDetailMode = mode;
+  renderPlayerDetail();
+}
+function renderPlayerDetail() {
+  const d = _playerDetailData;
+  if (!d) return;
+  const container = document.getElementById('players-detail-view');
+  const u = d.user;
+  const s = _playerDetailMode === 'pvp' ? d.pvp : d.pve;
+  const isImg = u.avatar && (u.avatar.startsWith('http') || u.avatar.startsWith('/'));
+  const avHtml = isImg
+    ? `<img src="${esc(u.avatar)}" class="avatar-lg">`
+    : `<span class="avatar-emoji">${esc(u.avatar || '🐺')}</span>`;
+
+  let html = `<button class="back-btn" onclick="showPlayersList()">← 返回玩家列表</button>`;
+  html += `<div class="player-header">${avHtml}<div class="info"><div class="name">${esc(u.nickname)}</div><div class="meta">${esc(u.phone)} · 注册于 ${ts(u.createdAt)}</div></div></div>`;
+
+  // PVP/PVE toggle
+  html += `<div class="sub-tabs" style="margin-bottom:16px">`;
+  html += `<div class="sub-tab ${_playerDetailMode === 'pvp' ? 'active' : ''}" onclick="switchPlayerMode('pvp')">PVP（纯人局）</div>`;
+  html += `<div class="sub-tab ${_playerDetailMode === 'pve' ? 'active' : ''}" onclick="switchPlayerMode('pve')">PVE（含AI局）</div>`;
+  html += `</div>`;
+
+  // Overview stat cards
+  html += '<div class="section-label">总览</div><div class="stat-grid">';
+  html += `<div class="stat-card"><div class="stat-val gold">${s.totalGames}</div><div class="stat-label">总对局</div></div>`;
+  html += `<div class="stat-card"><div class="stat-val green">${s.wins}</div><div class="stat-label">胜场</div></div>`;
+  html += `<div class="stat-card"><div class="stat-val blue">${s.winRate}%</div><div class="stat-label">胜率</div></div>`;
+  html += `<div class="stat-card"><div class="stat-val">${s.medalCount}</div><div class="stat-label">总勋章</div></div>`;
+  html += `<div class="stat-card"><div class="stat-val" style="color:${s.currentStreak > 0 ? '#3fb950' : s.currentStreak < 0 ? '#e05050' : '#f2e5c8'}">${s.currentStreak > 0 ? s.currentStreak : s.currentStreak < 0 ? Math.abs(s.currentStreak) + '连败' : 0}</div><div class="stat-label">${s.currentStreak >= 0 ? '当前连胜' : '当前连败'}</div></div>`;
+  html += '</div>';
+
+  // Role breakdown
+  if (s.byRole && s.byRole.length) {
+    html += '<div class="section-label">角色分布</div><div class="panel" style="overflow:auto"><table><thead><tr><th>角色</th><th>局数</th><th>胜场</th><th>胜率</th><th></th></tr></thead><tbody>';
+    s.byRole.forEach(r => {
+      const wr = r.total > 0 ? (r.wins * 100 / r.total).toFixed(1) : 0;
+      html += `<tr><td>${roleImg(r.role, 28)}</td><td>${r.total}</td><td>${r.wins}</td><td>${wr}%</td><td><div class="role-bar-wrap"><div class="role-bar"><div class="role-bar-fill" style="width:${wr}%"></div></div></div></td></tr>`;
+    });
+    html += '</tbody></table></div>';
+  } else {
+    html += '<div class="text-muted" style="padding:12px">暂无对局数据</div>';
+  }
+
+  // Medals
+  if (s.medals && s.medals.length) {
+    html += '<div class="section-label">勋章</div><div class="medal-grid">';
+    s.medals.forEach(m => {
+      const fColor = m.faction === 'good' ? '#4e9eff' : m.faction === 'evil' ? '#e05050' : '#d8b06b';
+      html += `<div class="medal-item">${medalImg(m.code)}<div class="medal-name" style="color:${fColor};margin-top:6px">${esc(m.name || m.code)}</div><div style="font-size:11px;color:rgba(242,229,200,.35);margin:4px 0">${esc(m.description || '')}</div><div class="medal-count">×${m.total || 1}</div></div>`;
+    });
+    html += '</div>';
+  }
+
+  // Games (paginated)
+  html += '<div class="section-label">对局记录</div><div id="player-games-area"></div>';
+  container.innerHTML = html;
+  loadPlayerGames(1);
+}
+function loadPlayerGames(page) {
+  const phone = _playerDetailData.user.phone;
+  api(`/api/admin/players/${phone}/games?page=${page}&limit=15&mode=${_playerDetailMode}`).then(d => {
+    let html = '<div class="panel" style="overflow:auto"><table><thead><tr><th>ID</th><th>房间号</th><th>角色</th><th>结果</th><th>胜方</th><th>时间</th></tr></thead><tbody>';
+    (d.games || []).forEach(g => {
+      html += `<tr class="clickable" onclick="jumpToGame(${g.gameId})"><td>${g.gameId}</td><td>${esc(g.roomCode)}</td><td>${roleImg(g.role, 20)}</td><td>${resultBadge(g.result)}</td><td>${winBadge(g.winner)}</td><td>${ts(g.endedAt)}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    const pages = Math.ceil(d.total / d.limit);
+    html += `<div class="pager"><button ${d.page <= 1 ? 'disabled' : ''} onclick="loadPlayerGames(${d.page - 1})">上一页</button><span>${d.page} / ${pages}（共 ${d.total} 条）</span><button ${d.page >= pages ? 'disabled' : ''} onclick="loadPlayerGames(${d.page + 1})">下一页</button></div>`;
+    html += '</div>';
+    document.getElementById('player-games-area').innerHTML = html;
+  });
+}
+function fixAssassination(gameId) {
+  const targetId = document.getElementById('fix-ass-target-' + gameId).value;
+  const hit = document.getElementById('fix-ass-hit-' + gameId).checked;
+  if (!confirm(`确认修改第 ${gameId} 局刺杀结果？\n目标: ${targetId}\n刺中: ${hit ? '是（邪恶胜）' : '否（正义胜）'}\n\n这会同步更新所有玩家的胜负、勋章数据。`)) return;
+  api(`/api/admin/games/${gameId}/fix-assassination`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ targetId, hit }),
+  }).then(d => {
+    toast(`已修改：${d.winner === 'evil' ? '邪恶胜' : '正义胜'}，重算 ${d.medalsInserted} 枚勋章`);
+    showGameDetail(gameId); // refresh
+  }).catch(e => toast('修改失败: ' + e.message));
+}
+function jumpToGame(gameId) {
+  switchMod('games');
+  setTimeout(() => showGameDetail(gameId), 100);
+}
+
+// ── AI ────────────────────────────────────────────────────────────
+document.querySelectorAll('#ai-tabs .sub-tab').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('#ai-tabs .sub-tab').forEach(t => t.classList.toggle('active', t === el));
+    document.querySelectorAll('#mod-ai .sub-content').forEach(c => c.classList.toggle('active', c.id === el.dataset.sub));
+    const sub = el.dataset.sub;
+    if (sub === 'ai-overview') loadAiOverview();
+    else if (sub === 'ai-evolution') loadAiEvolution();
+    else if (sub === 'ai-speeches') loadAiSpeeches();
+    else if (sub === 'ai-strategies') loadAiStrategies();
+    else if (sub === 'ai-profiles') loadAiProfiles();
+    else if (sub === 'ai-memory') loadAiMemory();
+  });
+});
+
+let aiCharactersCache = null;
+const AI_AVATAR_URLS = [
+  'https://www.awalon.top/mp-assets/ai-avatars/ai-01-wizard.jpg?v=3',
+  'https://www.awalon.top/mp-assets/ai-avatars/ai-02-knight.jpg?v=3',
+  'https://www.awalon.top/mp-assets/ai-avatars/ai-03-assassin.jpg?v=3',
+  'https://www.awalon.top/mp-assets/ai-avatars/ai-04-noble.jpg?v=3',
+  'https://www.awalon.top/mp-assets/ai-avatars/ai-05-archer.jpg?v=3',
+  'https://www.awalon.top/mp-assets/ai-avatars/ai-06-mage.jpg?v=3',
+  'https://www.awalon.top/mp-assets/ai-avatars/ai-07-paladin.jpg?v=3',
+  'https://www.awalon.top/mp-assets/ai-avatars/ai-08-witch.jpg?v=3',
+  'https://www.awalon.top/mp-assets/ai-avatars/ai-09-guard.jpg?v=3',
+  'https://www.awalon.top/mp-assets/ai-avatars/ai-10-oracle.jpg?v=3',
+];
+let aiStatsCache = null;
+let aiDetailIdx = null;
+
+function loadAiOverview() {
+  Promise.all([api('/api/admin/ai-stats'), api('/api/admin/ai/characters')]).then(([d, charData]) => {
+    aiStatsCache = d;
+    aiCharactersCache = charData.characters || [];
+    selectedAiChar = null;
+    aiDetailIdx = null;
+    renderAiList();
+  }).catch(() => {
+    document.getElementById('ai-overview').innerHTML = '<div class="text-muted">无法加载 AI 数据</div>';
+  });
+}
+function renderAiList() {
+  const d = aiStatsCache || {};
+  let html = '';
+  // Stats row
+  html += '<div class="stat-grid">';
+  if (d.totalGames !== undefined) html += `<div class="stat-card"><div class="stat-val gold">${d.totalGames}</div><div class="stat-label">AI 参与对局</div></div>`;
+  if (d.totalSpeeches !== undefined) html += `<div class="stat-card"><div class="stat-val blue">${d.totalSpeeches}</div><div class="stat-label">发言总数</div></div>`;
+  if (d.winRate !== undefined) html += `<div class="stat-card"><div class="stat-val green">${typeof d.winRate === 'number' ? d.winRate.toFixed(1) + '%' : d.winRate}</div><div class="stat-label">AI 胜率</div></div>`;
+  if (d.totalStrategies !== undefined) html += `<div class="stat-card"><div class="stat-val">${d.totalStrategies}</div><div class="stat-label">策略数</div></div>`;
+  html += '</div>';
+
+  if (aiCharactersCache.length > 0) {
+    html += '<div class="section-label">AI 角色</div><div class="ai-card-grid">';
+    aiCharactersCache.forEach((c, i) => {
+      const stats = c.stats || {};
+      const games = stats.games || 0;
+      const wins = stats.wins || 0;
+      const wr = games > 0 ? (wins * 100 / games).toFixed(1) : '-';
+      const avUrl = AI_AVATAR_URLS[i % AI_AVATAR_URLS.length];
+      html += `<div class="ai-char-card" onclick="showAiDetail(${i})">
+        <div class="ai-char-header">
+          <img src="${avUrl}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;flex-shrink:0">
+          <div>
+            <div class="ai-name">${esc(c.name)}</div>
+            <div class="ai-style">${esc(c.style || '')}</div>
+          </div>
+        </div>
+        <div class="ai-char-stats">
+          <span class="ai-stat">对局 <b>${games}</b></span>
+          <span class="ai-stat">胜场 <b>${wins}</b></span>
+          <span class="ai-stat">胜率 <b>${wr}%</b></span>
+        </div>
+        <div class="ai-char-catch" style="margin-top:6px">"${esc((c.catchphrase || '').split('|')[0])}"</div>
+      </div>`;
+    });
+    html += '</div>';
+  } else {
+    html += '<div class="text-muted" style="margin-top:12px">暂无 AI 角色数据</div>';
+  }
+  html += `<button class="mt-12" style="background:rgba(216,176,107,.15);border:1px solid rgba(216,176,107,.35);color:#d8b06b;border-radius:8px;padding:8px 20px;font-size:13px;cursor:pointer;font-weight:600;" onclick="triggerMeta()">触发元分析</button>`;
+  document.getElementById('ai-overview').innerHTML = html;
+}
+function showAiDetail(idx) {
+  aiDetailIdx = idx;
+  const c = aiCharactersCache[idx];
+  if (!c) return;
+  const container = document.getElementById('ai-overview');
+  const stats = c.stats || {};
+  const games = stats.games || 0;
+  const wins = stats.wins || 0;
+  const wr = games > 0 ? (wins * 100 / games).toFixed(1) : 0;
+  const avUrl = AI_AVATAR_URLS[idx % AI_AVATAR_URLS.length];
+
+  let html = `<button class="back-btn" onclick="renderAiList()">← 返回 AI 列表</button>`;
+  // Header
+  html += `<div class="player-header"><img src="${avUrl}" class="avatar-lg"><div class="info"><div class="name">${esc(c.name)}</div><div class="meta">${esc(c.style || '')}</div></div></div>`;
+
+  // Stats
+  const medalCount = (c.medals || []).reduce((s, m) => s + (m.total || 0), 0);
+  html += '<div class="section-label">数据总览</div><div class="stat-grid">';
+  html += `<div class="stat-card"><div class="stat-val gold">${games}</div><div class="stat-label">总对局</div></div>`;
+  html += `<div class="stat-card"><div class="stat-val green">${wins}</div><div class="stat-label">胜场</div></div>`;
+  html += `<div class="stat-card"><div class="stat-val blue">${wr}%</div><div class="stat-label">胜率</div></div>`;
+  html += `<div class="stat-card"><div class="stat-val">${medalCount}</div><div class="stat-label">总勋章</div></div>`;
+  html += '</div>';
+
+  // Role breakdown
+  if (c.byRole && c.byRole.length) {
+    html += '<div class="section-label">角色分布</div><div class="panel" style="overflow:auto"><table><thead><tr><th>角色</th><th>局数</th><th>胜场</th><th>胜率</th><th></th></tr></thead><tbody>';
+    c.byRole.forEach(r => {
+      const rwr = r.total > 0 ? (r.wins * 100 / r.total).toFixed(1) : 0;
+      html += `<tr><td>${roleImg(r.role, 28)}</td><td>${r.total}</td><td>${r.wins}</td><td>${rwr}%</td><td><div class="role-bar-wrap"><div class="role-bar"><div class="role-bar-fill" style="width:${rwr}%"></div></div></div></td></tr>`;
+    });
+    html += '</tbody></table></div>';
+  }
+
+  // Medals
+  if (c.medals && c.medals.length) {
+    html += '<div class="section-label">勋章</div><div class="medal-grid">';
+    c.medals.forEach(m => {
+      const fColor = m.faction === 'good' ? '#4e9eff' : m.faction === 'evil' ? '#e05050' : '#d8b06b';
+      html += `<div class="medal-item">${medalImg(m.code)}<div class="medal-name" style="color:${fColor};margin-top:6px">${esc(m.name || m.code)}</div><div style="font-size:11px;color:rgba(242,229,200,.35);margin:4px 0">${esc(m.description || '')}</div><div class="medal-count">×${m.total || 1}</div></div>`;
+    });
+    html += '</div>';
+  }
+
+  // Character traits
+  html += '<div class="section-label">人设特征</div><div class="panel" style="padding:18px">';
+  html += `<div style="margin-bottom:12px"><span class="text-gold" style="font-size:12px;letter-spacing:1px">语气风格</span><div style="margin-top:4px;font-size:13px">${esc(c.speakTone || '')}</div></div>`;
+  html += `<div style="margin-bottom:12px"><span class="text-gold" style="font-size:12px;letter-spacing:1px">口头禅</span><div style="margin-top:4px;font-size:13px;font-style:italic;color:rgba(216,176,107,.7)">"${esc(c.catchphrase || '')}"</div></div>`;
+  html += `<div style="margin-bottom:12px"><span class="text-gold" style="font-size:12px;letter-spacing:1px">投票习惯</span><div style="margin-top:4px;font-size:13px">${esc(c.voteHabits || '')}</div></div>`;
+  html += `<div style="margin-bottom:12px"><span class="text-gold" style="font-size:12px;letter-spacing:1px">欺骗策略</span><div style="margin-top:4px;font-size:13px">${esc(c.bluffHint || '')}</div></div>`;
+  html += `<div style="display:flex;gap:16px;font-size:12px;color:rgba(242,229,200,.4)"><span>欺骗频率: <b class="text-gold">${esc(c.bluffFreq || '-')}</b></span><span>信任阈值: <b class="text-gold">${esc(c.trustThreshold || '-')}</b></span></div>`;
+  html += '</div>';
+
+  // Games (paginated)
+  html += '<div class="section-label">对局记录</div><div id="ai-games-area"></div>';
+
+  // Memory (structured)
+  if (c.memory && c.memory.length) {
+    html += `<div class="section-label">AI 记忆（${c.memory.length}条）</div>`;
+    c.memory.forEach(m => {
+      const s = m.value || '';
+      const tagMatch = s.match(/^\[([^\]]+)\]/);
+      const tags = tagMatch ? tagMatch[1].split('|').map(t => t.trim()) : [];
+      const body = tagMatch ? s.slice(tagMatch[0].length).trim() : s;
+      const parts = {};
+      body.replace(/教训[：:]\s*/g, '\n教训: ').replace(/调整[：:]\s*/g, '\n调整: ').replace(/亮点[：:]\s*/g, '\n亮点: ').split('\n').forEach(line => {
+        const l = line.trim();
+        if (l.startsWith('教训:') || l.startsWith('教训：')) parts.lesson = l.replace(/^教训[：:]\s*/, '');
+        else if (l.startsWith('调整:') || l.startsWith('调整：')) parts.adjust = l.replace(/^调整[：:]\s*/, '');
+        else if (l.startsWith('亮点:') || l.startsWith('亮点：')) parts.highlight = l.replace(/^亮点[：:]\s*/, '');
+        else if (l && !parts.main) parts.main = l;
+      });
+      html += `<div class="panel" style="padding:14px 18px;margin-bottom:8px">`;
+      if (tags.length) {
+        html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">`;
+        tags.forEach(t => {
+          let color = 'rgba(216,176,107,.7)';
+          if (t === '胜' || t === '满足') color = '#3fb950';
+          if (t === '败' || t === '挫败') color = '#e05050';
+          html += `<span style="background:rgba(255,255,255,.06);padding:2px 10px;border-radius:6px;font-size:12px;color:${color}">${esc(t)}</span>`;
+        });
+        html += `<span class="text-muted" style="margin-left:auto;font-size:11px">${esc(m.key || '')}</span></div>`;
+      }
+      if (parts.lesson) html += `<div style="font-size:13px;margin-bottom:6px"><span class="text-gold" style="font-size:11px;margin-right:6px">教训</span>${esc(parts.lesson)}</div>`;
+      if (parts.adjust) html += `<div style="font-size:13px;margin-bottom:6px"><span style="color:#4e9eff;font-size:11px;margin-right:6px">调整</span>${esc(parts.adjust)}</div>`;
+      if (parts.highlight) html += `<div style="font-size:13px;margin-bottom:6px"><span style="color:#3fb950;font-size:11px;margin-right:6px">亮点</span>${esc(parts.highlight)}</div>`;
+      if (parts.main && !parts.lesson && !parts.adjust) html += `<div style="font-size:13px">${esc(parts.main)}</div>`;
+      html += `</div>`;
+    });
+  }
+
+  // Edit section
+  html += '<div class="section-label">编辑人设</div><div class="ai-edit-panel">';
+  html += `<div class="ai-edit-row"><label>风格描述</label><textarea id="aie-style">${esc(c.style || '')}</textarea></div>`;
+  html += `<div class="ai-edit-row"><label>语气</label><textarea id="aie-tone">${esc(c.speakTone || '')}</textarea></div>`;
+  html += `<div class="ai-edit-row"><label>口头禅</label><input id="aie-catch" value="${esc(c.catchphrase || '')}"></div>`;
+  html += `<div class="ai-edit-row"><label>投票习惯</label><textarea id="aie-vote">${esc(c.voteHabits || '')}</textarea></div>`;
+  html += `<div class="ai-edit-row"><label>欺骗策略</label><textarea id="aie-bluff">${esc(c.bluffHint || '')}</textarea></div>`;
+  html += `<button class="ai-save-btn mt-12" onclick="saveAiChar(${idx})">保存修改</button>`;
+  html += '</div>';
+
+  container.innerHTML = html;
+  loadAiGames(1);
+}
+function loadAiGames(page) {
+  const c = aiCharactersCache[aiDetailIdx];
+  if (!c) return;
+  api(`/api/admin/ai/${encodeURIComponent(c.name)}/games?page=${page}&limit=15`).then(d => {
+    let html = '<div class="panel" style="overflow:auto"><table><thead><tr><th>ID</th><th>房间号</th><th>角色</th><th>结果</th><th>胜方</th><th>时间</th></tr></thead><tbody>';
+    (d.games || []).forEach(g => {
+      html += `<tr class="clickable" onclick="jumpToGame(${g.gameId})"><td>${g.gameId}</td><td>${esc(g.roomCode)}</td><td>${roleImg(g.role, 20)}</td><td>${resultBadge(g.result)}</td><td>${winBadge(g.winner)}</td><td>${ts(g.endedAt)}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    const pages = Math.ceil(d.total / d.limit);
+    html += `<div class="pager"><button ${d.page <= 1 ? 'disabled' : ''} onclick="loadAiGames(${d.page - 1})">上一页</button><span>${d.page} / ${pages}（共 ${d.total} 条）</span><button ${d.page >= pages ? 'disabled' : ''} onclick="loadAiGames(${d.page + 1})">下一页</button></div>`;
+    html += '</div>';
+    document.getElementById('ai-games-area').innerHTML = html;
+  });
+}
+function saveAiChar(idx) {
+  const c = aiCharactersCache[idx];
+  const body = {
+    style: document.getElementById('aie-style').value,
+    speakTone: document.getElementById('aie-tone').value,
+    catchphrase: document.getElementById('aie-catch').value,
+    voteHabits: document.getElementById('aie-vote').value,
+    bluffHint: document.getElementById('aie-bluff').value,
+  };
+  api(`/api/admin/ai/characters/${encodeURIComponent(c.name)}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  }).then(() => {
+    toast('已保存');
+    // Update cache
+    Object.assign(c, body);
+    showAiDetail(idx);
+  }).catch(e => toast('保存失败: ' + e.message));
+}
+function triggerMeta() {
+  api('/api/admin/trigger-meta', { method: 'POST' }).then(() => toast('元分析已触发')).catch(e => toast('触发失败: ' + e.message));
+}
+function loadAiEvolution() {
+  api('/api/admin/ai/evolution-log').then(d => {
+    let html = '<div class="panel"><table><thead><tr><th>ID</th><th>时间</th><th>内容</th></tr></thead><tbody>';
+    (d.logs || []).forEach(l => {
+      let content = '';
+      try { content = JSON.stringify(JSON.parse(l.summary || l.content || l.data || ''), null, 2); } catch (_) { content = l.summary || l.content || l.data || JSON.stringify(l); }
+      html += `<tr><td>${l.id}</td><td>${ts(l.created_at)}</td><td><pre class="json" style="max-height:120px">${esc(content)}</pre></td></tr>`;
+    });
+    html += '</tbody></table></div>';
+    document.getElementById('ai-evolution').innerHTML = html;
+  });
+}
+function loadAiSpeeches() {
+  let html = '<div class="panel-header mb-16"><select id="speech-faction"><option value="">全部阵营</option><option value="good">正义</option><option value="evil">邪恶</option></select><button onclick="doLoadSpeeches()">筛选</button></div><div id="speeches-list"></div>';
+  document.getElementById('ai-speeches').innerHTML = html;
+  doLoadSpeeches();
+}
+function doLoadSpeeches() {
+  const faction = document.getElementById('speech-faction').value;
+  let q = '/api/admin/ai/speeches?limit=50';
+  if (faction) q += `&faction=${faction}`;
+  api(q).then(d => {
+    let html = '<div class="panel"><table><thead><tr><th>ID</th><th>阵营</th><th>意图</th><th>内容</th></tr></thead><tbody>';
+    (d.speeches || []).forEach(s => {
+      html += `<tr><td>${s.id}</td><td>${s.faction || '-'}</td><td>${esc(s.intent || '-')}</td><td style="max-width:400px;word-break:break-all">${esc(s.text || s.content || JSON.stringify(s))}</td></tr>`;
+    });
+    html += '</tbody></table></div>';
+    document.getElementById('speeches-list').innerHTML = html;
+  });
+}
+function loadAiStrategies() {
+  let html = '<div class="panel-header mb-16"><select id="strat-faction"><option value="">全部阵营</option><option value="good">正义</option><option value="evil">邪恶</option></select><select id="strat-role"><option value="">全部角色</option><option value="merlin">梅林</option><option value="percival">派西维尔</option><option value="assassin">刺客</option><option value="morgana">莫甘娜</option><option value="mordred">莫德雷德</option><option value="oberon">奥伯伦</option></select><button onclick="doLoadStrategies()">筛选</button></div><div id="strategies-list"></div>';
+  document.getElementById('ai-strategies').innerHTML = html;
+  doLoadStrategies();
+}
+function doLoadStrategies() {
+  const faction = document.getElementById('strat-faction').value;
+  const role = document.getElementById('strat-role').value;
+  let q = '/api/admin/ai/strategies?limit=50';
+  if (faction) q += `&faction=${faction}`;
+  if (role) q += `&role=${role}`;
+  api(q).then(d => {
+    let html = '<div class="panel"><table><thead><tr><th>ID</th><th>阵营</th><th>角色</th><th>策略</th></tr></thead><tbody>';
+    (d.strategies || []).forEach(s => {
+      let text = s.strategy || s.pattern || s.description || '';
+      try { text = JSON.stringify(JSON.parse(text), null, 2); } catch (_) {}
+      html += `<tr><td>${s.id}</td><td>${s.faction || '-'}</td><td>${esc(s.role || '-')}</td><td><pre class="json" style="max-height:100px">${esc(text)}</pre></td></tr>`;
+    });
+    html += '</tbody></table></div>';
+    document.getElementById('strategies-list').innerHTML = html;
+  });
+}
+function loadAiProfiles() {
+  api('/api/admin/ai/profiles').then(d => {
+    if (!d.profiles || !d.profiles.length) { document.getElementById('ai-profiles').innerHTML = '<div class="text-muted">暂无玩家画像</div>'; return; }
+    let html = '<div style="font-size:12px;color:rgba(242,229,200,.35);margin-bottom:12px">AI 系统为每个真人玩家建立的行为画像，用于预判投票和发言策略。</div>';
+    html += '<div class="ai-card-grid">';
+    d.profiles.forEach(p => {
+      const followPct = p.vote_follow_rate != null ? (p.vote_follow_rate * 100).toFixed(0) : '-';
+      const flipPct = p.vote_flip_rate != null ? (p.vote_flip_rate * 100).toFixed(0) : '-';
+      const logic = p.logic_responsive != null ? p.logic_responsive : '-';
+      const emotion = p.emotion_responsive != null ? p.emotion_responsive : '-';
+      html += `<div class="panel" style="padding:16px">`;
+      html += `<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><span style="font-size:18px;font-weight:700;color:#f2e5c8">${esc(p.nickname || '?')}</span><span class="text-muted" style="font-size:11px">${esc(p.player_hash || '')}</span></div>`;
+      html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">`;
+      html += `<div style="font-size:12px"><span class="text-muted">跟风率</span> <b style="color:#d8b06b">${followPct}%</b></div>`;
+      html += `<div style="font-size:12px"><span class="text-muted">翻票率</span> <b style="color:#4e9eff">${flipPct}%</b></div>`;
+      html += `<div style="font-size:12px"><span class="text-muted">逻辑敏感</span> <b style="color:#3fb950">${logic}/10</b></div>`;
+      html += `<div style="font-size:12px"><span class="text-muted">情绪敏感</span> <b style="color:#e05050">${emotion}/10</b></div>`;
+      html += `</div>`;
+      html += `<div style="display:flex;gap:12px;font-size:11px;color:rgba(242,229,200,.3)"><span>观察局数: ${p.games_observed || 0}</span><span>更新: ${ts(p.updated_at)}</span></div>`;
+      if (p.notes) html += `<div style="font-size:12px;color:rgba(242,229,200,.5);margin-top:8px;font-style:italic">${esc(p.notes)}</div>`;
+      html += `</div>`;
+    });
+    html += '</div>';
+    document.getElementById('ai-profiles').innerHTML = html;
+  });
+}
+function loadAiMemory() {
+  api('/api/admin/ai/memory').then(d => {
+    let html = '';
+    const grouped = {};
+    (d.memories || []).forEach(m => {
+      const name = m.ai_name || m.aiName || '未知';
+      if (!grouped[name]) grouped[name] = [];
+      grouped[name].push(m);
+    });
+    for (const [name, mems] of Object.entries(grouped)) {
+      const aiIdx = aiCharactersCache.findIndex(c => c.name === name);
+      const avUrl = aiIdx >= 0 ? AI_AVATAR_URLS[aiIdx % AI_AVATAR_URLS.length] : '';
+      const avHtml = avUrl ? `<img src="${avUrl}" style="width:24px;height:24px;border-radius:50%;vertical-align:middle;margin-right:8px">` : '';
+      html += `<div class="section-label" style="margin-top:20px">${avHtml}${esc(name)}（${mems.length}条）</div>`;
+      mems.forEach(m => {
+        const s = m.summary || m.content || m.data || '';
+        // Parse structured summary: [日记|角色|结果] 教训: ... 调整: ... 亮点: ...
+        const tagMatch = s.match(/^\[([^\]]+)\]/);
+        const tags = tagMatch ? tagMatch[1].split('|').map(t => t.trim()) : [];
+        const body = tagMatch ? s.slice(tagMatch[0].length).trim() : s;
+        const parts = {};
+        body.replace(/教训[：:]\s*/g, '\n教训: ').replace(/调整[：:]\s*/g, '\n调整: ').replace(/亮点[：:]\s*/g, '\n亮点: ').split('\n').forEach(line => {
+          const l = line.trim();
+          if (l.startsWith('教训:') || l.startsWith('教训：')) parts.lesson = l.replace(/^教训[：:]\s*/, '');
+          else if (l.startsWith('调整:') || l.startsWith('调整：')) parts.adjust = l.replace(/^调整[：:]\s*/, '');
+          else if (l.startsWith('亮点:') || l.startsWith('亮点：')) parts.highlight = l.replace(/^亮点[：:]\s*/, '');
+          else if (l && !parts.main) parts.main = l;
+        });
+        html += `<div class="panel" style="padding:14px 18px;margin-bottom:8px">`;
+        html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">`;
+        tags.forEach(t => {
+          let color = 'rgba(216,176,107,.7)';
+          if (t === '胜' || t === '满足') color = '#3fb950';
+          if (t === '败' || t === '挫败') color = '#e05050';
+          html += `<span style="background:rgba(255,255,255,.06);padding:2px 10px;border-radius:6px;font-size:12px;color:${color}">${esc(t)}</span>`;
+        });
+        html += `<span class="text-muted" style="margin-left:auto;font-size:11px">#${m.id} · ${ts(m.created_at)}</span></div>`;
+        if (parts.lesson) html += `<div style="font-size:13px;margin-bottom:6px"><span class="text-gold" style="font-size:11px;margin-right:6px">教训</span>${esc(parts.lesson)}</div>`;
+        if (parts.adjust) html += `<div style="font-size:13px;margin-bottom:6px"><span style="color:#4e9eff;font-size:11px;margin-right:6px">调整</span>${esc(parts.adjust)}</div>`;
+        if (parts.highlight) html += `<div style="font-size:13px;margin-bottom:6px"><span style="color:#3fb950;font-size:11px;margin-right:6px">亮点</span>${esc(parts.highlight)}</div>`;
+        if (parts.main && !parts.lesson && !parts.adjust) html += `<div style="font-size:13px">${esc(parts.main)}</div>`;
+        html += `</div>`;
+      });
+    }
+    if (!html) html = '<div class="text-muted">暂无 AI 记忆数据</div>';
+    document.getElementById('ai-memory').innerHTML = html;
+  });
+}
+
+// ── Config ────────────────────────────────────────────────────────
+let _configData = null;
+let _cfgRoleTab = '5';
+const ALL_ROLES = ['梅林','派西维尔','忠臣','莫甘娜','刺客','莫德雷德','奥伯伦','爪牙'];
+function loadConfig() {
+  api('/api/admin/config').then(d => {
+    _configData = d;
+    // Sidebar review toggle
+    updateReviewToggle(d.reviewMode);
+    // Game defaults
+    renderGameDefaults(d);
+    // Role config tabs
+    renderRoleTabs();
+    // JSON
+    const { reviewMode, defaultRoleConfig, ...rest } = d;
+    document.getElementById('cfg-json').value = JSON.stringify(rest, null, 2);
+  });
+}
+function updateReviewToggle(isOn) {
+  const t1 = document.getElementById('sidebar-review-toggle');
+  const l1 = document.getElementById('sidebar-review-label');
+  if (t1) t1.classList.toggle('on', !!isOn);
+  if (l1) l1.textContent = isOn ? '审核模式 开' : '审核模式';
+  if (l1) l1.style.color = isOn ? '#e05050' : 'rgba(242,229,200,.4)';
+}
+function renderGameDefaults(d) {
+  const cfg = d || _configData || {};
+  const speakSec = cfg.speakingSeconds || 120;
+  const forceMode = cfg.forceRoundMode || 'fixed_5';
+  const lady = cfg.ladyOfLakeEnabled !== false;
+  const evilVisible = !!cfg.evilRoleVisibleEnabled;
+  const oberonVisible = cfg.oberonVisibleEnabled !== false;
+  const aiVoice = !!cfg.aiVoiceEnabled;
+  const inputStyle = "background:rgba(255,255,255,.06);border:1px solid rgba(216,176,107,.2);border-radius:8px;color:#f2e5c8;padding:8px 12px;font-size:14px;outline:none";
+  const labelStyle = "font-size:12px;color:rgba(216,176,107,.6);display:block;margin-bottom:6px";
+  const checkStyle = "display:flex;align-items:center;gap:8px;padding:10px 0";
+  let html = '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">';
+  html += `<div><label style="${labelStyle}">发言时长（秒）</label><input id="cfg-speak-sec" type="number" value="${speakSec}" min="10" max="300" style="${inputStyle};width:100px"></div>`;
+  html += `<div><label style="${labelStyle}">强制轮模式</label><select id="cfg-force-mode" style="${inputStyle}"><option value="fixed_5" ${forceMode === 'fixed_5' ? 'selected' : ''}>固定5轮</option><option value="evil_plus_one" ${forceMode === 'evil_plus_one' ? 'selected' : ''}>邪恶人数+1</option></select></div>`;
+  html += `<div></div>`;
+  html += '</div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 24px;margin-top:12px;border-top:1px solid rgba(255,255,255,.04);padding-top:12px">';
+  html += `<label style="${checkStyle}"><input type="checkbox" id="cfg-lady" ${lady ? 'checked' : ''}><span style="font-size:13px">湖中仙女（8人+）</span></label>`;
+  html += `<label style="${checkStyle}"><input type="checkbox" id="cfg-oberon-visible" ${oberonVisible ? 'checked' : ''}><span style="font-size:13px">奥伯伦翻牌（默认）</span></label>`;
+  html += `<label style="${checkStyle}"><input type="checkbox" id="cfg-evil-visible" ${evilVisible ? 'checked' : ''}><span style="font-size:13px">邪恶角色可见</span></label>`;
+  html += `<label style="${checkStyle}"><input type="checkbox" id="cfg-ai-voice" ${aiVoice ? 'checked' : ''}><span style="font-size:13px">AI 语音</span></label>`;
+  html += '</div>';
+  html += `<button onclick="saveGameDefaults()" style="margin-top:14px;background:rgba(216,176,107,.15);border:1px solid rgba(216,176,107,.35);color:#d8b06b;border-radius:8px;padding:8px 20px;font-size:13px;cursor:pointer;font-weight:600">保存默认设置</button>`;
+  document.getElementById('cfg-game-defaults').innerHTML = html;
+}
+function saveGameDefaults() {
+  api('/api/admin/config', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      speakingSeconds: Number(document.getElementById('cfg-speak-sec').value) || 120,
+      forceRoundMode: document.getElementById('cfg-force-mode').value,
+      ladyOfLakeEnabled: document.getElementById('cfg-lady').checked,
+      oberonVisibleEnabled: document.getElementById('cfg-oberon-visible').checked,
+      evilRoleVisibleEnabled: document.getElementById('cfg-evil-visible').checked,
+      aiVoiceEnabled: document.getElementById('cfg-ai-voice').checked,
+    }),
+  }).then(() => toast('默认设置已保存')).catch(e => toast('保存失败'));
+}
+let _presetsData = null;
+function renderRoleTabs() {
+  let html = '';
+  ['5','6','7','8','9','10'].forEach(n => {
+    html += `<div class="sub-tab ${n === _cfgRoleTab ? 'active' : ''}" onclick="switchRoleTab('${n}')">${n}人局</div>`;
+  });
+  document.getElementById('cfg-role-tabs').innerHTML = html;
+  // Load presets
+  api('/api/admin/config/presets').then(d => {
+    _presetsData = d.presets || {};
+    renderPresetEditor();
+  });
+}
+function switchRoleTab(n) {
+  _cfgRoleTab = n;
+  document.querySelectorAll('#cfg-role-tabs .sub-tab').forEach(el => el.classList.toggle('active', el.textContent.startsWith(n)));
+  renderPresetEditor();
+}
+function renderPresetEditor() {
+  const presets = _presetsData && _presetsData[_cfgRoleTab] ? _presetsData[_cfgRoleTab] : [];
+  const n = Number(_cfgRoleTab);
+  let html = '';
+  if (!presets.length) {
+    html += `<div class="text-muted" style="margin-bottom:12px">${n}人局暂无预设</div>`;
+  }
+  presets.forEach((p, pi) => {
+    const isEvil = r => ['莫甘娜','刺客','莫德雷德','奥伯伦','爪牙'].includes(r);
+    html += `<div style="border:1px solid rgba(216,176,107,.15);border-radius:12px;padding:14px;margin-bottom:12px;background:rgba(255,255,255,.02)">`;
+    // Header: name + oberon toggle + delete
+    html += `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">`;
+    html += `<input value="${esc(p.name)}" onchange="updatePresetName(${pi},this.value)" style="background:none;border:none;border-bottom:1px solid rgba(216,176,107,.3);color:#d8b06b;font-size:15px;font-weight:700;padding:2px 0;width:120px;outline:none">`;
+    html += `<label style="font-size:12px;color:rgba(242,229,200,.4);display:flex;align-items:center;gap:6px;margin-left:auto"><input type="checkbox" ${p.oberonVisibleEnabled ? 'checked' : ''} onchange="updatePresetOberon(${pi},this.checked)"> 奥伯伦翻牌</label>`;
+    html += `<span onclick="removePreset(${pi})" style="cursor:pointer;color:rgba(224,80,80,.5);font-size:13px" title="删除此预设">删除</span>`;
+    html += `</div>`;
+    // Role pills
+    html += `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">`;
+    (p.roles || []).forEach((r, ri) => {
+      const evil = isEvil(r);
+      const color = evil ? '#e05050' : '#4e9eff';
+      const bg = evil ? 'rgba(224,80,80,.1)' : 'rgba(78,158,255,.1)';
+      const border = evil ? 'rgba(224,80,80,.3)' : 'rgba(78,158,255,.3)';
+      const roleFile = ROLE_IMG_MAP[r];
+      const roleAvUrl = roleFile ? `https://www.awalon.top/mp-assets/role-split/${roleFile}.png` : '';
+      html += `<div style="display:flex;align-items:center;gap:4px;padding:3px 6px 3px 4px;border:1px solid ${border};background:${bg};border-radius:16px">`;
+      if (roleAvUrl) html += `<img src="${roleAvUrl}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;flex-shrink:0">`;
+      html += `<select onchange="updatePresetRole(${pi},${ri},this.value)" style="background:none;border:none;color:${color};font-size:12px;font-weight:600;outline:none;cursor:pointer">`;
+      ALL_ROLES.forEach(opt => { html += `<option value="${opt}" ${opt === r ? 'selected' : ''}>${opt}</option>`; });
+      html += `</select>`;
+      html += `<span onclick="removePresetRole(${pi},${ri})" style="cursor:pointer;color:rgba(242,229,200,.25);font-size:14px;line-height:1">×</span>`;
+      html += `</div>`;
+    });
+    // Add role
+    html += `<div style="display:flex;align-items:center;gap:4px;padding:3px 6px;border:1px dashed rgba(216,176,107,.2);border-radius:16px;cursor:pointer" onclick="addPresetRole(${pi})">`;
+    html += `<span style="color:rgba(216,176,107,.5);font-size:12px">+ 角色</span>`;
+    html += `</div>`;
+    html += `</div>`;
+    html += `</div>`;
+  });
+  // Add preset + Save
+  html += `<div style="display:flex;gap:10px;align-items:center">`;
+  html += `<button onclick="addPreset()" style="background:rgba(216,176,107,.1);border:1px dashed rgba(216,176,107,.3);color:#d8b06b;border-radius:8px;padding:6px 16px;font-size:13px;cursor:pointer">+ 新增预设</button>`;
+  html += `<button onclick="savePresets()" style="margin-left:auto;background:rgba(63,185,80,.15);border:1px solid rgba(63,185,80,.4);color:#3fb950;border-radius:8px;padding:8px 24px;font-size:13px;cursor:pointer;font-weight:600">保存${_cfgRoleTab}人局全部预设</button>`;
+  html += `</div>`;
+  document.getElementById('cfg-role-editor').innerHTML = html;
+}
+function updatePresetName(pi, val) { _presetsData[_cfgRoleTab][pi].name = val; }
+function updatePresetOberon(pi, val) { _presetsData[_cfgRoleTab][pi].oberonVisibleEnabled = val; }
+function updatePresetRole(pi, ri, val) { _presetsData[_cfgRoleTab][pi].roles[ri] = val; renderPresetEditor(); }
+function removePresetRole(pi, ri) { _presetsData[_cfgRoleTab][pi].roles.splice(ri, 1); renderPresetEditor(); }
+function addPresetRole(pi) { _presetsData[_cfgRoleTab][pi].roles.push('忠臣'); renderPresetEditor(); }
+function removePreset(pi) {
+  if (!confirm('确认删除此预设？')) return;
+  _presetsData[_cfgRoleTab].splice(pi, 1);
+  renderPresetEditor();
+}
+function addPreset() {
+  const n = Number(_cfgRoleTab);
+  const defaultRoles = Array.from({length: n}, (_, i) => i < Math.floor(n/2) ? '忠臣' : '爪牙');
+  defaultRoles[0] = '梅林'; defaultRoles[1] = '派西维尔';
+  if (n > 2) defaultRoles[Math.floor(n/2)] = '莫甘娜';
+  if (n > 3) defaultRoles[Math.floor(n/2)+1] = '刺客';
+  if (!_presetsData[_cfgRoleTab]) _presetsData[_cfgRoleTab] = [];
+  _presetsData[_cfgRoleTab].push({ name: '新预设', roles: defaultRoles, oberonVisibleEnabled: true });
+  renderPresetEditor();
+}
+function savePresets() {
+  api('/api/admin/config/presets', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ playerCount: _cfgRoleTab, presets: _presetsData[_cfgRoleTab] }),
+  }).then(() => toast(`${_cfgRoleTab}人局预设已保存`)).catch(e => toast('保存失败'));
+}
+function toggleReview() {
+  const t = document.getElementById('sidebar-review-toggle');
+  const isOn = t && t.classList.contains('on');
+  api('/api/admin/config', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reviewMode: !isOn }),
+  }).then(() => {
+    updateReviewToggle(!isOn);
+    toast((!isOn ? '已开启' : '已关闭') + '审核模式');
+  });
+}
+function saveConfig() {
+  try {
+    const cfg = JSON.parse(document.getElementById('cfg-json').value);
+    api('/api/admin/config', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cfg),
+    }).then(() => toast('配置已保存')).catch(e => toast('保存失败'));
+  } catch (e) { toast('JSON 格式错误'); }
+}
+
+// ── Skins ─────────────────────────────────────────────────────────
+function loadSkins() {
+  api('/api/admin/skins').then(d => {
+    const grid = document.getElementById('skins-grid');
+    grid.innerHTML = (d.skins || []).map(s => `
+      <div class="skin-card">
+        <div class="skin-name">${esc(s.name)}</div>
+        <div class="skin-id">${esc(s.id)}</div>
+        <span class="skin-status ${s.status}">${s.status === 'published' ? '已发布' : '草稿'}</span>
+        <div class="skin-toggle">
+          <button onclick="toggleSkin('${esc(s.id)}','${s.status === 'published' ? 'draft' : 'published'}')"
+            style="background:rgba(216,176,107,.12);border:1px solid rgba(216,176,107,.3);color:#d8b06b;border-radius:8px;padding:6px 16px;font-size:13px;cursor:pointer">
+            ${s.status === 'published' ? '设为草稿' : '发布'}
+          </button>
+        </div>
+      </div>
+    `).join('');
+  });
+}
+function toggleSkin(id, status) {
+  api(`/api/admin/skins/${id}/status`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status }),
+  }).then(() => { toast(`皮肤已${status === 'published' ? '发布' : '设为草稿'}`); loadSkins(); });
+}
+
+// ── Assets ───────────────────────────────────────────────────────
+let _assetsData = null;
+let _assetsExpandedCat = null;
+function fmtSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+function isPreviewable(name) { return /\.(png|jpg|jpeg|gif|svg|webp)$/i.test(name); }
+function loadAssets() {
+  api('/api/admin/assets').then(d => {
+    _assetsData = d;
+    _assetsExpandedCat = null;
+    renderAssetsList();
+  });
+}
+function renderAssetsList() {
+  const d = _assetsData;
+  if (!d || !d.categories) { document.getElementById('assets-content').innerHTML = '<div class="text-muted">无资源数据</div>'; return; }
+  const totalSize = d.categories.reduce((s, c) => s + c.totalSize, 0);
+  const totalFiles = d.categories.reduce((s, c) => s + c.count, 0);
+  let html = `<div class="stat-grid" style="margin-bottom:20px">`;
+  html += `<div class="stat-card"><div class="stat-val gold">${d.categories.length}</div><div class="stat-label">资源分类</div></div>`;
+  html += `<div class="stat-card"><div class="stat-val blue">${totalFiles}</div><div class="stat-label">文件总数</div></div>`;
+  html += `<div class="stat-card"><div class="stat-val green">${fmtSize(totalSize)}</div><div class="stat-label">总大小</div></div>`;
+  html += `</div>`;
+
+  const CATEGORY_ICONS = { 'ai-avatars': '🤖', 'role-split': '🎭', 'medals': '🏅', 'icons': '📐', 'skins': '🎨', 'ui-icons': '🖼️', 'comments': '💬', 'research': '🔬', '_root': '📄' };
+  const CATEGORY_NAMES = { 'ai-avatars': 'AI 头像', 'role-split': '角色立绘', 'medals': '勋章图标', 'icons': '系统图标', 'skins': '皮肤资源', 'ui-icons': 'UI 图标', 'comments': '评论图片', 'research': '研究素材', '_root': '根目录文件', 'role-split-backup-20260226-175353': '角色备份' };
+
+  d.categories.forEach(cat => {
+    const icon = CATEGORY_ICONS[cat.name] || '📁';
+    const label = CATEGORY_NAMES[cat.name] || cat.name;
+    const isExpanded = _assetsExpandedCat === cat.name;
+    html += `<div class="panel" style="margin-bottom:10px;overflow:hidden">`;
+    html += `<div style="padding:14px 18px;cursor:pointer;display:flex;align-items:center;gap:12px" onclick="toggleAssetsCat('${esc(cat.name)}')">`;
+    html += `<span style="font-size:20px">${icon}</span>`;
+    html += `<div style="flex:1"><div style="font-size:14px;font-weight:600;color:#f2e5c8">${esc(label)}</div><div style="font-size:12px;color:rgba(242,229,200,.35)">${cat.name}/</div></div>`;
+    html += `<span style="font-size:12px;color:rgba(242,229,200,.4)">${cat.count} 文件 · ${fmtSize(cat.totalSize)}</span>`;
+    html += `<span style="color:rgba(216,176,107,.5);font-size:14px">${isExpanded ? '▲' : '▼'}</span>`;
+    html += `</div>`;
+    if (isExpanded) {
+      html += `<div style="padding:0 18px 16px;border-top:1px solid rgba(255,255,255,.04)">`;
+      // Preview grid for images
+      const images = cat.files.filter(f => isPreviewable(f.name));
+      const others = cat.files.filter(f => !isPreviewable(f.name));
+      if (images.length) {
+        html += `<div style="display:flex;flex-wrap:wrap;gap:10px;padding-top:14px">`;
+        images.forEach(f => {
+          html += `<div style="text-align:center;width:80px">`;
+          html += `<a href="https://www.awalon.top${f.url}" target="_blank" style="text-decoration:none">`;
+          html += `<img src="https://www.awalon.top${f.url}" style="width:64px;height:64px;object-fit:contain;border-radius:8px;border:1px solid rgba(216,176,107,.15);background:rgba(255,255,255,.03)">`;
+          html += `</a>`;
+          html += `<div style="font-size:10px;color:rgba(242,229,200,.35);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(f.name)}">${esc(f.name)}</div>`;
+          html += `<div style="font-size:10px;color:rgba(242,229,200,.2)">${fmtSize(f.size)}</div>`;
+          html += `</div>`;
+        });
+        html += `</div>`;
+      }
+      if (others.length) {
+        html += `<table style="margin-top:12px"><thead><tr><th>文件名</th><th>大小</th><th>链接</th></tr></thead><tbody>`;
+        others.forEach(f => {
+          html += `<tr><td>${esc(f.name)}</td><td class="text-muted">${fmtSize(f.size)}</td><td><a href="https://www.awalon.top${f.url}" target="_blank" style="color:#d8b06b;font-size:12px">打开</a></td></tr>`;
+        });
+        html += `</tbody></table>`;
+      }
+      html += `</div>`;
+    }
+    html += `</div>`;
+  });
+  document.getElementById('assets-content').innerHTML = html;
+}
+function toggleAssetsCat(name) {
+  _assetsExpandedCat = _assetsExpandedCat === name ? null : name;
+  renderAssetsList();
+}
+
+// ── Pager ─────────────────────────────────────────────────────────
+function renderPager(containerId, page, total, limit, loadFn) {
+  const pages = Math.ceil(total / limit);
+  const el = document.getElementById(containerId);
+  el.innerHTML = `
+    <button ${page <= 1 ? 'disabled' : ''} onclick="(${loadFn.name})(${page - 1})">上一页</button>
+    <span>${page} / ${pages}（共 ${total} 条）</span>
+    <button ${page >= pages ? 'disabled' : ''} onclick="(${loadFn.name})(${page + 1})">下一页</button>
+  `;
+}
+
+// Enter on key input
+document.getElementById('key-input').addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
+</script>
+</body>
+</html>

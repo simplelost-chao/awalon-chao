@@ -1,0 +1,22 @@
+domain: awalon.top
+
+service:
+  port: 8080
+  health_path: /health
+  health_token: awalon-ok
+  domain_health_token: ""
+
+deploy:
+  type: ec2
+  host: ec2-15-135-140-253.ap-southeast-2.compute.amazonaws.com
+  user: ec2-user
+  remote_dir: /opt/avalon-online/server
+  cmd: deploy.sh
+
+tech_stack:
+  - DeepSeek
+  - Node.js
+  - WebSocket
+  - SQLite
+  - PM2
+  - 微信小程序

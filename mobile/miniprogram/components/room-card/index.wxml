@@ -1,0 +1,36 @@
+<view class="rl-card">
+  <view class="rl-stripe {{roomData.started ? 'rl-stripe-ingame' : 'rl-stripe-lobby'}}"></view>
+  <view class="rl-card-main">
+
+    <view class="rl-avatar-wrap">
+      <view class="rl-avatar {{roomData.started ? 'rl-avatar-ingame' : 'rl-avatar-lobby'}}">
+        <image wx:if="{{roomData.hostAvatarImage}}" class="rl-avatar-img" src="{{roomData.hostAvatarImage}}" mode="aspectFill" />
+        <text wx:else class="rl-avatar-emoji">{{roomData.hostAvatarText || '🐺'}}</text>
+      </view>
+      <view class="rl-avatar-dot {{roomData.started ? 'rl-dot-ingame' : 'rl-dot-lobby'}}"></view>
+    </view>
+
+    <view class="rl-info">
+      <view class="rl-name-row">
+        <text class="rl-host-name">{{roomData.hostName}}的房间</text>
+        <view class="rl-badge {{roomData.started ? 'rl-badge-ingame' : 'rl-badge-lobby'}}">{{roomData.started ? '游戏中' : '大厅'}}</view>
+      </view>
+      <view class="rl-meta-row">
+        <text class="rl-code">房间 <text class="rl-code-num">{{roomData.code}}</text></text>
+        <view class="rl-sep"></view>
+        <text class="rl-count">{{roomData.seatedCount}} / {{roomData.maxPlayers}} 人</text>
+      </view>
+      <view class="rl-missions">
+        <view wx:for="{{roomData.missionSegs}}" wx:key="index" wx:for-item="seg" class="rl-mseg rl-mseg-{{seg}}"></view>
+      </view>
+    </view>
+
+    <view class="rl-action">
+      <view wx:if="{{isCurrentRoom}}" class="rl-btn rl-btn-resume" bindtap="onResumeTap">重新进入</view>
+      <view wx:elif="{{roomData.joinable}}" class="rl-btn rl-btn-join" bindtap="onJoinTap">加入</view>
+      <view wx:elif="{{roomData.started}}" class="rl-btn rl-btn-watch" bindtap="onJoinTap">观战</view>
+      <text wx:else class="rl-full-txt">已满</text>
+    </view>
+
+  </view>
+</view>

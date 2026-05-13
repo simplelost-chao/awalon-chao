@@ -1,0 +1,31 @@
+<view class="control-wrap">
+  <text class="section-title section-title-small section-chip">身份卡</text>
+  <view class="role-info-loading" wx:if="{{roleInfoLoading && !roleInfo}}">
+    <text class="role-info-loading-text">正在获取身份...</text>
+  </view>
+  <view wx:if="{{roleInfo}}">
+    <view class="role-assassin-tip" wx:if="{{isAssassin && phase==='assassination'}}">
+      <text class="role-assassin-tip-text">刺杀阶段：点击圆桌目标，再在圆桌中心执行刺杀</text>
+    </view>
+    <view class="role-seat-list">
+      <view class="role-seat-row {{item.rowClass}} {{item.isSelf ? 'role-seat-row-self' : ''}}"
+        wx:for="{{roleVisibleSeats}}" wx:key="seat">
+        <view class="role-seat-badge"><text>{{item.seat}}</text></view>
+        <image wx:if="{{item.avatarImage}}" src="{{item.avatarImage}}" mode="aspectFill" class="role-seat-thumb" />
+        <view wx:else class="role-seat-thumb role-seat-thumb-avatar"><text class="role-seat-thumb-text">{{item.avatarText}}</text></view>
+        <view class="role-seat-info">
+          <view class="role-seat-name-row">
+            <text class="role-seat-name">{{item.nickname}}</text>
+            <text wx:if="{{assassinSeatNo && item.seat === assassinSeatNo}}" class="role-seat-knife">🔪带刀</text>
+          </view>
+          <view wx:if="{{item.role}}" class="role-seat-role-pill {{item.rowClass}}">
+            <image wx:if="{{item.roleImage}}" src="{{item.roleImage}}" mode="aspectFill" class="role-seat-role-img" />
+            <text class="role-seat-role {{item.roleClass}}">{{item.role}}</text>
+          </view>
+        </view>
+        <text wx:if="{{item.isSelf && isAssassin && phase!=='assassination' && phase!=='end'}}"
+          class="role-action-link" bindtap="onStartAssassination">发起刺杀</text>
+      </view>
+    </view>
+  </view>
+</view>

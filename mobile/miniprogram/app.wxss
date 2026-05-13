@@ -5,8 +5,10 @@ page {
   /* Chrome variables – replaced per theme */
   --aw-bg:               #0f1115;
   --aw-bg-2:             #161b24;
-  --aw-panel:            rgba(19,23,31,0.82);
+  --aw-panel:            rgba(19,23,31,0.72);
   --aw-panel-border:     rgba(255,255,255,0.10);
+  --aw-panel-border-width: 1rpx;
+  --aw-panel-shadow:     none;
   --aw-text:             #eef1f7;
   --aw-subtext:          #aeb6c7;
   --aw-accent:           #d9b36b;
@@ -27,25 +29,30 @@ page {
   font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Helvetica Neue", sans-serif;
 }
 
-/* ── 仙境 (light blue watercolor) ──────────────────────── */
+/* ──GENERATED-THEMES-START── */
+/* ⚠️  Edit skins.js vars then run: node build-themes.js */
+
+/* ── 青云仙境 (Genshin Impact — warm parchment + celestial gold) ─── */
 .theme-celestial {
-  --aw-bg:               #ddeeff;
-  --aw-bg-2:             #c8e0f8;
-  --aw-panel:            rgba(255,255,255,0.75);
-  --aw-panel-border:     rgba(100,160,220,0.25);
-  --aw-text:             #1a2a3a;
-  --aw-subtext:          #4a6a8a;
-  --aw-accent:           #2e7fc8;
-  --aw-accent-text:      #ffffff;
-  --aw-nav-bg:           rgba(200,230,255,0.90);
-  --aw-nav-border:       rgba(100,160,220,0.20);
-  --aw-chip-on-bg:       rgba(46,127,200,0.15);
-  --aw-chip-on-border:   rgba(46,127,200,0.50);
-  --aw-chip-on-text:     #1a5a9a;
-  --aw-btn-ghost-border: rgba(46,127,200,0.35);
-  --aw-btn-ghost-text:   #2e7fc8;
-  --aw-input-bg:         rgba(255,255,255,0.60);
-  --aw-input-border:     rgba(100,160,220,0.30);
+  --aw-bg:               #e8d8b0;
+  --aw-bg-2:             #dcc89a;
+  --aw-panel:            rgba(248,238,210,0.90);
+  --aw-panel-border:     rgba(196,158,72,0.55);
+  --aw-panel-border-width: 1rpx;
+  --aw-panel-shadow:     0 0 0 1rpx rgba(196,158,72,0.20), 0 4rpx 20rpx rgba(140,100,20,0.18);
+  --aw-text:             #2c1a08;
+  --aw-subtext:          #7a5830;
+  --aw-accent:           #c8902a;
+  --aw-accent-text:      #fff8ec;
+  --aw-nav-bg:           rgba(232,215,168,0.94);
+  --aw-nav-border:       rgba(196,158,72,0.40);
+  --aw-chip-on-bg:       rgba(200,144,42,0.20);
+  --aw-chip-on-border:   rgba(200,144,42,0.60);
+  --aw-chip-on-text:     #7a4e10;
+  --aw-btn-ghost-border: rgba(196,158,72,0.55);
+  --aw-btn-ghost-text:   #5c3810;
+  --aw-input-bg:         rgba(255,248,228,0.80);
+  --aw-input-border:     rgba(196,158,72,0.40);
   --aw-bg-image:         none;
 }
 
@@ -93,26 +100,31 @@ page {
   --aw-bg-image:         none;
 }
 
-/* ── 暗黑地牢 (gothic dark brown) ─────────────────────── */
+/* ── 邪恶铭刻 (Darkest Dungeon / Inscryption pixel gothic) ─────────────────────── */
 .theme-dark-dungeon {
-  --aw-bg:               #0e0a07;
-  --aw-bg-2:             #1a1208;
-  --aw-panel:            rgba(20,14,8,0.90);
-  --aw-panel-border:     rgba(180,130,60,0.15);
-  --aw-text:             #e8d8b8;
-  --aw-subtext:          #9a8060;
+  --aw-bg:               #0c0802;
+  --aw-bg-2:             #180f04;
+  --aw-panel:            rgba(22,14,4,0.62);
+  --aw-panel-border:     rgba(185,138,52,0.65);
+  --aw-panel-border-width: 2rpx;
+  --aw-panel-shadow:     0 0 0 1rpx rgba(185,138,52,0.25), 0 6rpx 28rpx rgba(0,0,0,0.75), inset 0 0 48rpx rgba(0,0,0,0.55);
+  --aw-text:             #edd9aa;
+  --aw-subtext:          #9a7848;
   --aw-accent:           #c8902a;
-  --aw-accent-text:      #0e0a07;
-  --aw-nav-bg:           rgba(10,6,2,0.92);
-  --aw-nav-border:       rgba(180,130,60,0.10);
-  --aw-chip-on-bg:       rgba(200,144,42,0.18);
-  --aw-chip-on-border:   rgba(200,144,42,0.45);
-  --aw-chip-on-text:     #c8902a;
-  --aw-btn-ghost-border: rgba(200,144,42,0.30);
-  --aw-btn-ghost-text:   #e8d8b8;
-  --aw-input-bg:         rgba(255,255,255,0.04);
-  --aw-input-border:     rgba(180,130,60,0.18);
+  --aw-accent-text:      #0c0802;
+  --aw-nav-bg:           rgba(8,5,1,0.98);
+  --aw-nav-border:       rgba(185,138,52,0.45);
+  --aw-chip-on-bg:       rgba(200,144,42,0.22);
+  --aw-chip-on-border:   rgba(200,144,42,0.70);
+  --aw-chip-on-text:     #d4a043;
+  --aw-btn-ghost-border: rgba(185,138,52,0.55);
+  --aw-btn-ghost-text:   #edd9aa;
+  --aw-input-bg:         rgba(255,220,140,0.05);
+  --aw-input-border:     rgba(185,138,52,0.35);
   --aw-bg-image:         none;
+  --aw-dd-gold-hi:       rgba(185,138,52,0.90);
+  --aw-dd-gold-mid:      rgba(185,138,52,0.55);
+  --aw-dd-gold-lo:       rgba(185,138,52,0.22);
 }
 
 /* ── 深渊 (near-black deep space) ─────────────────────── */
@@ -136,3 +148,146 @@ page {
   --aw-input-border:     rgba(80,100,160,0.16);
   --aw-bg-image:         none;
 }
+
+/* ──GENERATED-THEMES-END── */
+
+/* ── Panel Frame (pf) ─ 面板边框组件系统 ────────────────────────
+   用法: <panel-frame> content </panel-frame>
+   组件内部自动渲染 8 个 fb-* 边框元素
+   ──────────────────────────────────────────────────────────── */
+
+/* fb-* 边框段基础定位（全局可用） */
+.fb          { position: absolute; z-index: 2; }
+.fb-top      { top: 0;    left: 10rpx; right: 10rpx; height: 1.5rpx; }
+.fb-bottom   { bottom: 0; left: 10rpx; right: 10rpx; height: 1.5rpx; }
+.fb-left     { left: 0;   top: 10rpx;  bottom: 10rpx; width: 1.5rpx; }
+.fb-right    { right: 0;  top: 10rpx;  bottom: 10rpx; width: 1.5rpx; }
+.fb-ctl      { top: 10rpx;               left: 0;                    width: 14rpx; height: 1.5rpx; transform: rotate(-45deg); transform-origin: 0% 0%; }
+.fb-ctr      { top: 0;                   left: calc(100% - 10rpx);   width: 14rpx; height: 1.5rpx; transform: rotate(45deg);  transform-origin: 0% 0%; }
+.fb-cbl      { top: calc(100% - 10rpx);  left: 0;                    width: 14rpx; height: 1.5rpx; transform: rotate(45deg);  transform-origin: 0% 0%; }
+.fb-cbr      { left: calc(100% - 10rpx); bottom: 0;                  width: 14rpx; height: 1.5rpx; transform: rotate(-45deg); transform-origin: 0% 100%; }
+
+/* fc-inner 内角装饰线（全局可用） */
+.fc-inner        { position: absolute; width: 10rpx; height: 2rpx; z-index: 1; }
+.fc-inner.fc-tl  { top: 12rpx;               left: 6rpx;                  transform: rotate(-45deg); transform-origin: 0% 0%; }
+.fc-inner.fc-tr  { top: 6rpx;                left: calc(100% - 12rpx);    transform: rotate(45deg);  transform-origin: 0% 0%; }
+.fc-inner.fc-bl  { top: calc(100% - 12rpx);  left: 6rpx;                  transform: rotate(45deg);  transform-origin: 0% 0%; }
+.fc-inner.fc-br  { left: calc(100% - 12rpx); bottom: 6rpx;                transform: rotate(-45deg); transform-origin: 0% 100%; }
+
+/* panel-frame 根样式 */
+.pf {
+  position: relative;
+  background: var(--aw-panel);
+  padding: 24rpx;
+  margin-top: 28rpx;
+  backdrop-filter: blur(6px);
+  box-shadow: var(--aw-panel-shadow, none);
+  /* 裁掉四个角的矩形背景，与 fb-* 的 10rpx≈5px 斜角位置对齐 */
+  clip-path: polygon(5px 0%, calc(100% - 5px) 0%, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0% calc(100% - 5px), 0% 5px);
+}
+
+/* panel-frame 金色渐变边框（学参考图样式） */
+.pf .fb-top, .pf .fb-bottom {
+  height: 2rpx;
+  background: linear-gradient(to right, #6b3e08 0%, #c8860a 18%, #f5cc52 42%, #fff4b0 50%, #f5cc52 58%, #c8860a 82%, #6b3e08 100%);
+}
+.pf .fb-left, .pf .fb-right {
+  width: 2rpx;
+  background: linear-gradient(to bottom, #6b3e08, #c8860a 35%, #c8860a 65%, #6b3e08);
+}
+.pf .fb-ctl, .pf .fb-ctr, .pf .fb-cbl, .pf .fb-cbr {
+  height: 2rpx;
+  background: #9a6010;
+}
+.pf .fc-inner { background: rgba(228, 194, 129, 0.65); }
+
+/* ── Chamfer Frame (cf) ─ 双层斜切角边框系统 ──────────────────
+   外层: clip-path + 边框色背景；内层: 面板色背景（覆盖内部）
+   用法:  <view class="cf cf-md cf-gold">
+            <view class="cf-in">content</view>
+          </view>
+   尺寸:  cf-sm(6px) / cf-md(8px) / cf-lg(10px)
+   颜色:  cf-subtle(浅白) / cf-gold(主题边框色)
+   ──────────────────────────────────────────────────────────── */
+.cf        { padding: 1rpx; }
+.cf-sm     { clip-path: polygon(6px 0%, calc(100% - 6px) 0%, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0% calc(100% - 6px), 0% 6px); }
+.cf-md     { clip-path: polygon(8px 0%, calc(100% - 8px) 0%, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0% calc(100% - 8px), 0% 8px); }
+.cf-lg     { clip-path: polygon(10px 0%, calc(100% - 10px) 0%, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0% calc(100% - 10px), 0% 10px); }
+.cf-subtle { background: rgba(255, 255, 255, 0.15); }
+.cf-gold   { background: var(--aw-panel-border); }
+.cf-bright {
+  background: linear-gradient(to right, #7a4a06 0%, #c8860a 20%, #f5cc52 45%, #fff4b0 50%, #f5cc52 55%, #c8860a 80%, #7a4a06 100%);
+  padding: 2rpx;
+  filter: drop-shadow(0 0 4rpx rgba(200, 150, 20, 0.55));
+}
+/* 内层：各自携带内缩 1px 的 clip-path + 面板背景
+   <button> 不受父 clip-path 影响，必须在元素本身设置 */
+.cf-in    { background: var(--aw-panel); }
+.cf-in-sm { background: var(--aw-panel); border-radius: 0 !important; clip-path: polygon(5px 0%, calc(100% - 5px) 0%, 100% 5px, 100% calc(100% - 5px), calc(100% - 5px) 100%, 5px 100%, 0% calc(100% - 5px), 0% 5px); }
+.cf-in-md { background: var(--aw-panel); border-radius: 0 !important; clip-path: polygon(7px 0%, calc(100% - 7px) 0%, 100% 7px, 100% calc(100% - 7px), calc(100% - 7px) 100%, 7px 100%, 0% calc(100% - 7px), 0% 7px); }
+.cf-in-lg { background: var(--aw-panel); border-radius: 0 !important; clip-path: polygon(9px 0%, calc(100% - 9px) 0%, 100% 9px, 100% calc(100% - 9px), calc(100% - 9px) 100%, 9px 100%, 0% calc(100% - 9px), 0% 9px); }
+
+/* ── 邪恶铭刻 自定义字体 ─────────────────────────── */
+@font-face {
+  font-family: 'DDTitle';
+  src: url('https://www.awalon.top/mp-assets/skins/dark-dungeon/fonts/title.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+}
+
+/* ── 问号帮助按钮（mission-pills / mission-table 共用） ── */
+.help-btn {
+  flex-shrink: 0;
+  margin-left: 8rpx;
+  width: 28rpx;
+  height: 28rpx;
+  border-radius: 50%;
+  border: 1.5rpx solid rgba(228, 194, 129, 0.35);
+  background: rgba(228, 194, 129, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.help-btn-q {
+  font-size: 18rpx;
+  font-weight: 700;
+  color: rgba(228, 194, 129, 0.6);
+  line-height: 1;
+  text-align: center;
+}
+
+/* ── 帮助浮层（fixed，position 不受 backdrop-filter 影响） ── */
+.help-popup {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(16, 10, 4, 0.97);
+  border: 1rpx solid rgba(200, 134, 10, 0.45);
+  border-radius: 16rpx;
+  padding: 24rpx 28rpx;
+  flex-direction: column;
+  gap: 14rpx;
+  z-index: 9999;
+  box-shadow: 0 12rpx 48rpx rgba(0, 0, 0, 0.75);
+  min-width: 300rpx;
+  max-width: 560rpx;
+}
+.help-popup-show {
+  display: flex;
+}
+
+/* ── 底部浮层容器（action-panel / speak-panel 共用） ── */
+.vote-bottom-wrap {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 30;
+  padding: 0;
+  pointer-events: none;
+}
+
+/* ── 皮肤专属视觉覆写 ─────────────────────────────────── */
+@import '/styles/theme-dark-dungeon.wxss';

@@ -10,3 +10,6 @@
   mobile/scripts/mp-upload.key
   mobile/scripts/.mp-auditid
   mobile/scripts/.mp-version
+ai-research/
+mobile_old/
+*.wav

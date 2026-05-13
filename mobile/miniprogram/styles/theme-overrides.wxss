@@ -1,0 +1,16 @@
+/* ── Theme overrides: shared bg/mask rules ──────────────────
+   Extracted from pages/index, subpkg/role-stats,
+   subpkg/history, subpkg/history-detail to avoid duplication.
+   Import via @import in each page/subpage wxss.
+   ─────────────────────────────────────────────────────────── */
+
+/* light skins: hide dark bg image and remove dark overlay */
+.theme-celestial .bg,
+.theme-ink-wash .bg { display: none; }
+.theme-celestial .mask,
+.theme-ink-wash .mask { background: none; }
+
+/* dark-dungeon: 减轻遮罩，让背景图透出来，panel 透明才有效 */
+.theme-dark-dungeon .mask {
+  background: linear-gradient(180deg, rgba(6, 4, 2, 0.30), rgba(6, 4, 2, 0.55));
+}

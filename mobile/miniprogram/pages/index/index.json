@@ -1,3 +1,18 @@
 {
-  "navigationBarTitleText": "Awalon 小程序"
+  "navigationBarTitleText": "Awalon 小程序",
+  "usingComponents": {
+    "mission-table": "/components/mission-table/index",
+    "mission-pills": "/components/mission-pills/index",
+    "speak-list": "/components/speak-list/index",
+    "room-card": "/components/room-card/index",
+    "speak-panel": "/components/speak-panel/index",
+    "action-panel": "/components/action-panel/index",
+    "review-page": "/components/review-page/index",
+    "advanced-settings": "/components/advanced-settings/index",
+    "identity-panel": "/components/identity-panel/index",
+    "room-players-panel": "/components/room-players-panel/index",
+    "round-table": "/components/round-table/index",
+    "nav-header": "/components/nav-header/index",
+    "panel-frame": "/components/panel-frame/index"
+  }
 }

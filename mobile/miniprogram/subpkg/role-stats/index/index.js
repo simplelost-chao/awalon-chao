@@ -1,5 +1,7 @@
 const { ALL_MEDALS, decorateMedals } = require("../../../utils/medals");
 const { SKINS, getSkin } = require("../../../skins");
+const socket = require("../../../utils/socket");
+const { drawRadar } = require("./radar");
 
 const ROLE_IMAGE_MAP = {
   梅林: "https://www.awalon.top/mp-assets/role-split/merlin.png",
@@ -16,8 +18,8 @@ const ROLE_IMAGE_MAP = {
 };
 
 const ALL_ROLES = [
-  "梅林", "派西维尔", "忠臣", "兰斯洛特（正义）",
-  "刺客", "莫甘娜", "莫德雷德", "奥伯伦", "爪牙", "兰斯洛特（邪恶）"
+  "梅林", "派西维尔", "忠臣",
+  "刺客", "莫甘娜", "莫德雷德", "奥伯伦", "爪牙"
 ];
 const GOOD_ROLE_SET = new Set(["梅林", "派西维尔", "忠臣", "亚瑟的忠臣", "兰斯洛特（正义）"]);
 const EVIL_ROLE_SET = new Set(["刺客", "莫甘娜", "莫德雷德", "奥伯伦", "爪牙", "兰斯洛特（邪恶）"]);
@@ -39,6 +41,10 @@ Page({
     skins: [],
     skinInGameBg: 'https://www.awalon.top/mp-assets/in-game-bg-optimized.jpg',
     loading: true,
+    mode: 'pvp',
+    profileNickname: '',
+    avatarImage: '',
+    avatarText: '🐺',
     roleStats: null,
     statsList: [],
     goodSummary: { total: 0, wins: 0, winRate: 0 },
@@ -47,7 +53,19 @@ Page({
     factionBarEvilPct: 50,
     medalTotal: 0,
     goodMedals: [],
-    evilMedals: []
+    evilMedals: [],
+    roleMedals: [],
+    recentGames: [],
+    recentDotsText: '',
+    streakLabel: '',
+    streakType: null,
+    streakCount: 0,
+    radarFaction: 'good',
+    radarData: null,
+    detailTab: 'roles',
+    partnerTitles: [],
+    partnerMatrix: [],
+    expandedPartner: null
   },
 
   onLoad() {
@@ -59,6 +77,9 @@ Page({
       .filter((s) => publishedIds.includes(s.id))
       .map((s) => ({ id: s.id, name: s.name, bg: s.colors.bg, panel: s.colors.panel, accent: s.colors.accent }));
     const skinInGameBg = getSkin(skinId).inGameBg;
+    const nickname = wx.getStorageSync('awalonNickname') || '未登录';
+    const avatar = wx.getStorageSync('awalonAvatar') || '🐺';
+    const isUrl = avatar.startsWith('http') || avatar.startsWith('/');
     this.setData({
       statusBarHeight: nav.statusBarHeight || 20,
       navBarHeight: nav.navBarHeight || 44,
@@ -66,6 +87,9 @@ Page({
       skinId,
       skins,
       skinInGameBg,
+      profileNickname: nickname,
+      avatarImage: isUrl ? avatar : '',
+      avatarText: isUrl ? '' : avatar,
     });
     // Re-filter when API response arrives after page load
     app.globalData.skinsLoadedListener = (published) => {
@@ -83,70 +107,27 @@ Page({
     const skinInGameBg = getSkin(skinId).inGameBg;
     this.setData({ skinId, skinInGameBg });
 
-    app.globalData.roleStatsListener = (stats) => {
-      const roleStats = stats || null;
-      const byRoleMap = new Map(
-        (((roleStats && roleStats.byRole) || [])).map((item) => [item.role, item])
-      );
-      const statsList = ALL_ROLES.map((role) => {
-        const found = byRoleMap.get(role) || null;
-        const total = found ? Number(found.total || 0) : 0;
-        const wins = found ? Number(found.wins || 0) : 0;
-        const winRate = total > 0 ? Number((wins * 100 / total).toFixed(1)) : 0;
-        const faction = GOOD_ROLE_SET.has(role) ? "good" : EVIL_ROLE_SET.has(role) ? "evil" : "good";
-        return {
-          role, total, wins, winRate,
-          roleImage: ROLE_IMAGE_MAP[role] || "",
-          rateDeg: Number((winRate * 3.6).toFixed(1)),
-          winRateClass: winRate >= 50 ? "rate-good" : "rate-bad",
-          roleNameClass: faction === "evil" ? "role-name-evil" : "role-name-good",
-          faction
-        };
-      });
-      const good = statsList.filter((item) => item.faction === "good");
-      const evil = statsList.filter((item) => item.faction === "evil");
-      const goodTotal = good.reduce((s, item) => s + Number(item.total || 0), 0);
-      const goodWins = good.reduce((s, item) => s + Number(item.wins || 0), 0);
-      const evilTotal = evil.reduce((s, item) => s + Number(item.total || 0), 0);
-      const evilWins = evil.reduce((s, item) => s + Number(item.wins || 0), 0);
-      const goodSummary = {
-        total: goodTotal, wins: goodWins,
-        winRate: goodTotal > 0 ? Number((goodWins * 100 / goodTotal).toFixed(1)) : 0
-      };
-      const evilSummary = {
-        total: evilTotal, wins: evilWins,
-        winRate: evilTotal > 0 ? Number((evilWins * 100 / evilTotal).toFixed(1)) : 0
-      };
-      const rawMedalMap = new Map((((roleStats && roleStats.medals) || [])).map((m) => [m.code, Number(m.total || 0)]));
-      const legacyMerge = { good_protect_round_fail_captain: "good_first_round_clean_captain" };
-      for (const [legacyCode, newCode] of Object.entries(legacyMerge)) {
-        const legacyCount = rawMedalMap.get(legacyCode) || 0;
-        if (legacyCount > 0) rawMedalMap.set(newCode, (rawMedalMap.get(newCode) || 0) + legacyCount);
-      }
-      const medalList = decorateMedals(ALL_MEDALS.filter((m) => !m.hidden).map((m) => ({
-        ...m, total: rawMedalMap.get(m.code) || 0
-      })));
-      const goodMedals = medalList.filter((m) => m.faction === "good");
-      const evilMedals = medalList.filter((m) => m.faction === "evil");
-      const barTotal = goodTotal + evilTotal || 1;
-      const factionBarGoodPct = Number((goodTotal * 100 / barTotal).toFixed(1));
-      const factionBarEvilPct = Number((100 - factionBarGoodPct).toFixed(1));
-      this.setData({
-        roleStats, statsList, goodSummary, evilSummary,
-        factionBarGoodPct, factionBarEvilPct,
-        medalTotal: Number((roleStats && roleStats.totalMedals) || 0),
-        goodMedals, evilMedals, loading: false
-      });
+    app.globalData.roleStatsListener = (raw) => {
+      this._rawStats = raw;
+      this.applyStats(raw);
     };
 
     if (app.globalData.latestRoleStats) {
-      app.globalData.roleStatsListener(app.globalData.latestRoleStats);
+      this._rawStats = app.globalData.latestRoleStats;
+      this.applyStats(app.globalData.latestRoleStats);
       return;
     }
     const indexPage = getIndexPage();
     if (indexPage && typeof indexPage.requestRoleStats === "function") {
       this.setData({ loading: true });
       indexPage.requestRoleStats();
+      return;
+    }
+    this.setData({ loading: true });
+    const sent = socket.send({ type: "GET_ROLE_STATS", payload: {} });
+    if (!sent) {
+      this.setData({ loading: false });
+      wx.showToast({ title: "连接未就绪", icon: "none" });
     }
   },
 
@@ -154,6 +135,81 @@ Page({
     const app = getApp();
     if (app.globalData.roleStatsListener) app.globalData.roleStatsListener = null;
     if (app.globalData.skinsLoadedListener) app.globalData.skinsLoadedListener = null;
+  },
+
+  applyStats(raw) {
+    // raw = { pvp: {...}, pve: {...} } 或旧格式兼容
+    const mode = this.data.mode;
+    const roleStats = (raw && raw.pvp) ? raw[mode] : raw;
+    if (!roleStats) { this.setData({ roleStats: null, loading: false }); return; }
+    const byRoleMap = new Map(((roleStats.byRole) || []).map((item) => [item.role, item]));
+    const statsList = ALL_ROLES.map((role) => {
+      const found = byRoleMap.get(role) || null;
+      const total = found ? Number(found.total || 0) : 0;
+      const wins = found ? Number(found.wins || 0) : 0;
+      const winRate = total > 0 ? Number((wins * 100 / total).toFixed(1)) : 0;
+      const faction = GOOD_ROLE_SET.has(role) ? "good" : EVIL_ROLE_SET.has(role) ? "evil" : "good";
+      return {
+        role, total, wins, winRate,
+        roleImage: ROLE_IMAGE_MAP[role] || "",
+        rateDeg: Number((winRate * 3.6).toFixed(1)),
+        winRateClass: winRate >= 50 ? "rate-good" : "rate-bad",
+        roleNameClass: faction === "evil" ? "role-name-evil" : "role-name-good",
+        faction
+      };
+    });
+    const good = statsList.filter((item) => item.faction === "good");
+    const evil = statsList.filter((item) => item.faction === "evil");
+    const goodTotal = good.reduce((s, item) => s + Number(item.total || 0), 0);
+    const goodWins = good.reduce((s, item) => s + Number(item.wins || 0), 0);
+    const evilTotal = evil.reduce((s, item) => s + Number(item.total || 0), 0);
+    const evilWins = evil.reduce((s, item) => s + Number(item.wins || 0), 0);
+    const goodSummary = {
+      total: goodTotal, wins: goodWins,
+      winRate: goodTotal > 0 ? Number((goodWins * 100 / goodTotal).toFixed(1)) : 0
+    };
+    const evilSummary = {
+      total: evilTotal, wins: evilWins,
+      winRate: evilTotal > 0 ? Number((evilWins * 100 / evilTotal).toFixed(1)) : 0
+    };
+    const rawMedalMap = new Map(((roleStats.medals) || []).map((m) => [m.code, Number(m.total || 0)]));
+    const legacyMerge = { good_protect_round_fail_captain: "good_first_round_clean_captain" };
+    for (const [legacyCode, newCode] of Object.entries(legacyMerge)) {
+      const legacyCount = rawMedalMap.get(legacyCode) || 0;
+      if (legacyCount > 0) rawMedalMap.set(newCode, (rawMedalMap.get(newCode) || 0) + legacyCount);
+    }
+    const medalList = decorateMedals(ALL_MEDALS.filter((m) => !m.hidden).map((m) => ({
+      ...m, total: rawMedalMap.get(m.code) || 0
+    })));
+    const goodMedals = medalList.filter((m) => m.faction === "good" && !m.role);
+    const evilMedals = medalList.filter((m) => m.faction === "evil" && !m.role);
+    const roleMedals = medalList.filter((m) => !!m.role);
+    const barTotal = goodTotal + evilTotal || 1;
+    const factionBarGoodPct = Number((goodTotal * 100 / barTotal).toFixed(1));
+    const factionBarEvilPct = Number((100 - factionBarGoodPct).toFixed(1));
+    const recentGames = ((roleStats.recentGames) || []).slice().reverse();
+    const recentDotsText = recentGames.map(g => g.result === 'win' ? '◆' : '◇').join('');
+    const streakType = roleStats.streakType || null;
+    const streakCount = Number(roleStats.streakCount || 0);
+    this.setData({
+      roleStats, statsList, goodSummary, evilSummary,
+      factionBarGoodPct, factionBarEvilPct,
+      medalTotal: Number(roleStats.totalMedals || 0),
+      goodMedals, evilMedals, roleMedals, loading: false,
+      recentGames, recentDotsText, streakType, streakCount,
+      radarData: roleStats.radar || null,
+      partnerTitles: this._buildPartnerTitles(roleStats.partners),
+      partnerMatrix: this._buildPartnerMatrix(roleStats.partners)
+    }, () => {
+      if (roleStats.radar) this._drawRadarChart();
+    });
+  },
+
+  onSwitchMode(e) {
+    const mode = String(e.currentTarget.dataset.mode || 'pvp');
+    if (mode === this.data.mode) return;
+    this.setData({ mode });
+    if (this._rawStats) this.applyStats(this._rawStats);
   },
 
   onPickSkin(e) {
@@ -179,5 +235,58 @@ Page({
     const pages = getCurrentPages();
     if (pages.length > 1) { wx.navigateBack({ delta: 1 }); return; }
     wx.reLaunch({ url: "/pages/index/index" });
+  },
+
+  onSwitchRadar(e) {
+    const faction = e.currentTarget.dataset.faction;
+    this.setData({ radarFaction: faction }, () => this._drawRadarChart());
+  },
+
+  onSwitchDetailTab(e) {
+    this.setData({ detailTab: e.currentTarget.dataset.tab });
+  },
+
+  onTogglePartner(e) {
+    const phone = e.currentTarget.dataset.phone;
+    this.setData({ expandedPartner: this.data.expandedPartner === phone ? null : phone });
+  },
+
+  _drawRadarChart() {
+    const query = this.createSelectorQuery();
+    query.select('#radarCanvas')
+      .fields({ node: true, size: true })
+      .exec((res) => {
+        if (!res || !res[0] || !res[0].node) return;
+        const canvas = res[0].node;
+        const ctx = canvas.getContext('2d');
+        const dpr = wx.getWindowInfo().pixelRatio || 2;
+        canvas.width = 320 * dpr;
+        canvas.height = 320 * dpr;
+        const faction = this.data.radarFaction;
+        const radar = this.data.radarData;
+        if (!radar) return;
+        const data = faction === 'good' ? radar.good : radar.evil;
+        drawRadar(ctx, data, faction, 320);
+      });
+  },
+
+  _buildPartnerTitles(partners) {
+    if (!partners || !partners.titles) return [];
+    const TITLE_LABELS = {
+      golden: '黄金搭档', bestWolf: '最佳狼队友', bestKnight: '最佳骑士搭档',
+      bestMerlinPerci: '最佳梅林&派西', nemesis: '天生冤家', worstTeammate: '最坑队友',
+    };
+    return partners.titles.filter(t => t.phone).map(t => {
+      const isUrl = t.avatar && (t.avatar.startsWith('http') || t.avatar.startsWith('/'));
+      return { ...t, label: TITLE_LABELS[t.type] || t.type, avatarImage: isUrl ? t.avatar : '', avatarText: isUrl ? '' : (t.avatar || '🐺') };
+    });
+  },
+
+  _buildPartnerMatrix(partners) {
+    if (!partners || !partners.matrix) return [];
+    return partners.matrix.slice(0, 30).map(p => {
+      const isUrl = p.avatar && (p.avatar.startsWith('http') || p.avatar.startsWith('/'));
+      return { ...p, avatarImage: isUrl ? p.avatar : '', avatarText: isUrl ? '' : (p.avatar || '🐺') };
+    });
   }
 });

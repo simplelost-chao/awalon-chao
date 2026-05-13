@@ -1,0 +1,118 @@
+<view>
+  <view class="mt-wrap {{embedded ? 'mt-embedded' : 'pf'}}">
+    <block wx:if="{{!embedded}}">
+      <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+      <view class="fb fb-left"></view><view class="fb fb-right"></view>
+      <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+      <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+      <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+      <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+    </block>
+
+    <!-- 标题 + 问号 -->
+    <view class="mt-title-row">
+      <view class="mt-title-line"></view>
+      <text class="mt-title-deco">◆</text>
+      <text class="mt-title">任务详情</text>
+      <view class="help-btn" bindtouchstart="onLegendShow" bindtouchend="onLegendHide">
+        <text class="help-btn-q">?</text>
+      </view>
+      <text class="mt-title-deco">◆</text>
+      <view class="mt-title-line"></view>
+    </view>
+
+    <!-- 表头 -->
+    <view class="mt-head">
+      <view class="mt-col mt-col-team"><text class="mt-hdr">当前队伍</text></view>
+      <view class="mt-col mt-col-vote">
+        <text class="mt-hdr mt-hdr-yes">投票成功（绿）</text>
+        <text class="mt-hdr-sep"> / </text>
+        <text class="mt-hdr mt-hdr-no">反对（红）</text>
+      </view>
+      <view class="mt-col mt-col-result"><text class="mt-hdr">结果</text></view>
+    </view>
+
+    <!-- 数据行 -->
+    <view class="mt-row {{item.approved ? '' : 'mt-row-skipped'}}" wx:for="{{rows}}" wx:key="key">
+
+      <!-- 队伍 -->
+      <view class="mt-col mt-col-team mt-col-team-left">
+        <view class="mt-chip mt-chip-seat"
+          wx:for="{{item.teamSeatList}}" wx:key="*this" wx:for-item="seat" wx:for-index="si">
+          <text class="mt-chip-text">{{seat}}</text>
+        </view>
+      </view>
+
+      <!-- 投票（队长标识） -->
+      <view class="mt-col mt-col-vote mt-col-vote-split">
+        <view class="mt-vote-group mt-vote-group-yes">
+          <view class="mt-vote-chips">
+            <view class="mt-chip mt-chip-yes {{vc.isLeaderSeat ? 'mt-chip-leader-mark' : ''}}"
+              wx:for="{{item.voteSupportChips}}" wx:key="seat" wx:for-item="vc">
+              <text class="mt-chip-text">{{vc.seat}}</text>
+            </view>
+          </view>
+        </view>
+        <view class="mt-vote-group mt-vote-group-no">
+          <view class="mt-vote-chips">
+            <view class="mt-chip mt-chip-no {{vc.isLeaderSeat ? 'mt-chip-leader-mark' : ''}}"
+              wx:for="{{item.voteRejectChips}}" wx:key="seat" wx:for-item="vc">
+              <text class="mt-chip-text">{{vc.seat}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 结果 -->
+      <view class="mt-col mt-col-result">
+        <view wx:if="{{item.result === 'success'}}" class="mt-result">
+          <view class="mt-result-badge mt-result-badge-success {{item.failCount > 0 ? '' : 'mt-result-badge-single'}}">
+            <view class="mt-result-cell mt-result-symbol mt-result-symbol-success">✦</view>
+            <view class="mt-result-cell mt-result-fail-count mt-result-fail-count-protected" wx:if="{{item.failCount > 0}}">{{item.failCount}}</view>
+          </view>
+        </view>
+        <view wx:elif="{{item.result === 'fail'}}" class="mt-result">
+          <view class="mt-result-badge mt-result-badge-fail {{item.failCount > 0 ? '' : 'mt-result-badge-single'}}">
+            <view class="mt-result-cell mt-result-symbol mt-result-symbol-fail"><view class="mt-fail-mark-line mt-fail-mark-line-a"></view><view class="mt-fail-mark-line mt-fail-mark-line-b"></view></view>
+            <view class="mt-result-cell mt-result-fail-count" wx:if="{{item.failCount > 0}}">{{item.failCount}}</view>
+          </view>
+        </view>
+        <view wx:elif="{{item.result === 'pending'}}" class="mt-result mt-result-pending">
+          <text class="mt-result-icon">···</text>
+        </view>
+        <view wx:else class="mt-result">
+          <image class="mt-result-img" src="https://www.awalon.top/mp-assets/icons/mission-veto.svg" mode="aspectFit"/>
+        </view>
+      </view>
+    </view>
+
+  </view>
+
+  <!-- 图例浮层：在 pf 之外，position:fixed 不受 backdrop-filter 影响 -->
+  <view class="help-popup {{showLegend ? 'help-popup-show' : ''}}">
+    <view class="mt-legend-item">
+      <view class="mt-chip mt-chip-yes mt-chip-sm"><text class="mt-chip-text">n</text></view>
+      <text class="mt-legend-text">支持</text>
+    </view>
+    <view class="mt-legend-item">
+      <view class="mt-chip mt-chip-no mt-chip-sm"><text class="mt-chip-text">n</text></view>
+      <text class="mt-legend-text">不支持</text>
+    </view>
+    <view class="mt-legend-item">
+      <view class="mt-chip mt-chip-no mt-chip-sm mt-chip-leader-mark"><text class="mt-chip-text">n</text></view>
+      <text class="mt-legend-text">队长</text>
+    </view>
+    <view class="mt-legend-item">
+      <view class="mt-result-badge mt-result-badge-success mt-result-badge-single"><view class="mt-result-cell mt-result-symbol mt-result-symbol-success">✦</view></view>
+      <text class="mt-legend-text">任务成功</text>
+    </view>
+    <view class="mt-legend-item">
+      <view class="mt-result-badge mt-result-badge-fail"><view class="mt-result-cell mt-result-symbol mt-result-symbol-fail"><view class="mt-fail-mark-line mt-fail-mark-line-a"></view><view class="mt-fail-mark-line mt-fail-mark-line-b"></view></view><view class="mt-result-cell mt-result-fail-count">n</view></view>
+      <text class="mt-legend-text">任务失败(n=失败票)</text>
+    </view>
+    <view class="mt-legend-item">
+      <image class="mt-result-img" src="https://www.awalon.top/mp-assets/icons/mission-veto.svg" mode="aspectFit"/>
+      <text class="mt-legend-text">队伍未出征</text>
+    </view>
+  </view>
+</view>

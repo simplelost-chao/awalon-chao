@@ -2,11 +2,11 @@
 
 .spk-card {
   border-radius: 40rpx 40rpx 0 0;
-  border: 1rpx solid var(--aw-nav-border);
+  border: var(--aw-panel-border-width, 1rpx) solid var(--aw-nav-border);
   border-bottom: none;
-  background: var(--aw-panel);
+  background: linear-gradient(to bottom, rgba(32, 18, 4, 0.88) 0%, rgba(16, 9, 2, 0.97) 100%);
   overflow: hidden;
-  box-shadow: 0 -16rpx 64rpx rgba(0, 0, 0, 0.5);
+  box-shadow: 0 -16rpx 64rpx rgba(0, 0, 0, 0.5), var(--aw-panel-shadow, 0 0 0 transparent);
   pointer-events: auto;
   padding-bottom: calc(env(safe-area-inset-bottom) + 16rpx);
 }

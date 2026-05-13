@@ -1,7 +1,10 @@
 {
   "description": "Awalon MiniProgram",
   "packOptions": {
-    "ignore": [],
+    "ignore": [
+      { "type": "file", "value": "build-themes.js" },
+      { "type": "file", "value": "README.md" }
+    ],
     "include": []
   },
   "setting": {

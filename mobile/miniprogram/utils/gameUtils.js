@@ -149,10 +149,28 @@ function formatRecapEntry(r) {
   };
 }
 
-function avatarMeta(avatar) {
+const AI_AVATAR_URLS = [
+  "https://www.awalon.top/mp-assets/ai-avatars/ai-01-wizard.jpg?v=3",
+  "https://www.awalon.top/mp-assets/ai-avatars/ai-02-knight.jpg?v=3",
+  "https://www.awalon.top/mp-assets/ai-avatars/ai-03-assassin.jpg?v=3",
+  "https://www.awalon.top/mp-assets/ai-avatars/ai-04-noble.jpg?v=3",
+  "https://www.awalon.top/mp-assets/ai-avatars/ai-05-archer.jpg?v=3",
+  "https://www.awalon.top/mp-assets/ai-avatars/ai-06-mage.jpg?v=3",
+  "https://www.awalon.top/mp-assets/ai-avatars/ai-07-paladin.jpg?v=3",
+  "https://www.awalon.top/mp-assets/ai-avatars/ai-08-witch.jpg?v=3",
+  "https://www.awalon.top/mp-assets/ai-avatars/ai-09-guard.jpg?v=3",
+  "https://www.awalon.top/mp-assets/ai-avatars/ai-10-oracle.jpg?v=3",
+];
+
+function avatarMeta(avatar, player) {
   const raw = String(avatar || "").trim();
   if (/^https?:\/\//i.test(raw)) {
     return { image: raw, text: "" };
+  }
+  if (player && player.isAI) {
+    // Use seat index (0-based, server-assigned) for collision-free assignment
+    const seat = Number.isFinite(player.seat) ? player.seat : 0;
+    return { image: AI_AVATAR_URLS[seat % AI_AVATAR_URLS.length], text: "" };
   }
   return { image: "", text: raw || "🙂" };
 }
@@ -192,7 +210,7 @@ function buildCenterResult(room) {
   if (!winner && room.phase !== "end") return { show: false, title: "", sub: "" };
   const title = winner === "good" ? "正义胜利" : winner === "evil" ? "邪恶胜利" : "对局结束";
   const ass = room.game.assassination || null;
-  const sub = ass && ass.targetSeat ? `刺杀目标：${ass.targetSeat}号位` : "本局已结束";
+  const sub = ass && ass.targetSeat ? `刺杀目标：${ass.targetSeat}号位` : "";
   return { show: true, title, sub };
 }
 
@@ -207,7 +225,7 @@ function buildRoundSeats(seatSlots, maxPlayers) {
   const n = Math.max(5, Number(maxPlayers) || 7);
   return (seatSlots || []).map((s, idx) => {
     const angle = (2 * Math.PI * idx) / n - Math.PI / 2;
-    const r = 39;
+    const r = 43;
     const cx = 50;
     const cy = 50;
     const left = cx + r * Math.cos(angle);
@@ -333,7 +351,7 @@ function buildLadyTargets(room) {
       if (!pid || pid === lady.holderId || previousHolders.has(pid)) return null;
       const player = room.players.find((it) => it.id === pid);
       if (!player) return null;
-      const meta = avatarMeta(player.avatar || "🙂");
+      const meta = avatarMeta(player.avatar || "🙂", player);
       return { id: pid, seat: idx + 1, nickname: player.nickname, avatarImage: meta.image, avatarText: meta.text || "🙂" };
     })
     .filter(Boolean);
@@ -395,7 +413,7 @@ function buildSeatSlots(room, selectedTeam, selectedAssassinate, roleVisibleSeat
   for (let i = 0; i < max; i += 1) {
     const pid = seats[i] || null;
     const p = pid ? players.find((it) => it.id === pid) : null;
-    const meta = p ? avatarMeta(p.avatar || "🙂") : { image: "", text: "" };
+    const meta = p ? avatarMeta(p.avatar || "🙂", p) : { image: "", text: "" };
     let action = "";
     let actionDone = false;
     if (pid && game) {
@@ -487,7 +505,7 @@ function buildRoleVisibleSeats(info, room, clientId, myRole) {
       const isKnown = isSelf || !!role || isEvilViewer || visibleAreEvil;
       const rowClass = isEvil ? "role-seat-row-evil" : isKnown ? "role-seat-row-good" : "role-seat-row-unknown";
       const roleClass = isEvil ? "role-seat-role-evil" : isSelf ? "role-seat-role-self" : "role-seat-role-other";
-      const meta = avatarMeta(p && p.avatar ? p.avatar : "🙂");
+      const meta = avatarMeta(p && p.avatar ? p.avatar : "🙂", p);
       const identityFaction = isSelf
         ? (EVIL_ROLES.has(currentRole) ? 'evil' : 'good')
         : (isEvil ? 'evil' : 'good');
@@ -517,7 +535,7 @@ function buildPlayerCards(room, clientId) {
     .map((p) => {
       const seat = Number.isFinite(p.seat) ? p.seat + 1 : bySeat[p.id] || 0;
       const role = getRevealedRoleLabel(room, p.id);
-      const spectator = seat <= 0 || p.avatar === "👀";
+      const spectator = seat <= 0 || !!p.spectator;
       const offline = !!p.offline;
       let status = "准备中";
       let statusClass = "status-ready";
@@ -525,7 +543,7 @@ function buildPlayerCards(room, clientId) {
       else if (spectator) { status = "观战中"; statusClass = "status-watch"; }
       else if (room.started && phase !== "end") { status = "正在游戏中"; statusClass = "status-playing"; }
       else if (room.started && phase === "end") { status = "已结束"; statusClass = "status-ended"; }
-      const meta = avatarMeta(p.avatar || "🙂");
+      const meta = avatarMeta(p.avatar || "🙂", p);
       return {
         id: p.id,
         seat,
@@ -564,7 +582,7 @@ function buildSpeakMessagesByRound(room, roundKey, clientId) {
     const seat = p ? room.seats.findIndex((id) => id === p.id) + 1 : 0;
     const mine = !!(p && p.id === clientId);
     const isAI = !!(p && p.isAI);
-    const meta = avatarMeta((p && p.avatar) || "🙂");
+    const meta = avatarMeta((p && p.avatar) || "🙂", p);
     return {
       key: `${m.ts || 0}-${idx}`,
       from: m.from || "系统",

@@ -1,171 +1,187 @@
 # Awalon Online
 
-`awalon-online` 是一个阿瓦隆联机项目，当前由两个主工程组成：
+阿瓦隆联机小程序，微信小程序客户端 + Node.js 服务端。
 
-- `mobile/`: Expo React Native 客户端，现阶段同时承担 Web 端部署
-- `server/`: Express + WebSocket 服务端，包含 SQLite 持久化和 AI 逻辑
+- **线上地址**：`wss://www.awalon.top/ws`（服务端）
+- **小程序**：微信搜索「阿瓦隆联机」或扫描 AppID `wx...` 二维码
 
-项目已经具备完整主流程，但代码仍处在“功能先行、工程待整理”的阶段。本文档以“接手维护”为目标，优先说明怎么运行、怎么部署、代码放在哪里、接下来该怎么收口。
+## 工程结构
 
-## 当前完成度
-
-截至 `2026-03-12`，主链路已具备：
-
-- 登录和身份恢复
-- 创建房间、加入房间、观战、选座
-- 房主设置人数、发言时长和角色配置
-- 发言阶段、组队、全员投票、任务执行、刺杀
-- 历史对局、角色统计、勋章展示
-- SQLite 持久化
-- AI 发言 / 投票 / 复盘能力
-- Web 部署脚本与服务端部署脚本
-
-当前主要问题不是功能缺失，而是：
-
-- 前端入口文件过大：`mobile/App.js`
-- 服务端状态机和接口集中在单文件：`server/index.js`
-- 运行时数据、环境文件、素材和代码边界还不够清晰
-- git 提交历史不足，难以追踪演进
-
-## 目录说明
-
-```text
-avalon-online/
-├── mobile/        Expo 客户端主工程
-├── server/        服务端主工程
-├── mobile_old/    历史版本备份
-└── docs/          补充文档
+```
+awalon-chao/
+├── mobile/miniprogram/         微信小程序客户端（主工程）
+│   ├── pages/index/            主页面（房间/游戏/复盘全在此）
+│   ├── subpkg/                 分包页面（头像裁剪、规则、历史、统计）
+│   ├── components/             自定义组件（圆桌、身份面板、任务卡等）
+│   ├── skins.js                皮肤配置（6 套主题）
+│   ├── utils/                  工具函数（socket、medals、gameUtils 等）
+│   └── assets/                 图片、图标素材
+├── server/                     Node.js 服务端
+│   ├── index.js                主服务（HTTP + WebSocket + 连接管理）
+│   ├── game.js                 游戏核心逻辑（投票、任务、刺杀、状态机）
+│   ├── game-ai.js              AI 玩家行为（发言、投票、组队、自动托管）
+│   ├── room.js                 房间管理（创建、加入、观战、踢人、持久化）
+│   ├── presence.js             在线状态与断线重连
+│   ├── ai.js                   AI 推理引擎（DeepSeek API 调用、复盘生成）
+│   ├── voice.js                AI 语音合成
+│   ├── db.js                   数据库层（SQLite 读写）
+│   ├── medals.js               勋章计算引擎
+│   ├── constants.js            角色阵营、任务配置等常量
+│   ├── default-role-config.js  默认角色配置表
+│   ├── history.js              历史对局查询
+│   ├── admin-api.js            管理后台 API
+│   ├── users.sqlite            用户、对局、历史数据
+│   └── ai.sqlite               AI 复盘缓存、发言策略库
+└── design-preview/             设计工具
+    ├── skin-prompt-studio.html AI 皮肤资产生成工具（DALL-E 集成）
+    ├── component-workshop.html 组件展示/测试工具
+    └── system-overview.html    系统架构概览
 ```
 
-补充说明：
+## 已实现功能
 
-- `mobile/miniprogram/` 当前不是独立主工程，更像小程序残留代码和复用工具目录。
-- `mobile_old/` 当前不建议继续开发，建议视为归档。
+### 房间与对局
 
-更细的工程说明见 [docs/ARCHITECTURE.md](/Users/chao/Documents/Projects/avalon-online/docs/ARCHITECTURE.md)。
+- 创建房间：5–10 人，自定义角色配置、发言时长、组队判负规则、坏人互认模式
+- 加入房间：房间号加入或首页列表一键加入/观战
+- 首页房间列表：显示当前活跃房间（可加入 / 游戏中），10 秒自动刷新
+- 观战：进行中的房间可随时加入观战（自动设为观战者身份，保留真实头像），游戏结束后可点击空座位坐下参与下局
+- 断线重连：30 分钟内自动恢复房间状态，指数退避重连
+- 房主限制：同一账号同时只能是一个房间的房主，建新房自动解散旧房
+- 分享邀请：生成房间分享卡片，扫码直接加入
+
+### 游戏流程
+
+- **发言阶段**：顺序发言、倒计时、发言记录按轮次查看、房主可跳过
+- **组队阶段**：队长选队、全员投票、强制判负规则
+- **任务阶段**：队员秘密提交成功/失败，任务进度可视化（5 轮卡片）
+- **刺杀阶段**：刺客选择目标完成终局
+- **湖中仙女**：8 人以上可开启，持卡者逐轮验人
+- 座位圆桌可视化（Canvas 绘制）
+- 座位标注系统：给其他玩家打标签（嫌疑大 / 可信 / 摇摆等）
+- 游戏结束互评：MVP、最可疑、最有趣
+
+### AI 功能
+
+- **AI 玩家**：可添加 AI 填充空位，自动参与发言、投票、任务
+- **自动托管**：游戏中开启托管，AI 代为操作；断线 30 分钟后自动启用
+- **AI 复盘**：游戏结束后生成每位玩家视角的详细复盘（推理过程、关键节点、发言分析等）
+- **AI 语音**：AI 玩家发言可合成语音播放，支持不同角色人格语音
+- **AI 信念推理**：`computeBeliefState` 基于投票/任务历史做确定性逻辑推断
+- AI 接入 DeepSeek API（默认模型 `deepseek-chat`，支持替换其他兼容接口）
+
+### 历史与统计
+
+- 历史对局列表：分页展示，含角色、胜负、时间、勋章、互评
+- 对局详情：完整任务/投票/发言/刺杀记录
+- 角色统计：总胜率、按角色/阵营分类胜率、勋章统计
+- 勋章系统：按游戏表现自动触发，含正义/邪恶双系列（20+ 种勋章），支持本地 SVG 渲染
+
+### 用户系统
+
+- 微信登录（openid）+ 手机号绑定
+- 昵称、头像编辑（支持本地图片上传或 emoji）
+- 登录状态本地持久化（token、昵称、头像）
+
+### 皮肤系统
+
+- 6 套内置皮肤：dark-gold（默认）、celestial、ink-wash、cyber-neon、dark-dungeon、abyss
+- 每套皮肤包含 CSS 变量、背景图、配色方案、角色立绘路径
+- 皮肤选择器：主页 / 历史 / 统计页面均支持切换
+- 动态背景：各页面根据当前皮肤加载对应背景图
+- 皮肤资产支持 CDN + 本地双路径，自动降级
+- 服务端皮肤目录 API（`/api/skins`）控制发布状态
+
+### 皮肤设计工具（Skin Prompt Studio）
+
+- AI 资产生成：集成 DALL-E API，按皮肤规格批量生成角色立绘、背景图等
+- 手机预览：实时模拟小程序界面效果
+- QA 报告：自动检测资产一致性，报告持久化到 IndexedDB
+
+### 交互体验
+
+- 操作时机震动提醒（组队/投票/发言/任务/刺杀轮到自己时）
+- 新手引导提示卡片（关键阶段首次操作时弹出）
+- 审核模式：`REVIEW_MODE=true` 时屏蔽真实 AI 内容，用于微信审核
+- 重新发牌身份保护：gameVersion 机制防止重开后显示上局身份
+
+---
 
 ## 本地开发
 
-### 1. 启动服务端
+### 服务端
 
 ```bash
-cd /Users/chao/Documents/Projects/avalon-online/server
+cd server
 npm install
-cp .env.example .env
-npm start
+cp .env.example .env   # 填入 QWEN_API_KEY、WX_APPID 等
+npm start              # 默认端口 8080
 ```
 
-默认端口为 `8080`，健康检查地址为 `http://localhost:8080/health`。
+健康检查：`http://localhost:8080/health`
 
-如果需要 AI 或微信登录能力，补齐 `.env` 中的对应变量。
+### 小程序客户端
 
-### 2. 启动客户端
+用微信开发者工具打开 `mobile/miniprogram/` 目录。`app.js` 内置 dev/prod 双环境配置，将 `globalData.env` 改为 `"dev"` 即可连接本地服务端（`ws://127.0.0.1:8080/ws`）。
 
-```bash
-cd /Users/chao/Documents/Projects/avalon-online/mobile
-npm install
-npm start
-```
-
-默认行为：
-
-- Web 端会根据当前页面地址推导 WebSocket 地址
-- 原生端会优先读取 `EXPO_PUBLIC_WS_URL`
-- 若未配置，会回退到 `ws://127.0.0.1:8080/ws`
-
-生产 WebSocket 地址样例见 [mobile/.env.production.example](/Users/chao/Documents/Projects/avalon-online/mobile/.env.production.example)。
-
-## 环境变量
-
-### `server/.env`
-
-最小可用：
-
-```env
-PORT=8080
-```
-
-可选项：
-
-- `QWEN_API_KEY`
-- `QWEN_MODEL`
-- `QWEN_BASE_URL`
-- `WX_APPID`
-- `WX_APPSECRET`
-- `RECONNECT_GRACE_MS`
-
-样例见：
-
-- [server/.env.example](/Users/chao/Documents/Projects/avalon-online/server/.env.example)
-- [server/.env.production.example](/Users/chao/Documents/Projects/avalon-online/server/.env.production.example)
-
-### `mobile/.env.production`
-
-目前主要使用：
-
-```env
-EXPO_PUBLIC_WS_URL=ws://15.135.140.253/ws
-```
-
-注意：
-
-- 上线时应改成 `wss://<your-domain>/ws`
-- `.env` 与 `.env.production` 都不应提交到版本库
+---
 
 ## 部署
 
-### 部署服务端
+服务端运行在 `awalon.top`（EC2），PM2 管理进程。
 
 ```bash
-cd /Users/chao/Documents/Projects/avalon-online/server
-bash scripts/deploy.sh
+# 部署服务端（scp 全部 JS 文件 + 重启）
+scp -r server/*.js awalon:/opt/avalon-online/server/
+ssh awalon "pm2 restart avalon-server"
+
+# 仅部署特定文件（推荐，减少传输）
+scp server/game.js server/room.js awalon:/opt/avalon-online/server/
+ssh awalon "pm2 restart avalon-server"
+
+# 切换审核模式
+ssh awalon "REVIEW_MODE=true pm2 restart avalon-server --update-env"
+
+# 切换游戏模式
+ssh awalon "REVIEW_MODE=false pm2 restart avalon-server --update-env"
+
+# 清空房间数据（慎用）
+ssh awalon "node -e \"const db=require('better-sqlite3')('/opt/avalon-online/server/users.sqlite'); db.prepare('DELETE FROM active_rooms').run(); db.prepare('DELETE FROM active_room_players').run();\""
 ```
 
-脚本会通过 `rsync + ssh` 同步到远端；默认不同步 `*.sqlite*` 数据库文件。
+小程序客户端通过微信开发者工具上传代码，提交审核后发布。
 
-如果需要同步数据库，需要显式使用 `--include-db`。
+---
 
-### 部署前端 Web
+## 环境变量（server/.env）
 
-```bash
-cd /Users/chao/Documents/Projects/avalon-online/mobile
-bash scripts/deploy.sh --prod
-```
+| 变量 | 说明 |
+|------|------|
+| `PORT` | 服务端口，默认 8080 |
+| `AI_API_KEY` | AI 服务 API Key（DeepSeek 或兼容接口）|
+| `AI_MODEL` | AI 模型名称，默认 `deepseek-chat` |
+| `AI_BASE_URL` | AI 服务地址，默认 `https://api.deepseek.com/v1` |
+| `WX_APPID` | 微信小程序 AppID |
+| `WX_APPSECRET` | 微信小程序 AppSecret |
+| `REVIEW_MODE` | `true` 时启用审核模式 |
+| `RECONNECT_GRACE_MS` | 断线重连宽限时间（默认 30 分钟）|
 
-该脚本会在远端执行：
+---
 
-- 安装依赖
-- `expo export --platform web`
-- 同步 `assets/` 到 `dist/mp-assets/`
-- 使用 `pm2 + serve` 托管 `dist/`
+## 协议说明
 
-## 协议与数据
+服务端同时提供：
 
-服务端同时暴露：
+- **WebSocket** `wss://www.awalon.top/ws`：全部游戏逻辑（房间、对局、历史、AI）
+- **HTTP REST**：
+  - `GET /health`
+  - `GET /api/rooms` — 活跃房间列表（支持 viewer 身份识别）
+  - `GET /api/review-mode`
+  - `GET /api/role-config` — 角色配置
+  - `GET /api/skins` — 皮肤目录与发布状态
+  - `GET /api/skin-generated/:skinId` — 皮肤生成资产
+  - `POST /api/wx/openid-login`
+  - `POST /api/wx/phone-login`
+  - `POST /api/profile/avatar`
 
-- HTTP 接口：健康检查、微信登录
-- WebSocket 协议：房间、对局、历史、统计
-
-协议整理见 [docs/PROTOCOL.md](/Users/chao/Documents/Projects/avalon-online/docs/PROTOCOL.md)。
-
-运行时数据说明：
-
-- `server/users.sqlite*`: 用户与对局数据
-- `server/ai.sqlite*`: AI 总结与记忆
-- `mobile/dist/`: Web 构建产物
-
-这些文件都属于运行时或构建产物，不应进入 git。
-
-## 推荐的下一步整理顺序
-
-1. 为 `mobile` 和 `server` 分别提交一次“当前可运行快照”。
-2. 优先拆分 `mobile/App.js`，先抽常量、纯函数和网络层。
-3. 把 `server/index.js` 的 HTTP、协议分发、状态机、落库逻辑拆开。
-4. 给关键状态机补最基本测试：角色分配、投票、任务、刺杀、历史写入。
-5. 保持文档同步更新，不再让协议和环境约定只存在代码里。
-
-## 文档清单
-
-- [docs/ARCHITECTURE.md](/Users/chao/Documents/Projects/avalon-online/docs/ARCHITECTURE.md)
-- [docs/PROTOCOL.md](/Users/chao/Documents/Projects/avalon-online/docs/PROTOCOL.md)
-- [docs/RUNBOOK.md](/Users/chao/Documents/Projects/avalon-online/docs/RUNBOOK.md)
+详细 WebSocket 消息协议见 [docs/PROTOCOL.md](docs/PROTOCOL.md)。

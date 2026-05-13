@@ -1,0 +1,373 @@
+<view class="page theme-{{skinId}}">
+  <image class="bg" src="{{skinInGameBg}}" mode="aspectFill" />
+  <view class="mask"></view>
+
+  <nav-header title="游戏规则" statusBarHeight="{{statusBarHeight}}" navBarHeight="{{navBarHeight}}" bind:back="onBackHome"></nav-header>
+
+  <view class="content" style="padding-top: {{navTotalHeight}}px;">
+
+    <!-- ── Tab 切换 ── -->
+    <view class="pf rules-panel tab-panel">
+      <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+      <view class="fb fb-left"></view><view class="fb fb-right"></view>
+      <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+      <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+      <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+      <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+      <view class="intro-inner">
+        <text class="intro-headline">阿瓦隆是什么？</text>
+        <text class="intro-body">一桌人里藏着几个卧底。正义要完成任务，邪恶要搞破坏——谁是好人谁是坏人，只能靠说话、投票和观察去猜。5–10 人，一局约 30 分钟。</text>
+      </view>
+      <view class="tab-bar">
+        <view class="tab-item {{tab === 'play' ? 'tab-active' : ''}}" data-tab="play" bindtap="onSwitchTab">怎么玩</view>
+        <view class="tab-item {{tab === 'roles' ? 'tab-active' : ''}}" data-tab="roles" bindtap="onSwitchTab">角色介绍</view>
+        <view class="tab-item {{tab === 'advanced' ? 'tab-active' : ''}}" data-tab="advanced" bindtap="onSwitchTab">进阶机制</view>
+      </view>
+    </view>
+
+    <scroll-view scroll-y="true" class="tab-content" scroll-into-view="" enhanced="true">
+
+    <!-- ═══════════ Tab: 怎么玩 ═══════════ -->
+    <block wx:if="{{tab === 'play'}}">
+
+      <!-- 游戏流程图 -->
+      <view class="pf rules-panel">
+        <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+        <view class="fb fb-left"></view><view class="fb fb-right"></view>
+        <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+        <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+        <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+        <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+        <view class="rs-title-row">
+          <view class="rs-title-line"></view>
+          <text class="rs-deco">◆</text>
+          <text class="rs-title">一局流程</text>
+          <text class="rs-deco">◆</text>
+          <view class="rs-title-line"></view>
+        </view>
+        <!-- 流程示意图 -->
+        <view class="flow-chart">
+          <view class="flow-row">
+            <view class="flow-node flow-node-start">
+              <text class="flow-icon">🎴</text>
+              <text class="flow-label">发身份</text>
+            </view>
+            <view class="flow-arrow">→</view>
+            <view class="flow-node">
+              <text class="flow-icon">👥</text>
+              <text class="flow-label">组队</text>
+            </view>
+            <view class="flow-arrow">→</view>
+            <view class="flow-node">
+              <text class="flow-icon">💬</text>
+              <text class="flow-label">发言</text>
+            </view>
+          </view>
+          <view class="flow-return-row">
+            <view class="flow-return-line"></view>
+            <text class="flow-return-text">没过？换队长重来</text>
+          </view>
+          <view class="flow-row">
+            <view class="flow-node">
+              <text class="flow-icon">🗳</text>
+              <text class="flow-label">投票</text>
+            </view>
+            <view class="flow-arrow">→</view>
+            <view class="flow-node">
+              <text class="flow-icon">⚔</text>
+              <text class="flow-label">出征</text>
+            </view>
+            <view class="flow-arrow">→</view>
+            <view class="flow-node flow-node-repeat">
+              <text class="flow-icon">🔄</text>
+              <text class="flow-label">下一轮</text>
+            </view>
+          </view>
+          <view class="flow-end-row">
+            <view class="flow-end-line"></view>
+            <view class="flow-end-nodes">
+              <view class="flow-end-node good-end">
+                <text class="flow-end-label">正义 3 胜</text>
+                <text class="flow-end-sub">→ 刺客刺杀 →</text>
+                <text class="flow-end-result">最终判定</text>
+              </view>
+              <view class="flow-end-node evil-end">
+                <text class="flow-end-label">邪恶 3 胜</text>
+                <text class="flow-end-sub">→ 邪恶直接赢</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 步骤详解 -->
+      <view class="pf rules-panel">
+        <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+        <view class="fb fb-left"></view><view class="fb fb-right"></view>
+        <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+        <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+        <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+        <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+        <view class="rs-title-row">
+          <view class="rs-title-line"></view>
+          <text class="rs-deco">◆</text>
+          <text class="rs-title">详细步骤</text>
+          <text class="rs-deco">◆</text>
+          <view class="rs-title-line"></view>
+        </view>
+        <view class="journey-list">
+          <view class="journey-card" wx:for="{{uiJourney}}" wx:key="step">
+            <view class="journey-head">
+              <text class="journey-step">{{item.step}}</text>
+              <text class="journey-title">{{item.title}}</text>
+            </view>
+            <view class="journey-points">
+              <view class="journey-point" wx:for="{{item.points}}" wx:key="*this" wx:for-item="pt">{{pt}}</view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 任务人数表 -->
+      <view class="pf rules-panel">
+        <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+        <view class="fb fb-left"></view><view class="fb fb-right"></view>
+        <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+        <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+        <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+        <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+        <view class="rs-title-row">
+          <view class="rs-title-line"></view>
+          <text class="rs-deco">◆</text>
+          <text class="rs-title">任务人数表</text>
+          <text class="rs-deco">◆</text>
+          <view class="rs-title-line"></view>
+        </view>
+        <view class="mission-table-wrap">
+          <view class="mt-header">
+            <text class="mt-cell mt-cell-first"></text>
+            <text class="mt-cell mt-round">第1轮</text>
+            <text class="mt-cell mt-round">第2轮</text>
+            <text class="mt-cell mt-round">第3轮</text>
+            <text class="mt-cell mt-round">第4轮</text>
+            <text class="mt-cell mt-round">第5轮</text>
+          </view>
+          <view class="mt-row" wx:for="{{missionTable}}" wx:key="players">
+            <text class="mt-cell mt-cell-first">{{item.players}}人</text>
+            <text class="mt-cell {{item.r4shield ? '' : ''}}">{{item.r1}}</text>
+            <text class="mt-cell">{{item.r2}}</text>
+            <text class="mt-cell">{{item.r3}}</text>
+            <text class="mt-cell {{item.r4shield ? 'mt-shield' : ''}}">{{item.r4}}{{item.r4shield ? '*' : ''}}</text>
+            <text class="mt-cell">{{item.r5}}</text>
+          </view>
+          <text class="mt-note">* 标记轮次为保护轮，需要 2 张失败牌才算任务失败</text>
+        </view>
+      </view>
+
+      <!-- 胜负条件 -->
+      <view class="pf rules-panel">
+        <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+        <view class="fb fb-left"></view><view class="fb fb-right"></view>
+        <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+        <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+        <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+        <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+        <view class="rs-title-row">
+          <view class="rs-title-line"></view>
+          <text class="rs-deco">◆</text>
+          <text class="rs-title">谁能赢</text>
+          <text class="rs-deco">◆</text>
+          <view class="rs-title-line"></view>
+        </view>
+        <view class="win-section">
+          <view class="win-row good-win">
+            <text class="win-icon">⚔</text>
+            <view class="win-body">
+              <text class="win-label">正义获胜</text>
+              <text class="win-desc">完成 3 次任务，且刺客最后没猜中梅林。</text>
+            </view>
+          </view>
+          <view class="win-row evil-win">
+            <text class="win-icon">🗡</text>
+            <view class="win-body">
+              <text class="win-label">邪恶获胜</text>
+              <text class="win-desc">搞砸 3 次任务；或刺客猜中梅林；或连续组队被否决触发强制判负。</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 新手建议 -->
+      <view class="pf rules-panel tip-panel">
+        <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+        <view class="fb fb-left"></view><view class="fb fb-right"></view>
+        <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+        <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+        <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+        <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+        <view class="rs-title-row">
+          <view class="rs-title-line"></view>
+          <text class="rs-deco">◆</text>
+          <text class="rs-title">新手建议</text>
+          <text class="rs-deco">◆</text>
+          <view class="rs-title-line"></view>
+        </view>
+        <view class="tip-list">
+          <view class="tip-item" wx:for="{{beginnerTips}}" wx:key="*this">{{item}}</view>
+        </view>
+      </view>
+    </block>
+
+    <!-- ═══════════ Tab: 角色介绍 ═══════════ -->
+    <block wx:if="{{tab === 'roles'}}">
+
+      <!-- 角色关系图 -->
+      <view class="pf rules-panel">
+        <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+        <view class="fb fb-left"></view><view class="fb fb-right"></view>
+        <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+        <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+        <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+        <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+        <view class="rs-title-row">
+          <view class="rs-title-line"></view>
+          <text class="rs-deco">◆</text>
+          <text class="rs-title">谁能看到谁</text>
+          <text class="rs-deco">◆</text>
+          <view class="rs-title-line"></view>
+        </view>
+        <view class="vision-chart">
+          <!-- 正义侧 -->
+          <view class="vision-col">
+            <text class="vision-faction-label good">正义阵营</text>
+            <view class="vision-role">
+              <image class="vision-avatar" src="https://www.awalon.top/mp-assets/role-split/merlin.png" mode="aspectFill" />
+              <text class="vision-name">梅林</text>
+            </view>
+            <view class="vision-role">
+              <image class="vision-avatar" src="https://www.awalon.top/mp-assets/role-split/percival.png" mode="aspectFill" />
+              <text class="vision-name">派西维尔</text>
+            </view>
+            <view class="vision-role">
+              <image class="vision-avatar" src="https://www.awalon.top/mp-assets/role-split/arthur_loyal.png" mode="aspectFill" />
+              <text class="vision-name">忠臣</text>
+            </view>
+          </view>
+          <!-- 箭头区 -->
+          <view class="vision-arrows">
+            <view class="vision-arrow-item">
+              <text class="vision-arrow-line good-line">───→</text>
+              <text class="vision-arrow-desc">梅林看到邪恶\n（除莫德雷德）</text>
+            </view>
+            <view class="vision-arrow-item">
+              <text class="vision-arrow-line good-line">←───</text>
+              <text class="vision-arrow-desc">派西维尔看到\n梅林+莫甘娜\n（分不清）</text>
+            </view>
+            <view class="vision-arrow-item">
+              <text class="vision-arrow-line evil-line">←──→</text>
+              <text class="vision-arrow-desc">邪恶互认\n（除奥伯伦）</text>
+            </view>
+          </view>
+          <!-- 邪恶侧 -->
+          <view class="vision-col">
+            <text class="vision-faction-label evil">邪恶阵营</text>
+            <view class="vision-role">
+              <image class="vision-avatar" src="https://www.awalon.top/mp-assets/role-split/assassin.png" mode="aspectFill" />
+              <text class="vision-name">刺客</text>
+            </view>
+            <view class="vision-role">
+              <image class="vision-avatar" src="https://www.awalon.top/mp-assets/role-split/morgana.png" mode="aspectFill" />
+              <text class="vision-name">莫甘娜</text>
+            </view>
+            <view class="vision-role">
+              <image class="vision-avatar" src="https://www.awalon.top/mp-assets/role-split/mordred.png" mode="aspectFill" />
+              <text class="vision-name">莫德雷德</text>
+            </view>
+            <view class="vision-role vision-role-isolated">
+              <image class="vision-avatar" src="https://www.awalon.top/mp-assets/role-split/oberon.png" mode="aspectFill" />
+              <text class="vision-name">奥伯伦</text>
+              <text class="vision-tag">孤立</text>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 正义角色 -->
+      <view class="pf rules-panel">
+        <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+        <view class="fb fb-left"></view><view class="fb fb-right"></view>
+        <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+        <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+        <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+        <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+        <view class="rs-title-row">
+          <view class="rs-title-line"></view>
+          <text class="rs-deco">◆</text>
+          <text class="rs-title">正义阵营</text>
+          <text class="rs-deco">◆</text>
+          <view class="rs-title-line"></view>
+        </view>
+        <view class="role-list">
+          <view class="role-item" wx:for="{{goodRoles}}" wx:key="role">
+            <view class="role-head">
+              <image class="role-avatar" wx:if="{{item.roleImage}}" src="{{item.roleImage}}" mode="aspectFill" />
+              <text class="role-name good">{{item.role}}</text>
+            </view>
+            <text class="role-desc">{{item.desc}}</text>
+            <text class="role-tip" wx:if="{{item.tip}}">💡 {{item.tip}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 邪恶角色 -->
+      <view class="pf rules-panel tip-panel">
+        <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+        <view class="fb fb-left"></view><view class="fb fb-right"></view>
+        <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+        <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+        <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+        <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+        <view class="rs-title-row">
+          <view class="rs-title-line"></view>
+          <text class="rs-deco">◆</text>
+          <text class="rs-title">邪恶阵营</text>
+          <text class="rs-deco">◆</text>
+          <view class="rs-title-line"></view>
+        </view>
+        <view class="role-list">
+          <view class="role-item" wx:for="{{evilRoles}}" wx:key="role">
+            <view class="role-head">
+              <image class="role-avatar" wx:if="{{item.roleImage}}" src="{{item.roleImage}}" mode="aspectFill" />
+              <text class="role-name evil">{{item.role}}</text>
+            </view>
+            <text class="role-desc">{{item.desc}}</text>
+            <text class="role-tip" wx:if="{{item.tip}}">💡 {{item.tip}}</text>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    <!-- ═══════════ Tab: 进阶机制 ═══════════ -->
+    <block wx:if="{{tab === 'advanced'}}">
+      <view class="pf rules-panel tip-panel">
+        <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+        <view class="fb fb-left"></view><view class="fb fb-right"></view>
+        <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+        <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+        <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+        <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+        <view class="mech-list">
+          <view class="mech-item" wx:for="{{mechanics}}" wx:key="name">
+            <text class="mech-icon">{{item.icon}}</text>
+            <view class="mech-body">
+              <text class="mech-name">{{item.name}}</text>
+              <text class="mech-desc">{{item.desc}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </block>
+
+    </scroll-view>
+  </view>
+</view>

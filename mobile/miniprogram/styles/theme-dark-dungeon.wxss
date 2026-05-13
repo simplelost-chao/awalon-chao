@@ -1,0 +1,281 @@
+/* ══════════════════════════════════════════════════════════
+   邪恶铭刻皮肤 — 专属视觉覆写 v2
+   ══════════════════════════════════════════════════════════ */
+
+/* ─── 全局字体 ──────────────────────────────────────────── */
+.theme-dark-dungeon {
+  font-family: 'DDTitle', 'PingFang SC', 'Heiti SC', sans-serif;
+}
+
+/* ─── 按钮共同基础 ──────────────────────────────────────── */
+.theme-dark-dungeon .btn {
+  letter-spacing: 4rpx;
+  font-weight: 900;
+  border-radius: 8rpx;
+  font-family: 'DDTitle', 'PingFang SC', sans-serif;
+}
+
+/* 主操作按钮：石碑铭刻 */
+.theme-dark-dungeon .primary {
+  background-color: #160900;
+  background-image: url('https://www.awalon.top/mp-assets/skins/dark-dungeon/ui/panel-texture.png');
+  background-size: 50%;
+  background-blend-mode: overlay;
+  color: #f0e090;
+  border-top: 2rpx solid var(--aw-dd-gold-hi);
+  border-left: 2rpx solid rgba(200,150,55,0.75);
+  border-right: 2rpx solid rgba(120,80,25,0.90);
+  border-bottom: 6rpx solid rgba(70,38,4,0.95);
+  letter-spacing: 6rpx;
+  box-shadow:
+    0 8rpx 0 #040100,
+    0 12rpx 36rpx rgba(0,0,0,0.85),
+    inset 0 2rpx 0 rgba(255,210,90,0.12),
+    inset 0 -4rpx 12rpx rgba(0,0,0,0.65);
+  text-shadow:
+    0 0 20rpx rgba(220,165,50,0.95),
+    0 0 48rpx var(--aw-dd-gold-mid),
+    0 2rpx 4rpx rgba(0,0,0,1);
+}
+
+/* 次要按钮：暗石 */
+.theme-dark-dungeon .ghost {
+  background-color: rgba(14,8,2,0.88);
+  background-image: url('https://www.awalon.top/mp-assets/skins/dark-dungeon/ui/panel-texture.png');
+  background-size: 50%;
+  background-blend-mode: overlay;
+  border: 2rpx solid var(--aw-dd-gold-mid);
+  color: var(--aw-subtext);
+  letter-spacing: 3rpx;
+  text-shadow: 0 1rpx 4rpx rgba(0,0,0,0.90);
+}
+
+/* 危险按钮 */
+.theme-dark-dungeon .danger {
+  background: linear-gradient(180deg, #3a0a0a 0%, #1e0404 100%);
+  border: 2rpx solid rgba(200,80,80,0.75);
+  color: #f5c0c0;
+  box-shadow: 0 5rpx 0 #060000, 0 10rpx 32rpx rgba(0,0,0,0.80);
+  text-shadow: 0 0 16rpx rgba(220,80,80,0.50);
+}
+
+/* ─── 面板边框图 ────────────────────────────────────────── */
+.theme-dark-dungeon .panel {
+  border-image: url('https://www.awalon.top/mp-assets/skins/dark-dungeon/ui/panel-frame.png') 20 fill / 20rpx / 0 stretch;
+  border-width: 20rpx;
+  background-image: url('https://www.awalon.top/mp-assets/skins/dark-dungeon/ui/panel-texture.png');
+  background-size: 256rpx 256rpx;
+  background-blend-mode: overlay;
+  background-color: rgba(18,10,3,0.97);
+  box-shadow:
+    0 0 32rpx var(--aw-dd-gold-lo),
+    0 10rpx 40rpx rgba(0,0,0,0.80);
+}
+
+.theme-dark-dungeon .room-panel {
+  border-image: url('https://www.awalon.top/mp-assets/skins/dark-dungeon/ui/panel-frame.png') 20 fill / 20rpx / 0 stretch;
+  border-width: 20rpx;
+  background-color: rgba(16,8,2,0.95);
+  box-shadow:
+    0 0 32rpx var(--aw-dd-gold-lo),
+    0 10rpx 40rpx rgba(0,0,0,0.80);
+}
+
+/* ─── 导航栏 ────────────────────────────────────────────── */
+.theme-dark-dungeon .nav-title {
+  letter-spacing: 10rpx;
+  font-family: 'DDTitle', 'PingFang SC', sans-serif;
+  font-weight: 900;
+  color: var(--aw-text);
+  text-shadow:
+    0 0 28rpx var(--aw-dd-gold-hi),
+    0 0 60rpx var(--aw-dd-gold-lo),
+    0 2rpx 6rpx rgba(0,0,0,0.95);
+}
+
+.theme-dark-dungeon .nav-back {
+  border: 2rpx solid var(--aw-panel-border);
+  background: rgba(12,6,1,0.90);
+  border-radius: 8rpx;
+}
+
+.theme-dark-dungeon .nav-back-chevron {
+  border-left-color: var(--aw-subtext);
+  border-top-color: var(--aw-subtext);
+}
+
+.theme-dark-dungeon .nav-back-label {
+  color: var(--aw-subtext);
+  letter-spacing: 2rpx;
+  font-family: 'DDTitle', 'PingFang SC', sans-serif;
+}
+
+/* ─── 输入框 ────────────────────────────────────────────── */
+.theme-dark-dungeon .input {
+  background: rgba(14,6,1,0.80);
+  border: 2rpx solid var(--aw-panel-border);
+  color: var(--aw-text);
+  border-radius: 8rpx;
+}
+
+/* ─── 任务进度卡片 ──────────────────────────────────────── */
+.theme-dark-dungeon .mc-card {
+  border: 2rpx solid var(--aw-panel-border);
+  background-color: rgba(16,8,2,0.80);
+  background-image: url('https://www.awalon.top/mp-assets/skins/dark-dungeon/ui/panel-texture.png');
+  background-size: 128rpx 128rpx;
+  background-blend-mode: overlay;
+}
+
+.theme-dark-dungeon .mc-current {
+  border-color: var(--aw-dd-gold-hi);
+  box-shadow:
+    0 0 0 2rpx var(--aw-dd-gold-lo) inset,
+    0 0 24rpx var(--aw-dd-gold-lo);
+}
+
+.theme-dark-dungeon .mc-cur-size {
+  font-family: 'DDTitle', 'PingFang SC', sans-serif;
+  text-shadow: 0 0 16rpx rgba(200,144,42,0.60);
+}
+
+/* ─── 圆桌中心结果 ──────────────────────────────────────── */
+.theme-dark-dungeon .center-result {
+  border: 2rpx solid var(--aw-dd-gold-mid);
+  background-color: rgba(10,5,1,0.98);
+  background-image: url('https://www.awalon.top/mp-assets/skins/dark-dungeon/ui/panel-texture.png');
+  background-size: 128rpx 128rpx;
+  background-blend-mode: overlay;
+  box-shadow:
+    0 0 0 1rpx var(--aw-dd-gold-lo),
+    0 12rpx 48rpx rgba(0,0,0,0.92);
+  border-radius: 8rpx;
+}
+
+.theme-dark-dungeon .center-result-title {
+  color: var(--aw-text);
+  font-family: 'DDTitle', 'PingFang SC', sans-serif;
+  font-weight: 900;
+  letter-spacing: 4rpx;
+  text-shadow:
+    0 0 20rpx rgba(200,144,42,0.65),
+    0 2rpx 4rpx rgba(0,0,0,0.95);
+}
+
+/* ─── 房间卡片 ──────────────────────────────────────────── */
+.theme-dark-dungeon .rl-card {
+  border: 2rpx solid var(--aw-dd-gold-mid);
+  background-color: rgba(16,8,2,0.92);
+  background-image: url('https://www.awalon.top/mp-assets/skins/dark-dungeon/ui/panel-texture.png');
+  background-size: 256rpx 256rpx;
+  background-blend-mode: overlay;
+  box-shadow:
+    0 0 0 1rpx var(--aw-dd-gold-lo),
+    0 8rpx 32rpx rgba(0,0,0,0.75);
+  border-radius: 12rpx;
+}
+
+.theme-dark-dungeon .rl-host-name {
+  font-family: 'DDTitle', 'PingFang SC', sans-serif;
+  letter-spacing: 2rpx;
+}
+
+.theme-dark-dungeon .rl-btn-join {
+  border: 2rpx solid var(--aw-dd-gold-mid);
+  background-color: rgba(20,10,2,0.90);
+  color: var(--aw-chip-on-text);
+  box-shadow: 0 3rpx 0 #040100, 0 6rpx 16rpx rgba(0,0,0,0.70);
+  letter-spacing: 2rpx;
+  border-radius: 8rpx;
+}
+
+/* ─── 投票/发言面板 ─────────────────────────────────────── */
+.theme-dark-dungeon .vote-bottom-card {
+  background-color: rgba(12,6,1,0.98);
+  background-image: url('https://www.awalon.top/mp-assets/skins/dark-dungeon/ui/panel-texture.png');
+  background-size: 256rpx 256rpx;
+  background-blend-mode: overlay;
+  border-top: 3rpx solid var(--aw-dd-gold-mid);
+  border-left: 2rpx solid var(--aw-panel-border);
+  border-right: 2rpx solid var(--aw-panel-border);
+  box-shadow: 0 -12rpx 48rpx var(--aw-dd-gold-lo);
+}
+
+.theme-dark-dungeon .spk-card {
+  background-color: rgba(12,6,1,0.98);
+  background-image: url('https://www.awalon.top/mp-assets/skins/dark-dungeon/ui/panel-texture.png');
+  background-size: 256rpx 256rpx;
+  background-blend-mode: overlay;
+  border-top: 3rpx solid var(--aw-dd-gold-mid);
+  border-left: 2rpx solid var(--aw-panel-border);
+  border-right: 2rpx solid var(--aw-panel-border);
+  box-shadow: 0 -12rpx 48rpx var(--aw-dd-gold-lo);
+}
+
+.theme-dark-dungeon .vote-bottom-title {
+  color: var(--aw-subtext);
+  letter-spacing: 6rpx;
+  font-family: 'DDTitle', 'PingFang SC', sans-serif;
+}
+
+/* ─── 队员头像框 ────────────────────────────────────────── */
+.theme-dark-dungeon .vote-team-avatar {
+  border: 2rpx solid var(--aw-dd-gold-mid);
+  box-shadow:
+    0 0 16rpx var(--aw-dd-gold-lo),
+    inset 0 0 12rpx rgba(0,0,0,0.60);
+}
+
+/* ─── 历史记录卡片 ──────────────────────────────────────── */
+.theme-dark-dungeon .hc {
+  box-shadow:
+    0 0 0 1rpx var(--aw-dd-gold-lo),
+    0 8rpx 36rpx rgba(0,0,0,0.80);
+}
+
+.theme-dark-dungeon .hc-role-name-good {
+  text-shadow: 0 0 14rpx rgba(100,180,255,0.55);
+}
+
+.theme-dark-dungeon .hc-role-name-evil {
+  text-shadow: 0 0 14rpx rgba(255,80,80,0.55);
+}
+
+.theme-dark-dungeon .hc-badge-win .hc-badge-txt  { text-shadow: 0 0 12rpx rgba(80,220,140,0.60); }
+.theme-dark-dungeon .hc-badge-lose .hc-badge-txt { text-shadow: 0 0 12rpx rgba(220,80,80,0.60); }
+
+.theme-dark-dungeon .hc-role-name { font-family: 'DDTitle', 'PingFang SC', sans-serif; letter-spacing: 2rpx; }
+
+/* ─── 角色统计面板 ──────────────────────────────────────── */
+.theme-dark-dungeon .panel-title {
+  font-family: 'DDTitle', 'PingFang SC', sans-serif;
+  font-weight: 900;
+  letter-spacing: 6rpx;
+  text-shadow:
+    0 0 20rpx var(--aw-dd-gold-mid),
+    0 2rpx 4rpx rgba(0,0,0,0.90);
+}
+
+.theme-dark-dungeon .panel-header {
+  border-bottom: 1rpx solid var(--aw-dd-gold-lo);
+}
+
+/* ─── 各类数字/统计数字 ─────────────────────────────────── */
+.theme-dark-dungeon .mc-cur-size,
+.theme-dark-dungeon .page-num,
+.theme-dark-dungeon .player-seat-badge {
+  font-family: 'DDTitle', 'PingFang SC', sans-serif;
+}
+
+/* ─── 玩家列表项 ────────────────────────────────────────── */
+.theme-dark-dungeon .player-item-compact-inner {
+  border-color: var(--aw-dd-gold-lo);
+  background: rgba(12,6,1,0.65);
+  border-radius: 6rpx;
+}
+
+.theme-dark-dungeon .player-host-text {
+  border-color: var(--aw-dd-gold-mid);
+  background: rgba(38,18,2,0.80);
+  color: var(--aw-chip-on-text);
+}

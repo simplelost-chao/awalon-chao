@@ -1,5 +1,17 @@
 const socket = require("../../utils/socket");
 const { decorateMedals } = require("../../utils/medals");
+const AI_AVATAR_URLS = [
+  "https://www.awalon.top/mp-assets/ai-avatars/ai-01-wizard.jpg?v=3",
+  "https://www.awalon.top/mp-assets/ai-avatars/ai-02-knight.jpg?v=3",
+  "https://www.awalon.top/mp-assets/ai-avatars/ai-03-assassin.jpg?v=3",
+  "https://www.awalon.top/mp-assets/ai-avatars/ai-04-noble.jpg?v=3",
+  "https://www.awalon.top/mp-assets/ai-avatars/ai-05-archer.jpg?v=3",
+  "https://www.awalon.top/mp-assets/ai-avatars/ai-06-mage.jpg?v=3",
+  "https://www.awalon.top/mp-assets/ai-avatars/ai-07-paladin.jpg?v=3",
+  "https://www.awalon.top/mp-assets/ai-avatars/ai-08-witch.jpg?v=3",
+  "https://www.awalon.top/mp-assets/ai-avatars/ai-09-guard.jpg?v=3",
+  "https://www.awalon.top/mp-assets/ai-avatars/ai-10-oracle.jpg?v=3",
+];
 const {
   ROLE_IMAGE_MAP, EVIL_ROLES, roleImageFor, roleClassFor,
   missionMetaByCount, forcedRoundForRoom, isCurrentForcedAttempt,
@@ -11,14 +23,14 @@ const NOTE_LABELS_GOOD = ["梅林", "派西", "偏好", "正义", "排水"];
 const NOTE_LABELS_EVIL = ["偏坏", "狼人", "奥伯伦"];
 const NOTE_LABELS = [...NOTE_LABELS_GOOD, ...NOTE_LABELS_EVIL];
 const NOTE_CHIP_CONFIG = {
-  "梅林":  { icon: "✨", color: "#a78bfa", bg: "rgba(109,40,217,0.25)",  border: "rgba(167,139,250,0.55)" },
-  "派西":  { icon: "👁️", color: "#a5b4fc", bg: "rgba(99,102,241,0.22)",  border: "rgba(165,180,252,0.5)"  },
-  "偏好":  { icon: "💚", color: "#86efac", bg: "rgba(21,128,61,0.18)",   border: "rgba(134,239,172,0.45)" },
-  "正义":  { icon: "✅", color: "#4ade80", bg: "rgba(21,128,61,0.22)",   border: "rgba(74,222,128,0.5)"   },
-  "排水":  { icon: "💧", color: "#38bdf8", bg: "rgba(7,89,133,0.25)",    border: "rgba(56,189,248,0.5)"   },
-  "偏坏":  { icon: "⚠️", color: "#fb923c", bg: "rgba(194,65,12,0.22)",   border: "rgba(251,146,60,0.5)"   },
-  "狼人":  { icon: "🐺", color: "#f87171", bg: "rgba(153,27,27,0.28)",   border: "rgba(248,113,113,0.55)" },
-  "奥伯伦":{ icon: "🌑", color: "#c084fc", bg: "rgba(88,28,135,0.25)",   border: "rgba(192,132,252,0.5)"  },
+  "梅林":  { icon: "✦", color: "#a78bfa", bg: "rgba(109,40,217,0.25)",  border: "rgba(167,139,250,0.55)" },
+  "派西":  { icon: "⬟", color: "#a5b4fc", bg: "rgba(99,102,241,0.22)",  border: "rgba(165,180,252,0.5)"  },
+  "偏好":  { icon: "△", color: "#86efac", bg: "rgba(21,128,61,0.18)",   border: "rgba(134,239,172,0.45)" },
+  "正义":  { icon: "▲", color: "#4ade80", bg: "rgba(21,128,61,0.22)",   border: "rgba(74,222,128,0.5)"   },
+  "排水":  { icon: "⊘", color: "#38bdf8", bg: "rgba(7,89,133,0.25)",    border: "rgba(56,189,248,0.5)"   },
+  "偏坏":  { icon: "▽", color: "#fb923c", bg: "rgba(194,65,12,0.22)",   border: "rgba(251,146,60,0.5)"   },
+  "狼人":  { icon: "▼", color: "#f87171", bg: "rgba(153,27,27,0.28)",   border: "rgba(248,113,113,0.55)" },
+  "奥伯伦":{ icon: "◐", color: "#c084fc", bg: "rgba(88,28,135,0.25)",   border: "rgba(192,132,252,0.5)"  },
 };
 const NOTE_BADGE_STYLE = {
   "梅林":  "background:rgba(109,40,217,0.85);border-color:rgba(167,139,250,0.65);",
@@ -40,24 +52,56 @@ const NOTE_TEXT_STYLE = {
   "狼人":  "color:#fca5a5;",
   "奥伯伦":"color:#e9d5ff;",
 };
-const ROLE_ORDER = ["梅林", "派西维尔", "忠臣", "刺客", "莫甘娜", "莫德雷德", "奥伯伦", "爪牙"];
+const ROLE_ORDER = ["梅林", "派西维尔", "忠臣", "莫甘娜", "刺客", "莫德雷德", "奥伯伦", "爪牙"];
+const ROLE_PRESETS = {
+  7: [
+    { name: '经典版', roles: ['梅林','派西维尔','忠臣','忠臣','莫甘娜','刺客','爪牙'], oberonVisibleEnabled: true },
+    { name: '孤狼版', roles: ['梅林','派西维尔','忠臣','忠臣','莫甘娜','莫德雷德','奥伯伦'], oberonVisibleEnabled: false },
+  ],
+  8: [
+    { name: '经典版', roles: ['梅林','派西维尔','忠臣','忠臣','忠臣','莫甘娜','刺客','爪牙'], oberonVisibleEnabled: true },
+    { name: '竞技版', roles: ['梅林','派西维尔','忠臣','忠臣','忠臣','莫甘娜','莫德雷德','刺客'], oberonVisibleEnabled: true },
+    { name: '孤狼版', roles: ['梅林','派西维尔','忠臣','忠臣','忠臣','莫甘娜','莫德雷德','奥伯伦'], oberonVisibleEnabled: false },
+  ],
+  9: [
+    { name: '经典版', roles: ['梅林','派西维尔','忠臣','忠臣','忠臣','忠臣','莫甘娜','莫德雷德','刺客'], oberonVisibleEnabled: true },
+    { name: '孤狼版', roles: ['梅林','派西维尔','忠臣','忠臣','忠臣','忠臣','莫甘娜','莫德雷德','奥伯伦'], oberonVisibleEnabled: false },
+  ],
+  10: [
+    { name: '经典版', roles: ['梅林','派西维尔','忠臣','忠臣','忠臣','忠臣','莫甘娜','莫德雷德','奥伯伦','刺客'], oberonVisibleEnabled: true },
+    { name: '孤狼版', roles: ['梅林','派西维尔','忠臣','忠臣','忠臣','忠臣','莫甘娜','莫德雷德','奥伯伦','刺客'], oberonVisibleEnabled: false },
+  ],
+};
 const FORCE_ROUND_OPTIONS = [
   { value: "fixed5", label: "第5次组队判负" },
   { value: "evil_plus_one", label: "第(匪徒数+1)次组队判负" }
 ];
 const SPEAKING_SECONDS_OPTIONS = [60, 90, 120, 180];
 const ROLE_DESCRIPTION_MAP = {
-  梅林: "知道大部分邪恶身份，但必须隐藏自己，避免在终局被刺客识破。",
-  派西维尔: "能看到梅林与莫甘娜，但无法区分谁是真梅林，职责是保护关键正义位。",
-  忠臣: "没有额外信息，依靠发言、投票和任务结果帮助正义阵营推进。",
-  "亚瑟的忠臣": "没有额外信息，依靠发言、投票和任务结果帮助正义阵营推进。",
-  "兰斯洛特（正义）": "特殊规则角色，可能带来阵营扰动，需要结合局势判断信息真伪。",
-  刺客: "邪恶核心角色。若正义先完成三次任务成功，刺客仍可通过刺杀梅林翻盘。",
-  莫甘娜: "会被派西维尔误认为可能的梅林，适合伪装和带偏判断。",
-  莫德雷德: "通常不会被梅林看到，隐蔽性强，适合潜伏带队或控场。",
-  奥伯伦: "属于邪恶阵营，但通常不与其他邪恶互通信息，容易形成信息断层。",
-  爪牙: "标准邪恶位，没有额外能力，主要负责配合队友制造失败任务和混淆视角。",
-  "兰斯洛特（邪恶）": "特殊规则角色，阵营关系更复杂，需要结合对局规则和信息变化判断。"
+  梅林: "正义核心：知道多数坏人，但不能暴露自己。",
+  派西维尔: "正义信息位：看到梅林和莫甘娜，要分辨真假。",
+  忠臣: "普通正义：没有夜晚信息，靠发言和投票推理。",
+  "亚瑟的忠臣": "普通正义：没有夜晚信息，靠发言和投票推理。",
+  "兰斯洛特（正义）": "正义变体位：看本局规则处理阵营变化。",
+  刺客: "邪恶关键位：正义快赢时可刺杀梅林翻盘。",
+  莫甘娜: "邪恶伪装位：会混进派西维尔看到的梅林候选。",
+  莫德雷德: "邪恶隐匿位：通常不会被梅林看到。",
+  奥伯伦: "邪恶变体位：是否暴露给队友看本局配置。",
+  爪牙: "普通邪恶：配合队友干扰判断、制造失败任务。",
+  "兰斯洛特（邪恶）": "邪恶变体位：看本局规则处理阵营变化。"
+};
+const ROLE_GUIDE_MAP = {
+  梅林: "阵营：正义。\n你知道大多数邪恶玩家是谁，但通常看不到莫德雷德。\n你的目标不是直接跳出来报答案，而是用发言和投票悄悄带正义完成3次任务。\n终局如果刺客刺中你，邪恶会翻盘，所以越到后面越要藏好自己。",
+  派西维尔: "阵营：正义。\n你会看到两个像梅林的人：真正的梅林和莫甘娜。\n你的任务是保护真正的梅林，同时别被莫甘娜带偏。\n新手可以多观察谁的信息更稳定、谁更像在保护正义任务。",
+  忠臣: "阵营：正义。\n你没有额外信息，不知道谁好谁坏。\n你的主要玩法是听发言、看投票、看任务结果，慢慢排除嫌疑。\n不要因为自己没信息就随便跟票，正义阵营很需要普通忠臣的判断。",
+  "亚瑟的忠臣": "阵营：正义。\n你没有额外信息，不知道谁好谁坏。\n你的主要玩法是听发言、看投票、看任务结果，慢慢排除嫌疑。\n不要因为自己没信息就随便跟票，正义阵营很需要普通忠臣的判断。",
+  刺客: "阵营：邪恶。\n你和邪恶队友要阻止正义完成3次成功任务。\n如果正义先完成3次成功任务，你还有最后一次刺杀梅林的机会。\n新手刺客要重点记谁像在暗中带队、谁的信息太准。",
+  莫甘娜: "阵营：邪恶。\n你会被派西维尔看到，和梅林一起成为两个候选人。\n你的玩法是装成梅林，让派西维尔和正义阵营分不清真假。\n发言时可以给一点似是而非的信息，但别暴露自己是邪恶。",
+  莫德雷德: "阵营：邪恶。\n你通常不会被梅林看到，所以你比其他邪恶更隐蔽。\n你的玩法是利用这层保护，争取进入关键任务队伍或带偏正义判断。\n但你仍然要注意投票和任务行为，别因为太激进被推出去。",
+  奥伯伦: "阵营：邪恶。\n奥伯伦是特殊邪恶位，具体是否和邪恶队友互相知道，要看本局配置。\n如果本局显示不翻牌，你更像孤狼：你不知道队友，队友也不能确认你。\n这种局里要靠任务、投票和发言自己判断谁可能是队友。",
+  爪牙: "阵营：邪恶。\n你没有特殊技能，但你通常知道邪恶队友是谁。\n你的目标是配合队友让任务失败，或者混淆正义阵营的判断。\n新手可以先少暴露，多观察队友怎么发言和投票。",
+  "兰斯洛特（正义）": "阵营：正义。\n这是变体角色，具体能力和阵营变化要看本局规则。\n新手先记住：你的目标仍然是帮助正义完成任务。\n如果规则涉及阵营变化，发言时要格外小心。",
+  "兰斯洛特（邪恶）": "阵营：邪恶。\n这是变体角色，具体能力和阵营变化要看本局规则。\n你的目标是阻止正义完成任务，同时隐藏自己的邪恶身份。\n如果规则涉及阵营变化，尽量别让行为前后矛盾。"
 };
 
 
@@ -75,6 +119,9 @@ Page({
     skinId: 'dark-gold',
     skinHomeBg: 'https://www.awalon.top/mp-assets/home-bg-optimized.jpg',
     skinInGameBg: 'https://www.awalon.top/mp-assets/in-game-bg-optimized.jpg',
+    skinTableUrl: 'https://www.awalon.top/mp-assets/table.png?v=8',
+    skinQuestSuccess: 'https://www.awalon.top/mp-assets/quest-success-420x300.png?v=5',
+    skinQuestFail: 'https://www.awalon.top/mp-assets/quest-failed-420x300.png?v=5',
     clientId: "",
     authToken: "",
     loggedIn: false,
@@ -89,6 +136,8 @@ Page({
     atHome: true,
     maxPlayersOptions: ["5人", "6人", "7人", "8人", "9人", "10人"],
     maxPlayersIndex: 2,
+    rolePresets: [],
+    selectedPresetIndex: 0,
     allRoleOptions: [],
     selectedRoles: [],
     hostRole: "随机",
@@ -117,11 +166,16 @@ Page({
     assassinSeatNo: 0,
     showRolePanel: false,
     identityMode: false,
+    canViewIdentity: false,
     roleVisibleSeats: [],
     roleInfoImage: "",
     roleInfoClass: "",
+    roleFactionText: "",
     roleRequested: false,
     myRole: "",
+    identityRevealSeen: false,
+    identityRevealVisible: false,
+    identityRevealPhase: "flip",
     selectedTeam: [],
     teamConfirmed: false,
     leaderActionText: "提交队伍",
@@ -130,6 +184,7 @@ Page({
     teamCandidates: [],
     currentVoteTeam: [],
     selectedAssassinate: "",
+    assassinateCount: 0,
     speakText: "",
     speakTextLen: 0,
     speakingSeat: 0,
@@ -147,11 +202,15 @@ Page({
     speakRoundIdx: 0,
     showSpeakPanel: true,
     showPlayerList: false,
+    showRoomSettings: false,
+    showConfigHelp: false,
+    roleGuideModal: null,
     cheatPressingPlayerId: "",
     cheatPendingPlayerId: "",
     cheatRevealPlayerId: "",
     cheatRoles: {},
     gameTip: "开始游戏后，这里会显示阶段控制。",
+    phasePrompt: null,
     phase: "",
     isHost: false,
     isLeader: false,
@@ -173,11 +232,17 @@ Page({
     ladyHolderName: "",
     ladyHistory: [],
     ladyTargets: [],
+    selectedLadyTarget: "",
     roomConfigLines: [],
+    roomConfigHelpLines: [],
     roomRoleCards: [],
     advancedRoleSummary: "",
     advancedQuotaText: "",
     currentRoleChips: [],
+    goodChipCount: 0,
+    evilChipCount: 0,
+    neededGood: 4,
+    neededEvil: 3,
     playerCards: [],
     historyPage: 1,
     historyList: [],
@@ -220,10 +285,10 @@ Page({
     // Load skin and register change listener
     const _skinId = app.globalData.skinId || 'dark-gold';
     const _skin = getSkin(_skinId);
-    this.setData({ skinId: _skinId, skinHomeBg: _skin.homeBg, skinInGameBg: _skin.inGameBg });
+    this.setData({ skinId: _skinId, skinHomeBg: _skin.homeBg, skinInGameBg: _skin.inGameBg, skinTableUrl: _skin.table, skinQuestSuccess: _skin.questSuccess, skinQuestFail: _skin.questFail });
     app.globalData.skinChangeListener = (newSkinId) => {
       const skin = getSkin(newSkinId);
-      this.setData({ skinId: newSkinId, skinHomeBg: skin.homeBg, skinInGameBg: skin.inGameBg });
+      this.setData({ skinId: newSkinId, skinHomeBg: skin.homeBg, skinInGameBg: skin.inGameBg, skinTableUrl: skin.table, skinQuestSuccess: skin.questSuccess, skinQuestFail: skin.questFail });
     };
     // 审核模式：已加载则直接用，否则等回调
     if (app.globalData.reviewMode) {
@@ -252,11 +317,17 @@ Page({
         role,
         image: roleImageFor(role)
       })),
-      selectedRoles: this.defaultRolesForCount(7),
+      rolePresets: this.presetsForCount(7),
+      selectedPresetIndex: 0,
+      selectedRoles: this.presetsForCount(7)[0].roles.slice(),
       hostRoleOptions: this.withRoleImages(this.uniqueRoles(this.defaultRolesForCount(7))),
       advancedRoleSummary: this.formatAdvancedRoleSummary(this.defaultRolesForCount(7)),
       advancedQuotaText: this.formatAdvancedQuotaText(7),
-      currentRoleChips: this.buildCurrentRoleChips(this.defaultRolesForCount(7))
+      currentRoleChips: this.buildCurrentRoleChips(this.defaultRolesForCount(7)),
+      goodChipCount: this.countRolesByFaction(this.defaultRolesForCount(7)).good,
+      evilChipCount: this.countRolesByFaction(this.defaultRolesForCount(7)).evil,
+      neededGood: this.expectedGoodCount(7),
+      neededEvil: this.expectedEvilCount(7)
     });
     if (sharedRoomCode) {
       this.setData({ roomTip: `已识别分享房间 ${sharedRoomCode}，登录后将自动加入。` });
@@ -281,9 +352,13 @@ Page({
   onShow() {
     if (!this.data.wsUrl) return;
     if (!this.data.connected) {
-      // 切回前台时如果断连，立即重连（不等重连定时器）
+      // 切回前台时如果断连，短暂延迟后重连（给 CONNECTING 状态的连接一点时间建立）
       this._reconnectDelay = 1000;
-      this.connect(this.data.wsUrl);
+      if (this._reconnectTimer) { clearTimeout(this._reconnectTimer); this._reconnectTimer = null; }
+      this._reconnectTimer = setTimeout(() => {
+        this._reconnectTimer = null;
+        if (!this.data.connected && this.data.wsUrl) this.connect(this.data.wsUrl);
+      }, 300);
     } else {
       this.requestRoomRecovery();
     }
@@ -420,6 +495,10 @@ Page({
   onUnload() {
     this._clearVoiceCache();
     this.stopRoomsPolling();
+    if (this._identityRevealTimer) {
+      clearTimeout(this._identityRevealTimer);
+      this._identityRevealTimer = null;
+    }
     if (this._missionAnimTimer) {
       clearTimeout(this._missionAnimTimer);
       this._missionAnimTimer = null;
@@ -469,7 +548,12 @@ Page({
     if (!player) return false;
     if (player.spectator) return true;
     const seat = Number.isFinite(player.seat) ? player.seat + 1 : this.getSeatNo(room, playerId, null);
-    return !seat || seat <= 0 || player.avatar === "👀";
+    return !seat || seat <= 0;
+  },
+
+  canViewIdentityInRoom(room, playerId) {
+    if (!room || !room.started || !playerId) return false;
+    return !this.isSpectatorInRoom(room, playerId);
   },
 
   tryJoinPendingSharedRoom() {
@@ -951,13 +1035,29 @@ Page({
         if (msg.type === "ROOM_STATE" && msg.room) {
           const room = msg.room;
           const prevRoom = this.data.room;
+          const prevPhase = prevRoom ? (prevRoom.phase || "") : "";
           // clear notes when game resets (started → not started)
           if (prevRoom && prevRoom.started && !room.started) {
             this.setData({ seatNotes: {}, myAutoplay: false, autoplayAssassinTarget: null });
+            this.hideIdentityReveal(false);
+            this.setData({ showRolePanel: false, identityMode: false });
           }
-          // clear cached role info when a new game starts (not started → started)
-          if (prevRoom && !prevRoom.started && room.started) {
-            this.setData({ roleInfo: null, roleInfoImage: "", roleInfoClass: "", roleVisibleSeats: [], roleInfoLoading: false, assassinSeatNo: 0, isAssassin: false });
+          // 新开局或重新发牌时，重置身份过场
+          const isFreshGameStart = !!(prevRoom && !prevRoom.started && room.started);
+          const prevGameVersion = prevRoom && prevRoom.game ? Number(prevRoom.game.gameVersion || 0) : 0;
+          const nextGameVersion = room && room.game ? Number(room.game.gameVersion || 0) : 0;
+          // 重新发牌会保持 started=true，但 gameVersion 会刷新
+          const isRedealStart = !!(
+            prevRoom &&
+            prevRoom.started &&
+            room.started &&
+            prevGameVersion &&
+            nextGameVersion &&
+            nextGameVersion !== prevGameVersion
+          );
+          const shouldForceRefreshRole = !!(isFreshGameStart || isRedealStart);
+          if (shouldForceRefreshRole) {
+            this.clearRoleState(false);
           }
           const currentPhase = room.phase || "";
           const nextTeamPhaseKey =
@@ -989,19 +1089,26 @@ Page({
             currentPhase === "assassination" && !(room.game && room.game.assassination)
               ? this.keepValidTarget(room, this.data.selectedAssassinate)
               : "";
+          const selectedLadyTarget =
+            currentPhase === "lady"
+              ? this.keepValidLadyTarget(room, this.data.selectedLadyTarget)
+              : "";
           const isForcedAttempt = isCurrentForcedAttempt(room);
-          const seatSlots = this.buildSeatSlots(room, selectedTeam, selectedAssassinate);
+          const seatSlots = this.buildSeatSlots(room, selectedTeam, selectedAssassinate, null, selectedLadyTarget);
           const isSpectator = this.isSpectatorInRoom(room, this.data.clientId);
+          const canViewIdentity = this.canViewIdentityInRoom(room, this.data.clientId);
           const playerCards = this.buildPlayerCards(room);
+          const roomConfigState = this.data.showRoomSettings ? {} : this.buildEditableConfigFromRoom(room);
           this.setData({
             room,
-            ladyOfLakeEnabled: !!room.ladyOfLakeEnabled,
-            aiVoiceEnabled: !!room.aiVoiceEnabled,
+            ...roomConfigState,
             teamPhaseKey: nextTeamPhaseKey || this.data.teamPhaseKey,
             selectedTeam,
             teamConfirmed,
             ...leaderAction,
             selectedAssassinate,
+            selectedLadyTarget,
+            assassinateCount: selectedAssassinate ? 1 : 0,
             isCurrentForcedAttempt: isForcedAttempt,
             seatSlots,
             roundSeats: this.buildRoundSeats(seatSlots, room.maxPlayers || 7),
@@ -1009,8 +1116,13 @@ Page({
             playerCards,
             ...this.buildSpeakViewState(room, this.data.speakRoundView),
             isSpectator,
+            canViewIdentity,
             roomTip: isSpectator ? `正在观战房间 ${room.code}` : `已进入房间 ${room.code}`
           }, () => {
+            if (shouldForceRefreshRole && room && room.started) {
+              this.setData({ roleRequested: true });
+              this.send("VIEW_ROLE");
+            }
             this.ensureShareInviteImage(room);
           });
           this.refreshGameState(room);
@@ -1084,6 +1196,11 @@ Page({
         }
         if (msg.type === "ROLE_INFO") {
           const info = (msg.data || {});
+          const currentGameVersion = this.data.room && this.data.room.game ? Number(this.data.room.game.gameVersion || 0) : 0;
+          const infoGameVersion = Number(info.gameVersion || 0);
+          if (currentGameVersion && infoGameVersion && currentGameVersion !== infoGameVersion) {
+            return;
+          }
           const assassinSeatNo = Number(info.assassinSeatNo) || 0;
           const roleVisibleSeats = this.buildRoleVisibleSeats(info, assassinSeatNo);
           this.setData({
@@ -1091,19 +1208,31 @@ Page({
             roleInfoLoading: false,
             roleVisibleSeats,
             assassinSeatNo,
-            showRolePanel: this.data.showRolePanel,
             roleInfoImage: roleImageFor(info.role),
             roleInfoClass: roleClassFor(info.role),
+            roleFactionText: EVIL_ROLES.has(info.role) ? "邪恶阵营" : "正义阵营",
             myRole: info.role || this.data.myRole,
             isAssassin: !!info.isAssassin,
             gameTip: `身份：${info.role || "未知"}`
           });
+          if (!this.data.identityRevealVisible || this.data.identityRevealSeen) {
+            this.hideIdentityReveal(false);
+          }
           // 用最新的 roleVisibleSeats 重建圆桌座位，使 identityClass 生效
           const room = this.data.room;
           if (room) {
             const seatSlots = this.buildSeatSlots(room, this.data.selectedTeam, this.data.selectedAssassinate, roleVisibleSeats);
-            this.setData({ roundSeats: this.buildRoundSeats(seatSlots, room.maxPlayers || 7) });
+            this.setData({ seatSlots, roundSeats: this.buildRoundSeats(seatSlots, room.maxPlayers || 7) });
           }
+          return;
+        }
+        if (msg.type === "ROLE_RESET") {
+          const nextGameVersion = Number(msg.data && msg.data.gameVersion || 0);
+          const currentGameVersion = this.data.room && this.data.room.game ? Number(this.data.room.game.gameVersion || 0) : 0;
+          if (currentGameVersion && nextGameVersion && nextGameVersion < currentGameVersion) {
+            return;
+          }
+          this.clearRoleState(false);
           return;
         }
         if (msg.type === "LADY_OF_LAKE_RESULT") {
@@ -1218,6 +1347,12 @@ Page({
     return ids.has(targetId) ? targetId : "";
   },
 
+  keepValidLadyTarget(room, targetId) {
+    if (!targetId) return "";
+    const targets = this.buildLadyTargets(room);
+    return targets.some((item) => item.id === targetId) ? targetId : "";
+  },
+
   sameTeam(a = [], b = []) {
     if (!Array.isArray(a) || !Array.isArray(b)) return false;
     if (a.length !== b.length) return false;
@@ -1273,6 +1408,7 @@ Page({
     const myMissionDone = !!(game && game.missionVotes && game.missionVotes[clientId] !== undefined);
     const isAssassin = !!this.data.isAssassin;
     const myPlayer = room && Array.isArray(room.players) ? room.players.find((p) => p.id === clientId) : null;
+    const canViewIdentity = this.canViewIdentityInRoom(room, clientId);
     const myAutoplay = myPlayer ? !!myPlayer.autoplay : this.data.myAutoplay;
     const missionRows = this.buildMissionRows(room);
     const missionPills = buildMissionPills(room);
@@ -1296,13 +1432,32 @@ Page({
     const speakingUrgent = speakingRemainingSec > 0 && speakingRemainingSec <= 15;
     const speakingTimerText = (() => { const s = speakingRemainingSec; return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); })();
     const speakingPlayer = speakingPlayerId && Array.isArray(room.players) ? room.players.find(p => p.id === speakingPlayerId) : null;
-    const speakingAvatarMeta = speakingPlayer ? this.avatarMeta(speakingPlayer.avatar || '🙂') : null;
+    const speakingAvatarMeta = speakingPlayer ? this.avatarMeta(speakingPlayer.avatar || '🙂', speakingPlayer) : null;
     const speakingAvatarImage = speakingAvatarMeta ? speakingAvatarMeta.image : '';
     const speakingAvatarText = speakingAvatarMeta ? (speakingAvatarMeta.text || '🙂') : '🙂';
     const selectedTeam = this.data.selectedTeam || [];
+    const selectedLadyTarget = phase === "lady" ? this.keepValidLadyTarget(room, this.data.selectedLadyTarget) : "";
     const serverTeam = game && Array.isArray(game.team) ? this.keepValidSelectedTeam(room, game.team) : [];
     const teamConfirmed = !!(isLeader && phase === "speaking" && serverTeam.length === teamSize && this.sameTeam(selectedTeam, serverTeam));
     const leaderAction = this.deriveLeaderAction(phase, teamSize, selectedTeam, teamConfirmed);
+    const phasePrompt = this.buildPhasePrompt(room, {
+      phase,
+      isLeader,
+      leaderSeat,
+      inTeam,
+      myVoted,
+      myMissionDone,
+      isMyTurn,
+      isLadyHolder,
+      speakingPlayer,
+      speakingSeat,
+      ladyHolder,
+      ladySeat,
+      selectedLadyTarget,
+      teamSize,
+      selectedTeam,
+      teamConfirmed
+    });
 
     const speakView = this.buildSpeakViewState(room, this.data.speakRoundView);
     this.setData({
@@ -1315,11 +1470,13 @@ Page({
       inTeam,
       myMissionDone,
       isAssassin,
+      canViewIdentity,
       myAutoplay,
       isLadyHolder,
       ladyHolderName: ladyHolder ? `${ladySeat}号 · ${ladyHolder.nickname}` : "",
       ladyTargets,
       ladyHistory,
+      selectedLadyTarget,
       missionRows,
       missionPills,
       showCenterResult: resultInfo.show,
@@ -1335,6 +1492,7 @@ Page({
       speakingUrgent,
       speakingTimerText,
       isMyTurn,
+      phasePrompt,
       teamConfirmed,
       ...leaderAction,
       teamCandidates: this.buildTeamCandidates(room, selectedTeam),
@@ -1351,17 +1509,81 @@ Page({
         };
       })(),
       roomConfigLines: this.buildRoomConfig(room, leaderSeat),
+      roomConfigHelpLines: this.buildRoomConfigHelp(room),
       roomRoleCards: this.buildRoomRoleCards(room),
       playerCards: this.buildPlayerCards(room),
       ...speakView
     });
 
-    if (room && room.started && !currentRole && !this.data.roleRequested) {
+    if (room && room.started && !this.data.myRole && !this.data.roleRequested) {
       this.setData({ roleRequested: true });
       this.send("VIEW_ROLE");
     }
     this.maybeShowGameHint(room, { phase, isLeader, isMyTurn, inTeam, myPlayer });
     this.maybeVibrate({ phase, isLeader, isMyTurn, inTeam, myMissionDone, myVoted, isAssassin, isLadyHolder, myPlayer });
+  },
+
+  buildPhasePrompt(room, state) {
+    if (!room || !room.started || !room.game || state.phase === "end") return null;
+    const formatPlayer = (player, seat) => {
+      if (!player) return "等待玩家";
+      return seat ? `${seat}号 · ${player.nickname || "玩家"}` : (player.nickname || "玩家");
+    };
+
+    if (state.phase === "lady") {
+      const holderName = formatPlayer(state.ladyHolder, state.ladySeat);
+      const target = state.selectedLadyTarget
+        ? (this.buildLadyTargets(room).find((item) => item.id === state.selectedLadyTarget) || null)
+        : null;
+      const holderMeta = state.ladyHolder ? this.avatarMeta(state.ladyHolder.avatar || "🙂", state.ladyHolder) : { image: "", text: "?" };
+      const chain = this.buildLadyChain(room, state.ladyHolder, state.ladySeat);
+      return {
+        title: "验人阶段",
+        label: "湖中仙女",
+        actor: holderName,
+        holder: {
+          name: state.ladyHolder ? (state.ladyHolder.nickname || "玩家") : "等待玩家",
+          seat: state.ladySeat || 0,
+          avatarImage: holderMeta.image,
+          avatarText: holderMeta.text || "🙂"
+        },
+        target,
+        chain,
+        isHolder: !!state.isLadyHolder,
+        canConfirm: !!(state.isLadyHolder && target),
+        tone: state.isLadyHolder ? "mine" : "wait",
+        hint: state.isLadyHolder
+          ? (target ? "确认后将查看该玩家阵营，湖中仙女会传递给他。" : "点击圆桌上的可选玩家，选择本轮验人目标。")
+          : `等待 ${holderName} 选择验人目标。`
+      };
+    }
+
+    return null;
+  },
+
+  buildLadyChain(room, currentHolder, currentSeat) {
+    if (!room || !room.game || !room.game.ladyOfLake || !Array.isArray(room.players) || !Array.isArray(room.seats)) return [];
+    const history = Array.isArray(room.game.ladyOfLake.history) ? room.game.ladyOfLake.history : [];
+    const chain = history.map((item) => {
+      const holder = room.players.find((p) => p.id === item.holderId);
+      const target = room.players.find((p) => p.id === item.targetId);
+      const holderSeat = room.seats.findIndex((id) => id === item.holderId) + 1;
+      const targetSeat = room.seats.findIndex((id) => id === item.targetId) + 1;
+      return {
+        key: `${item.round || 0}-${item.holderId || ""}-${item.targetId || ""}`,
+        from: holder ? `${holderSeat}号 ${holder.nickname}` : "未知",
+        to: target ? `${targetSeat}号 ${target.nickname}` : "未知"
+      };
+    });
+    if (currentHolder) {
+      chain.push({
+        key: `current-${currentHolder.id}`,
+        from: chain.length ? chain[chain.length - 1].to : "初始持有",
+        to: `${currentSeat || ""}号 ${currentHolder.nickname || "玩家"}`,
+        current: true
+      });
+    }
+    return chain.slice(-3);
   },
 
   maybeVibrate({ phase, isLeader, isMyTurn, inTeam, myMissionDone, myVoted, isAssassin, isLadyHolder, myPlayer }) {
@@ -1370,7 +1592,7 @@ Page({
     let actionKey = null;
     if (phase === 'team' && isLeader) actionKey = `team-lead-${this.data.room && this.data.room.game && this.data.room.game.round}-${this.data.room && this.data.room.game && this.data.room.game.attempt}`;
     else if (phase === 'speaking' && isMyTurn) actionKey = `speak-${this.data.speakingSeat}`;
-    else if (phase === 'vote' && !myVoted) actionKey = `vote-${this.data.room && this.data.room.game && this.data.room.game.round}-${this.data.room && this.data.room.game && this.data.room.game.attempt}`;
+    else if (phase === 'voting' && !myVoted) actionKey = `vote-${this.data.room && this.data.room.game && this.data.room.game.round}-${this.data.room && this.data.room.game && this.data.room.game.attempt}`;
     else if (phase === 'mission' && inTeam && !myMissionDone) actionKey = `mission-${this.data.room && this.data.room.game && this.data.room.game.round}`;
     else if (phase === 'assassination' && isAssassin) actionKey = 'assassination';
     else if (phase === 'lady' && isLadyHolder) actionKey = `lady-${this.data.room && this.data.room.game && this.data.room.game.ladyOfLake && this.data.room.game.ladyOfLake.round}`;
@@ -1409,7 +1631,7 @@ Page({
     const target = players.find((p) => p.id === anim.targetId);
     const assassin = players.find((p) => p.id === anim.assassinId);
     const targetRole = this.getRevealedRoleLabel(room, anim.targetId);
-    const targetMeta = this.avatarMeta(target && target.avatar ? target.avatar : '');
+    const targetMeta = this.avatarMeta(target && target.avatar ? target.avatar : '', target);
     this.setData({
       assassinAnim: {
         show: true,
@@ -1533,7 +1755,7 @@ Page({
       missionAnimFails: latest.fails,
       missionAnimFailsText: latest.fails === 0 ? "无失败票" : `${latest.fails} 张失败票`,
       missionAnimClass: latest.success ? "mission-anim-success" : "mission-anim-fail",
-      missionAnimImage: latest.success ? "https://www.awalon.top/mp-assets/quest-success-420x300.png" : "https://www.awalon.top/mp-assets/quest-failed-420x300.png"
+      missionAnimImage: latest.success ? this.data.skinQuestSuccess : this.data.skinQuestFail
     });
     this._missionAnimTimer = setTimeout(() => {
       this.setData({ showMissionAnim: false });
@@ -1563,53 +1785,67 @@ Page({
     });
     const phase = room.phase || "";
     const game = room.game || null;
+    const seatCount = players.length || 0;
     return voteHistory.map((v, idx) => {
       const mission = v && v.approved ? missionByRound[Number(v.round || 0)] || null : null;
       const snapshot = (v && v.seatSnapshot) || (mission && mission.seatSnapshot) || null;
-      const leaderSeat = this.getSeatNo(room, v && v.leaderId, snapshot) || "-";
-      const teamSeats = this.formatSeatList(room, v && v.team, snapshot);
-      const approves = this.formatSeatList(
-        room,
-        Object.entries(v && v.votes ? v.votes : {})
-          .filter(([, val]) => !!val)
-          .map(([id]) => id),
-        snapshot
-      );
-      const rejects = this.formatSeatList(
-        room,
-        Object.entries(v && v.votes ? v.votes : {})
-          .filter(([, val]) => !val)
-          .map(([id]) => id),
-        snapshot
-      );
-      let resText = "";
-      let resClass = "";
+      const leaderSeat = this.getSeatNo(room, v && v.leaderId, snapshot) || 0;
+      // team seat list as array
+      const teamSeatList = (Array.isArray(v && v.team) ? v.team : [])
+        .map((id) => this.getSeatNo(room, id, snapshot))
+        .filter((s) => Number.isFinite(s) && s > 0)
+        .sort((a, b) => a - b);
+      // vote chips: one chip per seat 1..N
+      const voteMap = v && v.votes ? v.votes : {};
+      const voteSupportChips = [];
+      const voteRejectChips = [];
+      for (let seat = 1; seat <= seatCount; seat++) {
+        // find player at this seat using snapshot or players list
+        let pid = null;
+        if (snapshot) {
+          pid = Object.keys(snapshot).find((id) => Number(snapshot[id]) === seat) || null;
+        }
+        if (!pid) {
+          const p = players.find((p) => this.getSeatNo(room, p.id, snapshot) === seat);
+          pid = p ? p.id : null;
+        }
+        if (pid !== null) {
+          const chip = { seat, supported: !!(voteMap[pid]), isLeaderSeat: seat === leaderSeat };
+          if (chip.supported) voteSupportChips.push(chip);
+          else voteRejectChips.push(chip);
+        }
+      }
+      // result
+      let result = "skipped";
+      let failCount = 0;
       let approved = !!(v && v.approved);
       if (mission) {
-        const fails = mission.fails || 0;
-        resText = mission.success ? (fails > 0 ? `✓ ${fails}` : "✓") : `✗ ${fails}`;
-        resClass = mission.success ? "pill-ok" : "pill-ng";
-      } else if (phase === "voting" && game && Number(game.round || 0) === Number(v.round || 0) && Number(game.attempt || 0) === Number(v.attempt || 0)) {
-        resText = "···";
-        resClass = "pill-wait";
-        approved = true;
-      } else if (phase === "mission" && game && Number(game.round || 0) === Number(v.round || 0) && Number(game.attempt || 0) === Number(v.attempt || 0)) {
-        resText = "···";
-        resClass = "pill-wait";
-        approved = true;
+        failCount = mission.fails || 0;
+        result = mission.success ? "success" : "fail";
+      } else if (
+        approved &&
+        phase !== "end" &&
+        game &&
+        Number(game.round || 0) === Number(v.round || 0) &&
+        Number(game.attempt || 0) === Number(v.attempt || 0)
+      ) {
+        result = "pending";
+      } else if (approved) {
+        result = "pending";
       }
       const roundNum = Number(v.round || 0);
       const attemptNum = Number(v.attempt || 0);
       return {
         key: `${v.round || 0}-${v.attempt || idx + 1}`,
+        round: roundNum,
         isForcedRound: roundNum > 0 && attemptNum > 0 && attemptNum === forcedRoundForRoom(room),
-        leader: `${leaderSeat}`,
-        team: teamSeats || "-",
-        approve: approves || "-",
-        reject: rejects || "-",
+        leaderSeat,
+        teamSeatList,
+        voteSupportChips,
+        voteRejectChips,
+        result,
+        failCount,
         approved,
-        resText,
-        resClass
       };
     });
   },
@@ -1621,7 +1857,7 @@ Page({
     const title = winner === "good" ? "正义胜利" : winner === "evil" ? "邪恶胜利" : "对局结束";
     const ass = room.game.assassination || null;
     const endReason = room.game.endReason || null;
-    let sub = "本局已结束";
+    let sub = "";
     if (ass && ass.targetSeat) {
       sub = `刺杀目标：${ass.targetSeat}号位`;
     } else if (endReason === "force_round") {
@@ -1642,7 +1878,7 @@ Page({
     return decorateMedals(list);
   },
 
-  buildSeatSlots(room, selectedTeam = [], selectedAssassinate = "", roleVisibleSeats = null) {
+  buildSeatSlots(room, selectedTeam = [], selectedAssassinate = "", roleVisibleSeats = null, selectedLadyTarget = "") {
     const max = Number(room.maxPlayers || 0);
     const seats = Array.isArray(room.seats) ? room.seats : [];
     const players = Array.isArray(room.players) ? room.players : [];
@@ -1660,7 +1896,7 @@ Page({
     for (let i = 0; i < max; i += 1) {
       const pid = seats[i] || null;
       const p = pid ? players.find((it) => it.id === pid) : null;
-      const avatarMeta = p ? this.avatarMeta(p.avatar || "🙂") : { image: "", text: "" };
+      const avatarMeta = p ? this.avatarMeta(p.avatar || "🙂", p) : { image: "", text: "" };
       let action = "";
       let actionDone = false;
       if (pid && game) {
@@ -1700,6 +1936,7 @@ Page({
             : (Array.isArray(game.team) && game.team.includes(pid)))
         ),
         selectedAssassinate: !!(pid && selectedAssassinate && selectedAssassinate === pid),
+        selectedLadyTarget: !!(pid && selectedLadyTarget && selectedLadyTarget === pid),
         isAssassinated: !!(pid && assTargetId && pid === assTargetId),
         roleLabel: this.getRevealedRoleLabel(room, pid),
         roleImage: roleImageFor(this.getRevealedRoleLabel(room, pid)),
@@ -1781,7 +2018,7 @@ Page({
         const isKnown = isSelf || !!role || isEvilViewer || visibleAreEvil;
         const rowClass = isEvil ? "role-seat-row-evil" : isKnown ? "role-seat-row-good" : "role-seat-row-unknown";
         const roleClass = isEvil ? "role-seat-role-evil" : isSelf ? "role-seat-role-self" : "role-seat-role-other";
-        const avatarMeta = this.avatarMeta(p && p.avatar ? p.avatar : "🙂");
+        const avatarMeta = this.avatarMeta(p && p.avatar ? p.avatar : "🙂", p);
         // 圆桌身份模式用：每个可见座位的阵营颜色
         const identityFaction = isSelf
           ? (EVIL_ROLES.has(currentRole) ? 'evil' : 'good')
@@ -1816,7 +2053,7 @@ Page({
       .map((p) => {
         const seat = Number.isFinite(p.seat) ? p.seat + 1 : bySeat[p.id] || 0;
         const role = this.getRevealedRoleLabel(room, p.id);
-        const spectator = seat <= 0 || p.avatar === "👀";
+        const spectator = seat <= 0 || !!p.spectator;
         const offline = !!p.offline;
         let status = "准备中";
         let statusClass = "status-ready";
@@ -1833,7 +2070,7 @@ Page({
           status = "已结束";
           statusClass = "status-ended";
         }
-        const avatarMeta = this.avatarMeta(p.avatar || "🙂");
+        const avatarMeta = this.avatarMeta(p.avatar || "🙂", p);
         return {
           id: p.id,
           seat,
@@ -1873,21 +2110,92 @@ Page({
       assassination: "刺杀中",
       end: "已结束"
     };
-    const phaseText = phaseMap[room.phase] || (room.started ? "进行中" : "未开始");
-    const roleSummary = this.summarizeRoomRoles(room.roles);
     const forcedRound = forcedRoundForRoom(room);
+    const maxPlayers = Number(room.maxPlayers || (room.roles || []).length || 0);
+    const hasOberon = Array.isArray(room.roles) && room.roles.includes("奥伯伦");
     return [
-      { label: "扩展", value: room.ladyOfLakeEnabled ? "湖中仙女" : "标准局" },
-      { label: "邪恶互认", value: room.evilRoleVisibleEnabled ? "显示具体身份" : "仅显示队友座位" },
-      { label: "奥伯伦", value: room.oberonVisibleEnabled ? "纳入阵营" : "孤狼" },
-      { label: "强制轮", value: `第${forcedRound}次组队` },
-      { label: "发言时长", value: `${room.speakingSeconds || 120}s` }
+      { label: "人数", value: `${maxPlayers}人`, icon: "https://www.awalon.top/mp-assets/icons/meta-players.svg" },
+      ...(maxPlayers >= 8 ? [{ label: "湖中仙女", value: room.ladyOfLakeEnabled ? "开启" : "关闭", icon: "https://www.awalon.top/mp-assets/icons/rule-lady.svg" }] : []),
+      { label: "邪恶互认", value: room.evilRoleVisibleEnabled ? "显示身份" : "仅座位", icon: "https://www.awalon.top/mp-assets/icons/rule-evil.svg" },
+      ...(hasOberon
+        ? [{ label: "奥伯伦", value: room.oberonVisibleEnabled ? "翻牌" : "不翻牌", icon: "https://www.awalon.top/mp-assets/icons/meta-sword.svg" }]
+        : []),
+      { label: "强制轮", value: `第${forcedRound}次`, icon: "https://www.awalon.top/mp-assets/icons/rule-force.svg" },
+      { label: "发言时长", value: `${room.speakingSeconds || 120}s`, icon: "https://www.awalon.top/mp-assets/icons/rule-timer.svg" }
     ];
+  },
+
+  buildRoomConfigHelp(room) {
+    if (!room) return [];
+    const maxPlayers = Number(room.maxPlayers || (room.roles || []).length || 0);
+    const forcedRound = forcedRoundForRoom(room);
+    const hasOberon = Array.isArray(room.roles) && room.roles.includes("奥伯伦");
+    return [
+      ...(maxPlayers >= 8 ? [{
+        label: "湖中仙女",
+        text: room.ladyOfLakeEnabled ? "第2到第4轮任务结束后，持有者可查一名玩家正邪，然后仙女交给被查的人。" : "本局不会出现额外验人；所有阵营信息只靠角色与发言判断。",
+        icon: "https://www.awalon.top/mp-assets/icons/rule-lady.svg"
+      }] : []),
+      { label: "邪恶互认", text: room.evilRoleVisibleEnabled ? "坏人开局能看到队友是谁，以及队友具体是什么角色。" : "坏人开局只知道哪些座位是队友，不知道队友具体角色。", icon: "https://www.awalon.top/mp-assets/icons/rule-evil.svg" },
+      ...(hasOberon ? [{
+        label: "奥伯伦",
+        text: room.oberonVisibleEnabled ? "本局奥伯伦参与邪恶互认，刺杀阶段会和其他邪恶一起翻牌。" : "本局奥伯伦是孤狼，不参与邪恶互认，刺杀阶段也不会提前翻牌。",
+        icon: "https://www.awalon.top/mp-assets/icons/meta-sword.svg"
+      }] : []),
+      { label: "强制轮", text: `同一轮任务连续否决到第${forcedRound}次组队仍未通过，正义直接判负。`, icon: "https://www.awalon.top/mp-assets/icons/rule-force.svg" }
+    ];
+  },
+
+  buildEditableConfigFromRoom(room) {
+    if (!room) return {};
+    const maxPlayers = Number(room.maxPlayers || (Array.isArray(room.roles) ? room.roles.length : 7)) || 7;
+    const selectedRoles = Array.isArray(room.roles) && room.roles.length
+      ? room.roles.slice()
+      : this.defaultRolesForCount(maxPlayers);
+    const rolePresets = this.presetsForCount(maxPlayers);
+    const selectedPresetIndex = rolePresets.findIndex((preset) => {
+      return this.sameRoleList(preset.roles, selectedRoles);
+    });
+    const selectedPreset = rolePresets[selectedPresetIndex] || rolePresets[0] || null;
+    const counts = this.countRolesByFaction(selectedRoles);
+    const oberonVisibleEnabled =
+      typeof room.oberonVisibleEnabled === "boolean"
+        ? !!room.oberonVisibleEnabled
+        : this.defaultOberonVisibleForRoles(selectedRoles, selectedPreset);
+    return {
+      maxPlayersIndex: Math.max(0, Math.min(5, maxPlayers - 5)),
+      rolePresets,
+      selectedPresetIndex,
+      selectedRoles,
+      hostRole: room.hostRole || "随机",
+      hostRoleOptions: this.withRoleImages(this.uniqueRoles(selectedRoles)),
+      ladyOfLakeEnabled: !!room.ladyOfLakeEnabled,
+      speakingSeconds: Number(room.speakingSeconds || 120) || 120,
+      evilRoleVisibleEnabled: !!room.evilRoleVisibleEnabled,
+      oberonVisibleEnabled,
+      aiVoiceEnabled: !!room.aiVoiceEnabled,
+      forceRoundMode: room.forceRoundMode || "fixed5",
+      advancedRoleSummary: this.formatAdvancedRoleSummary(selectedRoles),
+      advancedQuotaText: this.formatAdvancedQuotaText(maxPlayers),
+      currentRoleChips: this.buildCurrentRoleChips(selectedRoles, oberonVisibleEnabled),
+      goodChipCount: counts.good,
+      evilChipCount: counts.evil,
+      neededGood: this.expectedGoodCount(maxPlayers),
+      neededEvil: this.expectedEvilCount(maxPlayers)
+    };
+  },
+
+  sameRoleList(a = [], b = []) {
+    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
+    const aa = a.slice().sort();
+    const bb = b.slice().sort();
+    return aa.every((role, idx) => role === bb[idx]);
   },
 
   buildRoomRoleCards(room) {
     const roles = room && Array.isArray(room.roles) ? room.roles : [];
     if (!roles.length) return [];
+    const hostRole = room && room.hostRole && room.hostRole !== "随机" ? String(room.hostRole) : "";
     const counts = new Map();
     roles.forEach((role) => {
       const name = String(role || "").trim();
@@ -1907,7 +2215,10 @@ Page({
         role,
         count,
         image: roleImageFor(role),
+        isEvil: EVIL_ROLES.has(role),
+        isHostRole: !!(hostRole && role === hostRole),
         roleClass: roleClassFor(role),
+        roleBadgeText: this.roleBadgeText(role, roles, room.oberonVisibleEnabled),
         description: ROLE_DESCRIPTION_MAP[role] || "暂无角色说明"
       }));
   },
@@ -1922,7 +2233,7 @@ Page({
         if (!pid || pid === lady.holderId || previousHolders.has(pid)) return null;
         const player = room.players.find((it) => it.id === pid);
         if (!player) return null;
-        const avatarMeta = this.avatarMeta(player.avatar || "🙂");
+        const avatarMeta = this.avatarMeta(player.avatar || "🙂", player);
         return {
           id: pid,
           seat: idx + 1,
@@ -1970,6 +2281,9 @@ Page({
     if (!room || !room.game || !pid) return "";
     const full = room.game.revealedRoles || null;
     if (full && full[pid]) return full[pid];
+    const phase = String(room.phase || "");
+    // 邪恶翻牌仅在刺杀阶段/终局展示，避免开局或对局中提前在桌面暴露
+    if (phase !== "assassination" && phase !== "end") return "";
     const evil = room.game.revealedEvil || null;
     if (evil && evil[pid]) return evil[pid];
     return "";
@@ -2021,7 +2335,7 @@ Page({
       const isAI = !!(p && p.isAI);
       const text = m.text || "";
       const key = `${m.ts || 0}-${idx}`;
-      const avatarMeta = this.avatarMeta((p && p.avatar) || "🙂");
+      const avatarMeta = this.avatarMeta((p && p.avatar) || "🙂", p);
       return {
         key,
         from: m.from || "系统",
@@ -2056,14 +2370,24 @@ Page({
     const idx = Number(e.currentTarget.dataset.idx);
     if (!Number.isFinite(idx)) return;
     const maxPlayers = 5 + idx;
-    const selectedRoles = this.defaultRolesForCount(maxPlayers);
+    const rolePresets = this.presetsForCount(maxPlayers);
+    const selectedPreset = rolePresets.length ? rolePresets[0] : null;
+    const selectedRoles = selectedPreset ? selectedPreset.roles.slice() : this.defaultRolesForCount(maxPlayers);
+    const oberonVisibleEnabled = this.defaultOberonVisibleForRoles(selectedRoles, selectedPreset);
     const next = {
       maxPlayersIndex: idx,
+      rolePresets,
+      selectedPresetIndex: 0,
       selectedRoles,
       hostRoleOptions: this.withRoleImages(this.uniqueRoles(selectedRoles)),
       advancedRoleSummary: this.formatAdvancedRoleSummary(selectedRoles),
       advancedQuotaText: this.formatAdvancedQuotaText(maxPlayers),
-      currentRoleChips: this.buildCurrentRoleChips(selectedRoles)
+      currentRoleChips: this.buildCurrentRoleChips(selectedRoles, oberonVisibleEnabled),
+      goodChipCount: this.countRolesByFaction(selectedRoles).good,
+      evilChipCount: this.countRolesByFaction(selectedRoles).evil,
+      neededGood: this.expectedGoodCount(maxPlayers),
+      neededEvil: this.expectedEvilCount(maxPlayers),
+      oberonVisibleEnabled
     };
     if (this.data.hostRole !== "随机" && !selectedRoles.includes(this.data.hostRole)) {
       next.hostRole = "随机";
@@ -2100,6 +2424,42 @@ Page({
     this.setData({ evilRoleVisibleEnabled: enabled });
   },
 
+  onToggleLadyDirect(e) {
+    const enabled = !!Number(e.currentTarget.dataset.enabled);
+    const maxPlayers = 5 + Number(this.data.maxPlayersIndex || 0);
+    if (enabled && maxPlayers < 8) {
+      wx.showToast({ title: "仅支持8人及以上", icon: "none" });
+      return;
+    }
+    this.setData({ ladyOfLakeEnabled: enabled });
+  },
+
+  onPickForceRoundDirect(e) {
+    const value = String(e.currentTarget.dataset.value || "fixed5");
+    this.setData({ forceRoundMode: value === "evil_plus_one" ? "evil_plus_one" : "fixed5" });
+  },
+
+  onPickEvilVisibleDirect(e) {
+    const enabled = e.currentTarget.dataset.value === "true";
+    this.setData({ evilRoleVisibleEnabled: enabled });
+  },
+
+  onPickOberonVisibleDirect(e) {
+    const enabled = e.currentTarget.dataset.value === "true";
+    this.setData({ oberonVisibleEnabled: enabled });
+  },
+
+  onPickSpeakingSecondsDirect(e) {
+    const seconds = Number(e.currentTarget.dataset.value);
+    if (![60, 90, 120, 180].includes(seconds)) return;
+    this.setData({ speakingSeconds: seconds });
+  },
+
+  onToggleAiVoiceDirect(e) {
+    const enabled = !!Number(e.currentTarget.dataset.enabled);
+    this.setData({ aiVoiceEnabled: enabled });
+  },
+
   onPickOberonVisible(e) {
     const enabled = !!Number(e.detail.enabled);
     this.setData({ oberonVisibleEnabled: enabled });
@@ -2108,6 +2468,62 @@ Page({
   onToggleAiVoice(e) {
     const enabled = !!Number(e.detail.enabled);
     this.setData({ aiVoiceEnabled: enabled });
+  },
+
+  onOpenConfigHelp() {
+    this.setData({ showConfigHelp: true });
+  },
+
+  onCloseConfigHelp() {
+    this.setData({ showConfigHelp: false });
+  },
+
+  onOpenRoomSettings() {
+    const room = this.data.room;
+    if (!room || !this.data.isHost) return;
+    if (room.started && room.phase !== "end") {
+      wx.showToast({ title: "本局进行中不能修改配置", icon: "none" });
+      return;
+    }
+    this.setData({ ...this.buildEditableConfigFromRoom(room), showRoomSettings: true });
+  },
+
+  onCloseRoomSettings() {
+    const room = this.data.room;
+    this.setData({ ...(room ? this.buildEditableConfigFromRoom(room) : {}), showRoomSettings: false });
+  },
+
+  onApplyRoomSettings() {
+    const room = this.data.room;
+    if (!room || !this.data.isHost) return;
+    if (room.started && room.phase !== "end") {
+      wx.showToast({ title: "本局进行中不能修改配置", icon: "none" });
+      return;
+    }
+    const maxPlayers = 5 + Number(this.data.maxPlayersIndex || 0);
+    const roles = Array.isArray(this.data.selectedRoles) ? this.data.selectedRoles.slice() : [];
+    const roleError = this.validateSelectedRoles(maxPlayers, roles);
+    if (roleError) {
+      wx.showToast({ title: roleError, icon: "none" });
+      return;
+    }
+    const hostRole = this.data.hostRole || "随机";
+    if (hostRole !== "随机" && !roles.includes(hostRole)) {
+      wx.showToast({ title: "房主身份不在当前配置中", icon: "none" });
+      return;
+    }
+    this.send("UPDATE_SETTINGS", {
+      maxPlayers,
+      roles,
+      hostRole,
+      speakingSeconds: Number(this.data.speakingSeconds || 120) || 120,
+      ladyOfLakeEnabled: !!this.data.ladyOfLakeEnabled && maxPlayers >= 8,
+      evilRoleVisibleEnabled: !!this.data.evilRoleVisibleEnabled,
+      oberonVisibleEnabled: !!this.data.oberonVisibleEnabled,
+      aiVoiceEnabled: !!this.data.aiVoiceEnabled,
+      forceRoundMode: this.data.forceRoundMode || "fixed5"
+    });
+    this.setData({ showRoomSettings: false, gameTip: "已提交房间配置" });
   },
 
   onAddAdvancedRole(e) {
@@ -2130,13 +2546,16 @@ Page({
       return;
     }
     selectedRoles.push(role);
+    const { good: newGood, evil: newEvil } = this.countRolesByFaction(selectedRoles);
     const unique = this.uniqueRoles(selectedRoles);
     const next = {
       selectedRoles,
       hostRoleOptions: this.withRoleImages(unique),
       advancedRoleSummary: this.formatAdvancedRoleSummary(selectedRoles),
       advancedQuotaText: this.formatAdvancedQuotaText(maxPlayers),
-      currentRoleChips: this.buildCurrentRoleChips(selectedRoles)
+      currentRoleChips: this.buildCurrentRoleChips(selectedRoles, this.data.oberonVisibleEnabled),
+      goodChipCount: newGood,
+      evilChipCount: newEvil
     };
     if (this.data.hostRole !== "随机" && !unique.includes(this.data.hostRole)) {
       next.hostRole = "随机";
@@ -2155,7 +2574,9 @@ Page({
       hostRoleOptions: this.withRoleImages(unique),
       advancedRoleSummary: this.formatAdvancedRoleSummary(selectedRoles),
       advancedQuotaText: this.formatAdvancedQuotaText(5 + Number(this.data.maxPlayersIndex || 0)),
-      currentRoleChips: this.buildCurrentRoleChips(selectedRoles)
+      currentRoleChips: this.buildCurrentRoleChips(selectedRoles, this.data.oberonVisibleEnabled),
+      goodChipCount: this.countRolesByFaction(selectedRoles).good,
+      evilChipCount: this.countRolesByFaction(selectedRoles).evil
     };
     if (this.data.hostRole !== "随机" && !unique.includes(this.data.hostRole)) {
       next.hostRole = "随机";
@@ -2166,13 +2587,19 @@ Page({
   onResetAdvancedRoles() {
     const maxPlayers = 5 + Number(this.data.maxPlayersIndex || 0);
     const selectedRoles = this.defaultRolesForCount(maxPlayers);
+    const rolePresets = this.presetsForCount(maxPlayers);
+    const preset = rolePresets[Number(this.data.selectedPresetIndex || 0)] || rolePresets[0] || null;
+    const oberonVisibleEnabled = this.defaultOberonVisibleForRoles(selectedRoles, preset);
     this.setData({
       selectedRoles,
       hostRole: "随机",
       hostRoleOptions: this.withRoleImages(this.uniqueRoles(selectedRoles)),
       advancedRoleSummary: this.formatAdvancedRoleSummary(selectedRoles),
       advancedQuotaText: this.formatAdvancedQuotaText(maxPlayers),
-      currentRoleChips: this.buildCurrentRoleChips(selectedRoles)
+      currentRoleChips: this.buildCurrentRoleChips(selectedRoles, oberonVisibleEnabled),
+      goodChipCount: this.countRolesByFaction(selectedRoles).good,
+      evilChipCount: this.countRolesByFaction(selectedRoles).evil,
+      oberonVisibleEnabled
     });
   },
 
@@ -2197,16 +2624,22 @@ Page({
   _rebuildRoleChips() {
     const maxPlayers = 5 + Number(this.data.maxPlayersIndex || 0);
     const selectedRoles = this.defaultRolesForCount(maxPlayers);
+    const rolePresets = this.presetsForCount(maxPlayers);
+    const preset = rolePresets[Number(this.data.selectedPresetIndex || 0)] || rolePresets[0] || null;
+    const oberonVisibleEnabled = this.defaultOberonVisibleForRoles(selectedRoles, preset);
     this.setData({
       selectedRoles,
-      currentRoleChips: this.buildCurrentRoleChips(selectedRoles),
+      currentRoleChips: this.buildCurrentRoleChips(selectedRoles, oberonVisibleEnabled),
       hostRoleOptions: this.withRoleImages(this.uniqueRoles(selectedRoles)),
       advancedRoleSummary: this.formatAdvancedRoleSummary(selectedRoles),
       advancedQuotaText: this.formatAdvancedQuotaText(maxPlayers),
+      goodChipCount: this.countRolesByFaction(selectedRoles).good,
+      evilChipCount: this.countRolesByFaction(selectedRoles).evil,
+      oberonVisibleEnabled
     });
   },
 
-  buildCurrentRoleChips(roles = []) {
+  buildCurrentRoleChips(roles = [], oberonVisibleEnabled = this.data.oberonVisibleEnabled) {
     const counts = {};
     (roles || []).forEach((r) => { counts[r] = (counts[r] || 0) + 1; });
     return ROLE_ORDER
@@ -2215,8 +2648,60 @@ Page({
         role: r,
         image: roleImageFor(r),
         isEvil: EVIL_ROLES.has(r),
-        count: counts[r]
+        count: counts[r],
+        roleBadgeText: this.roleBadgeText(r, roles, oberonVisibleEnabled)
       }));
+  },
+
+  roleBadgeText(role, roles = [], oberonVisibleEnabled) {
+    if (role === "奥伯伦") return oberonVisibleEnabled ? "翻牌" : "不翻牌";
+    const roleList = Array.isArray(roles) ? roles : [];
+    const knifeRole = roleList.includes("刺客") ? "刺客" : (roleList.includes("莫德雷德") ? "莫德雷德" : "");
+    if (role && role === knifeRole) return "带刀";
+    return "";
+  },
+
+  presetsForCount(count) {
+    const hardcoded = ROLE_PRESETS[Number(count)];
+    if (hardcoded) return hardcoded;
+    const defaults = this.defaultRolesForCount(count);
+    return defaults.length ? [{ name: '默认', roles: defaults }] : [];
+  },
+
+  onSelectPreset(e) {
+    const idx = Number(e.currentTarget.dataset.idx || 0);
+    const presets = this.data.rolePresets;
+    if (!presets[idx]) return;
+    const preset = presets[idx];
+    const selectedRoles = preset.roles.slice();
+    const { good, evil } = this.countRolesByFaction(selectedRoles);
+    const maxPlayers = 5 + Number(this.data.maxPlayersIndex || 0);
+    const unique = this.uniqueRoles(selectedRoles);
+    const oberonVisibleEnabled = this.defaultOberonVisibleForRoles(selectedRoles, preset);
+    const next = {
+      selectedPresetIndex: idx,
+      selectedRoles,
+      currentRoleChips: this.buildCurrentRoleChips(selectedRoles, oberonVisibleEnabled),
+      hostRoleOptions: this.withRoleImages(unique),
+      advancedRoleSummary: this.formatAdvancedRoleSummary(selectedRoles),
+      goodChipCount: good,
+      evilChipCount: evil,
+      neededGood: this.expectedGoodCount(maxPlayers),
+      neededEvil: this.expectedEvilCount(maxPlayers),
+      oberonVisibleEnabled
+    };
+    if (this.data.hostRole !== "随机" && !unique.includes(this.data.hostRole)) {
+      next.hostRole = "随机";
+    }
+    this.setData(next);
+  },
+
+  defaultOberonVisibleForRoles(roles = [], preset = null) {
+    if (!Array.isArray(roles) || !roles.includes("奥伯伦")) return false;
+    if (preset && typeof preset.oberonVisibleEnabled === "boolean") return !!preset.oberonVisibleEnabled;
+    const presetName = preset && preset.name ? String(preset.name) : "";
+    if (presetName.includes("孤狼")) return false;
+    return true;
   },
 
   defaultRolesForCount(count) {
@@ -2273,7 +2758,7 @@ Page({
   },
 
   formatAdvancedQuotaText(maxPlayers) {
-    return `本局需配置 ${this.expectedGoodCount(maxPlayers)} 个正义、${this.expectedEvilCount(maxPlayers)} 个邪恶，且必须包含梅林与刺客。`;
+    return `本局需配置 ${this.expectedGoodCount(maxPlayers)} 个正义、${this.expectedEvilCount(maxPlayers)} 个邪恶，且必须包含梅林与刺客（或以莫德雷德代替刺客）。`;
   },
 
   validateSelectedRoles(maxPlayers, roles) {
@@ -2281,7 +2766,7 @@ Page({
     const { good, evil } = this.countRolesByFaction(selected);
     if (selected.length !== maxPlayers) return `角色数量需为${maxPlayers}个`;
     if (!selected.includes("梅林")) return "高级配置必须包含梅林";
-    if (!selected.includes("刺客")) return "高级配置必须包含刺客";
+    if (!selected.includes("刺客") && !selected.includes("莫德雷德")) return "高级配置必须包含刺客（或以莫德雷德代替）";
     if (evil !== this.expectedEvilCount(maxPlayers)) return `邪恶数量需为${this.expectedEvilCount(maxPlayers)}个`;
     if (good !== this.expectedGoodCount(maxPlayers)) return `正义数量需为${this.expectedGoodCount(maxPlayers)}个`;
     return "";
@@ -2305,13 +2790,94 @@ Page({
 
   onTapRoomRoleCard(e) {
     const role = String(e.detail.role || "角色");
-    const description = String(e.detail.description || "暂无角色说明");
-    wx.showModal({
-      title: role,
-      content: description,
-      showCancel: false,
-      confirmText: "知道了"
+    this.openRoleGuideModal(role);
+  },
+
+  onTapConfigRole(e) {
+    const role = String((e.currentTarget && e.currentTarget.dataset && e.currentTarget.dataset.role) || "角色");
+    this.openRoleGuideModal(role);
+  },
+
+  openRoleGuideModal(role) {
+    const cards = this.buildRoleGuideCards(role);
+    this.setData({
+      roleGuideModal: {
+        show: true,
+        role,
+        image: roleImageFor(role),
+        isEvil: EVIL_ROLES.has(role),
+        faction: EVIL_ROLES.has(role) ? "邪恶阵营" : "正义阵营",
+        cards
+      }
     });
+  },
+
+  onCloseRoleGuide() {
+    this.setData({ roleGuideModal: null });
+  },
+
+  buildRoleGuideCards(role) {
+    const fallback = [{ title: "说明", text: this.buildRoleGuide(role) }];
+    const map = {
+      梅林: [
+        { title: "你知道什么", text: "你能看到多数邪恶玩家，但通常看不到莫德雷德。" },
+        { title: "怎么玩", text: "别直接报答案，用投票和发言悄悄带正义完成任务。" },
+        { title: "小心", text: "正义三次成功后，刺客刺中你会让邪恶翻盘。" }
+      ],
+      派西维尔: [
+        { title: "你知道什么", text: "你会看到梅林和莫甘娜两个候选人。" },
+        { title: "怎么玩", text: "判断谁更像真梅林，同时尽量保护真梅林。" },
+        { title: "小心", text: "莫甘娜会故意装得像梅林，别太早站死边。" }
+      ],
+      忠臣: [
+        { title: "你知道什么", text: "你没有额外信息，只能靠公开发言和投票判断。" },
+        { title: "怎么玩", text: "记录谁上车、谁投票、任务成败，慢慢排坑。" },
+        { title: "小心", text: "别因为没信息就乱跟票，普通正义的判断很关键。" }
+      ],
+      "亚瑟的忠臣": [
+        { title: "你知道什么", text: "你没有额外信息，只能靠公开发言和投票判断。" },
+        { title: "怎么玩", text: "记录谁上车、谁投票、任务成败，慢慢排坑。" },
+        { title: "小心", text: "别因为没信息就乱跟票，普通正义的判断很关键。" }
+      ],
+      刺客: [
+        { title: "你知道什么", text: "你是邪恶关键角色，通常知道邪恶队友。" },
+        { title: "怎么玩", text: "阻止正义任务成功，并记下谁最像梅林。" },
+        { title: "翻盘点", text: "正义三次成功后，你刺中梅林即可让邪恶获胜。" }
+      ],
+      莫甘娜: [
+        { title: "你知道什么", text: "派西维尔会把你和梅林一起看到。" },
+        { title: "怎么玩", text: "装成梅林候选，制造真假梅林的混乱。" },
+        { title: "小心", text: "不要给出太硬的假信息，否则容易被反推。" }
+      ],
+      莫德雷德: [
+        { title: "你知道什么", text: "你是邪恶，但通常不会被梅林看到。" },
+        { title: "怎么玩", text: "利用隐蔽性进关键队伍，带偏正义判断。" },
+        { title: "小心", text: "别因为安全就过度发力，投票和任务行为仍会暴露。" }
+      ],
+      奥伯伦: [
+        { title: "你知道什么", text: this.data.room && this.data.room.oberonVisibleEnabled ? "本局你参与邪恶互认，队友能确认你。" : "本局你是孤狼，不参与邪恶互认。" },
+        { title: "怎么玩", text: "观察投票和任务结果，判断谁可能是邪恶队友。" },
+        { title: "小心", text: this.data.room && this.data.room.oberonVisibleEnabled ? "你会在刺杀阶段随邪恶一起翻牌。" : "你不会提前翻牌，队友也可能误判你。" }
+      ],
+      爪牙: [
+        { title: "你知道什么", text: "你是普通邪恶，通常知道邪恶队友。" },
+        { title: "怎么玩", text: "配合队友进任务队伍，制造失败或混淆视角。" },
+        { title: "小心", text: "不要每次都急着投失败，行为太直会暴露阵营。" }
+      ]
+    };
+    return map[role] || fallback;
+  },
+
+  buildRoleGuide(role) {
+    if (role === "奥伯伦") {
+      const room = this.data.room || {};
+      const base = ROLE_GUIDE_MAP[role] || ROLE_DESCRIPTION_MAP[role] || "暂无角色说明";
+      const configLine = room.oberonVisibleEnabled
+        ? "本局配置：奥伯伦翻牌，参与邪恶互认，其他邪恶能确认你。"
+        : "本局配置：奥伯伦不翻牌，不参与邪恶互认，更接近单独行动。";
+      return `${base}\n\n${configLine}`;
+    }
+    return ROLE_GUIDE_MAP[role] || ROLE_DESCRIPTION_MAP[role] || "暂无角色说明";
   },
 
   async onWxLogin() {
@@ -2398,6 +2964,12 @@ Page({
       aiVoiceEnabled: !!this.data.aiVoiceEnabled,
       forceRoundMode: this.data.forceRoundMode || "fixed5"
     };
+    console.log("[mp:createRoom:payload]", {
+      maxPlayers: payload.maxPlayers,
+      roles: payload.roles,
+      oberonVisibleEnabled: payload.oberonVisibleEnabled,
+      selectedPresetIndex: this.data.selectedPresetIndex
+    });
     const hostRole = this.data.hostRole || "随机";
     if (hostRole !== "随机") {
       if (!roles.includes(hostRole)) {
@@ -2487,6 +3059,7 @@ Page({
         if (!res || !res.confirm) return;
         this.send("LEAVE_ROOM");
         this._missionProgressDismissedRound = undefined;
+        this._identityRevealPending = false;
         this.setData({
           room: null,
           atHome: true,
@@ -2499,9 +3072,13 @@ Page({
           isAssassin: false,
           showRolePanel: false,
           identityMode: false,
+          identityRevealSeen: false,
+          identityRevealVisible: false,
+          identityRevealPhase: "flip",
           roleVisibleSeats: [],
           roleInfoImage: "",
           roleInfoClass: "",
+          roleFactionText: "",
           roleRequested: false,
           myRole: "",
           selectedTeam: [],
@@ -2515,6 +3092,7 @@ Page({
           ladyHolderName: "",
           ladyHistory: [],
           ladyTargets: [],
+          selectedLadyTarget: "",
           selectedAssassinate: "",
           speakText: "",
           speakingSeat: 0,
@@ -2528,6 +3106,7 @@ Page({
           cheatRevealPlayerId: "",
           cheatRoles: {},
           roomConfigLines: [],
+          roomConfigHelpLines: [],
           roomRoleCards: [],
           missionAnimBootstrapped: false,
           missionAnimRoomCode: "",
@@ -2571,8 +3150,14 @@ Page({
     });
   },
 
-  onResumeRoom() {
-    if (!this.data.room) return;
+  onResumeRoom(e) {
+    if (!this.data.room) {
+      const code = e && e.detail && e.detail.code;
+      if (code) {
+        this.onJoinPublicRoom({ detail: { code } });
+      }
+      return;
+    }
     this.setData({ atHome: false });
   },
 
@@ -2725,18 +3310,38 @@ Page({
       this.send("CHOOSE_SEAT", { seatIndex: idx });
       return;
     }
+    if (this.data.phase === "end") {
+      this.send("CHOOSE_SEAT", { seatIndex: idx });
+      return;
+    }
     const slot = (this.data.seatSlots || [])[idx];
     const pid = slot && slot.playerId;
     if (!pid) return;
-    if (this.data.phase === "end") {
-      return;
-    }
     if ((this.data.phase === "team" || this.data.phase === "speaking") && this.data.isLeader) {
       this.onToggleTeamById(pid);
       return;
     }
     if (this.data.phase === "lady" && this.data.isLadyHolder) {
-      this.onUseLadyOfLake(pid);
+      const target = (this.data.ladyTargets || []).find((item) => item.id === pid);
+      if (!target) {
+        wx.showToast({ title: "该玩家不能被验", icon: "none" });
+        return;
+      }
+      const seatSlots = this.buildSeatSlots(room, this.data.selectedTeam, this.data.selectedAssassinate, null, pid);
+      const phasePrompt = this.buildPhasePrompt(room, {
+        phase: this.data.phase,
+        isLadyHolder: this.data.isLadyHolder,
+        ladyHolder: room.players.find((p) => p.id === room.game.ladyOfLake.holderId),
+        ladySeat: room.seats.findIndex((id) => id === room.game.ladyOfLake.holderId) + 1,
+        selectedLadyTarget: pid
+      });
+      this.setData({
+        selectedLadyTarget: pid,
+        seatSlots,
+        roundSeats: this.buildRoundSeats(seatSlots, room.maxPlayers || 7),
+        phasePrompt,
+        gameTip: `已选择验人目标：${target.seat}号 ${target.nickname}`
+      });
       return;
     }
     if (this.data.phase === "assassination" && this.data.isAssassin) {
@@ -2753,6 +3358,7 @@ Page({
       }
       this.setData({
         selectedAssassinate: pid,
+        assassinateCount: 1,
         seatSlots: this.buildSeatSlots(room, this.data.selectedTeam, pid),
         roundSeats: this.buildRoundSeats(this.buildSeatSlots(room, this.data.selectedTeam, pid), room.maxPlayers || 7),
         gameTip: `已选择刺杀目标：${slot.name}`
@@ -2765,18 +3371,136 @@ Page({
   },
 
   toggleRolePanel() {
-    if (this.data.identityMode) {
-      this.setData({ identityMode: false });
+    const room = this.data.room;
+    if (!room || !this.data.canViewIdentity) return;
+    if (!this.data.identityRevealSeen) {
+      this.setData({
+        showRolePanel: false,
+        identityMode: false,
+        showPlayerList: false,
+        roleInfoLoading: !this.data.roleInfo,
+        identityRevealVisible: true,
+        identityRevealPhase: "flip"
+      });
+      if (this.data.roleInfo) {
+        this.showIdentityReveal();
+      } else {
+        this._identityRevealPending = true;
+        this.send("VIEW_ROLE");
+      }
       return;
     }
-    const room = this.data.room;
-    if (!room || !room.started) return;
-    this.setData({ identityMode: true, showPlayerList: false, roleInfoLoading: !this.data.roleInfo });
-    this.send("VIEW_ROLE");
+    if (this.data.identityMode) {
+      this.onCloseRolePanel();
+      return;
+    }
+    this.setData({
+      identityMode: true,
+      showRolePanel: false,
+      showPlayerList: false,
+      roleInfoLoading: !this.data.roleInfo
+    });
+    if (!this.data.roleInfo) {
+      this.send("VIEW_ROLE");
+    }
   },
 
   onCloseRolePanel() {
-    this.setData({ showRolePanel: false });
+    const shouldMarkSeen = !this.data.identityRevealSeen && this.data.identityRevealVisible;
+    if (shouldMarkSeen) {
+      this.setData({ identityRevealSeen: true });
+    }
+    this.hideIdentityReveal(shouldMarkSeen);
+    this.setData({
+      showRolePanel: false,
+      identityMode: false
+    });
+  },
+
+  clearRoleState(roleInfoLoading = false) {
+    this.resetIdentityRevealState();
+    const room = this.data.room;
+    const seatSlots = room
+      ? this.buildSeatSlots(room, this.data.selectedTeam, this.data.selectedAssassinate, [])
+      : this.data.seatSlots;
+    const nextState = {
+      roleInfo: null,
+      roleInfoImage: "",
+      roleInfoClass: "",
+      roleFactionText: "",
+      roleVisibleSeats: [],
+      roleInfoLoading,
+      assassinSeatNo: 0,
+      isAssassin: false,
+      roleRequested: false,
+      myRole: "",
+      identityRevealSeen: false,
+      showRolePanel: false,
+      identityMode: false
+    };
+    if (room) {
+      nextState.seatSlots = seatSlots;
+      nextState.roundSeats = this.buildRoundSeats(seatSlots, room.maxPlayers || 7);
+    }
+    this.setData(nextState);
+  },
+
+  resetIdentityRevealState() {
+    this._identityRevealPending = true;
+    if (this._identityRevealTimer) {
+      clearTimeout(this._identityRevealTimer);
+      this._identityRevealTimer = null;
+    }
+    this.setData({
+      identityRevealVisible: false,
+      identityRevealPhase: "flip"
+    });
+  },
+
+  showIdentityReveal() {
+    if (this._identityRevealTimer) {
+      clearTimeout(this._identityRevealTimer);
+      this._identityRevealTimer = null;
+    }
+    this.setData({
+      identityRevealVisible: true,
+      identityRevealPhase: "flip"
+    });
+  },
+
+  onTapIdentityReveal() {
+    if (!this.data.identityRevealVisible || this.data.identityRevealSeen) return;
+    if (this.data.roleInfoLoading || !this.data.roleInfo) return;
+    if (this.data.identityRevealPhase === "revealed") {
+      this.setData({
+        identityRevealSeen: true,
+        identityRevealVisible: false,
+        identityRevealPhase: "flip",
+        identityMode: true,
+        showRolePanel: false,
+        showPlayerList: false
+      });
+      return;
+    }
+    this.setData({ identityRevealPhase: "revealed" });
+    if (this._identityRevealTimer) {
+      clearTimeout(this._identityRevealTimer);
+      this._identityRevealTimer = null;
+    }
+  },
+
+  hideIdentityReveal(reset = true) {
+    if (this._identityRevealTimer) {
+      clearTimeout(this._identityRevealTimer);
+      this._identityRevealTimer = null;
+    }
+    if (reset) {
+      this._identityRevealPending = false;
+    }
+    this.setData({
+      identityRevealVisible: false,
+      identityRevealPhase: "flip"
+    });
   },
 
   onSeatTouchStart(e) {
@@ -2789,6 +3513,7 @@ Page({
       const existing = this.data.seatNotes[idx] || {};
       const currentLabel = existing.label || "";
       const cfg = NOTE_CHIP_CONFIG[currentLabel] || null;
+      const avatarMeta = player ? this.avatarMeta(player.avatar || "", player) : { image: "", text: "" };
       this.setData({
         noteModal: {
           show: true,
@@ -2797,6 +3522,8 @@ Page({
           name: player ? player.nickname : `${idx + 1}号位`,
           label: currentLabel,
           targetId: pid || "",
+          avatarImage: avatarMeta.image,
+          avatarText: avatarMeta.text || String(idx + 1),
           ringStyle: cfg ? `border-color:${cfg.border};background:${cfg.bg};box-shadow:0 0 24rpx ${cfg.bg};` : "",
           labelColor: cfg ? cfg.color : "",
           labelBg: cfg ? cfg.bg : "",
@@ -2942,7 +3669,7 @@ Page({
         const seat = room.seats.findIndex((id) => id === pid) + 1;
         const player = room.players.find((it) => it.id === pid);
         if (!seat || !player) return null;
-        const avatarMeta = this.avatarMeta(player.avatar || "🙂");
+        const avatarMeta = this.avatarMeta(player.avatar || "🙂", player);
         return {
           id: pid,
           seat,
@@ -2966,7 +3693,7 @@ Page({
     const team = teamIds.map((pid) => {
       const seat = Array.isArray(room.seats) ? room.seats.findIndex((id) => id === pid) + 1 : 0;
       const player = Array.isArray(room.players) ? room.players.find((p) => p.id === pid) : null;
-      const avatarMeta = this.avatarMeta((player && player.avatar) || "🙂");
+      const avatarMeta = this.avatarMeta((player && player.avatar) || "🙂", player);
       return {
         id: pid,
         seat,
@@ -3152,14 +3879,15 @@ Page({
 
   onRedealIdentities() {
     wx.showModal({
-      title: "确认重发身份",
-      content: "将按当前配置重新开始本局并给所有玩家重新发身份，是否继续？",
-      confirmText: "确认重发",
+      title: "确认重新开始",
+      content: "将按当前配置重新开一局，座位、AI和身份都会按最新配置重新生成，是否继续？",
+      confirmText: "重新开始",
       cancelText: "取消",
       success: (res) => {
         if (!res.confirm) return;
         this.send("REDEAL_IDENTITIES");
-        this.setData({ gameTip: "已请求重发身份" });
+        this.clearRoleState(true);
+        this.setData({ gameTip: "已请求重新开始", seatNotes: {} });
       }
     });
   },
@@ -3184,6 +3912,14 @@ Page({
     });
   },
 
+  onConfirmLadyOfLake() {
+    if (!this.data.selectedLadyTarget) {
+      wx.showToast({ title: "先选择验人目标", icon: "none" });
+      return;
+    }
+    this.onUseLadyOfLake(this.data.selectedLadyTarget);
+  },
+
   openHistory(arg = 1) {
     wx.navigateTo({ url: "/subpkg/history/index/index" });
   },
@@ -3204,16 +3940,22 @@ Page({
 
   fetchActiveRooms(showLoading = false) {
     const apiBase = getApp().globalData.apiBase;
+    const token = this.data.authToken || wx.getStorageSync("awalonAuthToken") || "";
+    const roomCode = this.data.room && this.data.room.code ? String(this.data.room.code) : "";
     if (showLoading) this.setData({ activeRoomsLoading: true });
     const done = () => { if (showLoading) this.setData({ activeRoomsLoading: false }); };
     wx.request({
-      url: `${apiBase}/api/rooms`,
+      url: `${apiBase}/api/rooms${token ? `?token=${encodeURIComponent(token)}` : ""}`,
       timeout: 8000,
       success: (res) => {
         if (res.statusCode === 200 && res.data && Array.isArray(res.data.rooms)) {
-          const next = JSON.stringify(res.data.rooms);
+          const rooms = res.data.rooms.map((item) => ({
+            ...item,
+            isCurrentRoom: !!(item && (item.isMine || (roomCode && String(item.code) === roomCode)))
+          }));
+          const next = JSON.stringify(rooms);
           if (next !== JSON.stringify(this.data.activeRooms)) {
-            this.setData({ activeRooms: res.data.rooms });
+            this.setData({ activeRooms: rooms });
           }
         }
         done();
@@ -3241,10 +3983,14 @@ Page({
     this.setData({ reviewMode: false });
   },
 
-  avatarMeta(avatar) {
+  avatarMeta(avatar, player) {
     const raw = String(avatar || "").trim();
     if (/^https?:\/\//i.test(raw)) {
       return { image: raw, text: "" };
+    }
+    if (player && player.isAI) {
+      const seat = Number.isFinite(player.seat) ? player.seat : 0;
+      return { image: AI_AVATAR_URLS[seat % AI_AVATAR_URLS.length], text: "" };
     }
     return { image: "", text: raw || "🙂" };
   },

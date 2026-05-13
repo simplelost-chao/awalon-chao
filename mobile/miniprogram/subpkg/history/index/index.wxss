@@ -1,6 +1,6 @@
 /* ─── PAGE ─── */
 .page { min-height: 100vh; position: relative; background: var(--aw-bg); }
-.bg, .mask { position: fixed; inset: 0; }
+.bg, .mask { position: fixed; left: 0; right: 0; top: 0; bottom: 0; }
 .bg { width: 100vw; height: 100vh; }
 .mask { background: linear-gradient(180deg, rgba(6,8,16,0.72) 0%, rgba(8,10,20,0.88) 40%, rgba(6,8,16,0.96) 100%); }
 
@@ -9,6 +9,56 @@
 .theme-ink-wash .bg { display: none; }
 .theme-celestial .mask,
 .theme-ink-wash .mask { background: none; }
+
+.sub-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 20;
+  background: rgba(6, 8, 15, 0.92);
+  border-bottom: 1rpx solid rgba(216, 176, 107, 0.14);
+}
+.sub-nav-inner {
+  position: relative;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8rpx;
+}
+.sub-nav-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 14rpx;
+  border: 1rpx solid rgba(216, 176, 107, 0.35);
+  background: rgba(216, 176, 107, 0.08);
+  flex-shrink: 0;
+}
+.sub-nav-back-arrow {
+  font-size: 36rpx;
+  color: rgba(216, 176, 107, 0.8);
+  line-height: 1;
+  margin-top: -2rpx;
+}
+.sub-nav-title {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  color: #f2e5c8;
+  font-size: 30rpx;
+  font-weight: 700;
+  letter-spacing: 4rpx;
+  pointer-events: none;
+}
+.sub-nav-placeholder {
+  width: 100rpx;
+  flex-shrink: 0;
+}
 
 
 /* ─── CONTENT ─── */
@@ -19,22 +69,32 @@
 .record-list { display: flex; flex-direction: column; gap: 18rpx; margin-top: 20rpx; }
 
 /* ─── CARD ─── */
+/* 外层：边框色背景 + 斜切角 clip-path */
 .hc {
-  position: relative; overflow: hidden;
-  border-radius: 28rpx;
-  border: 1rpx solid transparent;
+  position: relative;
+  clip-path: polygon(8px 0%, calc(100% - 8px) 0%, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0% calc(100% - 8px), 0% 8px);
+  padding: 1.5rpx;
 }
-.hc-win  { background: linear-gradient(135deg, rgba(20,60,36,0.88) 0%, rgba(10,14,24,0.94) 55%); border-color: rgba(80,220,140,0.38); box-shadow: 0 0 40rpx rgba(60,200,110,0.10); }
-.hc-lose { background: linear-gradient(135deg, rgba(60,16,16,0.88) 0%, rgba(10,14,24,0.94) 55%); border-color: rgba(220,80,80,0.35);  box-shadow: 0 0 40rpx rgba(200,60,60,0.10); }
-.hc-spec { background: linear-gradient(135deg, rgba(54,40,14,0.88) 0%, rgba(10,14,24,0.94) 55%); border-color: rgba(216,176,107,0.32); box-shadow: 0 0 30rpx rgba(180,136,40,0.08); }
+.hc-win  { background: rgba(70,210,130,0.60); }
+.hc-lose { background: rgba(220,70,70,0.60); }
+.hc-spec { background: linear-gradient(135deg, #8a6010, #c8a040 40%, #f5d060 50%, #c8a040 60%, #8a6010); }
+
+/* 内层：面板渐变背景 + 内缩斜切角 */
+.hc-inner {
+  position: relative; overflow: hidden;
+  clip-path: polygon(7px 0%, calc(100% - 7px) 0%, 100% 7px, 100% calc(100% - 7px), calc(100% - 7px) 100%, 7px 100%, 0% calc(100% - 7px), 0% 7px);
+}
+.hc-win  .hc-inner { background: linear-gradient(135deg, rgba(12,46,26,0.96) 0%, rgba(8,12,22,0.98) 55%); }
+.hc-lose .hc-inner { background: linear-gradient(135deg, rgba(50,10,10,0.96) 0%, rgba(8,12,22,0.98) 55%); }
+.hc-spec .hc-inner { background: linear-gradient(135deg, rgba(44,28,6,0.96)  0%, rgba(8,12,22,0.98) 55%); }
 
 /* 左侧色条 */
-.hc::before {
-  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5rpx;
+.hc-inner::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4rpx; z-index: 1;
 }
-.hc-win::before  { background: linear-gradient(180deg, rgba(80,220,140,0.9), rgba(80,220,140,0.15)); }
-.hc-lose::before { background: linear-gradient(180deg, rgba(220,80,80,0.9),  rgba(220,80,80,0.15)); }
-.hc-spec::before { background: linear-gradient(180deg, rgba(216,176,107,0.8), rgba(216,176,107,0.12)); }
+.hc-win  .hc-inner::before { background: linear-gradient(180deg, rgba(80,220,140,0.95), rgba(80,220,140,0.15)); }
+.hc-lose .hc-inner::before { background: linear-gradient(180deg, rgba(220,80,80,0.95),  rgba(220,80,80,0.15)); }
+.hc-spec .hc-inner::before { background: linear-gradient(180deg, rgba(216,176,107,0.9), rgba(216,176,107,0.12)); }
 
 /* 局号水印 */
 .hc-watermark {
@@ -42,9 +102,9 @@
   font-size: 120rpx; font-weight: 700; line-height: 1;
   pointer-events: none; user-select: none; letter-spacing: -4rpx;
 }
-.hc-win  .hc-watermark { color: rgba(80,220,140,0.055); }
-.hc-lose .hc-watermark { color: rgba(220,80,80,0.065); }
-.hc-spec .hc-watermark { color: rgba(216,176,107,0.055); }
+.hc-win  .hc-watermark { color: rgba(80,220,140,0.07); }
+.hc-lose .hc-watermark { color: rgba(220,80,80,0.08); }
+.hc-spec .hc-watermark { color: rgba(216,176,107,0.07); }
 
 /* 卡片主体 */
 .hc-body { padding: 24rpx 24rpx 20rpx 28rpx; position: relative; }

@@ -1,0 +1,1 @@
+/* 样式通过 styleIsolation: shared 继承 app.wxss 中的 .pf / .fb-* / .fc-inner */

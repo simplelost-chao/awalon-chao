@@ -8,27 +8,36 @@
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+  /* Mira skin defaults — overridden by JS when embedded in Mira iframe */
   :root {
-    --gold: #d9b36b;
-    --gold-dim: rgba(217,179,107,0.18);
-    --gold-border: rgba(217,179,107,0.35);
-    --blue: #4e9eff;
-    --blue-dim: rgba(78,158,255,0.12);
-    --blue-border: rgba(78,158,255,0.3);
-    --red: #ff5f5f;
-    --red-dim: rgba(255,95,95,0.12);
-    --red-border: rgba(255,95,95,0.3);
-    --green: #5cd08a;
-    --green-dim: rgba(92,208,138,0.12);
-    --green-border: rgba(92,208,138,0.3);
-    --purple: #b07cff;
-    --purple-dim: rgba(176,124,255,0.12);
-    --purple-border: rgba(176,124,255,0.3);
-    --bg: #080c14;
-    --panel: rgba(14,20,36,0.9);
-    --border: rgba(255,255,255,0.08);
-    --text: #eef1f7;
-    --sub: #7a8499;
+    --bg: #0f1117;
+    --card: #1a1d27;
+    --border: #2d3148;
+    --text: #e2e8f0;
+    --text-sec: #94a3b8;
+    --text-muted: #64748b;
+    --yellow: #facc15;
+    --green: #22c55e;
+    --red: #ef4444;
+    --purple: #a855f7;
+    --accent: #4f46e5;
+    --accent-light: #818cf8;
+
+    /* Awalon semantic aliases → Mira vars */
+    --gold:          var(--yellow);
+    --gold-dim:      color-mix(in srgb, var(--yellow) 18%, transparent);
+    --gold-border:   color-mix(in srgb, var(--yellow) 35%, transparent);
+    --blue:          var(--accent-light);
+    --blue-dim:      color-mix(in srgb, var(--accent-light) 12%, transparent);
+    --blue-border:   color-mix(in srgb, var(--accent-light) 30%, transparent);
+    --red-dim:       color-mix(in srgb, var(--red) 12%, transparent);
+    --red-border:    color-mix(in srgb, var(--red) 30%, transparent);
+    --green-dim:     color-mix(in srgb, var(--green) 12%, transparent);
+    --green-border:  color-mix(in srgb, var(--green) 30%, transparent);
+    --purple-dim:    color-mix(in srgb, var(--purple) 12%, transparent);
+    --purple-border: color-mix(in srgb, var(--purple) 30%, transparent);
+    --panel:         var(--card);
+    --sub:           var(--text-sec);
     --mono: 'JetBrains Mono', monospace;
     --serif: 'Noto Serif SC', serif;
   }
@@ -46,8 +55,8 @@
     content: '';
     position: fixed; inset: 0;
     background-image:
-      linear-gradient(rgba(217,179,107,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(217,179,107,0.03) 1px, transparent 1px);
+      linear-gradient(color-mix(in srgb, var(--yellow) 3%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in srgb, var(--yellow) 3%, transparent) 1px, transparent 1px);
     background-size: 40px 40px;
     pointer-events: none;
     z-index: 0;
@@ -126,7 +135,7 @@
     border-radius: 12px;
     padding: 16px 20px;
     border: 1px solid var(--border);
-    background: rgba(255,255,255,0.03);
+    background: color-mix(in srgb, var(--text) 3%, transparent);
     min-width: 130px;
   }
   .flow-node-label {
@@ -188,7 +197,7 @@
   .mode-rows { display: flex; flex-direction: column; gap: 10px; }
   .mode-row { display: flex; align-items: flex-start; gap: 12px; font-size: 12px; }
   .mode-row-icon { flex-shrink: 0; opacity: 0.7; }
-  .mode-row-text { color: rgba(238,241,247,0.7); line-height: 1.5; }
+  .mode-row-text { color: color-mix(in srgb, var(--text) 70%, transparent); line-height: 1.5; }
 
   /* ── 服务端模块 ── */
   .server-grid {
@@ -200,7 +209,7 @@
     border-radius: 12px;
     padding: 18px 18px 16px;
     border: 1px solid var(--border);
-    background: rgba(255,255,255,0.02);
+    background: color-mix(in srgb, var(--text) 2%, transparent);
   }
   .srv-file {
     font-size: 12px;
@@ -220,8 +229,10 @@
   .srv-card.gameai .srv-file{ color: var(--purple); }
   .srv-card.db     { border-color: var(--green-border); }
   .srv-card.db .srv-file    { color: var(--green); }
-  .srv-card.other  { border-color: rgba(255,255,255,0.1); }
-  .srv-card.other .srv-file { color: rgba(200,210,230,0.7); }
+  .srv-card.other  { border-color: color-mix(in srgb, var(--text) 10%, transparent); }
+  .srv-card.other .srv-file { color: color-mix(in srgb, var(--text) 70%, transparent); }
+  .srv-card.voice  { border-color: color-mix(in srgb, var(--yellow) 40%, var(--red) 20%); background: color-mix(in srgb, var(--yellow) 7%, transparent); }
+  .srv-card.voice .srv-file { color: color-mix(in srgb, var(--yellow) 80%, var(--red) 30%); }
 
   /* ── 小程序结构 ── */
   .mp-grid {
@@ -233,7 +244,7 @@
     border-radius: 12px;
     padding: 18px;
     border: 1px solid var(--border);
-    background: rgba(255,255,255,0.02);
+    background: color-mix(in srgb, var(--text) 2%, transparent);
   }
   .mp-group-title {
     font-size: 11px;
@@ -263,13 +274,13 @@
     font-size: 10px;
     letter-spacing: 2px;
     color: var(--gold);
-    background: rgba(217,179,107,0.06);
+    background: color-mix(in srgb, var(--yellow) 6%, transparent);
     border-bottom: 1px solid var(--border);
   }
   .ws-table td {
     padding: 10px 14px;
-    border-bottom: 1px solid rgba(255,255,255,0.04);
-    color: rgba(238,241,247,0.75);
+    border-bottom: 1px solid color-mix(in srgb, var(--text) 4%, transparent);
+    color: color-mix(in srgb, var(--text) 75%, transparent);
     line-height: 1.5;
   }
   .ws-table tr:last-child td { border-bottom: none; }
@@ -281,9 +292,9 @@
     border-radius: 4px;
     letter-spacing: 1px;
   }
-  .tag-cs { background: rgba(78,158,255,0.18); color: #7ac7ff; }
-  .tag-sc { background: rgba(217,179,107,0.18); color: var(--gold); }
-  .tag-both { background: rgba(176,124,255,0.18); color: #c8a8ff; }
+  .tag-cs   { background: var(--blue-dim); color: var(--blue); }
+  .tag-sc   { background: var(--gold-dim); color: var(--gold); }
+  .tag-both { background: var(--purple-dim); color: var(--purple); }
   .msg-name { font-family: var(--mono); font-weight: 700; color: var(--text); }
 
   /* ── Admin / 切换方式 ── */
@@ -296,7 +307,7 @@
     border-radius: 12px;
     padding: 20px;
     border: 1px solid var(--border);
-    background: rgba(255,255,255,0.02);
+    background: color-mix(in srgb, var(--text) 2%, transparent);
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -327,9 +338,9 @@
     letter-spacing: 1px;
     align-self: flex-start;
   }
-  .badge-instant { background: rgba(92,208,138,0.18); color: var(--green); }
-  .badge-restart { background: rgba(255,95,95,0.18); color: var(--red); }
-  .badge-hidden  { background: rgba(176,124,255,0.18); color: var(--purple); }
+  .badge-instant { background: var(--green-dim); color: var(--green); }
+  .badge-restart { background: var(--red-dim); color: var(--red); }
+  .badge-hidden  { background: var(--purple-dim); color: var(--purple); }
 
   /* ── AI 系统 ── */
   .ai-layer-grid {
@@ -409,7 +420,7 @@
     border-radius: 12px;
     padding: 16px 14px;
     border: 1px solid var(--border);
-    background: rgba(255,255,255,0.02);
+    background: color-mix(in srgb, var(--text) 2%, transparent);
     display: flex;
     flex-direction: column;
     gap: 6px;
@@ -425,10 +436,10 @@
     align-self: flex-start;
     margin-top: 2px;
   }
-  .bluff-very-high { background: rgba(255,95,95,0.18); color: var(--red); }
-  .bluff-high      { background: rgba(255,165,0,0.18); color: #ffb347; }
-  .bluff-medium    { background: rgba(217,179,107,0.18); color: var(--gold); }
-  .bluff-low       { background: rgba(92,208,138,0.18); color: var(--green); }
+  .bluff-very-high { background: var(--red-dim); color: var(--red); }
+  .bluff-high      { background: var(--gold-dim); color: var(--gold); }
+  .bluff-medium    { background: var(--purple-dim); color: var(--purple); }
+  .bluff-low       { background: var(--green-dim); color: var(--green); }
 
   /* 记忆系统 */
   .memory-grid {
@@ -440,7 +451,7 @@
     border-radius: 12px;
     padding: 18px;
     border: 1px solid var(--border);
-    background: rgba(255,255,255,0.02);
+    background: color-mix(in srgb, var(--text) 2%, transparent);
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -452,7 +463,7 @@
   code {
     font-family: var(--mono);
     font-size: 10px;
-    background: rgba(255,255,255,0.06);
+    background: color-mix(in srgb, var(--text) 6%, transparent);
     padding: 2px 6px;
     border-radius: 4px;
     color: var(--gold);
@@ -460,18 +471,96 @@
 
   .divider {
     height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(217,179,107,0.2), transparent);
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--yellow) 20%, transparent), transparent);
     margin: 8px 0 24px;
+  }
+
+  /* 语音声纹映射卡 */
+  .voice-map-card {
+    background: color-mix(in srgb, var(--text) 3%, transparent);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+  }
+  .voice-map-card .vm-emoji { font-size: 13px; margin-bottom: 4px; }
+  .voice-map-card .vm-name  { font-size: 11px; font-weight: 700; color: var(--text); }
+  .voice-map-card .vm-voice { font-size: 10px; color: var(--sub); margin-top: 3px; }
+  .voice-map-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+
+  /* ── 移动适配 ── */
+  @media (max-width: 700px) {
+    body { padding: 28px 16px 60px; }
+
+    .page-header { margin-bottom: 36px; }
+    .page-header h1 { font-size: 26px; letter-spacing: 2px; }
+
+    /* 两列 → 单列 */
+    .mode-grid,
+    .mp-grid,
+    .ai-layer-grid { grid-template-columns: 1fr; }
+
+    /* 三列 → 单列 */
+    .server-grid,
+    .switch-grid { grid-template-columns: 1fr 1fr; }
+
+    /* 五列人格 → 两列 */
+    .persona-grid { grid-template-columns: 1fr 1fr; }
+
+    /* 四列记忆 → 两列 */
+    .memory-grid { grid-template-columns: 1fr 1fr; }
+
+    /* 语音映射 → 两列 */
+    .voice-map-grid { grid-template-columns: repeat(2, 1fr); }
+
+    /* 流程图竖排 */
+    .review-flow { flex-direction: column; align-items: flex-start; }
+    .flow-arrow { transform: rotate(90deg); padding: 6px 0; }
+    .flow-branch { flex-direction: column; }
+
+    /* 决策链允许换行 */
+    .dc-row { flex-wrap: wrap; }
+    .dc-phase { width: auto; text-align: left; }
+
+    /* WS 表格横向滚动 */
+    .card { overflow-x: auto; }
+  }
+
+  @media (max-width: 420px) {
+    .server-grid,
+    .switch-grid { grid-template-columns: 1fr; }
+    .persona-grid { grid-template-columns: 1fr 1fr; }
+    .memory-grid  { grid-template-columns: 1fr; }
   }
 </style>
 </head>
 <body>
+<script>
+  // Inherit Mira skin CSS variables from parent iframe (same-origin)
+  (function () {
+    try {
+      var parentRoot = window.parent.document.documentElement;
+      var ps = getComputedStyle(parentRoot);
+      var vars = [
+        '--bg','--card','--border','--border-subtle-rgb',
+        '--text','--text-sec','--text-muted','--text-deep',
+        '--accent','--accent-rgb','--accent-light','--accent-light-rgb',
+        '--green','--green-dim','--red','--purple','--yellow',
+        '--card-deep'
+      ];
+      var root = document.documentElement;
+      vars.forEach(function(v) {
+        var val = ps.getPropertyValue(v).trim();
+        if (val) root.style.setProperty(v, val);
+      });
+    } catch (e) { /* standalone or cross-origin — use :root defaults */ }
+  })();
+</script>
 <div class="wrap">
 
   <div class="page-header">
     <div class="page-header-eyebrow">System Overview · 2026</div>
     <h1>Awalon 系统全貌</h1>
-    <div class="page-header-sub">微信小程序 · 游戏服务器 · 审核伪装机制 · Admin 切换</div>
+    <div class="page-header-sub">微信小程序 · 游戏服务器 · 审核伪装机制 · Admin 切换 · AI 语音合成</div>
   </div>
 
   <!-- ① 审核模式启动流程 -->
@@ -596,6 +685,10 @@
         <div class="srv-file">presence.js</div>
         <div class="srv-desc">在线状态 ping/pong 管理</div>
       </div>
+      <div class="srv-card voice">
+        <div class="srv-file">voice.js</div>
+        <div class="srv-desc">CosyVoice 2 语音合成封装；PERSONA_REF_TEXTS 映射；synthesizeAiSpeech（服务端已弃用，由客户端直连）</div>
+      </div>
     </div>
   </div>
 
@@ -632,6 +725,8 @@
           <div class="mp-item"><span class="mp-item-name">socket.js</span><span class="mp-item-desc">WebSocket 封装，心跳 · 重连</span></div>
           <div class="mp-item"><span class="mp-item-name">medals.js</span><span class="mp-item-desc">勋章数据装饰</span></div>
           <div class="mp-item"><span class="mp-item-name">shareCard.js</span><span class="mp-item-desc">分享卡片生成</span></div>
+          <div class="mp-item"><span class="mp-item-name">_handleAiVoiceRequest</span><span class="mp-item-desc">收到 AI_VOICE_REQUEST，检查预合成缓存，命中则直接播放，未命中则实时合成</span></div>
+          <div class="mp-item"><span class="mp-item-name">_prefetchAiVoice</span><span class="mp-item-desc">收到 AI_VOICE_PREFETCH，后台合成下一位 AI 音频写入临时文件，存入 _voiceCache</span></div>
         </div>
       </div>
       <div class="mp-group">
@@ -688,6 +783,21 @@
             <td><span class="msg-name">PONG</span></td>
             <td><span class="tag tag-both">双向</span></td>
             <td>心跳保活，客户端响应服务端 PING，维持连接稳定</td>
+          </tr>
+          <tr>
+            <td><span class="msg-name">AI_VOICE_REQUEST</span></td>
+            <td><span class="tag tag-sc">S→C</span></td>
+            <td>服务端通知客户端合成并播放当前 AI 发言音频；携带 <code>personaKey</code>、<code>text</code>、<code>playerId</code></td>
+          </tr>
+          <tr>
+            <td><span class="msg-name">AI_VOICE_PREFETCH</span></td>
+            <td><span class="tag tag-sc">S→C</span></td>
+            <td>预取：当前 AI 音频播放期间，提前合成下一位 AI 的音频并缓存，减少等待</td>
+          </tr>
+          <tr>
+            <td><span class="msg-name">VOICE_DONE</span></td>
+            <td><span class="tag tag-cs">C→S</span></td>
+            <td>客户端音频播放结束后回报服务端，服务端收到后推进发言队列到下一位</td>
           </tr>
         </tbody>
       </table>
@@ -862,9 +972,134 @@
     </div>
   </div>
 
-  <!-- ⑩ AI 记忆与学习系统 -->
+  <!-- ⑩ AI 语音系统 -->
   <div class="section">
-    <div class="section-label">10 · AI 记忆与学习系统</div>
+    <div class="section-label">10 · AI 语音系统（CosyVoice 2）</div>
+    <div class="card" style="padding:24px 28px;">
+      <!-- 架构流程 -->
+      <div style="display:flex;align-items:center;gap:0;flex-wrap:wrap;row-gap:16px;margin-bottom:28px;">
+        <div class="flow-node gold">
+          <div class="flow-node-label">服务端</div>
+          <div class="flow-node-name">AI_VOICE_REQUEST</div>
+          <div class="flow-node-detail">personaKey + text</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node blue">
+          <div class="flow-node-label">小程序</div>
+          <div class="flow-node-name">wx.request</div>
+          <div class="flow-node-detail">POST /synthesize_cached<br>timeout: 90s</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node purple">
+          <div class="flow-node-label">本地 Mac</div>
+          <div class="flow-node-name">CosyVoice 2</div>
+          <div class="flow-node-detail">127.0.0.1:9001<br>声纹克隆合成 WAV</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node" style="border-color:var(--gold-border);background:color-mix(in srgb,var(--yellow) 7%,transparent);">
+          <div class="flow-node-label">隧道</div>
+          <div class="flow-node-name">Cloudflare Tunnel</div>
+          <div class="flow-node-detail">voice.zhuchao.life<br>http2 协议</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-node green">
+          <div class="flow-node-label">播放</div>
+          <div class="flow-node-name">InnerAudioContext</div>
+          <div class="flow-node-detail">写临时 WAV，播完<br>发 VOICE_DONE</div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <!-- 预合成流水线 -->
+      <div style="margin-bottom:20px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--purple);margin-bottom:14px;">PIPELINE · 预合成流水线</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div class="dc-row">
+            <div class="dc-phase" style="width:120px;">当前 AI 合成中</div>
+            <div class="dc-arrow">→</div>
+            <div class="dc-fn">LLM 生成下一位发言</div>
+            <div class="dc-effect">（后台，不阻塞）</div>
+          </div>
+          <div class="dc-row">
+            <div class="dc-phase" style="width:120px;">当前 AI 播放中</div>
+            <div class="dc-arrow">→</div>
+            <div class="dc-fn">AI_VOICE_PREFETCH</div>
+            <div class="dc-arrow">→</div>
+            <div class="dc-llm">_prefetchAiVoice</div>
+            <div class="dc-effect">→ 后台合成下一位，写入 _voiceCache</div>
+          </div>
+          <div class="dc-row">
+            <div class="dc-phase" style="width:120px;">下一位轮到时</div>
+            <div class="dc-arrow">→</div>
+            <div class="dc-fn">AI_VOICE_REQUEST</div>
+            <div class="dc-arrow">→</div>
+            <div class="dc-llm">cache hit → 即刻播放</div>
+            <div class="dc-effect">→ 等待从 ~9s 降至接近 0</div>
+          </div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <!-- Persona → 声音映射 -->
+      <div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:2px;color:var(--gold);margin-bottom:14px;">PERSONA → 声音映射（edge-tts 参考音频 → CosyVoice 声纹克隆）</div>
+        <div class="voice-map-grid">
+          <div class="voice-map-card">
+            <div class="vm-emoji">🦊</div>
+            <div class="vm-name">莫甘娜的微笑</div>
+            <div class="vm-voice">XiaoxiaoNeural<br>普通话女·冷静</div>
+          </div>
+          <div class="voice-map-card">
+            <div class="vm-emoji">🧙</div>
+            <div class="vm-name">梅林看穿你了</div>
+            <div class="vm-voice">YunjianNeural<br>普通话男·深沉</div>
+          </div>
+          <div class="voice-map-card">
+            <div class="vm-emoji">🐺</div>
+            <div class="vm-name">奥伯龙没朋友</div>
+            <div class="vm-voice">YunxiaNeural<br>普通话男·平淡</div>
+          </div>
+          <div class="voice-map-card">
+            <div class="vm-emoji">🦉</div>
+            <div class="vm-name">我知道你知道</div>
+            <div class="vm-voice">YunyangNeural<br>新闻播报·权威</div>
+          </div>
+          <div class="voice-map-card">
+            <div class="vm-emoji">🐍</div>
+            <div class="vm-name">背刺有理</div>
+            <div class="vm-voice">YunxiNeural<br>普通话男·活跃</div>
+          </div>
+          <div class="voice-map-card">
+            <div class="vm-emoji">🐱</div>
+            <div class="vm-name">沉默即答案</div>
+            <div class="vm-voice">shaanxi·XiaoniNeural<br>陕西腔·神秘</div>
+          </div>
+          <div class="voice-map-card">
+            <div class="vm-emoji">🐧</div>
+            <div class="vm-name">任务失败不是我</div>
+            <div class="vm-voice">XiaoyiNeural<br>普通话女·活泼</div>
+          </div>
+          <div class="voice-map-card">
+            <div class="vm-emoji">🦋</div>
+            <div class="vm-name">帕西法尔的直觉</div>
+            <div class="vm-voice">TW·HsiaoYuNeural<br>台湾女·温柔</div>
+          </div>
+          <div class="voice-map-card">
+            <div class="vm-emoji">🦅</div>
+            <div class="vm-name">三号位可疑</div>
+            <div class="vm-voice">liaoning·XiaobeiNeural<br>东北腔·执着</div>
+          </div>
+          <div class="voice-map-card">
+            <div class="vm-emoji">🐻</div>
+            <div class="vm-name">不解释</div>
+            <div class="vm-voice">HK·WanLungNeural<br>港式男·强硬</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑪ AI 记忆与学习系统 -->
+  <div class="section">
+    <div class="section-label">11 · AI 记忆与学习系统</div>
     <div class="memory-grid">
       <div class="memory-card">
         <div class="memory-table">ai_memory</div>

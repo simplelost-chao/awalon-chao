@@ -33,6 +33,7 @@ Page({
     navTotalHeight: 64,
     skinId: 'dark-gold',
     skinInGameBg: 'https://www.awalon.top/mp-assets/in-game-bg-optimized.jpg',
+    skinTableUrl: 'https://www.awalon.top/mp-assets/table.png',
     gameId: 0,
     loading: true,
     historyDetail: null,
@@ -72,6 +73,7 @@ Page({
       navTotalHeight: nav.navTotalHeight || 64,
       skinId: _skinId,
       skinInGameBg: getSkin(_skinId).inGameBg,
+      skinTableUrl: getSkin(_skinId).table,
       gameId: Number(query && query.gameId) || 0
     });
   },
@@ -299,47 +301,46 @@ Page({
     });
 
     return voteHistory.map((v, idx) => {
-      const mission = v && v.approved ? missionByRound[Number(v.round || 0)] || null : null;
+      const approved = !!v.approved;
+      const mission = approved ? missionByRound[Number(v.round || 0)] || null : null;
       const leader = byId[v.leaderId] || null;
       const leaderSeat = leader ? this.seatNoFromRaw(leader.seat, maxPlayers) || "?" : "?";
-      const team = (v.team || [])
+
+      const teamSeatList = (v.team || [])
         .map((id) => (byId[id] ? this.seatNoFromRaw(byId[id].seat, maxPlayers) || "?" : "?"))
-        .sort((a, b) => Number(a) - Number(b))
-        .join(",");
-      const approves = Object.entries(v.votes || {})
-        .filter(([, val]) => !!val)
-        .map(([id]) => (byId[id] ? this.seatNoFromRaw(byId[id].seat, maxPlayers) || "?" : "?"))
-        .sort((a, b) => Number(a) - Number(b))
-        .join(",");
-      const rejects = Object.entries(v.votes || {})
-        .filter(([, val]) => !val)
-        .map(([id]) => (byId[id] ? this.seatNoFromRaw(byId[id].seat, maxPlayers) || "?" : "?"))
-        .sort((a, b) => Number(a) - Number(b))
-        .join(",");
-      const approved = !!v.approved;
-      let resText = null;
-      let resClass = '';
-      if (!approved) {
-        resText = null;
-        resClass = '';
-      } else if (mission) {
-        const fails = mission.fails || 0;
-        resText = mission.success ? (fails > 0 ? `✓ ${fails}` : '✓') : `✗ ${fails}`;
-        resClass = mission.success ? 'pill-ok' : 'pill-ng';
-      } else {
-        resText = '···';
-        resClass = 'pill-wait';
+        .sort((a, b) => Number(a) - Number(b));
+
+      const voteChips = Object.entries(v.votes || {})
+        .map(([id, val]) => ({
+          seat: byId[id] ? this.seatNoFromRaw(byId[id].seat, maxPlayers) || "?" : "?",
+          supported: !!val,
+          isLeaderSeat: id === v.leaderId,
+        }))
+        .sort((a, b) => Number(a.seat) - Number(b.seat));
+      const voteSupportChips = voteChips.filter((chip) => chip.supported);
+      const voteRejectChips = voteChips.filter((chip) => !chip.supported);
+
+      let result = 'veto';
+      let failCount = 0;
+      if (approved) {
+        if (mission) {
+          result = mission.success ? 'success' : 'fail';
+          failCount = mission.fails || 0;
+        } else {
+          result = 'pending';
+        }
       }
+
       return {
         key: `${v.round || 0}-${v.attempt || idx + 1}`,
-        round: `${v.round || 0}-${v.attempt || idx + 1}`,
-        leader: `${leaderSeat}号`,
-        team: team || "-",
-        approve: approves || "-",
-        reject: rejects || "-",
         approved,
-        resText,
-        resClass,
+        leaderSeat,
+        teamSeatList,
+        voteChips,
+        voteSupportChips,
+        voteRejectChips,
+        result,
+        failCount,
       };
     });
   },

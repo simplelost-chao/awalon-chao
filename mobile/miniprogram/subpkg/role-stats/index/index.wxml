@@ -2,30 +2,55 @@
   <image class="bg" src="{{skinInGameBg}}" mode="aspectFill" />
   <view class="mask"></view>
 
-  <nav-header title="我的主页" statusBarHeight="{{statusBarHeight}}" navBarHeight="{{navBarHeight}}" bind:back="onBackHome"></nav-header>
+  <view class="sub-nav" style="padding-top: {{statusBarHeight}}px; height: {{navBarHeight}}px;">
+    <view class="sub-nav-inner">
+      <view class="sub-nav-back" bindtap="onBackHome"><text class="sub-nav-back-arrow">‹</text></view>
+      <text class="sub-nav-title">我的主页</text>
+      <view class="sub-nav-placeholder"></view>
+    </view>
+  </view>
 
   <view class="content" style="padding-top: {{navTotalHeight + 8}}px;">
 
-    <!-- ── 外观皮肤 ── -->
-    <view class="panel skin-picker-panel">
-      <view class="panel-header">
-        <text class="panel-title">外观皮肤</text>
-      </view>
-      <view class="skin-grid">
-        <view
-          class="skin-card {{item.id === skinId ? 'skin-card-active' : ''}}"
-          wx:for="{{skins}}"
-          wx:key="id"
-          data-id="{{item.id}}"
-          bindtap="onPickSkin"
-        >
-          <view class="skin-preview">
-            <view class="skin-dot" style="background:{{item.bg}}"></view>
-            <view class="skin-dot" style="background:{{item.panel}}"></view>
-            <view class="skin-dot" style="background:{{item.accent}}"></view>
+    <!-- ── 用户资料 + PVP/PVE 切换 ── -->
+    <view class="pf rs-section">
+      <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+      <view class="fb fb-left"></view><view class="fb fb-right"></view>
+      <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+      <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+      <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+      <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+
+      <view class="profile-header">
+        <image class="profile-avatar-img" wx:if="{{avatarImage}}" src="{{avatarImage}}" mode="aspectFill" />
+        <text class="profile-avatar-text" wx:else>{{avatarText}}</text>
+        <text class="profile-nickname">{{profileNickname}}</text>
+        <view class="profile-stats-row">
+          <view class="profile-stat">
+            <text class="profile-stat-num profile-stat-blue">{{roleStats.totalGames || 0}}</text>
+            <text class="profile-stat-label">总对局</text>
           </view>
-          <text class="skin-name">{{item.name}}</text>
-          <view wx:if="{{item.id === skinId}}" class="skin-check">✓</view>
+          <view class="profile-stat-sep"></view>
+          <view class="profile-stat">
+            <text class="profile-stat-num profile-stat-green">{{roleStats.overallWinRate || 0}}<text class="profile-stat-unit">%</text></text>
+            <text class="profile-stat-label">胜率</text>
+          </view>
+          <view class="profile-stat-sep"></view>
+          <view class="profile-stat">
+            <text class="profile-stat-num profile-stat-gold">{{medalTotal || 0}}</text>
+            <text class="profile-stat-label">勋章</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="mode-tabs-inline">
+        <view class="mode-tab-inline {{mode === 'pvp' ? 'mode-tab-inline-active' : ''}}" data-mode="pvp" bindtap="onSwitchMode">
+          <text class="mode-tab-inline-text">PVP</text>
+          <text class="mode-tab-inline-sub">纯人局</text>
+        </view>
+        <view class="mode-tab-inline {{mode === 'pve' ? 'mode-tab-inline-active' : ''}}" data-mode="pve" bindtap="onSwitchMode">
+          <text class="mode-tab-inline-text">PVE</text>
+          <text class="mode-tab-inline-sub">含AI局</text>
         </view>
       </view>
     </view>
@@ -33,62 +58,176 @@
     <view class="panel" wx:if="{{loading}}">
       <text class="meta">加载中...</text>
     </view>
+    <view class="panel" wx:if="{{!loading && !roleStats}}">
+      <text class="meta">暂无统计数据</text>
+    </view>
 
     <block wx:if="{{!loading && roleStats}}">
 
-      <!-- ── 总览 ── -->
-      <view class="panel">
-        <view class="panel-header">
-          <text class="panel-title">总览</text>
-          <text class="panel-subtitle">近期战绩</text>
-        </view>
+      <!-- ── 近期战绩 + 连胜 + 阵营对比 ── -->
+      <view class="pf rs-section">
+        <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+        <view class="fb fb-left"></view><view class="fb fb-right"></view>
+        <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+        <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+        <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+        <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
 
-        <view class="overview-numbers">
-          <view class="stat-block">
-            <text class="stat-num stat-blue">{{roleStats.totalGames}}</text>
-            <text class="stat-label">总对局</text>
-          </view>
-          <view class="stat-divider"></view>
-          <view class="stat-block">
-            <text class="stat-num stat-green">{{roleStats.overallWinRate}}%</text>
-            <text class="stat-label">总胜率</text>
-          </view>
-        </view>
-
-        <view class="faction-wrap">
-          <view class="faction-bar-labels">
-            <text class="faction-bar-tag good">正义阵营 · {{goodSummary.total}}局</text>
-            <text class="faction-bar-tag evil">邪恶阵营 · {{evilSummary.total}}局</text>
-          </view>
-          <view class="faction-bar-track">
-            <view class="faction-bar-good" style="width: {{factionBarGoodPct}}%"></view>
-            <view class="faction-bar-evil" style="width: {{factionBarEvilPct}}%"></view>
-          </view>
-          <view class="faction-cards">
-            <view class="faction-card faction-card-good">
-              <text class="faction-card-title good">正义阵营</text>
-              <view class="faction-stat-row">
-                <text class="faction-stat-big good">{{goodSummary.wins}}</text>
-                <text class="faction-stat-small">/ {{goodSummary.total}} 胜</text>
-              </view>
-              <text class="faction-win-rate good">胜率 {{goodSummary.winRate}}%</text>
+        <!-- 连胜/连败 + 近期战绩 -->
+        <view class="ov-recent-streak">
+          <view class="ov-streak-inline" wx:if="{{streakType}}">
+            <view class="ov-streak-icon {{streakType === 'win' ? 'ov-streak-win' : 'ov-streak-lose'}}">
+              <view class="ov-streak-arrow"></view>
             </view>
-            <view class="faction-card faction-card-evil">
-              <text class="faction-card-title evil">邪恶阵营</text>
-              <view class="faction-stat-row">
-                <text class="faction-stat-big evil">{{evilSummary.wins}}</text>
-                <text class="faction-stat-small">/ {{evilSummary.total}} 胜</text>
-              </view>
-              <text class="faction-win-rate evil">胜率 {{evilSummary.winRate}}%</text>
+            <text class="ov-streak-text {{streakType === 'win' ? 'ov-num-gold' : 'ov-num-red'}}">{{streakType === 'win' ? '连胜' : '连败'}} {{streakCount}}</text>
+          </view>
+          <view class="ov-recent" wx:if="{{recentGames.length}}">
+            <text class="ov-recent-label">近期战绩</text>
+            <text class="recent-row">{{recentDotsText}}</text>
+          </view>
+        </view>
+
+        <!-- 阵营对比 -->
+        <view class="ov-faction">
+          <view class="ov-faction-pair">
+            <view class="ov-faction-col">
+              <text class="ov-faction-name good">正义</text>
+              <text class="ov-faction-rate good">{{goodSummary.winRate}}%</text>
+              <text class="ov-faction-detail good">{{goodSummary.wins}}胜 / {{goodSummary.total}}局</text>
+            </view>
+            <view class="ov-faction-sep"></view>
+            <view class="ov-faction-col">
+              <text class="ov-faction-name evil">邪恶</text>
+              <text class="ov-faction-rate evil">{{evilSummary.winRate}}%</text>
+              <text class="ov-faction-detail evil">{{evilSummary.wins}}胜 / {{evilSummary.total}}局</text>
             </view>
           </view>
         </view>
       </view>
 
-      <!-- ── 角色统计 ── -->
-      <view class="panel rs-panel">
-        <view class="panel-header">
-          <text class="panel-title">按角色统计</text>
+      <!-- ── 能力雷达 ── -->
+      <view class="pf rs-section" wx:if="{{radarData}}">
+        <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+        <view class="fb fb-left"></view><view class="fb fb-right"></view>
+        <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+        <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+        <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+        <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+        <view class="rs-title-row">
+          <view class="rs-title-line"></view>
+          <text class="rs-deco">◆</text>
+          <text class="rs-title">能力雷达</text>
+          <text class="rs-deco">◆</text>
+          <view class="rs-title-line"></view>
+        </view>
+        <view class="radar-faction-tabs">
+          <view class="radar-tab {{radarFaction === 'good' ? 'radar-tab-active-good' : ''}}" data-faction="good" bindtap="onSwitchRadar">正义</view>
+          <view class="radar-tab {{radarFaction === 'evil' ? 'radar-tab-active-evil' : ''}}" data-faction="evil" bindtap="onSwitchRadar">邪恶</view>
+        </view>
+        <view class="radar-canvas-wrap">
+          <canvas id="radarCanvas" type="2d" class="radar-canvas" style="width:320px;height:320px;"></canvas>
+        </view>
+      </view>
+
+      <!-- ── 搭档称号 ── -->
+      <view class="pf rs-section" wx:if="{{partnerTitles.length}}">
+        <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+        <view class="fb fb-left"></view><view class="fb fb-right"></view>
+        <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+        <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+        <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+        <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+        <view class="rs-title-row">
+          <view class="rs-title-line"></view>
+          <text class="rs-deco">◆</text>
+          <text class="rs-title">搭档称号</text>
+          <text class="rs-deco">◆</text>
+          <view class="rs-title-line"></view>
+        </view>
+        <scroll-view scroll-x class="title-scroll">
+          <view class="title-cards">
+            <view class="title-card" wx:for="{{partnerTitles}}" wx:key="type">
+              <text class="title-label">{{item.label}}</text>
+              <image class="title-avatar-img" wx:if="{{item.avatarImage}}" src="{{item.avatarImage}}" mode="aspectFill" />
+              <text class="title-avatar-text" wx:else>{{item.avatarText}}</text>
+              <text class="title-nickname">{{item.nickname}}</text>
+              <text class="title-stat">胜率 {{item.winRate}}% · {{item.games}}局</text>
+            </view>
+          </view>
+        </scroll-view>
+      </view>
+
+      <!-- ── 搭档数据 ── -->
+      <view class="pf rs-section" wx:if="{{partnerMatrix.length}}">
+        <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+        <view class="fb fb-left"></view><view class="fb fb-right"></view>
+        <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+        <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+        <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+        <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+        <view class="rs-title-row">
+          <view class="rs-title-line"></view>
+          <text class="rs-deco">◆</text>
+          <text class="rs-title">搭档数据</text>
+          <text class="rs-deco">◆</text>
+          <view class="rs-title-line"></view>
+        </view>
+        <view class="partner-list">
+          <view class="partner-row" wx:for="{{partnerMatrix}}" wx:key="phone" bindtap="onTogglePartner" data-phone="{{item.phone}}">
+            <view class="partner-summary">
+              <image class="partner-avatar-img" wx:if="{{item.avatarImage}}" src="{{item.avatarImage}}" mode="aspectFill" />
+              <text class="partner-avatar-text" wx:else>{{item.avatarText}}</text>
+              <text class="partner-name">{{item.nickname}}</text>
+              <text class="partner-games">{{item.games}}局</text>
+              <view class="partner-bar-wrap">
+                <view class="partner-bar" style="width:{{item.winRate}}%"></view>
+              </view>
+              <text class="partner-rate">{{item.winRate}}%</text>
+            </view>
+            <view class="partner-detail" wx:if="{{expandedPartner === item.phone}}">
+              <view class="partner-detail-row">
+                <text class="pd-label">同为正义</text>
+                <text class="pd-value">{{item.sameGood || 0}}局 · 胜率 {{item.sameGoodRate || 0}}%</text>
+              </view>
+              <view class="partner-detail-row">
+                <text class="pd-label">同为邪恶</text>
+                <text class="pd-value">{{item.sameEvil || 0}}局 · 胜率 {{item.sameEvilRate || 0}}%</text>
+              </view>
+              <view class="partner-detail-row">
+                <text class="pd-label">互为对手</text>
+                <text class="pd-value">{{item.opponent || 0}}局 · 胜率 {{item.opponentRate || 0}}%</text>
+              </view>
+              <view class="partner-combos" wx:if="{{item.topCombos && item.topCombos.length}}">
+                <text class="pd-label">常见组合</text>
+                <view class="combo-tags">
+                  <text class="combo-tag" wx:for="{{item.topCombos}}" wx:for-item="combo" wx:key="*this">{{combo}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- ── Detail Tabs ── -->
+      <view class="detail-tabs">
+        <view class="detail-tab {{detailTab === 'roles' ? 'detail-tab-active' : ''}}" data-tab="roles" bindtap="onSwitchDetailTab">角色统计</view>
+        <view class="detail-tab {{detailTab === 'medals' ? 'detail-tab-active' : ''}}" data-tab="medals" bindtap="onSwitchDetailTab">勋章墙</view>
+      </view>
+
+      <!-- ── 角色统计 (tab) ── -->
+      <view class="pf rs-section rs-section-flush" wx:if="{{detailTab === 'roles'}}">
+        <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+        <view class="fb fb-left"></view><view class="fb fb-right"></view>
+        <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+        <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+        <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+        <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+        <view class="rs-title-row">
+          <view class="rs-title-line"></view>
+          <text class="rs-deco">◆</text>
+          <text class="rs-title">角色统计</text>
+          <text class="rs-deco">◆</text>
+          <view class="rs-title-line"></view>
         </view>
         <view class="role-grid">
           <view class="role-card" wx:for="{{statsList}}" wx:key="role">
@@ -107,35 +246,89 @@
         </view>
       </view>
 
-      <!-- ── 勋章统计 ── -->
-      <view class="panel" wx:if="{{goodMedals.length || evilMedals.length}}">
-        <view class="panel-header">
-          <text class="panel-title">勋章统计</text>
-          <text class="panel-subtitle">共 {{medalTotal}} 枚</text>
-        </view>
-        <view class="medal-section">
-          <text class="medal-section-title good">正义勋章</text>
-          <view class="medal-grid">
-            <view class="medal-card {{item.total > 0 ? '' : 'medal-zero'}}" wx:for="{{goodMedals}}" wx:key="code" catchtap="onTapMedal" data-name="{{item.name}}" data-description="{{item.description}}">
-              <image class="medal-img" wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFit" />
-              <text class="medal-emoji" wx:else>🏅</text>
-              <text class="medal-name">{{item.name}}</text>
-              <text class="medal-count">{{item.total}}</text>
+      <!-- ── 勋章墙 (tab) ── -->
+      <block wx:if="{{detailTab === 'medals'}}">
+        <!-- 正义勋章 -->
+        <view class="pf rs-section" wx:if="{{goodMedals.length}}">
+          <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+          <view class="fb fb-left"></view><view class="fb fb-right"></view>
+          <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+          <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+          <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+          <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+          <view class="rs-title-row">
+            <view class="rs-title-line"></view>
+            <text class="rs-deco">◆</text>
+            <text class="rs-title">正义勋章</text>
+            <text class="rs-deco">◆</text>
+            <view class="rs-title-line"></view>
+          </view>
+          <view class="medal-section">
+            <view class="medal-grid">
+              <view class="medal-card {{item.total > 0 ? '' : 'medal-zero'}}" wx:for="{{goodMedals}}" wx:key="code" catchtap="onTapMedal" data-name="{{item.name}}" data-description="{{item.description}}">
+                <image class="medal-img" wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFit" />
+                <text class="medal-emoji" wx:else>🏅</text>
+                <text class="medal-name">{{item.name}}</text>
+                <text class="medal-count">{{item.total}}</text>
+              </view>
             </view>
           </view>
         </view>
-        <view class="medal-section medal-section-sep">
-          <text class="medal-section-title evil">邪恶勋章</text>
-          <view class="medal-grid">
-            <view class="medal-card {{item.total > 0 ? '' : 'medal-zero'}}" wx:for="{{evilMedals}}" wx:key="code" catchtap="onTapMedal" data-name="{{item.name}}" data-description="{{item.description}}">
-              <image class="medal-img" wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFit" />
-              <text class="medal-emoji" wx:else>🏅</text>
-              <text class="medal-name">{{item.name}}</text>
-              <text class="medal-count">{{item.total}}</text>
+
+        <!-- 邪恶勋章 -->
+        <view class="pf rs-section" wx:if="{{evilMedals.length}}">
+          <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+          <view class="fb fb-left"></view><view class="fb fb-right"></view>
+          <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+          <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+          <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+          <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+          <view class="rs-title-row">
+            <view class="rs-title-line"></view>
+            <text class="rs-deco">◆</text>
+            <text class="rs-title">邪恶勋章</text>
+            <text class="rs-deco">◆</text>
+            <view class="rs-title-line"></view>
+          </view>
+          <view class="medal-section">
+            <view class="medal-grid">
+              <view class="medal-card {{item.total > 0 ? '' : 'medal-zero'}}" wx:for="{{evilMedals}}" wx:key="code" catchtap="onTapMedal" data-name="{{item.name}}" data-description="{{item.description}}">
+                <image class="medal-img" wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFit" />
+                <text class="medal-emoji" wx:else>🏅</text>
+                <text class="medal-name">{{item.name}}</text>
+                <text class="medal-count">{{item.total}}</text>
+              </view>
             </view>
           </view>
         </view>
-      </view>
+
+        <!-- 角色专属勋章 -->
+        <view class="pf rs-section" wx:if="{{roleMedals.length}}">
+          <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+          <view class="fb fb-left"></view><view class="fb fb-right"></view>
+          <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+          <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+          <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+          <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+          <view class="rs-title-row">
+            <view class="rs-title-line"></view>
+            <text class="rs-deco">◆</text>
+            <text class="rs-title">角色专属</text>
+            <text class="rs-deco">◆</text>
+            <view class="rs-title-line"></view>
+          </view>
+          <view class="medal-section">
+            <view class="medal-grid">
+              <view class="medal-card {{item.total > 0 ? '' : 'medal-zero'}}" wx:for="{{roleMedals}}" wx:key="code" catchtap="onTapMedal" data-name="{{item.name}}" data-description="{{item.description}}">
+                <image class="medal-img" wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFit" />
+                <text class="medal-emoji" wx:else>🏅</text>
+                <text class="medal-name">{{item.name}}</text>
+                <text class="medal-count">{{item.total}}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </block>
 
     </block>
   </view>

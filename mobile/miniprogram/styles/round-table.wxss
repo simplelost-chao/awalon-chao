@@ -1,0 +1,235 @@
+/* ─── 圆桌共享样式 (游戏内 + 历史详情共用) ─────────────── */
+
+.table-wrap {
+  position: relative;
+  height: 780rpx;
+  margin-top: 14rpx;
+  margin-bottom: -70rpx;
+  width: auto;
+  overflow: visible;
+}
+
+.table-bg-img {
+  position: absolute;
+  width: 620rpx;
+  height: 620rpx;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* ── 座位卡片 ── */
+.seat-card {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 120rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6rpx;
+  overflow: visible;
+}
+
+/* 头像区域 */
+.seat-avatar-wrap {
+  position: relative;
+  width: 84rpx;
+  height: 84rpx;
+  flex-shrink: 0;
+  overflow: visible;
+}
+
+.seat-avatar {
+  width: 84rpx;
+  height: 84rpx;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 11, 8, 0.55);
+  border: 2rpx solid rgba(255, 255, 255, 0.18);
+  position: relative;
+  z-index: 2;
+}
+
+.seat-avatar-text {
+  font-size: 40rpx;
+  line-height: 1;
+}
+
+/* 座位编号徽标 */
+.seat-no {
+  position: absolute;
+  right: -10rpx;
+  bottom: -4rpx;
+  min-width: 30rpx;
+  height: 30rpx;
+  padding: 0 8rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18rpx;
+  font-weight: 700;
+  color: #e6c17d;
+  background: rgba(10, 8, 20, 0.95);
+  border: 1rpx solid rgba(180, 140, 60, 0.42);
+  z-index: 5;
+  line-height: 1;
+  box-sizing: border-box;
+}
+
+/* 刀图标 */
+.seat-killed-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-32%, -62%) rotate(-20deg);
+  width: 100rpx;
+  height: 100rpx;
+  pointer-events: none;
+  opacity: 0.92;
+  z-index: 10;
+}
+
+/* 阵营光晕 */
+.seat-card.rev-good .seat-avatar {
+  border-color: rgba(78, 158, 255, 0.85);
+  box-shadow: 0 0 28rpx rgba(78, 158, 255, 0.45);
+  background: rgba(7, 50, 120, 0.88);
+}
+
+.seat-card.rev-evil .seat-avatar {
+  border-color: rgba(220, 60, 60, 0.8);
+  box-shadow: 0 0 24rpx rgba(200, 40, 40, 0.38);
+  background: rgba(35, 6, 6, 0.92);
+}
+
+.seat-card.rev-merlin .seat-avatar {
+  border-color: rgba(180, 130, 255, 0.85);
+  box-shadow: 0 0 28rpx rgba(160, 100, 255, 0.45);
+  background: rgba(25, 12, 55, 0.9);
+}
+
+/* 被刺杀：头像半透明，kill图标已能表达 */
+.seat-card.seat-assassinated .seat-avatar {
+  opacity: 0.72;
+}
+
+/* 昵称 */
+.seat-name {
+  font-size: 20rpx;
+  color: #d0d8e8;
+  max-width: 120rpx;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  line-height: 1.3;
+}
+
+/* 角色 pill */
+.seat-role-pill {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  max-width: 140rpx;
+  padding: 4rpx 10rpx;
+  border-radius: 999rpx;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.seat-card.rev-good .seat-role-pill {
+  background: rgba(7, 50, 120, 0.55);
+  border: 1rpx solid rgba(78, 158, 255, 0.45);
+}
+
+.seat-card.rev-evil .seat-role-pill {
+  background: rgba(110, 12, 12, 0.6);
+  border: 1rpx solid rgba(220, 60, 60, 0.4);
+}
+
+.seat-card.rev-merlin .seat-role-pill {
+  background: rgba(80, 30, 150, 0.55);
+  border-color: rgba(180, 130, 255, 0.4);
+}
+
+.seat-role {
+  font-size: 20rpx;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.seat-card.rev-good .seat-role { color: #bfdbfe; }
+.seat-card.rev-evil .seat-role { color: #fca5a5; }
+.seat-card.rev-merlin .seat-role { color: #d4aaff; }
+
+.seat-card.rev-good .seat-name { color: rgba(191, 219, 254, 0.92); }
+.seat-card.rev-evil .seat-name { color: rgba(255, 175, 175, 0.92); }
+.seat-card.rev-merlin .seat-name { color: rgba(220, 190, 255, 0.95); }
+
+/* ── 青云仙境主题：圆桌组件亮色适配 ────────────────────── */
+.theme-celestial .seat-avatar {
+  background: rgba(255, 245, 220, 0.80);
+  border-color: rgba(196, 158, 72, 0.50);
+}
+
+.theme-celestial .seat-no {
+  background: rgba(196, 140, 30, 0.92);
+  color: #fff8ec;
+  border-color: rgba(220, 175, 80, 0.60);
+}
+
+.theme-celestial .seat-name {
+  color: #3a2408;
+}
+
+.theme-celestial .seat-role {
+  color: #2c1a08;
+}
+
+.theme-celestial .seat-card.rev-good .seat-avatar {
+  border-color: rgba(40, 120, 200, 0.75);
+  box-shadow: 0 0 20rpx rgba(40, 120, 200, 0.30);
+  background: rgba(220, 238, 255, 0.70);
+}
+
+.theme-celestial .seat-card.rev-evil .seat-avatar {
+  border-color: rgba(200, 60, 60, 0.75);
+  box-shadow: 0 0 20rpx rgba(200, 60, 60, 0.28);
+  background: rgba(255, 225, 220, 0.70);
+}
+
+.theme-celestial .seat-card.rev-merlin .seat-avatar {
+  border-color: rgba(140, 90, 200, 0.75);
+  box-shadow: 0 0 20rpx rgba(140, 90, 200, 0.30);
+  background: rgba(240, 228, 255, 0.70);
+}
+
+.theme-celestial .seat-card.rev-good .seat-role-pill {
+  background: rgba(210, 232, 255, 0.70);
+  border-color: rgba(40, 120, 200, 0.35);
+}
+
+.theme-celestial .seat-card.rev-evil .seat-role-pill {
+  background: rgba(255, 220, 218, 0.70);
+  border-color: rgba(200, 60, 60, 0.30);
+}
+
+.theme-celestial .seat-card.rev-merlin .seat-role-pill {
+  background: rgba(238, 225, 255, 0.70);
+  border-color: rgba(140, 90, 200, 0.30);
+}
+
+.theme-celestial .seat-card.rev-good .seat-role { color: #1a4a8a; }
+.theme-celestial .seat-card.rev-evil .seat-role { color: #8a1a1a; }
+.theme-celestial .seat-card.rev-merlin .seat-role { color: #5a1a8a; }
+
+.theme-celestial .seat-card.rev-good .seat-name { color: rgba(26, 74, 138, 0.90); }
+.theme-celestial .seat-card.rev-evil .seat-name { color: rgba(138, 26, 26, 0.90); }
+.theme-celestial .seat-card.rev-merlin .seat-name { color: rgba(90, 26, 138, 0.90); }

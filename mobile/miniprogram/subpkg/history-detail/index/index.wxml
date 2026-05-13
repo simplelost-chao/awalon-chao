@@ -13,7 +13,12 @@
 
       <!-- ── 游戏头部 ── -->
       <view class="ghc {{myFactionClass}} {{myResultClass}}">
-        <view class="ghc-top-bar"></view>
+        <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+        <view class="fb fb-left"></view><view class="fb fb-right"></view>
+        <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+        <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+        <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+        <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
         <text class="ghc-watermark">{{historyDetail.myResult==='win'?'胜利':historyDetail.myResult==='lose'?'失败':'观战'}}</text>
 
         <view class="ghc-body">
@@ -45,19 +50,19 @@
               <text class="ghc-player-name ghc-spectator-name" wx:else>观战记录</text>
               <view class="ghc-meta-grid">
                 <view class="ghc-meta-item">
-                  <text class="ghc-meta-icon">🏠</text>
+                  <image class="ghc-meta-icon" src="https://www.awalon.top/mp-assets/icons/meta-room.svg" mode="aspectFit"/>
                   <text class="ghc-meta-val">房间 {{historyDetail.detail.roomCode}}</text>
                 </view>
                 <view class="ghc-meta-item">
-                  <text class="ghc-meta-icon">👥</text>
+                  <image class="ghc-meta-icon" src="https://www.awalon.top/mp-assets/icons/meta-players.svg" mode="aspectFit"/>
                   <text class="ghc-meta-val">{{historyDetail.detail.maxPlayers}} 人局</text>
                 </view>
                 <view class="ghc-meta-item" wx:if="{{historyDetail.myResult!=='spectator'}}">
-                  <text class="ghc-meta-icon">🪑</text>
+                  <image class="ghc-meta-icon" src="https://www.awalon.top/mp-assets/icons/meta-seat.svg" mode="aspectFit"/>
                   <text class="ghc-meta-val">{{historyDetail.mySeat}} 号座位</text>
                 </view>
                 <view class="ghc-meta-item">
-                  <text class="ghc-meta-icon">⚔️</text>
+                  <image class="ghc-meta-icon" src="https://www.awalon.top/mp-assets/icons/meta-sword.svg" mode="aspectFit"/>
                   <text class="ghc-meta-val ghc-winner-val ghc-winner-{{winnerClass}}">{{winnerText}}</text>
                 </view>
               </view>
@@ -76,16 +81,25 @@
             <text class="medal-chip-name">{{item.name}}</text>
           </view>
         </view>
-        <view class="ghc-bottom-bar"></view>
       </view>
 
       <!-- ── 圆桌回放 ── -->
-      <view class="panel" style="overflow:visible;">
-        <view class="section-header">
-          <text class="section-title">圆桌回放</text>
+      <view class="pf hd-section" style="overflow:visible; margin-top:18rpx;">
+        <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+        <view class="fb fb-left"></view><view class="fb fb-right"></view>
+        <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+        <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+        <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+        <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+        <view class="hd-title-row">
+          <view class="hd-title-line"></view>
+          <text class="hd-deco">◆</text>
+          <text class="hd-title">圆桌回放</text>
+          <text class="hd-deco">◆</text>
+          <view class="hd-title-line"></view>
         </view>
         <view class="table-wrap">
-          <image class="table-bg-img" src="https://awalon.top/mp-assets/table.png" mode="aspectFill" />
+          <image class="table-bg-img" src="{{skinTableUrl}}" mode="aspectFill" />
           <view class="center-result {{winnerClass}}">
             <text class="center-title">{{winnerText}}</text>
             <text class="center-reason" wx:if="{{winnerReason}}">{{winnerReason}}</text>
@@ -112,32 +126,34 @@
         </view>
       </view>
 
-      <!-- ── 任务进度 ── -->
-      <view class="panel" wx:if="{{missionPills.length}}">
-        <view class="section-header">
-          <text class="section-title">任务进度</text>
-        </view>
+      <!-- ── 任务进度（组件自带 pf 框架） ── -->
+      <view class="hd-comp-wrap" wx:if="{{missionPills.length}}">
         <mission-pills pills="{{missionPills}}" />
       </view>
 
-      <!-- ── 任务详情 ── -->
-      <view class="panel">
-        <view class="section-header">
-          <text class="section-title">任务详情</text>
-        </view>
+      <!-- ── 任务详情（组件自带 pf 框架） ── -->
+      <view class="hd-comp-wrap">
         <mission-table rows="{{missionRows}}" />
       </view>
 
       <!-- ── 发言记录 ── -->
-      <view class="panel" wx:if="{{speakRows.length}}">
-        <view class="section-header">
-          <view class="speak-title-wrap">
-            <text class="section-title">发言记录</text>
-            <view class="speak-inline-pager">
-              <view class="speak-inline-btn {{speakPageIdx <= 0 ? 'speak-inline-disabled' : ''}}" bindtap="onSpeakPrev">‹</view>
-              <text class="speak-title-round" wx:if="{{currentSpeakRow}}">{{currentSpeakRow.label}}</text>
-              <view class="speak-inline-btn {{speakPageIdx >= speakRows.length - 1 ? 'speak-inline-disabled' : ''}}" bindtap="onSpeakNext">›</view>
-            </view>
+      <view class="pf hd-section" wx:if="{{speakRows.length}}" style="margin-top:18rpx;">
+        <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+        <view class="fb fb-left"></view><view class="fb fb-right"></view>
+        <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+        <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+        <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+        <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+        <view class="hd-title-row">
+          <view class="hd-title-line"></view>
+          <text class="hd-deco">◆</text>
+          <text class="hd-title">发言记录</text>
+          <text class="hd-deco">◆</text>
+          <view class="hd-title-line hd-title-line-short"></view>
+          <view class="speak-inline-pager">
+            <view class="speak-inline-btn {{speakPageIdx <= 0 ? 'speak-inline-disabled' : ''}}" bindtap="onSpeakPrev">‹</view>
+            <text class="speak-title-round" wx:if="{{currentSpeakRow}}">{{currentSpeakRow.label}}</text>
+            <view class="speak-inline-btn {{speakPageIdx >= speakRows.length - 1 ? 'speak-inline-disabled' : ''}}" bindtap="onSpeakNext">›</view>
           </view>
         </view>
         <view class="section-body">
@@ -146,12 +162,29 @@
       </view>
 
       <!-- ── AI 复盘 ── -->
-      <view class="panel" wx:if="{{recapRows.length || recapGenerating || !loading}}">
-        <view class="section-header">
-          <text class="section-title">AI 复盘</text>
+      <view class="pf hd-section" wx:if="{{recapRows.length || recapGenerating || !loading}}" style="margin-top:18rpx;">
+        <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+        <view class="fb fb-left"></view><view class="fb fb-right"></view>
+        <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+        <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+        <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+        <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+        <view class="hd-title-row">
+          <view class="hd-title-line"></view>
+          <text class="hd-deco">◆</text>
+          <text class="hd-title">AI 复盘</text>
+          <text class="hd-deco">◆</text>
+          <view class="hd-title-line"></view>
         </view>
-        <button wx:if="{{!recapRows.length && !recapGenerating}}" class="btn ghost recap-gen-btn" bindtap="onRequestHistoryRecap">生成复盘</button>
-        <button wx:elif="{{recapGenerating}}" class="btn ghost recap-gen-btn recap-gen-pending" disabled>正在复盘中...</button>
+
+        <!-- 生成按钮（cf 斜切角风格） -->
+        <view wx:if="{{!recapRows.length && !recapGenerating}}" class="hd-gen-btn" bindtap="onRequestHistoryRecap">
+          <view class="hd-gen-btn-inner"><text class="hd-gen-btn-txt">生成复盘</text></view>
+        </view>
+        <view wx:elif="{{recapGenerating}}" class="hd-gen-btn hd-gen-btn-pending">
+          <view class="hd-gen-btn-inner"><text class="hd-gen-btn-txt">正在复盘中...</text></view>
+        </view>
+
         <view class="recap-card" wx:for="{{recapRows}}" wx:key="key" bindtap="onToggleRecap" data-key="{{item.key}}">
           <view class="recap-header">
             <text class="recap-seat">{{item.seat}}号</text>

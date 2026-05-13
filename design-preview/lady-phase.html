@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>验人阶段 · 设计预览</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Ma+Shan+Zheng&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --teal:     #5bc8d8;
+    --teal-dim: rgba(91,200,216,0.18);
+    --teal-glow:rgba(91,200,216,0.45);
+    --aqua:     #a5f3f0;
+    --dark:     #0c1520;
+    --panel:    rgba(10,22,38,0.92);
+    --border:   rgba(91,200,216,0.25);
+    --text-hi:  #e6f4f8;
+    --text-lo:  rgba(160,200,220,0.65);
+  }
+
+  body {
+    background: #0a111c;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 48px;
+    padding: 48px 24px;
+    font-family: 'Noto Serif SC', serif;
+  }
+
+  h2 {
+    color: var(--text-lo);
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-family: monospace;
+  }
+
+  /* ─── COMPONENT WRAPPER ─── */
+  .lady-panel {
+    width: 360px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* subtle background water texture */
+  .lady-panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 40% at 50% 110%, rgba(91,200,216,0.07) 0%, transparent 70%),
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 28px,
+        rgba(91,200,216,0.025) 29px
+      );
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ─── HEADER ─── */
+  .lady-header {
+    position: relative;
+    z-index: 1;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid rgba(91,200,216,0.15);
+  }
+
+  .lady-header-bar {
+    width: 3px;
+    height: 18px;
+    background: linear-gradient(to bottom, var(--teal), rgba(91,200,216,0.3));
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .lady-header-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-hi);
+    letter-spacing: 1px;
+  }
+
+  .lady-header-icon {
+    margin-left: auto;
+    font-size: 16px;
+    opacity: 0.7;
+    animation: float-icon 4s ease-in-out infinite;
+  }
+
+  @keyframes float-icon {
+    0%,100% { transform: translateY(0); opacity: 0.7; }
+    50%      { transform: translateY(-3px); opacity: 1; }
+  }
+
+  /* ─── CURRENT PLAYER CARD ─── */
+  .lady-body {
+    position: relative;
+    z-index: 1;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .lady-scry-card {
+    position: relative;
+    padding: 18px 20px;
+    border-radius: 12px;
+    background: rgba(91,200,216,0.07);
+    border: 1px solid rgba(91,200,216,0.3);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  /* ripple glow at bottom */
+  .lady-scry-card::after {
+    content: '';
+    position: absolute;
+    bottom: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 180px;
+    height: 36px;
+    background: radial-gradient(ellipse, rgba(91,200,216,0.28) 0%, transparent 70%);
+    animation: ripple-glow 3s ease-in-out infinite;
+  }
+
+  @keyframes ripple-glow {
+    0%,100% { opacity: 0.6; transform: translateX(-50%) scaleX(1); }
+    50%      { opacity: 1;   transform: translateX(-50%) scaleX(1.15); }
+  }
+
+  /* scan line sweep */
+  .lady-scry-card::before {
+    content: '';
+    position: absolute;
+    top: -100%;
+    left: 0;
+    right: 0;
+    height: 60%;
+    background: linear-gradient(to bottom, transparent, rgba(91,200,216,0.04), transparent);
+    animation: scan-sweep 4s linear infinite;
+  }
+
+  @keyframes scan-sweep {
+    0%   { top: -60%; }
+    100% { top: 120%; }
+  }
+
+  .lady-scry-label {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--teal);
+    opacity: 0.75;
+    text-transform: uppercase;
+  }
+
+  .lady-scry-name {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--aqua);
+    letter-spacing: 0.5px;
+    text-shadow: 0 0 20px rgba(91,200,216,0.6), 0 0 40px rgba(91,200,216,0.2);
+    animation: name-pulse 3s ease-in-out infinite;
+    position: relative;
+    z-index: 1;
+  }
+
+  @keyframes name-pulse {
+    0%,100% { text-shadow: 0 0 20px rgba(91,200,216,0.6), 0 0 40px rgba(91,200,216,0.2); }
+    50%      { text-shadow: 0 0 28px rgba(91,200,216,0.9), 0 0 56px rgba(91,200,216,0.35); }
+  }
+
+  /* ─── HISTORY LIST ─── */
+  .lady-history {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .lady-history-head {
+    padding: 7px 14px;
+    background: rgba(255,255,255,0.04);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--text-lo);
+    text-transform: uppercase;
+  }
+
+  .lady-history-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 14px;
+    background: rgba(0,0,0,0.15);
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    animation: row-appear 0.4s ease both;
+  }
+
+  .lady-history-row:last-child { border-bottom: none; }
+
+  @keyframes row-appear {
+    from { opacity: 0; transform: translateX(-6px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  .lady-history-round {
+    font-size: 10px;
+    color: rgba(91,200,216,0.55);
+    letter-spacing: 1px;
+    flex-shrink: 0;
+    width: 36px;
+  }
+
+  .lady-history-arrow {
+    width: 16px;
+    height: 1px;
+    background: linear-gradient(to right, rgba(91,200,216,0.3), rgba(91,200,216,0.6));
+    flex-shrink: 0;
+    position: relative;
+  }
+  .lady-history-arrow::after {
+    content: '';
+    position: absolute;
+    right: -1px; top: -2px;
+    border: 3px solid transparent;
+    border-left: 4px solid rgba(91,200,216,0.6);
+  }
+
+  .lady-history-holder {
+    font-size: 13px;
+    color: var(--text-lo);
+    flex-shrink: 0;
+  }
+
+  .lady-history-target {
+    font-size: 13px;
+    color: #d9e8f0;
+    font-weight: 600;
+  }
+
+  /* ─── ACTION HINT ─── */
+  .lady-action {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 1px dashed rgba(91,200,216,0.3);
+    background: rgba(91,200,216,0.05);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .lady-action.is-mine {
+    border-color: rgba(91,200,216,0.55);
+    background: rgba(91,200,216,0.09);
+  }
+
+  /* corner accent */
+  .lady-action.is-mine::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 32px; height: 2px;
+    background: var(--teal);
+    border-radius: 0 0 2px 0;
+  }
+  .lady-action.is-mine::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 2px; height: 32px;
+    background: var(--teal);
+    border-radius: 0 0 2px 0;
+  }
+
+  .lady-action-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--teal);
+    flex-shrink: 0;
+    box-shadow: 0 0 6px var(--teal-glow);
+  }
+
+  .is-mine .lady-action-dot {
+    animation: dot-ping 1.6s ease-in-out infinite;
+  }
+
+  @keyframes dot-ping {
+    0%,100% { transform: scale(1); box-shadow: 0 0 6px var(--teal-glow); }
+    50%      { transform: scale(1.4); box-shadow: 0 0 14px var(--teal-glow), 0 0 24px rgba(91,200,216,0.3); }
+  }
+
+  .lady-action-text {
+    font-size: 13px;
+    color: rgba(160,200,220,0.8);
+    line-height: 1.4;
+  }
+
+  .is-mine .lady-action-text {
+    color: var(--aqua);
+  }
+
+  /* ─── PREVIEW VARIANTS ─── */
+  .preview-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .preview-label {
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: rgba(91,200,216,0.5);
+    font-family: monospace;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+<h2>验人阶段 · 设计预览</h2>
+
+<!-- VARIANT A: 轮到自己验人 -->
+<div class="preview-group">
+  <div class="preview-label">▸ 轮到自己操作</div>
+  <div class="lady-panel">
+    <div class="lady-header">
+      <div class="lady-header-bar"></div>
+      <span class="lady-header-title">验人阶段</span>
+      <span class="lady-header-icon">🦋</span>
+    </div>
+    <div class="lady-body">
+      <!-- 当前验人玩家 -->
+      <div class="lady-scry-card">
+        <span class="lady-scry-label">当前验人</span>
+        <span class="lady-scry-name">2号 · CHAO</span>
+      </div>
+      <!-- 历史 -->
+      <div class="lady-history">
+        <div class="lady-history-head">验人记录</div>
+        <div class="lady-history-row" style="animation-delay:.05s">
+          <span class="lady-history-round">第1轮</span>
+          <div class="lady-history-arrow"></div>
+          <span class="lady-history-holder">ALICE</span>
+          <div class="lady-history-arrow"></div>
+          <span class="lady-history-target">BOB</span>
+        </div>
+        <div class="lady-history-row" style="animation-delay:.1s">
+          <span class="lady-history-round">第2轮</span>
+          <div class="lady-history-arrow"></div>
+          <span class="lady-history-holder">BOB</span>
+          <div class="lady-history-arrow"></div>
+          <span class="lady-history-target">CHAO</span>
+        </div>
+      </div>
+      <!-- 操作提示 -->
+      <div class="lady-action is-mine">
+        <div class="lady-action-dot"></div>
+        <span class="lady-action-text">点击圆桌上的目标玩家进行验人</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VARIANT B: 等待他人 -->
+<div class="preview-group">
+  <div class="preview-label">▸ 等待他人操作</div>
+  <div class="lady-panel">
+    <div class="lady-header">
+      <div class="lady-header-bar"></div>
+      <span class="lady-header-title">验人阶段</span>
+      <span class="lady-header-icon">🦋</span>
+    </div>
+    <div class="lady-body">
+      <div class="lady-scry-card">
+        <span class="lady-scry-label">当前验人</span>
+        <span class="lady-scry-name">2号 · CHAO</span>
+      </div>
+      <div class="lady-action">
+        <div class="lady-action-dot" style="background:rgba(160,200,220,0.4);box-shadow:none;animation:none;"></div>
+        <span class="lady-action-text">等待 CHAO 选择目标…</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VARIANT C: 无历史 -->
+<div class="preview-group">
+  <div class="preview-label">▸ 第一轮（无历史）</div>
+  <div class="lady-panel">
+    <div class="lady-header">
+      <div class="lady-header-bar"></div>
+      <span class="lady-header-title">验人阶段</span>
+      <span class="lady-header-icon">🦋</span>
+    </div>
+    <div class="lady-body">
+      <div class="lady-scry-card">
+        <span class="lady-scry-label">当前验人</span>
+        <span class="lady-scry-name">5号 · ELLIE</span>
+      </div>
+      <div class="lady-action is-mine">
+        <div class="lady-action-dot"></div>
+        <span class="lady-action-text">点击圆桌上的目标玩家进行验人</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
