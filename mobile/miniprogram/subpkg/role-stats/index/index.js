@@ -276,7 +276,7 @@ Page({
       golden: '黄金搭档', bestWolf: '最佳狼队友', bestKnight: '最佳骑士搭档',
       bestMerlinPerci: '最佳梅林&派西', nemesis: '天生冤家', worstTeammate: '最坑队友',
     };
-    return partners.titles.filter(t => t.phone).map(t => {
+    return partners.titles.map(t => {
       const isUrl = t.avatar && (t.avatar.startsWith('http') || t.avatar.startsWith('/'));
       return { ...t, label: TITLE_LABELS[t.type] || t.type, avatarImage: isUrl ? t.avatar : '', avatarText: isUrl ? '' : (t.avatar || '🐺') };
     });

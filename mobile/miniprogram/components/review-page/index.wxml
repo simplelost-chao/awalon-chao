@@ -151,20 +151,17 @@
     <!-- 研究图 -->
     <view class="rv-section-title">游戏状态表示</view>
     <view class="rv-paper-card">
-      <image class="rv-paper-img" src="https://www.awalon.top/mp-assets/research/game_states.png" mode="widthFix" />
-      <text class="rv-paper-caption">图：游戏上下文可从全局视角（绿色）或轮次视角（黄色）表示，后者携带跨轮次的角色信念推断。来源：Stepputtis et al., EMNLP 2023</text>
+      <text class="rv-paper-caption">游戏上下文可从全局视角或轮次视角表示，后者携带跨轮次的角色信念推断。来源：Stepputtis et al., EMNLP 2023</text>
     </view>
 
     <view class="rv-section-title">LLM 角色识别表现</view>
     <view class="rv-paper-card">
-      <image class="rv-paper-img" src="https://www.awalon.top/mp-assets/research/role_prediction.png" mode="widthFix" />
-      <text class="rv-paper-caption">图：GPT-4、GPT-3.5 及 Llama-2 在角色预测任务上的表现均未达到人类水平，表明长链对话中的欺骗推理对当前 LLM 仍具挑战性。</text>
+      <text class="rv-paper-caption">GPT-4、GPT-3.5 及 Llama-2 在角色预测任务上的表现均未达到人类水平，表明长链对话中的欺骗推理对当前 LLM 仍具挑战性。</text>
     </view>
 
     <view class="rv-section-title">对局对话示例</view>
     <view class="rv-paper-card">
-      <image class="rv-paper-img" src="https://www.awalon.top/mp-assets/research/chat_example.png" mode="widthFix" />
-      <text class="rv-paper-caption">图：数据集对局示例，包含玩家发言、劝说策略标注与欺骗行为标记，共收录 20 局、2384 条发言。</text>
+      <text class="rv-paper-caption">数据集对局示例，包含玩家发言、劝说策略标注与欺骗行为标记，共收录 20 局、2384 条发言。</text>
     </view>
 
     <!-- 角色体系 -->

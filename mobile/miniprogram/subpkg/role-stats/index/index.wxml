@@ -130,7 +130,7 @@
       </view>
 
       <!-- ── 搭档称号 ── -->
-      <view class="pf rs-section" wx:if="{{partnerTitles.length}}">
+      <view class="pf rs-section">
         <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
         <view class="fb fb-left"></view><view class="fb fb-right"></view>
         <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
@@ -144,69 +144,29 @@
           <text class="rs-deco">◆</text>
           <view class="rs-title-line"></view>
         </view>
-        <scroll-view scroll-x class="title-scroll">
+        <scroll-view scroll-x class="title-scroll" wx:if="{{partnerTitles.length}}">
           <view class="title-cards">
             <view class="title-card" wx:for="{{partnerTitles}}" wx:key="type">
               <text class="title-label">{{item.label}}</text>
-              <image class="title-avatar-img" wx:if="{{item.avatarImage}}" src="{{item.avatarImage}}" mode="aspectFill" />
-              <text class="title-avatar-text" wx:else>{{item.avatarText}}</text>
-              <text class="title-nickname">{{item.nickname}}</text>
-              <text class="title-stat">胜率 {{item.winRate}}% · {{item.games}}局</text>
+              <block wx:if="{{item.nickname}}">
+                <image class="title-avatar-img" wx:if="{{item.avatarImage}}" src="{{item.avatarImage}}" mode="aspectFill" />
+                <text class="title-avatar-text" wx:else>{{item.avatarText}}</text>
+                <text class="title-nickname">{{item.nickname}}</text>
+                <text class="title-stat">胜率 {{item.winRate}}% · {{item.games}}局</text>
+              </block>
+              <block wx:else>
+                <text class="title-avatar-text">?</text>
+                <text class="title-nickname title-empty">局数不足</text>
+              </block>
             </view>
           </view>
         </scroll-view>
+        <view class="partner-empty-tip" wx:if="{{!partnerTitles.length}}">
+          <text class="partner-empty-text">多和好友一起玩，就能看到搭档称号啦</text>
+        </view>
       </view>
 
-      <!-- ── 搭档数据 ── -->
-      <view class="pf rs-section" wx:if="{{partnerMatrix.length}}">
-        <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
-        <view class="fb fb-left"></view><view class="fb fb-right"></view>
-        <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
-        <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
-        <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
-        <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
-        <view class="rs-title-row">
-          <view class="rs-title-line"></view>
-          <text class="rs-deco">◆</text>
-          <text class="rs-title">搭档数据</text>
-          <text class="rs-deco">◆</text>
-          <view class="rs-title-line"></view>
-        </view>
-        <view class="partner-list">
-          <view class="partner-row" wx:for="{{partnerMatrix}}" wx:key="phone" bindtap="onTogglePartner" data-phone="{{item.phone}}">
-            <view class="partner-summary">
-              <image class="partner-avatar-img" wx:if="{{item.avatarImage}}" src="{{item.avatarImage}}" mode="aspectFill" />
-              <text class="partner-avatar-text" wx:else>{{item.avatarText}}</text>
-              <text class="partner-name">{{item.nickname}}</text>
-              <text class="partner-games">{{item.games}}局</text>
-              <view class="partner-bar-wrap">
-                <view class="partner-bar" style="width:{{item.winRate}}%"></view>
-              </view>
-              <text class="partner-rate">{{item.winRate}}%</text>
-            </view>
-            <view class="partner-detail" wx:if="{{expandedPartner === item.phone}}">
-              <view class="partner-detail-row">
-                <text class="pd-label">同为正义</text>
-                <text class="pd-value">{{item.sameGood || 0}}局 · 胜率 {{item.sameGoodRate || 0}}%</text>
-              </view>
-              <view class="partner-detail-row">
-                <text class="pd-label">同为邪恶</text>
-                <text class="pd-value">{{item.sameEvil || 0}}局 · 胜率 {{item.sameEvilRate || 0}}%</text>
-              </view>
-              <view class="partner-detail-row">
-                <text class="pd-label">互为对手</text>
-                <text class="pd-value">{{item.opponent || 0}}局 · 胜率 {{item.opponentRate || 0}}%</text>
-              </view>
-              <view class="partner-combos" wx:if="{{item.topCombos && item.topCombos.length}}">
-                <text class="pd-label">常见组合</text>
-                <view class="combo-tags">
-                  <text class="combo-tag" wx:for="{{item.topCombos}}" wx:for-item="combo" wx:key="*this">{{combo}}</text>
-                </view>
-              </view>
-            </view>
-          </view>
-        </view>
-      </view>
+      <!-- ── 搭档数据（暂隐藏，待多人局数据充足后开放） ── -->
 
       <!-- ── Detail Tabs ── -->
       <view class="detail-tabs">
