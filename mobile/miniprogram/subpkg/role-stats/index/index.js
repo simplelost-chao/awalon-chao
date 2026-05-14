@@ -202,6 +202,7 @@ Page({
       radarData: roleStats.radar || null,
       trendData: roleStats.trend || null,
       partnerTitles: this._buildPartnerTitles(roleStats.partners),
+      partnerMinGames: (roleStats.partners && roleStats.partners._minGames) || 1,
       partnerMatrix: this._buildPartnerMatrix(roleStats.partners)
     }, () => {
       if (roleStats.radar) this._drawRadarChart();
