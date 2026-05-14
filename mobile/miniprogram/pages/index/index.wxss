@@ -4681,11 +4681,11 @@
 }
 .identity-card-back {
   background:
-    linear-gradient(90deg, rgba(236,195,104,0.10), transparent 13%, transparent 87%, rgba(236,195,104,0.10)),
-    linear-gradient(0deg, rgba(236,195,104,0.11), transparent 14%, transparent 86%, rgba(236,195,104,0.11)),
-    radial-gradient(circle at 50% 38%, rgba(236,195,104,0.18), transparent 34%),
-    linear-gradient(160deg, rgba(13, 15, 20, 0.99), rgba(24, 17, 9, 0.99));
-  border: 2rpx solid rgba(216,176,107,0.52);
+    radial-gradient(circle at 50% 36%, rgba(216,176,107,0.1), transparent 40%),
+    linear-gradient(160deg, rgba(6, 8, 16, 0.98), rgba(16, 12, 8, 0.98));
+  border: 2rpx solid;
+  border-image: linear-gradient(135deg, rgba(216,176,107,0.6), rgba(216,176,107,0.2), rgba(216,176,107,0.6)) 1;
+  box-shadow: 0 28rpx 76rpx rgba(0,0,0,0.58), 0 0 0 1rpx rgba(216,176,107,0.12);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4785,17 +4785,15 @@
   letter-spacing: 2rpx;
 }
 .identity-card-back-emblem {
-  width: 174rpx;
-  height: 174rpx;
-  border-radius: 18rpx;
-  border: 1rpx solid rgba(216,176,107,0.42);
-  background:
-    radial-gradient(circle, rgba(236,195,104,0.20), rgba(236,195,104,0.04) 58%, transparent 60%),
-    linear-gradient(180deg, rgba(216,176,107,0.16), rgba(216,176,107,0.03));
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 16rpx;
+  border: 1.5rpx solid rgba(216,176,107,0.3);
+  background: rgba(216,176,107,0.04);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: inset 0 0 0 1rpx rgba(255,255,255,0.05), 0 0 38rpx rgba(216,176,107,0.16);
+  box-shadow: 0 0 32rpx rgba(216,176,107,0.1), inset 0 0 20rpx rgba(216,176,107,0.05);
   transform: rotate(45deg);
 }
 .identity-card-back-icon {
@@ -4804,25 +4802,26 @@
   opacity: 0.9;
   transform: rotate(-45deg);
 }
+.identity-card-back .identity-card-corner { color: rgba(216,176,107,0.5); }
 .identity-card-back-title {
   position: absolute;
-  bottom: 72rpx;
+  bottom: 68rpx;
   left: 0;
   right: 0;
   text-align: center;
-  font-size: 38rpx;
+  font-size: 36rpx;
   font-weight: 800;
-  color: #f3dfaa;
+  color: rgba(216,176,107,0.85);
   letter-spacing: 6rpx;
 }
 .identity-card-back-sub {
   position: absolute;
-  bottom: 38rpx;
+  bottom: 36rpx;
   left: 0;
   right: 0;
   text-align: center;
-  font-size: 24rpx;
-  color: rgba(246,224,166,0.56);
+  font-size: 22rpx;
+  color: rgba(216,176,107,0.4);
 }
 .identity-card-portrait-wrap {
   width: 178rpx;
