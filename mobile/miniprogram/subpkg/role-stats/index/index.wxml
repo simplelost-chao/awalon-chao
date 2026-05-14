@@ -106,7 +106,7 @@
       </view>
 
       <!-- ── 能力雷达 ── -->
-      <view class="pf rs-section radar-section" wx:if="{{radarData}}">
+      <view class="pf rs-section" wx:if="{{radarData}}">
         <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
         <view class="fb fb-left"></view><view class="fb fb-right"></view>
         <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
@@ -139,11 +139,21 @@
       </view>
 
       <!-- ── 搭档称号 ── -->
-      <view class="partner-title-section">
-        <view class="rs-title-row" style="margin-top:18rpx">
+      <view class="pf rs-section">
+        <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+        <view class="fb fb-left"></view><view class="fb fb-right"></view>
+        <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+        <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+        <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+        <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+        <view class="rs-title-row">
+          <view class="rs-title-line"></view>
           <text class="rs-deco">◆</text>
           <text class="rs-title">搭档称号</text>
           <text class="rs-deco">◆</text>
+          <view class="rs-title-line"></view>
+        </view>
+        <view class="title-flip-row">
           <text class="title-flip-btn" bindtap="onFlipAllTitles">{{titlesFlipped ? '看正面' : '翻转'}}</text>
         </view>
         <scroll-view scroll-x class="title-scroll" wx:if="{{partnerTitles.length}}">

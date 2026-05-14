@@ -339,10 +339,8 @@
 .radar-canvas { width: 640rpx; height: 640rpx; }
 .radar-hint { text-align: center; padding: 0 0 16rpx; }
 .radar-hint-text { font-size: 22rpx; color: rgba(255,255,255,0.25); }
-.radar-section .rs-title-line,
-.partner-title-section .rs-title-line { display: none; }
-.partner-title-section { padding: 0 0 16rpx; }
-.title-flip-btn { font-size: 22rpx; color: rgba(78,158,255,0.8); margin-left: 16rpx; padding: 4rpx 16rpx; border: 1rpx solid rgba(78,158,255,0.3); border-radius: 16rpx; }
+.title-flip-row { text-align: right; padding: 0 24rpx 8rpx; }
+.title-flip-btn { font-size: 22rpx; color: rgba(78,158,255,0.8); padding: 4rpx 16rpx; border: 1rpx solid rgba(78,158,255,0.3); border-radius: 16rpx; }
 
 /* ─── 维度说明（内联展开） ─── */
 .radar-tip-inline { padding: 8rpx 48rpx 20rpx; }
