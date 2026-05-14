@@ -98,9 +98,9 @@ function buildRadar(phone, excludeAI) {
 
   // Evil accumulators
   const e = {
-    // charge: in approved teams, # of other evil teammates also on team
-    chargeEvilTeammates: 0, // total evil teammates across approved missions I was on
-    chargeMissions: 0,      // approved missions I was on (to compute avg, used as sample count)
+    // charge: in approved teams, % that also contain other evil teammates
+    chargeWithEvil: 0,      // approved teams I was on that had other evil
+    chargeMissions: 0,      // approved teams I was on (total)
 
     // stealth: in missions, % of times evil player voted success (true=fail, false=success)
     stealthSuccess: 0,      // times I voted success (false)
@@ -209,13 +209,13 @@ function buildRadar(phone, excludeAI) {
       e.evilGames += 1;
       if (winner === 'evil') e.evilWins += 1;
 
-      // charge: in approved missions, count other evil teammates on the team
+      // charge: in approved teams I'm on, % that also contain other evil
       for (const v of voteHistory) {
         if (!v || !Array.isArray(v.team) || !v.approved) continue;
         if (!v.team.includes(myId)) continue;
         e.chargeMissions += 1;
-        const otherEvil = v.team.filter((id) => id !== myId && factionById[id] === 'evil').length;
-        e.chargeEvilTeammates += otherEvil;
+        const hasOtherEvil = v.team.some((id) => id !== myId && factionById[id] === 'evil');
+        if (hasOtherEvil) e.chargeWithEvil += 1;
       }
 
       // stealth: in missions I participated in, voted success (false)
@@ -265,14 +265,7 @@ function buildRadar(phone, excludeAI) {
   const dodge          = scored(pct(g.dodgeMissed,       g.dodgeGames),          g.dodgeGames);
   const goodWinRate    = scored(pct(g.goodWins,          g.goodGames),           g.goodGames);
 
-  // Evil — charge: avg evil teammates per approved mission, scaled to 0-100
-  // Theoretical max ~ 3 (in a 10-player game with 4 evil, team of 4 could have 3 other evil)
-  // We normalise by mapping avg to 0-100 with cap at 2 evil teammates on average
-  let charge = -1;
-  if (e.chargeMissions >= MIN_SAMPLES) {
-    const avgEvilMates = e.chargeEvilTeammates / e.chargeMissions;
-    charge = Math.round(Math.min(1, avgEvilMates / 2) * 100);
-  }
+  const charge         = scored(pct(e.chargeWithEvil,            e.chargeMissions),      e.chargeMissions);
 
   const stealth        = scored(pct(e.stealthSuccess,           e.stealthMissions),     e.stealthMissions);
   const evilTrust      = scored(pct(e.evilTrustIncluded,        e.evilTrustTotal),      e.evilTrustTotal);

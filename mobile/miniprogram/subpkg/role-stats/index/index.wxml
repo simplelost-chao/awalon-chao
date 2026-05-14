@@ -133,7 +133,7 @@
       </view>
 
       <!-- ── 搭档称号 ── -->
-      <view class="pf rs-section">
+      <view class="pf rs-section partner-title-section">
         <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
         <view class="fb fb-left"></view><view class="fb fb-right"></view>
         <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>

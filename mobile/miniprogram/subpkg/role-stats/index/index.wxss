@@ -339,7 +339,8 @@
 .radar-canvas { width: 640rpx; height: 640rpx; }
 .radar-hint { text-align: center; padding: 0 0 16rpx; }
 .radar-hint-text { font-size: 22rpx; color: rgba(255,255,255,0.25); }
-.radar-section .rs-title-line { display: none; }
+.radar-section .rs-title-line,
+.partner-title-section .rs-title-line { display: none; }
 
 /* ─── 维度说明弹窗 ─── */
 .tip-overlay { position: fixed; left: 0; right: 0; top: 0; bottom: 0; z-index: 100; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; }
