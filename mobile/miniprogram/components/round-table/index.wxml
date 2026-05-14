@@ -67,7 +67,7 @@
         <view class="seat-wing seat-wing-ll"></view>
         <view class="seat-wing seat-wing-lr"></view>
       </view>
-      <text class="seat-no">{{item.seat}}</text>
+      <text class="seat-no {{item.selectedTeam ? 'seat-no-team' : ''}}">{{item.seat}}</text>
       <!-- 刺杀目标标记 -->
       <image class="seat-killed-icon" wx:if="{{item.selectedAssassinate}}" src="https://www.awalon.top/mp-assets/ui-icons/kill.png" mode="aspectFit" />
       <view class="seat-note-badge" wx:if="{{seatNotes[item.index]}}" style="{{seatNotes[item.index].badgeStyle}}">

@@ -82,6 +82,12 @@
   line-height: 1;
   box-sizing: border-box;
 }
+.seat-no-team {
+  background: rgba(50, 200, 120, 0.85) !important;
+  color: #fff !important;
+  border-color: rgba(80, 230, 140, 0.6) !important;
+  box-shadow: 0 0 8rpx rgba(60, 200, 110, 0.5);
+}
 
 /* 刀图标 */
 .seat-killed-icon {

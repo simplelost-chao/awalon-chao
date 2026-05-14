@@ -108,9 +108,9 @@
       <view class="radar-faction-tabs" wx:if="{{radarData}}">
         <view class="radar-tab {{radarFaction === 'good' ? 'radar-tab-active' : ''}}" data-faction="good" bindtap="onSwitchRadar">正义</view>
         <view class="radar-tab {{radarFaction === 'evil' ? 'radar-tab-active' : ''}}" data-faction="evil" bindtap="onSwitchRadar">邪恶</view>
-        <view class="help-btn" style="margin-left:12rpx" bindtap="onRadarHelp"><text class="help-btn-q">?</text></view>
       </view>
       <view class="pf rs-section radar-section" wx:if="{{radarData}}">
+        <view class="radar-help-btn" bindtap="onRadarHelp"><text class="help-btn-q">?</text></view>
         <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
         <view class="fb fb-left"></view><view class="fb fb-right"></view>
         <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
@@ -160,7 +160,8 @@
                   </block>
                   <block wx:else>
                     <view class="title-avatar-empty">?</view>
-                    <text class="title-nickname title-empty">需{{partnerMinGames}}局以上</text>
+                    <text class="title-nickname">未知</text>
+                    <text class="title-empty-hint">需{{partnerMinGames}}局以上</text>
                     <view class="title-rate-placeholder"></view>
                   </block>
                 </view>
@@ -183,7 +184,8 @@
                   </block>
                   <block wx:else>
                     <view class="title-avatar-empty">?</view>
-                    <text class="title-nickname title-empty">需{{partnerMinGames}}局以上</text>
+                    <text class="title-nickname">未知</text>
+                    <text class="title-empty-hint">需{{partnerMinGames}}局以上</text>
                     <view class="title-rate-placeholder"></view>
                   </block>
                 </view>
