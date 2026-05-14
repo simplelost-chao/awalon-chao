@@ -71,17 +71,17 @@ function buildRadar(phone, excludeAI) {
 
   // Good accumulators
   const g = {
-    // recognition: non-梅林 good, votes that rejected evil-containing teams
-    recognitionReject: 0,   // times rejected a team that had evil
-    recognitionTotal: 0,    // total vote opportunities (non-梅林 good, evil on team)
+    // recognition: non-梅林, vote accuracy (reject evil teams + approve clean teams) / total votes
+    recognitionCorrect: 0,  // correct votes (reject evil team OR approve clean team)
+    recognitionTotal: 0,    // total votes cast
 
     // leadership: as leader, how many teams got approved
     leaderApproved: 0,
     leaderTotal: 0,
 
-    // trustworthiness (good): non-leader, % of approved teams that included me
-    goodTrustIncluded: 0,   // approved teams where I was on the team (non-leader)
-    goodTrustTotal: 0,      // total approved teams where I was NOT the leader
+    // trustworthiness (good): % of approved teams that included me
+    goodTrustIncluded: 0,   // approved teams where I was on the team
+    goodTrustTotal: 0,      // total approved teams
 
     // shield: non-梅林 good, was I the assassination target?
     shieldTargeted: 0,      // games where I (non-梅林) was assassination target
@@ -163,16 +163,15 @@ function buildRadar(phone, excludeAI) {
 
       const isMerlin = myRole === '梅林';
 
-      // recognition: non-梅林 only (梅林开眼不算识人能力)
+      // recognition: non-梅林, vote accuracy across all teams
       if (!isMerlin) {
         for (const v of voteHistory) {
           if (!v || !v.votes || !Array.isArray(v.team)) continue;
           if (!(myId in v.votes)) continue;
-          const evilInTeam = teamEvilCount(v.team);
-          if (evilInTeam > 0) {
-            g.recognitionTotal += 1;
-            if (!v.votes[myId]) g.recognitionReject += 1; // false = reject
-          }
+          g.recognitionTotal += 1;
+          const hasEvil = teamEvilCount(v.team) > 0;
+          const voted = v.votes[myId]; // true = approve, false = reject
+          if ((hasEvil && !voted) || (!hasEvil && voted)) g.recognitionCorrect += 1;
         }
       }
 
@@ -183,10 +182,9 @@ function buildRadar(phone, excludeAI) {
         if (v.approved) g.leaderApproved += 1;
       }
 
-      // trustworthiness (good): non-leader, % of approved teams including me
+      // trustworthiness (good): % of approved teams including me
       for (const v of voteHistory) {
         if (!v || !Array.isArray(v.team) || !v.approved) continue;
-        if (v.leaderId === myId) continue; // skip when I'm leader
         g.goodTrustTotal += 1;
         if (v.team.includes(myId)) g.goodTrustIncluded += 1;
       }
@@ -228,16 +226,15 @@ function buildRadar(phone, excludeAI) {
         if (!mVotes[myId]) e.stealthSuccess += 1; // false = success vote
       }
 
-      // trustworthiness (evil): non-leader, % of approved teams including me
+      // trustworthiness (evil): % of approved teams including me
       for (const v of voteHistory) {
         if (!v || !Array.isArray(v.team) || !v.approved) continue;
-        if (v.leaderId === myId) continue;
         e.evilTrustTotal += 1;
         if (v.team.includes(myId)) e.evilTrustIncluded += 1;
       }
 
-      // assassination: as 刺客
-      if (myRole === '刺客' && assassination) {
+      // assassination: all evil share the result (team discussion)
+      if (assassination) {
         e.assassinGames += 1;
         if (assassination.hit) e.assassinHit += 1;
       }
@@ -263,7 +260,7 @@ function buildRadar(phone, excludeAI) {
   // ── 4. Compute final scores ────────────────────────────────────────────────
 
   // Good
-  const recognition    = scored(pct(g.recognitionReject, g.recognitionTotal),   g.recognitionTotal);
+  const recognition    = scored(pct(g.recognitionCorrect, g.recognitionTotal),  g.recognitionTotal);
   const leadership     = scored(pct(g.leaderApproved,    g.leaderTotal),         g.leaderTotal);
   const goodTrust      = scored(pct(g.goodTrustIncluded, g.goodTrustTotal),      g.goodTrustTotal);
   const shield         = scored(pct(g.shieldTargeted,    g.shieldGames),         g.shieldGames);
