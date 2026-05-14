@@ -66,9 +66,6 @@ Page({
     partnerTitles: [],
     partnerMatrix: [],
     expandedPartner: null,
-    radarTipVisible: false,
-    radarTipTitle: '',
-    radarTipItems: []
   },
 
   onLoad() {
@@ -249,30 +246,12 @@ Page({
     });
   },
 
-  onToggleRadarTip() {
-    if (this.data.radarTipVisible) {
-      this.setData({ radarTipVisible: false });
-      return;
-    }
+  onRadarHelp() {
     const isGood = this.data.radarFaction === 'good';
-    const items = isGood
-      ? [
-          { name: '识人', desc: '非梅林时投票准确率（坏车反对+好车赞成）' },
-          { name: '领袖', desc: '好人当队长时发车成功率' },
-          { name: '表水', desc: '通过的队伍中有自己的比例' },
-          { name: '挡刀', desc: '非梅林时替梅林挡刀的比例' },
-          { name: '躲刀', desc: '梅林时未被刺杀的比例' },
-          { name: '胜率', desc: '好人阵营胜率' },
-        ]
-      : [
-          { name: '冲锋', desc: '含坏人的队伍投赞成的比例（含自己）' },
-          { name: '煽动', desc: '坏人当队长时发车成功率' },
-          { name: '表水', desc: '通过的队伍中有自己的比例' },
-          { name: '隐秘', desc: '上车后出成功票藏身份的比例' },
-          { name: '破坏', desc: '上过车的局中出过失败票的比例' },
-          { name: '胜率', desc: '坏人阵营胜率' },
-        ];
-    this.setData({ radarTipVisible: true, radarTipItems: items });
+    const content = isGood
+      ? '识人：非梅林时投票准确率\n领袖：好人当队长发车成功率\n表水：通过队伍中有自己的比例\n挡刀：非梅林时替梅林挡刀\n躲刀：梅林时未被刺杀\n胜率：好人阵营胜率'
+      : '冲锋：含坏人队伍投赞成的比例\n煽动：坏人当队长发车成功率\n表水：通过队伍中有自己的比例\n隐秘：上车后出成功票藏身份\n破坏：上过车的局中出过失败票\n胜率：坏人阵营胜率';
+    wx.showModal({ title: isGood ? '正义能力维度' : '邪恶能力维度', content, showCancel: false, confirmText: '知道了' });
   },
 
   onFlipTitle(e) {
@@ -284,10 +263,10 @@ Page({
     }
   },
 
-  onTapPartnerHelp() {
+  onPartnerHelp() {
     wx.showModal({
-      title: '搭档称号',
-      content: '根据你和其他玩家的对局数据自动计算。点击卡片可翻转查看对立面。至少需要2-3局共同对局才会生成称号。',
+      title: '搭档称号说明',
+      content: '黄金搭档：同阵营胜率最高\n最坑队友：同阵营胜率最低\n最佳狼队友：同为坏人胜率最高\n最差狼队友：同为坏人胜率最低\n最佳骑士：同为好人胜率最高\n最差骑士：同为好人胜率最低\n最佳梅派：梅林+派西组合胜率最高\n最坑梅派：梅林+派西组合胜率最低\n血脉压制：对面阵营我胜率最高\n天生冤家：对面阵营我胜率最低\n\n点击卡片可翻转查看对立面',
       showCancel: false,
       confirmText: '知道了',
     });

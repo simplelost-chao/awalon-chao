@@ -114,10 +114,12 @@
         <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
         <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
         <view class="rs-title-row">
+          <view class="rs-title-line"></view>
           <text class="rs-deco">◆</text>
           <text class="rs-title">能力雷达</text>
           <text class="rs-deco">◆</text>
-          <text class="section-help" bindtap="onToggleRadarTip">?</text>
+          <view class="rs-title-line"></view>
+          <text class="section-help" bindtap="onRadarHelp">?</text>
         </view>
         <view class="radar-faction-tabs">
           <view class="radar-tab {{radarFaction === 'good' ? 'radar-tab-active-good' : ''}}" data-faction="good" bindtap="onSwitchRadar">正义</view>
@@ -125,15 +127,6 @@
         </view>
         <view class="radar-canvas-wrap">
           <canvas id="radarCanvas" type="2d" class="radar-canvas" style="width:320px;height:320px;"></canvas>
-        </view>
-        <view class="radar-hint" bindtap="onToggleRadarTip">
-          <text class="radar-hint-text">{{radarTipVisible ? '收起说明' : '查看维度说明'}}</text>
-        </view>
-        <view class="radar-tip-inline" wx:if="{{radarTipVisible}}">
-          <view class="tip-item" wx:for="{{radarTipItems}}" wx:key="name">
-            <text class="tip-name">{{item.name}}</text>
-            <text class="tip-desc">{{item.desc}}</text>
-          </view>
         </view>
       </view>
 
@@ -146,10 +139,12 @@
         <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
         <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
         <view class="rs-title-row">
+          <view class="rs-title-line"></view>
           <text class="rs-deco">◆</text>
           <text class="rs-title">搭档称号</text>
           <text class="rs-deco">◆</text>
-          <text class="section-help" bindtap="onTapPartnerHelp">?</text>
+          <view class="rs-title-line"></view>
+          <text class="section-help" bindtap="onPartnerHelp">?</text>
         </view>
         <scroll-view scroll-x class="title-scroll" wx:if="{{partnerTitles.length}}">
           <view class="title-cards">
