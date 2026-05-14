@@ -98,9 +98,9 @@ function buildRadar(phone, excludeAI) {
 
   // Evil accumulators
   const e = {
-    // charge: when a team containing other evil is proposed, % I voted approve AND it passed
-    chargeHelped: 0,        // voted approve on evil-containing team that passed
-    chargeTotal: 0,         // total votes on teams containing other evil
+    // charge: as evil leader, proposed teams with other evil that got approved
+    chargeSnuck: 0,         // my proposed teams with other evil AND approved
+    chargeLeads: 0,         // total teams I proposed as evil leader
 
     // stealth: in missions, % of times evil player voted success (true=fail, false=success)
     stealthSuccess: 0,      // times I voted success (false)
@@ -163,16 +163,14 @@ function buildRadar(phone, excludeAI) {
 
       const isMerlin = myRole === '梅林';
 
-      // recognition: non-梅林, vote to reject teams containing evil
-      if (!isMerlin) {
-        for (const v of voteHistory) {
-          if (!v || !v.votes || !Array.isArray(v.team)) continue;
-          if (!(myId in v.votes)) continue; // I didn't vote
-          const evilInTeam = teamEvilCount(v.team);
-          if (evilInTeam > 0) {
-            g.recognitionTotal += 1;
-            if (!v.votes[myId]) g.recognitionReject += 1; // false = reject
-          }
+      // recognition: vote to reject teams containing evil
+      for (const v of voteHistory) {
+        if (!v || !v.votes || !Array.isArray(v.team)) continue;
+        if (!(myId in v.votes)) continue;
+        const evilInTeam = teamEvilCount(v.team);
+        if (evilInTeam > 0) {
+          g.recognitionTotal += 1;
+          if (!v.votes[myId]) g.recognitionReject += 1; // false = reject
         }
       }
 
@@ -209,14 +207,12 @@ function buildRadar(phone, excludeAI) {
       e.evilGames += 1;
       if (winner === 'evil') e.evilWins += 1;
 
-      // charge: teams containing other evil — did I vote approve and it passed?
+      // charge: as leader, proposed team with other evil AND it got approved
       for (const v of voteHistory) {
-        if (!v || !Array.isArray(v.team) || !v.votes) continue;
-        if (!(myId in v.votes)) continue;
+        if (!v || !Array.isArray(v.team) || v.leaderId !== myId) continue;
+        e.chargeLeads += 1;
         const hasOtherEvil = v.team.some((id) => id !== myId && factionById[id] === 'evil');
-        if (!hasOtherEvil) continue;
-        e.chargeTotal += 1;
-        if (v.votes[myId] && v.approved) e.chargeHelped += 1; // I approved AND it passed
+        if (hasOtherEvil && v.approved) e.chargeSnuck += 1;
       }
 
       // stealth: in missions I participated in, voted success (false)
@@ -270,7 +266,7 @@ function buildRadar(phone, excludeAI) {
   const dodge          = scored(pct(g.dodgeMissed,       g.dodgeGames),          g.dodgeGames);
   const goodWinRate    = scored(pct(g.goodWins,          g.goodGames),           g.goodGames);
 
-  const charge         = scored(pct(e.chargeHelped,              e.chargeTotal),         e.chargeTotal);
+  const charge         = scored(pct(e.chargeSnuck,               e.chargeLeads),         e.chargeLeads);
 
   const stealth        = scored(pct(e.stealthSuccess,           e.stealthMissions),     e.stealthMissions);
   const evilTrust      = scored(pct(e.evilTrustIncluded,        e.evilTrustTotal),      e.evilTrustTotal);

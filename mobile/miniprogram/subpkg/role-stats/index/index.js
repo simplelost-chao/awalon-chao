@@ -257,7 +257,7 @@ Page({
     const isGood = this.data.radarFaction === 'good';
     const items = isGood
       ? [
-          { name: '识人', desc: '含坏人队伍投反对的比例' },
+          { name: '识人', desc: '有坏人的队伍投反对的比例' },
           { name: '领袖', desc: '当队长时发车成功率' },
           { name: '表水', desc: '非队长时被带上车的频率' },
           { name: '挡刀', desc: '非梅林时替梅林挡刀的比例' },
@@ -265,7 +265,7 @@ Page({
           { name: '胜率', desc: '好人阵营胜率' },
         ]
       : [
-          { name: '冲锋', desc: '帮坏人队友投赞成上车的比例' },
+          { name: '冲锋', desc: '当队长时带坏人队友上车的成功率' },
           { name: '隐秘', desc: '上车后出成功票藏身份的比例' },
           { name: '表水', desc: '非队长时自己上车的频率' },
           { name: '刺杀', desc: '带刀时刺中梅林的比例' },
