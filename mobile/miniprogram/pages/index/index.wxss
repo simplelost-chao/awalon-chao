@@ -1042,10 +1042,6 @@
   width: 2rpx;
   background: linear-gradient(to bottom, #6b3e08, #c8860a 40%, #c8860a 60%, #6b3e08);
 }
-.btn-frame-ghost .fb-ctl,
-.btn-frame-ghost .fb-ctr,
-.btn-frame-ghost .fb-cbl,
-.btn-frame-ghost .fb-cbr,
 .btn-frame-ghost .fc-inner {
   display: none;
 }
