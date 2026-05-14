@@ -1183,10 +1183,10 @@ function autoplaySkipSpeak(room) {
   }
   console.log(`[autoplaySkip] will skip ${p.nickname} in 800ms`);
   const gameRef = room.game;
-  const speakingRef = room.speaking;
+  const speakingIndex = room.speaking.index;
   setTimeout(() => {
-    if (!room.game || room.game !== gameRef || room.phase !== 'speaking' || room.speaking !== speakingRef) return;
-    if (room.seats[room.speaking.index] !== currentId) return;
+    if (!room.game || room.game !== gameRef || room.phase !== 'speaking' || !room.speaking) return;
+    if (room.speaking.index !== speakingIndex || room.seats[room.speaking.index] !== currentId) return;
     const player = room.players.get(currentId);
     if (!player || !player.autoplay) return;
     if (room.speakingTimeout) { clearTimeout(room.speakingTimeout); room.speakingTimeout = null; }
