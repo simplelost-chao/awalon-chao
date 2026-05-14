@@ -333,7 +333,7 @@
 
 /* ─── 雷达图 ─── */
 /* ─── 趋势图 ─── */
-.trend-wrap { padding: 8rpx 24rpx 16rpx; }
+.trend-wrap { padding: 8rpx 24rpx 16rpx; display: flex; justify-content: center; }
 .trend-legend { display: flex; justify-content: center; gap: 32rpx; margin-bottom: 8rpx; }
 .trend-legend-good { font-size: 22rpx; color: rgba(78,158,255,0.7); }
 .trend-legend-evil { font-size: 22rpx; color: rgba(220,80,80,0.7); }
@@ -355,7 +355,8 @@
 .help-item-desc { font-size: 24rpx; color: rgba(255,255,255,0.55); flex: 1; }
 .help-close { margin-top: 20rpx; text-align: center; }
 .help-close-text { font-size: 28rpx; color: rgba(78,158,255,0.9); padding: 12rpx 48rpx; }
-.partner-section .fb-top { display: none; }
+.radar-section .rs-title-row,
+.partner-section .rs-title-row { border-bottom: none; }
 .title-rate-placeholder { height: 0; }
 
 

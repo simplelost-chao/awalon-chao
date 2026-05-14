@@ -111,7 +111,7 @@
       </view>
 
       <!-- ── 能力雷达 ── -->
-      <view class="pf rs-section" wx:if="{{radarData}}">
+      <view class="pf rs-section radar-section" wx:if="{{radarData}}">
         <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
         <view class="fb fb-left"></view><view class="fb fb-right"></view>
         <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
