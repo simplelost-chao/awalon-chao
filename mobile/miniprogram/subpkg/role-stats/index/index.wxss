@@ -362,7 +362,7 @@
 .help-close-text { font-size: 28rpx; color: rgba(78,158,255,0.9); padding: 12rpx 48rpx; }
 .radar-section .rs-title-row,
 .partner-section .rs-title-row { border-bottom: none; }
-.title-rate-placeholder { height: 24rpx; margin-top: 8rpx; }
+.title-rate-placeholder { display: none; }
 
 
 /* ─── 搭档称号 ─── */
@@ -408,7 +408,7 @@
 
 /* ─── 搭档空状态 ─── */
 .title-avatar-empty { width: 72rpx; height: 72rpx; line-height: 72rpx; text-align: center; font-size: 36rpx; color: rgba(255,255,255,0.2); border: 2rpx dashed rgba(255,255,255,0.15); border-radius: 50%; }
-.title-empty-hint { color: rgba(255,255,255,0.25); font-size: 20rpx; margin-top: 4rpx; }
+.title-empty-hint { color: rgba(255,255,255,0.25); font-size: 22rpx; margin-top: 8rpx; height: 28rpx; line-height: 28rpx; }
 .partner-empty-tip { padding: 24rpx 0 32rpx; text-align: center; }
 .partner-empty-text { font-size: 24rpx; color: rgba(255,255,255,0.3); }
 
