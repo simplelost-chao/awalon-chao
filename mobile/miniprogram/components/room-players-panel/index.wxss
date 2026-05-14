@@ -1,1 +1,13 @@
-/* 样式由页面 shared 继承 */
+.rpp-section {
+  margin-top: 16rpx;
+  padding: 16rpx 20rpx;
+  overflow: hidden;
+}
+.rpp-title {
+  display: block;
+  font-size: 26rpx;
+  font-weight: 700;
+  color: rgba(216,176,107,0.85);
+  margin-bottom: 12rpx;
+  letter-spacing: 2rpx;
+}

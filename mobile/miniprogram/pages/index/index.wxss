@@ -1032,6 +1032,7 @@
 .top-btn-frame {
   flex: 1;
   padding: 0;
+  background: transparent;
 }
 
 /* 主按钮专属：加厚金色渐变边框 */
@@ -1114,7 +1115,7 @@
   height: 68rpx;
   padding: 0 24rpx;
   box-sizing: border-box;
-  background: rgba(10, 8, 16, 0.75);
+  background: rgba(10, 8, 16, 0.45);
 }
 .top-btn-icon {
   font-size: 24rpx;
