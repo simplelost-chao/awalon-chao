@@ -114,9 +114,9 @@ function buildRadar(phone, excludeAI) {
     assassinHit: 0,
     assassinGames: 0,
 
-    // destruction: voted fail AND mission failed, as % of fail votes total
-    destructionFailAndFailed: 0, // my fail votes where mission also failed
-    destructionFailVotes: 0,     // total fail votes I cast
+    // destruction: missions I participated in as evil that failed / total missions I was on
+    destructionFailed: 0,       // missions I was on that failed
+    destructionTotal: 0,        // total missions I was on
 
     // winRate
     evilWins: 0,
@@ -242,16 +242,11 @@ function buildRadar(phone, excludeAI) {
         if (assassination.hit) e.assassinHit += 1;
       }
 
-      // destruction: fail vote AND mission failed
+      // destruction: missions I was on as evil that failed
       for (const m of missionHistory) {
         if (!m || !Array.isArray(m.team) || !m.team.includes(myId)) continue;
-        const mVotes = m.missionVotes || {};
-        if (!(myId in mVotes)) continue;
-        if (mVotes[myId]) {
-          // I voted fail (true = fail)
-          e.destructionFailVotes += 1;
-          if (!m.success) e.destructionFailAndFailed += 1;
-        }
+        e.destructionTotal += 1;
+        if (!m.success) e.destructionFailed += 1;
       }
     }
   }
@@ -271,7 +266,7 @@ function buildRadar(phone, excludeAI) {
   const stealth        = scored(pct(e.stealthSuccess,           e.stealthMissions),     e.stealthMissions);
   const evilTrust      = scored(pct(e.evilTrustIncluded,        e.evilTrustTotal),      e.evilTrustTotal);
   const assassination  = scored(pct(e.assassinHit,              e.assassinGames),       e.assassinGames);
-  const destruction    = scored(pct(e.destructionFailAndFailed,  e.destructionFailVotes), e.destructionFailVotes);
+  const destruction    = scored(pct(e.destructionFailed,         e.destructionTotal),    e.destructionTotal);
   const evilWinRate    = scored(pct(e.evilWins,                 e.evilGames),           e.evilGames);
 
   return {
