@@ -343,21 +343,26 @@
 .partner-title-section .rs-title-line { display: none; }
 
 /* ─── 维度说明（内联展开） ─── */
-.radar-tip-inline { padding: 8rpx 32rpx 20rpx; }
-.tip-item { display: flex; padding: 10rpx 0; border-bottom: 1rpx solid rgba(255,255,255,0.06); }
+.radar-tip-inline { padding: 8rpx 48rpx 20rpx; }
+.tip-item { display: flex; align-items: center; padding: 12rpx 0; border-bottom: 1rpx solid rgba(255,255,255,0.06); }
 .tip-item:last-child { border-bottom: none; }
-.tip-name { font-size: 26rpx; color: rgba(255,255,255,0.85); width: 160rpx; flex-shrink: 0; font-weight: bold; }
-.tip-desc { font-size: 24rpx; color: rgba(255,255,255,0.55); flex: 1; }
+.tip-name { font-size: 26rpx; color: rgba(216,176,107,0.9); width: 80rpx; flex-shrink: 0; font-weight: bold; text-align: center; }
+.tip-desc { font-size: 24rpx; color: rgba(255,255,255,0.5); flex: 1; margin-left: 20rpx; }
 
 /* ─── 搭档称号 ─── */
 .title-scroll { white-space: nowrap; padding: 8rpx 0 16rpx; }
 .title-cards { display: inline-flex; gap: 16rpx; padding: 0 20rpx; }
-.title-card { display: inline-flex; flex-direction: column; align-items: center; width: 240rpx; padding: 20rpx 12rpx; background: rgba(255,255,255,0.04); border-radius: 16rpx; border: 1rpx solid rgba(216,176,107,0.12); }
-.title-label { font-size: 22rpx; color: rgba(216,176,107,0.8); margin-bottom: 12rpx; letter-spacing: 2rpx; }
-.title-avatar-img { width: 72rpx; height: 72rpx; border-radius: 50%; }
+.title-card { display: inline-flex; flex-direction: column; align-items: center; width: 240rpx; padding: 20rpx 12rpx 16rpx; background: rgba(255,255,255,0.04); border-radius: 16rpx; border: 1rpx solid rgba(216,176,107,0.12); }
+.title-icon { font-size: 32rpx; margin-bottom: 4rpx; }
+.title-label { font-size: 22rpx; color: rgba(216,176,107,0.8); margin-bottom: 10rpx; letter-spacing: 1rpx; }
+.title-avatar-img { width: 72rpx; height: 72rpx; border-radius: 50%; border: 2rpx solid rgba(216,176,107,0.3); }
 .title-avatar-text { font-size: 36rpx; line-height: 72rpx; }
 .title-nickname { font-size: 26rpx; color: rgba(255,255,255,0.85); margin-top: 8rpx; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200rpx; }
-.title-stat { font-size: 22rpx; color: rgba(255,255,255,0.45); margin-top: 4rpx; }
+.title-rate-row { display: flex; align-items: center; gap: 8rpx; margin-top: 8rpx; width: 200rpx; }
+.title-rate-bar-wrap { flex: 1; height: 8rpx; background: rgba(255,255,255,0.08); border-radius: 4rpx; overflow: hidden; }
+.title-rate-bar { height: 100%; background: linear-gradient(90deg, rgba(216,176,107,0.5), rgba(216,176,107,0.9)); border-radius: 4rpx; }
+.title-rate-num { font-size: 22rpx; color: rgba(216,176,107,0.9); flex-shrink: 0; }
+.title-games { font-size: 20rpx; color: rgba(255,255,255,0.3); margin-top: 2rpx; }
 
 /* ─── 搭档矩阵 ─── */
 .partner-list { padding: 0 20rpx 16rpx; }

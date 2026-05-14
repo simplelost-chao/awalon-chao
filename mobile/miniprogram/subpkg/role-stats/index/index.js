@@ -324,13 +324,18 @@ Page({
 
   _buildPartnerTitles(partners) {
     if (!partners || !partners.titles) return [];
-    const TITLE_LABELS = {
-      golden: '黄金搭档', bestWolf: '最佳狼队友', bestKnight: '最佳骑士搭档',
-      bestMerlinPerci: '最佳梅林&派西', nemesis: '天生冤家', worstTeammate: '最坑队友',
+    const TITLE_META = {
+      golden:          { label: '黄金搭档',      icon: '👑' },
+      bestWolf:        { label: '最佳狼队友',    icon: '🐺' },
+      bestKnight:      { label: '最佳骑士',      icon: '🛡️' },
+      bestMerlinPerci: { label: '梅林&派西',     icon: '🔮' },
+      nemesis:         { label: '天生冤家',      icon: '⚔️' },
+      worstTeammate:   { label: '最坑队友',      icon: '💀' },
     };
     return partners.titles.map(t => {
+      const meta = TITLE_META[t.type] || { label: t.type, icon: '?' };
       const isUrl = t.avatar && (t.avatar.startsWith('http') || t.avatar.startsWith('/'));
-      return { ...t, label: TITLE_LABELS[t.type] || t.type, avatarImage: isUrl ? t.avatar : '', avatarText: isUrl ? '' : (t.avatar || '🐺') };
+      return { ...t, label: meta.label, icon: meta.icon, avatarImage: isUrl ? t.avatar : '', avatarText: isUrl ? '' : (t.avatar || '🐺') };
     });
   },
 
