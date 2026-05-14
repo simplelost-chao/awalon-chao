@@ -996,8 +996,8 @@ function renderPlayerDetail() {
 
   // Partner title pairs
   if (s.partners && s.partners.pairs) {
-    const titleNames = { golden:'黄金搭档', bestWolf:'最佳狼队友', bestKnight:'最佳骑士', worstTeammate:'最坑队友', worstWolf:'最差狼队友', worstKnight:'最差骑士' };
-    const titleIcons = { golden:'👑', bestWolf:'🐺', bestKnight:'🛡️', worstTeammate:'💀', worstWolf:'💀', worstKnight:'💀' };
+    const titleNames = { golden:'黄金搭档', bestWolf:'最佳狼队友', bestKnight:'最佳骑士', bestMerlinPerci:'最佳梅派', dominated:'血脉压制', worstTeammate:'最坑队友', worstWolf:'最差狼队友', worstKnight:'最差骑士', worstMerlinPerci:'最坑梅派', nemesis:'天生冤家' };
+    const titleIcons = { golden:'👑', bestWolf:'🐺', bestKnight:'🛡️', bestMerlinPerci:'🔮', dominated:'💪', worstTeammate:'💀', worstWolf:'💀', worstKnight:'💀', worstMerlinPerci:'💀', nemesis:'⚔️' };
     function titleCard(t, borderColor) {
       const name = titleNames[t.type] || t.type;
       const icon = titleIcons[t.type] || '?';

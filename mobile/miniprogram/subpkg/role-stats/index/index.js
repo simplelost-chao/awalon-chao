@@ -316,12 +316,16 @@ Page({
     if (!partners || !partners.titles) return [];
     const CDN = 'https://www.awalon.top/mp-assets/titles';
     const TITLE_META = {
-      golden:          { label: '黄金搭档',      icon: `${CDN}/golden.svg` },
-      bestWolf:        { label: '最佳狼队友',    icon: `${CDN}/best_wolf.svg` },
-      bestKnight:      { label: '最佳骑士',      icon: `${CDN}/best_knight.svg` },
-      worstTeammate:   { label: '最坑队友',      icon: `${CDN}/worst_teammate.svg` },
-      worstWolf:       { label: '最差狼队友',    icon: `${CDN}/worst_teammate.svg` },
-      worstKnight:     { label: '最差骑士',      icon: `${CDN}/worst_teammate.svg` },
+      golden:           { label: '黄金搭档',      icon: `${CDN}/golden.svg` },
+      bestWolf:         { label: '最佳狼队友',    icon: `${CDN}/best_wolf.svg` },
+      bestKnight:       { label: '最佳骑士',      icon: `${CDN}/best_knight.svg` },
+      bestMerlinPerci:  { label: '最佳梅派',      icon: `${CDN}/merlin_perci.svg` },
+      dominated:        { label: '血脉压制',      icon: `${CDN}/nemesis.svg` },
+      worstTeammate:    { label: '最坑队友',      icon: `${CDN}/worst_teammate.svg` },
+      worstWolf:        { label: '最差狼队友',    icon: `${CDN}/worst_teammate.svg` },
+      worstKnight:      { label: '最差骑士',      icon: `${CDN}/worst_teammate.svg` },
+      worstMerlinPerci: { label: '最坑梅派',      icon: `${CDN}/worst_teammate.svg` },
+      nemesis:          { label: '天生冤家',      icon: `${CDN}/nemesis.svg` },
     };
     function decorateTitle(t) {
       const meta = TITLE_META[t.type] || { label: t.type, icon: '' };

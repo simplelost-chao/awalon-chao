@@ -270,6 +270,43 @@ function buildPartners(phone, excludeAI) {
     p => p.sameGood.winRate,
     2, false);
 
+  // bestMerlinPerci / worstMerlinPerci: 梅林↔派西维尔 combo win rate
+  const merlinPerciStats = new Map(); // phone -> { games, wins }
+  for (const [theirPhone, data] of partnerMap) {
+    let games = 0, wins = 0;
+    for (const [, combo] of data.combos) {
+      if ((combo.myRole === '梅林' && combo.theirRole === '派西维尔') ||
+          (combo.myRole === '派西维尔' && combo.theirRole === '梅林')) {
+        games += combo.games;
+        wins += combo.wins;
+      }
+    }
+    if (games > 0) merlinPerciStats.set(theirPhone, { games, wins, winRate: wr(wins, games) });
+  }
+  function pickMerlinPerci(wantMax) {
+    let best = null;
+    for (const [phone, mp] of merlinPerciStats) {
+      if (mp.games < 2) continue;
+      const m = matrix.find(p => p.phone === phone);
+      if (!m) continue;
+      if (!best || (wantMax ? mp.winRate > best.winRate : mp.winRate < best.winRate) ||
+          (mp.winRate === best.winRate && mp.games > best.games)) {
+        best = { phone: m.phone, nickname: m.nickname, avatar: m.avatar, winRate: mp.winRate, games: mp.games };
+      }
+    }
+    return best;
+  }
+  const bestMP = pickMerlinPerci(true);
+  const worstMP = pickMerlinPerci(false);
+  function mpTitle(type, p) {
+    if (!p) return { type, phone: null, nickname: null, avatar: null, winRate: null, games: null };
+    return { type, phone: p.phone, nickname: p.nickname, avatar: p.avatar, winRate: p.winRate, games: p.games };
+  }
+
+  // nemesis (天生冤家): opponent winRate lowest / dominated (血脉压制): opponent winRate highest
+  const nemesis = pickBest(matrix, p => p.opponent.games, p => p.opponent.winRate, 3, false);
+  const dominated = pickBest(matrix, p => p.opponent.games, p => p.opponent.winRate, 3, true);
+
   const pairs = [
     {
       front: toTitle('golden', golden, p => p.sameTeam.games, p => p.sameTeam.wins),
@@ -282,6 +319,14 @@ function buildPartners(phone, excludeAI) {
     {
       front: toTitle('bestKnight', bestKnight, p => p.sameGood.games, p => p.sameGood.wins),
       back:  toTitle('worstKnight', worstKnight, p => p.sameGood.games, p => p.sameGood.wins),
+    },
+    {
+      front: mpTitle('bestMerlinPerci', bestMP),
+      back:  mpTitle('worstMerlinPerci', worstMP),
+    },
+    {
+      front: toTitle('dominated', dominated, p => p.opponent.games, p => p.opponent.wins),
+      back:  toTitle('nemesis', nemesis, p => p.opponent.games, p => p.opponent.wins),
     },
   ];
 
