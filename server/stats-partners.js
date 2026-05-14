@@ -209,13 +209,22 @@ function buildPartners(phone, excludeAI) {
   matrix.sort((a, b) => b.totalGames - a.totalGames || a.phone.localeCompare(b.phone));
 
   // ── 6. Build titles ────────────────────────────────────────────────────────
-  // Helper: pick best/worst from matrix using a getter for value and a games filter
-  function pickBest(arr, gamesGetter, valueGetter, minGames, wantMax) {
+  // Bayesian smoothing for partner win rates (same k=3 as radar)
+  const SMOOTH_K = 3;
+  function smoothWR(wins, games) {
+    if (!games) return 50;
+    const raw = (wins / games) * 100;
+    return (raw * games + 50 * SMOOTH_K) / (games + SMOOTH_K);
+  }
+
+  // Helper: pick best/worst using Bayesian-smoothed win rate for ranking
+  function pickBest(arr, gamesGetter, winsGetter, minGames, wantMax) {
     const candidates = arr.filter(p => gamesGetter(p) >= minGames);
     if (!candidates.length) return null;
     candidates.sort((a, b) => {
-      const va = valueGetter(a), vb = valueGetter(b);
-      return wantMax ? vb - va : va - vb;
+      const sa = smoothWR(winsGetter(a), gamesGetter(a));
+      const sb = smoothWR(winsGetter(b), gamesGetter(b));
+      return wantMax ? sb - sa : sa - sb;
     });
     return candidates[0];
   }
@@ -234,18 +243,18 @@ function buildPartners(phone, excludeAI) {
     };
   }
 
-  // golden: sameTeam winRate highest (min 1)
-  const golden = pickBest(matrix, p => p.sameTeam.games, p => p.sameTeam.winRate, 1, true);
-  // bestWolf: sameEvil winRate highest (min 1)
-  const bestWolf = pickBest(matrix, p => p.sameEvil.games, p => p.sameEvil.winRate, 1, true);
-  // bestKnight: sameGood winRate highest (min 1)
-  const bestKnight = pickBest(matrix, p => p.sameGood.games, p => p.sameGood.winRate, 1, true);
-  // worstTeammate: sameTeam winRate lowest (min 1)
-  const worstTeammate = pickBest(matrix, p => p.sameTeam.games, p => p.sameTeam.winRate, 1, false);
-  // worstWolf: sameEvil winRate lowest (min 1)
-  const worstWolf = pickBest(matrix, p => p.sameEvil.games, p => p.sameEvil.winRate, 1, false);
-  // worstKnight: sameGood winRate lowest (min 1)
-  const worstKnight = pickBest(matrix, p => p.sameGood.games, p => p.sameGood.winRate, 1, false);
+  // golden: sameTeam smoothed winRate highest
+  const golden = pickBest(matrix, p => p.sameTeam.games, p => p.sameTeam.wins, 1, true);
+  // bestWolf: sameEvil smoothed winRate highest
+  const bestWolf = pickBest(matrix, p => p.sameEvil.games, p => p.sameEvil.wins, 1, true);
+  // bestKnight: sameGood smoothed winRate highest
+  const bestKnight = pickBest(matrix, p => p.sameGood.games, p => p.sameGood.wins, 1, true);
+  // worstTeammate: sameTeam smoothed winRate lowest
+  const worstTeammate = pickBest(matrix, p => p.sameTeam.games, p => p.sameTeam.wins, 1, false);
+  // worstWolf: sameEvil smoothed winRate lowest
+  const worstWolf = pickBest(matrix, p => p.sameEvil.games, p => p.sameEvil.wins, 1, false);
+  // worstKnight: sameGood smoothed winRate lowest
+  const worstKnight = pickBest(matrix, p => p.sameGood.games, p => p.sameGood.wins, 1, false);
 
   // bestMerlinPerci / worstMerlinPerci: 梅林↔派西维尔 combo win rate
   const merlinPerciStats = new Map(); // phone -> { games, wins }
@@ -266,9 +275,9 @@ function buildPartners(phone, excludeAI) {
       if (mp.games < 1) continue;
       const m = matrix.find(p => p.phone === phone);
       if (!m) continue;
-      if (!best || (wantMax ? mp.winRate > best.winRate : mp.winRate < best.winRate) ||
-          (mp.winRate === best.winRate && mp.games > best.games)) {
-        best = { phone: m.phone, nickname: m.nickname, avatar: m.avatar, winRate: mp.winRate, games: mp.games };
+      const swr = smoothWR(mp.wins, mp.games);
+      if (!best || (wantMax ? swr > best._swr : swr < best._swr)) {
+        best = { phone: m.phone, nickname: m.nickname, avatar: m.avatar, winRate: wr(mp.wins, mp.games), games: mp.games, _swr: swr };
       }
     }
     return best;
@@ -281,8 +290,8 @@ function buildPartners(phone, excludeAI) {
   }
 
   // nemesis (天生冤家): opponent winRate lowest / dominated (血脉压制): opponent winRate highest
-  const nemesis = pickBest(matrix, p => p.opponent.games, p => p.opponent.winRate, 1, false);
-  const dominated = pickBest(matrix, p => p.opponent.games, p => p.opponent.winRate, 1, true);
+  const nemesis = pickBest(matrix, p => p.opponent.games, p => p.opponent.wins, 1, false);
+  const dominated = pickBest(matrix, p => p.opponent.games, p => p.opponent.wins, 1, true);
 
   const pairs = [
     {
