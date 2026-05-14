@@ -114,9 +114,9 @@ function buildRadar(phone, excludeAI) {
     assassinHit: 0,
     assassinGames: 0,
 
-    // destruction: missions I participated in as evil that failed / total missions I was on
-    destructionFailed: 0,       // missions I was on that failed
-    destructionTotal: 0,        // total missions I was on
+    // destruction: games where I cast at least one fail vote / total evil games I was on missions
+    destructionSabotaged: 0,    // games where I voted fail at least once
+    destructionGames: 0,        // evil games where I participated in at least one mission
 
     // winRate
     evilWins: 0,
@@ -242,11 +242,20 @@ function buildRadar(phone, excludeAI) {
         if (assassination.hit) e.assassinHit += 1;
       }
 
-      // destruction: missions I was on as evil that failed
-      for (const m of missionHistory) {
-        if (!m || !Array.isArray(m.team) || !m.team.includes(myId)) continue;
-        e.destructionTotal += 1;
-        if (!m.success) e.destructionFailed += 1;
+      // destruction: per-game, did I cast at least one fail vote?
+      {
+        let wasOnMission = false;
+        let castFail = false;
+        for (const m of missionHistory) {
+          if (!m || !Array.isArray(m.team) || !m.team.includes(myId)) continue;
+          wasOnMission = true;
+          const mv = m.missionVotes || {};
+          if (mv[myId]) castFail = true; // true = fail vote
+        }
+        if (wasOnMission) {
+          e.destructionGames += 1;
+          if (castFail) e.destructionSabotaged += 1;
+        }
       }
     }
   }
@@ -266,7 +275,7 @@ function buildRadar(phone, excludeAI) {
   const stealth        = scored(pct(e.stealthSuccess,           e.stealthMissions),     e.stealthMissions);
   const evilTrust      = scored(pct(e.evilTrustIncluded,        e.evilTrustTotal),      e.evilTrustTotal);
   const assassination  = scored(pct(e.assassinHit,              e.assassinGames),       e.assassinGames);
-  const destruction    = scored(pct(e.destructionFailed,         e.destructionTotal),    e.destructionTotal);
+  const destruction    = scored(pct(e.destructionSabotaged,      e.destructionGames),    e.destructionGames);
   const evilWinRate    = scored(pct(e.evilWins,                 e.evilGames),           e.evilGames);
 
   return {
