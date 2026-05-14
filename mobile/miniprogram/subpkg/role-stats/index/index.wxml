@@ -156,7 +156,7 @@
         <scroll-view scroll-x class="title-scroll" wx:if="{{partnerTitles.length}}">
           <view class="title-cards">
             <view class="title-card" wx:for="{{partnerTitles}}" wx:key="type" bindtap="onTapTitle" data-type="{{item.type}}" data-label="{{item.label}}">
-              <image class="title-icon-img" src="{{item.iconUrl}}" mode="aspectFit" />
+              <image class="title-icon-bg" src="{{item.iconUrl}}" mode="aspectFit" />
               <text class="title-label">{{item.label}}</text>
               <block wx:if="{{item.nickname}}">
                 <image class="title-avatar-img" wx:if="{{item.avatarImage}}" src="{{item.avatarImage}}" mode="aspectFill" />
