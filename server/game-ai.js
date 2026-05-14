@@ -1170,11 +1170,18 @@ function autoplayPropose(room) {
 }
 
 function autoplaySkipSpeak(room) {
-  if (!room || !room.game || room.phase !== 'speaking' || !room.speaking) return;
+  if (!room || !room.game || room.phase !== 'speaking' || !room.speaking) {
+    console.log(`[autoplaySkip] guard fail: phase=${room && room.phase}, speaking=${!!(room && room.speaking)}`);
+    return;
+  }
   const currentId = room.seats[room.speaking.index];
-  if (!currentId) return;
+  if (!currentId) { console.log('[autoplaySkip] no currentId at index', room.speaking.index); return; }
   const p = room.players.get(currentId);
-  if (!p || !p.autoplay || p.isAI) return;
+  if (!p || !p.autoplay || p.isAI) {
+    console.log(`[autoplaySkip] skip: player=${p && p.nickname}, autoplay=${p && p.autoplay}, isAI=${p && p.isAI}`);
+    return;
+  }
+  console.log(`[autoplaySkip] will skip ${p.nickname} in 800ms`);
   const gameRef = room.game;
   const speakingRef = room.speaking;
   setTimeout(() => {

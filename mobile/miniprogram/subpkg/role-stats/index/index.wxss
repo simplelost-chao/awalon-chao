@@ -362,7 +362,7 @@
 .help-close-text { font-size: 28rpx; color: rgba(78,158,255,0.9); padding: 12rpx 48rpx; }
 .radar-section .rs-title-row,
 .partner-section .rs-title-row { border-bottom: none; }
-.title-rate-placeholder { height: 28rpx; }
+.title-rate-placeholder { display: none; }
 
 
 /* ─── 搭档称号 ─── */
