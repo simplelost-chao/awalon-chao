@@ -66,6 +66,7 @@ Page({
     partnerTitles: [],
     partnerMatrix: [],
     expandedPartner: null,
+    titlesFlipped: false,
     radarTipVisible: false,
     radarTipTitle: '',
     radarTipItems: []
@@ -275,13 +276,10 @@ Page({
     this.setData({ radarTipVisible: true, radarTipItems: items });
   },
 
-  onFlipTitle(e) {
-    const idx = Number(e.currentTarget.dataset.idx);
-    const pairs = this.data.partnerTitles.slice();
-    if (pairs[idx]) {
-      pairs[idx] = { ...pairs[idx], flipped: !pairs[idx].flipped };
-      this.setData({ partnerTitles: pairs });
-    }
+  onFlipAllTitles() {
+    const flipped = !this.data.titlesFlipped;
+    const pairs = this.data.partnerTitles.map(p => ({ ...p, flipped }));
+    this.setData({ partnerTitles: pairs, titlesFlipped: flipped });
   },
 
   onSwitchDetailTab(e) {
