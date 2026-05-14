@@ -57,8 +57,8 @@
       <view class="game-config-main-btn ap-btn-primary">开始游戏</view>
     </view>
 
-    <!-- 重新开始（房主，游戏结束） -->
-    <view class="btn-frame game-config-main-frame" wx:if="{{isHost && phase==='end'}}" bindtap="onRedeal">
+    <!-- 重发身份/重新开始（房主，游戏进行中或结束） -->
+    <view class="btn-frame game-config-main-frame" wx:if="{{isHost && started}}" bindtap="onRedeal">
       <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
       <view class="fb fb-left"></view><view class="fb fb-right"></view>
       <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
@@ -67,7 +67,7 @@
       <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
       <text class="btn-diamond btn-diamond-l">◆</text>
       <text class="btn-diamond btn-diamond-r">◆</text>
-      <view class="game-config-main-btn ap-btn-primary">重新开始</view>
+      <view class="game-config-main-btn ap-btn-primary">{{phase === 'end' ? '重新开始' : '重发身份'}}</view>
     </view>
 
     <!-- 托管（所有人，游戏进行中） -->
