@@ -66,6 +66,9 @@ Page({
     partnerTitles: [],
     partnerMatrix: [],
     expandedPartner: null,
+    helpVisible: false,
+    helpTitle: '',
+    helpItems: [],
   },
 
   onLoad() {
@@ -248,10 +251,24 @@ Page({
 
   onRadarHelp() {
     const isGood = this.data.radarFaction === 'good';
-    const content = isGood
-      ? '识人：非梅林时投票准确率\n领袖：好人当队长发车成功率\n表水：通过队伍中有自己的比例\n挡刀：非梅林时替梅林挡刀\n躲刀：梅林时未被刺杀\n胜率：好人阵营胜率'
-      : '冲锋：含坏人队伍投赞成的比例\n煽动：坏人当队长发车成功率\n表水：通过队伍中有自己的比例\n隐秘：上车后出成功票藏身份\n破坏：上过车的局中出过失败票\n胜率：坏人阵营胜率';
-    wx.showModal({ title: isGood ? '正义能力维度' : '邪恶能力维度', content, showCancel: false, confirmText: '知道了' });
+    const items = isGood
+      ? [
+          { name: '识人', desc: '非梅林时投票准确率' },
+          { name: '领袖', desc: '好人当队长发车成功率' },
+          { name: '表水', desc: '通过队伍中有自己的比例' },
+          { name: '挡刀', desc: '非梅林时替梅林挡刀' },
+          { name: '躲刀', desc: '梅林时未被刺杀' },
+          { name: '胜率', desc: '好人阵营胜率' },
+        ]
+      : [
+          { name: '冲锋', desc: '含坏人队伍投赞成的比例' },
+          { name: '煽动', desc: '坏人当队长发车成功率' },
+          { name: '表水', desc: '通过队伍中有自己的比例' },
+          { name: '隐秘', desc: '上车后出成功票藏身份' },
+          { name: '破坏', desc: '上过车的局中出过失败票' },
+          { name: '胜率', desc: '坏人阵营胜率' },
+        ];
+    this.setData({ helpVisible: true, helpTitle: isGood ? '正义能力维度' : '邪恶能力维度', helpItems: items });
   },
 
   onFlipTitle(e) {
@@ -264,12 +281,26 @@ Page({
   },
 
   onPartnerHelp() {
-    wx.showModal({
-      title: '搭档称号说明',
-      content: '黄金搭档：同阵营胜率最高\n最坑队友：同阵营胜率最低\n最佳狼队友：同为坏人胜率最高\n最差狼队友：同为坏人胜率最低\n最佳骑士：同为好人胜率最高\n最差骑士：同为好人胜率最低\n最佳梅派：梅林+派西组合胜率最高\n最坑梅派：梅林+派西组合胜率最低\n血脉压制：对面阵营我胜率最高\n天生冤家：对面阵营我胜率最低\n\n点击卡片可翻转查看对立面',
-      showCancel: false,
-      confirmText: '知道了',
+    this.setData({
+      helpVisible: true,
+      helpTitle: '搭档称号说明',
+      helpItems: [
+        { name: '黄金搭档', desc: '同阵营胜率最高' },
+        { name: '最坑队友', desc: '同阵营胜率最低' },
+        { name: '最佳狼队友', desc: '同为坏人胜率最高' },
+        { name: '最差狼队友', desc: '同为坏人胜率最低' },
+        { name: '最佳骑士', desc: '同为好人胜率最高' },
+        { name: '最差骑士', desc: '同为好人胜率最低' },
+        { name: '最佳梅派', desc: '梅林+派西组合胜率最高' },
+        { name: '最坑梅派', desc: '梅林+派西组合胜率最低' },
+        { name: '血脉压制', desc: '对面阵营我胜率最高' },
+        { name: '天生冤家', desc: '对面阵营我胜率最低' },
+      ],
     });
+  },
+
+  onCloseHelp() {
+    this.setData({ helpVisible: false });
   },
 
   onSwitchDetailTab(e) {

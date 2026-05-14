@@ -117,9 +117,9 @@
           <view class="rs-title-line"></view>
           <text class="rs-deco">◆</text>
           <text class="rs-title">能力雷达</text>
+          <view class="help-btn" bindtap="onRadarHelp"><text class="help-btn-q">?</text></view>
           <text class="rs-deco">◆</text>
           <view class="rs-title-line"></view>
-          <text class="section-help" bindtap="onRadarHelp">?</text>
         </view>
         <view class="radar-faction-tabs">
           <view class="radar-tab {{radarFaction === 'good' ? 'radar-tab-active-good' : ''}}" data-faction="good" bindtap="onSwitchRadar">正义</view>
@@ -142,9 +142,9 @@
           <view class="rs-title-line"></view>
           <text class="rs-deco">◆</text>
           <text class="rs-title">搭档称号</text>
+          <view class="help-btn" bindtap="onPartnerHelp"><text class="help-btn-q">?</text></view>
           <text class="rs-deco">◆</text>
           <view class="rs-title-line"></view>
-          <text class="section-help" bindtap="onPartnerHelp">?</text>
         </view>
         <scroll-view scroll-x class="title-scroll" wx:if="{{partnerTitles.length}}">
           <view class="title-cards">
@@ -331,4 +331,17 @@
     </block>
   </view>
 
+  <!-- ── 自定义帮助弹窗 ── -->
+  <view class="help-overlay" wx:if="{{helpVisible}}" bindtap="onCloseHelp">
+    <view class="help-dialog" catchtap="">
+      <text class="help-title">{{helpTitle}}</text>
+      <view class="help-item" wx:for="{{helpItems}}" wx:key="name">
+        <text class="help-item-name">{{item.name}}</text>
+        <text class="help-item-desc">{{item.desc}}</text>
+      </view>
+      <view class="help-close" bindtap="onCloseHelp">
+        <text class="help-close-text">知道了</text>
+      </view>
+    </view>
+  </view>
 </view>
