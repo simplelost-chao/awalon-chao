@@ -110,9 +110,9 @@ function buildRadar(phone, excludeAI) {
     evilTrustIncluded: 0,
     evilTrustTotal: 0,
 
-    // assassination: as 刺客, % of games hitting 梅林
-    assassinHit: 0,
-    assassinGames: 0,
+    // incite (煽动): as evil leader, team approval rate
+    inciteApproved: 0,
+    inciteTotal: 0,
 
     // destruction: games where I cast at least one fail vote / total evil games I was on missions
     destructionSabotaged: 0,    // games where I voted fail at least once
@@ -233,10 +233,11 @@ function buildRadar(phone, excludeAI) {
         if (v.team.includes(myId)) e.evilTrustIncluded += 1;
       }
 
-      // assassination: all evil share the result (team discussion)
-      if (assassination) {
-        e.assassinGames += 1;
-        if (assassination.hit) e.assassinHit += 1;
+      // incite (煽动): as evil leader, team got approved
+      for (const v of voteHistory) {
+        if (!v || v.leaderId !== myId) continue;
+        e.inciteTotal += 1;
+        if (v.approved) e.inciteApproved += 1;
       }
 
       // destruction: per-game, did I cast at least one fail vote?
@@ -271,7 +272,7 @@ function buildRadar(phone, excludeAI) {
 
   const stealth        = scored(pct(e.stealthSuccess,           e.stealthMissions),     e.stealthMissions);
   const evilTrust      = scored(pct(e.evilTrustIncluded,        e.evilTrustTotal),      e.evilTrustTotal);
-  const assassination  = scored(pct(e.assassinHit,              e.assassinGames),       e.assassinGames);
+  const incite         = scored(pct(e.inciteApproved,           e.inciteTotal),         e.inciteTotal);
   const destruction    = scored(pct(e.destructionSabotaged,      e.destructionGames),    e.destructionGames);
   const evilWinRate    = scored(pct(e.evilWins,                 e.evilGames),           e.evilGames);
 
@@ -286,9 +287,9 @@ function buildRadar(phone, excludeAI) {
     },
     evil: {
       charge,
-      stealth,
+      incite,
       trustworthiness: evilTrust,
-      assassination,
+      stealth,
       destruction,
       winRate: evilWinRate,
     },

@@ -10,8 +10,8 @@ const AXES = {
     scoreColor: 'rgba(78,158,255,1)',
   },
   evil: {
-    keys: ['charge', 'stealth', 'trustworthiness', 'assassination', 'destruction', 'winRate'],
-    labels: ['冲锋', '隐秘', '表水', '刺杀', '破坏', '胜率'],
+    keys: ['charge', 'incite', 'trustworthiness', 'stealth', 'destruction', 'winRate'],
+    labels: ['冲锋', '煽动', '表水', '隐秘', '破坏', '胜率'],
     fillColor: 'rgba(220,80,80,0.25)',
     strokeColor: 'rgba(220,80,80,0.8)',
     dotColor: 'rgba(220,80,80,1)',

@@ -976,8 +976,8 @@ function renderPlayerDetail() {
   if (s.radar) {
     const goodLabels = ['识人','领袖','表水','挡刀','躲刀','胜率'];
     const goodKeys = ['recognition','leadership','trustworthiness','shield','dodge','winRate'];
-    const evilLabels = ['冲锋','隐秘','表水','刺杀','破坏','胜率'];
-    const evilKeys = ['charge','stealth','trustworthiness','assassination','destruction','winRate'];
+    const evilLabels = ['冲锋','煽动','表水','隐秘','破坏','胜率'];
+    const evilKeys = ['charge','incite','trustworthiness','stealth','destruction','winRate'];
     function radarRow(labels, keys, data, color) {
       let rows = '';
       for (let i = 0; i < keys.length; i++) {
