@@ -245,7 +245,11 @@ Page({
     this.setData({ radarFaction: faction }, () => this._drawRadarChart());
   },
 
-  onTapRadar() {
+  onToggleRadarTip() {
+    if (this.data.radarTipVisible) {
+      this.setData({ radarTipVisible: false });
+      return;
+    }
     const isGood = this.data.radarFaction === 'good';
     const items = isGood
       ? [
@@ -264,15 +268,7 @@ Page({
           { name: '破坏力', desc: '作为坏人上过车的局中，出过失败票的局数比例' },
           { name: '坏人胜率', desc: '邪恶阵营时的胜率' },
         ];
-    this.setData({
-      radarTipVisible: true,
-      radarTipTitle: isGood ? '正义能力维度' : '邪恶能力维度',
-      radarTipItems: items,
-    });
-  },
-
-  onCloseRadarTip() {
-    this.setData({ radarTipVisible: false });
+    this.setData({ radarTipVisible: true, radarTipItems: items });
   },
 
   onTapTitle(e) {

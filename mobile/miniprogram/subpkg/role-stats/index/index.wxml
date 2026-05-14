@@ -124,11 +124,17 @@
           <view class="radar-tab {{radarFaction === 'good' ? 'radar-tab-active-good' : ''}}" data-faction="good" bindtap="onSwitchRadar">正义</view>
           <view class="radar-tab {{radarFaction === 'evil' ? 'radar-tab-active-evil' : ''}}" data-faction="evil" bindtap="onSwitchRadar">邪恶</view>
         </view>
-        <view class="radar-canvas-wrap" bindtap="onTapRadar">
+        <view class="radar-canvas-wrap">
           <canvas id="radarCanvas" type="2d" class="radar-canvas" style="width:320px;height:320px;"></canvas>
         </view>
-        <view class="radar-hint" bindtap="onTapRadar">
-          <text class="radar-hint-text">点击雷达图查看维度说明</text>
+        <view class="radar-hint" bindtap="onToggleRadarTip">
+          <text class="radar-hint-text">{{radarTipVisible ? '收起说明' : '查看维度说明'}}</text>
+        </view>
+        <view class="radar-tip-inline" wx:if="{{radarTipVisible}}">
+          <view class="tip-item" wx:for="{{radarTipItems}}" wx:key="name">
+            <text class="tip-name">{{item.name}}</text>
+            <text class="tip-desc">{{item.desc}}</text>
+          </view>
         </view>
       </view>
 
@@ -296,17 +302,4 @@
     </block>
   </view>
 
-  <!-- ── 雷达维度说明弹窗（cover-view 覆盖原生 Canvas） ── -->
-  <cover-view class="tip-overlay" wx:if="{{radarTipVisible}}" bindtap="onCloseRadarTip">
-    <cover-view class="tip-dialog" catchtap="">
-      <cover-view class="tip-title">{{radarTipTitle}}</cover-view>
-      <cover-view class="tip-item" wx:for="{{radarTipItems}}" wx:key="name">
-        <cover-view class="tip-name">{{item.name}}</cover-view>
-        <cover-view class="tip-desc">{{item.desc}}</cover-view>
-      </cover-view>
-      <cover-view class="tip-close" bindtap="onCloseRadarTip">
-        <cover-view class="tip-close-text">知道了</cover-view>
-      </cover-view>
-    </cover-view>
-  </cover-view>
 </view>
