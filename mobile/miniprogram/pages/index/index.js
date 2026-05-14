@@ -4130,9 +4130,9 @@ Page({
     }
   },
 
-  requestHistoryList(page = 1) {
+  requestHistoryList(page = 1, mode = 'pvp') {
     const p = Math.max(1, Number(page) || 1);
-    this.send("GET_GAME_HISTORY_LIST", { limit: 10, offset: (p - 1) * 10 });
+    this.send("GET_GAME_HISTORY_LIST", { limit: 10, offset: (p - 1) * 10, mode });
   },
 
   requestHistoryDetail(gameId) {

@@ -4,7 +4,10 @@ const { buildRadar } = require('./stats-radar');
 const { buildPartners } = require('./stats-partners');
 const { trendMaxGames } = require('./stats-config');
 
-function getHistoryListForPhone(phone, limit = 30, offset = 0) {
+function getHistoryListForPhone(phone, limit = 30, offset = 0, mode = 'pvp') {
+  const aiFilter = mode === 'pve'
+    ? `AND EXISTS (SELECT 1 FROM game_participants ai WHERE ai.game_id = gp.game_id AND ai.is_ai = 1)`
+    : `AND NOT EXISTS (SELECT 1 FROM game_participants ai WHERE ai.game_id = gp.game_id AND ai.is_ai = 1)`;
   const stmt = userDb.prepare(
     `SELECT
        gp.game_id AS gameId,
@@ -28,7 +31,7 @@ function getHistoryListForPhone(phone, limit = 30, offset = 0) {
      FROM game_participants gp
      JOIN game_records gr ON gr.id = gp.game_id
      WHERE gp.phone = ? AND COALESCE(gr.status,'completed') = 'completed'
-     AND NOT EXISTS (SELECT 1 FROM game_participants ai WHERE ai.game_id = gp.game_id AND ai.is_ai = 1)
+     ${aiFilter}
      ORDER BY gr.ended_at DESC
      LIMIT ? OFFSET ?`
   );

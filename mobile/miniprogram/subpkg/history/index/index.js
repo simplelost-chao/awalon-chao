@@ -52,6 +52,7 @@ Page({
     navTotalHeight: 64,
     skinId: 'dark-gold',
     skinInGameBg: 'https://www.awalon.top/mp-assets/in-game-bg-optimized.jpg',
+    mode: 'pvp',
     list: [],
     page: 1,
     pageDisplay: '01',
@@ -131,19 +132,25 @@ Page({
     return parts.join(" · ");
   },
 
+  onSwitchMode(e) {
+    const mode = e.currentTarget.dataset.mode;
+    if (mode === this.data.mode) return;
+    this.setData({ mode, list: [], page: 1 });
+    this.fetchPage(1);
+  },
+
   fetchPage(page) {
     const p = Math.max(1, Number(page) || 1);
+    const mode = this.data.mode || 'pvp';
     const indexPage = getIndexPage();
     if (!indexPage || typeof indexPage.requestHistoryList !== "function") {
-      const sent = socket.send({ type: "GET_GAME_HISTORY_LIST", payload: { limit: 10, offset: (p - 1) * 10 } });
+      const sent = socket.send({ type: "GET_GAME_HISTORY_LIST", payload: { limit: 10, offset: (p - 1) * 10, mode } });
       if (!sent) {
-        this.setData({ loading: false });
         wx.showToast({ title: "连接未就绪", icon: "none" });
       }
       return;
     }
-    this.setData({ loading: true });
-    indexPage.requestHistoryList(p);
+    indexPage.requestHistoryList(p, mode);
   },
 
   onPrev() {

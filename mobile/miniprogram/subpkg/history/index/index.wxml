@@ -12,8 +12,12 @@
 
   <view class="content" style="padding-top: {{navTotalHeight + 8}}px;">
 
-    <view wx:if="{{loading}}" class="state-tip">加载中...</view>
-    <view wx:if="{{!loading && !list.length}}" class="state-tip">暂无历史记录</view>
+    <view class="history-mode-tabs">
+      <view class="history-mode-tab {{mode === 'pvp' ? 'history-mode-tab-active' : ''}}" data-mode="pvp" bindtap="onSwitchMode">PVP · 纯人局</view>
+      <view class="history-mode-tab {{mode === 'pve' ? 'history-mode-tab-active' : ''}}" data-mode="pve" bindtap="onSwitchMode">PVE · 含AI局</view>
+    </view>
+
+    <view wx:if="{{!list.length}}" class="state-tip">暂无历史记录</view>
 
     <view class="record-list" wx:if="{{list.length}}">
       <view

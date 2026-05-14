@@ -1257,8 +1257,9 @@ function fetchHistoryList(client, payload) {
   if (!client.userPhone) return error(client, 'NEED_LOGIN');
   const limit = Math.min(100, Math.max(1, parseInt((payload && payload.limit) || 30, 10) || 30));
   const offset = Math.max(0, parseInt((payload && payload.offset) || 0, 10) || 0);
-  const list = getHistoryListForPhone(client.userPhone, limit, offset);
-  send(client, { type: 'GAME_HISTORY_LIST', data: { list, limit, offset } });
+  const mode = (payload && payload.mode === 'pve') ? 'pve' : 'pvp';
+  const list = getHistoryListForPhone(client.userPhone, limit, offset, mode);
+  send(client, { type: 'GAME_HISTORY_LIST', data: { list, limit, offset, mode } });
 }
 
 function fetchHistoryDetail(client, payload) {
