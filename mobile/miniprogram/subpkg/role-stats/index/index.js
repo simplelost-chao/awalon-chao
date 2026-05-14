@@ -66,7 +66,6 @@ Page({
     partnerTitles: [],
     partnerMatrix: [],
     expandedPartner: null,
-    titlesFlipped: false,
     radarTipVisible: false,
     radarTipTitle: '',
     radarTipItems: []
@@ -276,10 +275,22 @@ Page({
     this.setData({ radarTipVisible: true, radarTipItems: items });
   },
 
-  onFlipAllTitles() {
-    const flipped = !this.data.titlesFlipped;
-    const pairs = this.data.partnerTitles.map(p => ({ ...p, flipped }));
-    this.setData({ partnerTitles: pairs, titlesFlipped: flipped });
+  onFlipTitle(e) {
+    const idx = Number(e.currentTarget.dataset.idx);
+    const pairs = this.data.partnerTitles.slice();
+    if (pairs[idx]) {
+      pairs[idx] = { ...pairs[idx], flipped: !pairs[idx].flipped };
+      this.setData({ partnerTitles: pairs });
+    }
+  },
+
+  onTapPartnerHelp() {
+    wx.showModal({
+      title: '搭档称号',
+      content: '根据你和其他玩家的对局数据自动计算。点击卡片可翻转查看对立面。至少需要2-3局共同对局才会生成称号。',
+      showCancel: false,
+      confirmText: '知道了',
+    });
   },
 
   onSwitchDetailTab(e) {
