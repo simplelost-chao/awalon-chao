@@ -77,12 +77,15 @@ function error(client, code) {
 
 function broadcastRoom(room) {
   if (room._historyMode) return;
-  if (!_rooms.has(room.code)) return; // 房间已从内存删除，异步回调中的僵尸广播，直接忽略
+  if (!_rooms.has(room.code)) return;
   persistActiveRoom(room);
-  const payload = { type: 'ROOM_STATE', room: publicRoom(room) };
+  const base = publicRoom(room);
   for (const player of room.players.values()) {
     const ws = _clients.get(player.id);
-    if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(payload));
+    if (!ws || ws.readyState !== WebSocket.OPEN) continue;
+    // hostRole 只发给房主，其他人看到 null
+    const roomData = player.id === room.hostId ? base : { ...base, hostRole: null };
+    ws.send(JSON.stringify({ type: 'ROOM_STATE', room: roomData }));
   }
 }
 
