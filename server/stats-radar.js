@@ -24,7 +24,7 @@ const ROLE_FACTIONS = {
 };
 
 // Minimum sample count to produce a meaningful score (< this → return -1)
-const MIN_SAMPLES = 3;
+const MIN_SAMPLES = 1;
 
 /**
  * Scale a ratio (0–1) to a 0–100 integer, clamped.

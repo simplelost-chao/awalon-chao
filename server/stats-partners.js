@@ -234,41 +234,18 @@ function buildPartners(phone, excludeAI) {
     };
   }
 
-  // golden: sameTeam winRate highest (min 3)
-  const golden = pickBest(matrix,
-    p => p.sameTeam.games,
-    p => p.sameTeam.winRate,
-    3, true);
-
-  // bestWolf: sameEvil winRate highest (min 2 — 同为坏人概率低，门槛放宽)
-  const bestWolf = pickBest(matrix,
-    p => p.sameEvil.games,
-    p => p.sameEvil.winRate,
-    2, true);
-
-  // bestKnight: sameGood winRate highest (min 2)
-  const bestKnight = pickBest(matrix,
-    p => p.sameGood.games,
-    p => p.sameGood.winRate,
-    2, true);
-
-  // worstTeammate: sameTeam winRate lowest (min 3)
-  const worstTeammate = pickBest(matrix,
-    p => p.sameTeam.games,
-    p => p.sameTeam.winRate,
-    3, false);
-
-  // worstWolf: sameEvil winRate lowest (min 2)
-  const worstWolf = pickBest(matrix,
-    p => p.sameEvil.games,
-    p => p.sameEvil.winRate,
-    2, false);
-
-  // worstKnight: sameGood winRate lowest (min 2)
-  const worstKnight = pickBest(matrix,
-    p => p.sameGood.games,
-    p => p.sameGood.winRate,
-    2, false);
+  // golden: sameTeam winRate highest (min 1)
+  const golden = pickBest(matrix, p => p.sameTeam.games, p => p.sameTeam.winRate, 1, true);
+  // bestWolf: sameEvil winRate highest (min 1)
+  const bestWolf = pickBest(matrix, p => p.sameEvil.games, p => p.sameEvil.winRate, 1, true);
+  // bestKnight: sameGood winRate highest (min 1)
+  const bestKnight = pickBest(matrix, p => p.sameGood.games, p => p.sameGood.winRate, 1, true);
+  // worstTeammate: sameTeam winRate lowest (min 1)
+  const worstTeammate = pickBest(matrix, p => p.sameTeam.games, p => p.sameTeam.winRate, 1, false);
+  // worstWolf: sameEvil winRate lowest (min 1)
+  const worstWolf = pickBest(matrix, p => p.sameEvil.games, p => p.sameEvil.winRate, 1, false);
+  // worstKnight: sameGood winRate lowest (min 1)
+  const worstKnight = pickBest(matrix, p => p.sameGood.games, p => p.sameGood.winRate, 1, false);
 
   // bestMerlinPerci / worstMerlinPerci: 梅林↔派西维尔 combo win rate
   const merlinPerciStats = new Map(); // phone -> { games, wins }
@@ -286,7 +263,7 @@ function buildPartners(phone, excludeAI) {
   function pickMerlinPerci(wantMax) {
     let best = null;
     for (const [phone, mp] of merlinPerciStats) {
-      if (mp.games < 2) continue;
+      if (mp.games < 1) continue;
       const m = matrix.find(p => p.phone === phone);
       if (!m) continue;
       if (!best || (wantMax ? mp.winRate > best.winRate : mp.winRate < best.winRate) ||
@@ -304,8 +281,8 @@ function buildPartners(phone, excludeAI) {
   }
 
   // nemesis (天生冤家): opponent winRate lowest / dominated (血脉压制): opponent winRate highest
-  const nemesis = pickBest(matrix, p => p.opponent.games, p => p.opponent.winRate, 3, false);
-  const dominated = pickBest(matrix, p => p.opponent.games, p => p.opponent.winRate, 3, true);
+  const nemesis = pickBest(matrix, p => p.opponent.games, p => p.opponent.winRate, 1, false);
+  const dominated = pickBest(matrix, p => p.opponent.games, p => p.opponent.winRate, 1, true);
 
   const pairs = [
     {
