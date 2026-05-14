@@ -87,15 +87,6 @@
           </view>
         </view>
 
-        <!-- 趋势图 -->
-        <view class="trend-wrap" wx:if="{{trendData}}">
-          <view class="trend-legend">
-            <view class="trend-legend-item"><view class="trend-dot trend-dot-good"></view><text class="trend-legend-text">正义</text></view>
-            <view class="trend-legend-item"><view class="trend-dot trend-dot-evil"></view><text class="trend-legend-text">邪恶</text></view>
-          </view>
-          <canvas id="trendCanvas" type="2d" class="trend-canvas" style="width:320px;height:100px;"></canvas>
-        </view>
-
         <!-- 阵营对比 -->
         <view class="ov-faction">
           <view class="ov-faction-pair">
@@ -113,6 +104,15 @@
           </view>
         </view>
       </view>
+
+        <!-- 趋势图 -->
+        <view class="trend-wrap" wx:if="{{trendData}}">
+          <view class="trend-legend">
+            <view class="trend-legend-item"><view class="trend-dot trend-dot-good"></view><text class="trend-legend-text">正义</text></view>
+            <view class="trend-legend-item"><view class="trend-dot trend-dot-evil"></view><text class="trend-legend-text">邪恶</text></view>
+          </view>
+          <canvas id="trendCanvas" type="2d" class="trend-canvas" style="width:320px;height:100px;"></canvas>
+        </view>
 
       <!-- ── 能力雷达 ── -->
       <view class="pf rs-section" wx:if="{{radarData}}">
