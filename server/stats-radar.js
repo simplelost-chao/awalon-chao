@@ -213,8 +213,8 @@ function buildRadar(phone, excludeAI) {
       for (const v of voteHistory) {
         if (!v || !Array.isArray(v.team) || !v.votes) continue;
         if (!(myId in v.votes)) continue;
-        const hasOtherEvil = v.team.some((id) => id !== myId && factionById[id] === 'evil');
-        if (!hasOtherEvil) continue;
+        const hasEvil = v.team.some((id) => factionById[id] === 'evil');
+        if (!hasEvil) continue;
         e.chargeTotal += 1;
         if (v.votes[myId]) e.chargeApproved += 1; // true = approve
       }
