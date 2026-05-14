@@ -368,45 +368,51 @@ Page({
           ctx.stroke();
         }
 
-        function drawLine(data, color) {
-          ctx.beginPath();
-          let started = false;
+        function getPoints(data) {
+          const pts = [];
           for (let i = 0; i < n; i++) {
             const v = data[i];
             if (v === null || v === undefined) continue;
-            const x = padL + (i / (n - 1)) * cw;
-            const y = padT + ch * (1 - v / 100);
-            if (!started) { ctx.moveTo(x, y); started = true; }
-            else ctx.lineTo(x, y);
+            pts.push({ x: padL + (i / (n - 1)) * cw, y: padT + ch * (1 - v / 100), v });
           }
-          ctx.strokeStyle = color;
+          return pts;
+        }
+
+        function drawArea(pts, r, g, b) {
+          if (pts.length < 2) return;
+          // 渐变填充
+          ctx.beginPath();
+          ctx.moveTo(pts[0].x, padT + ch);
+          pts.forEach(p => ctx.lineTo(p.x, p.y));
+          ctx.lineTo(pts[pts.length - 1].x, padT + ch);
+          ctx.closePath();
+          const grad = ctx.createLinearGradient(0, padT, 0, padT + ch);
+          grad.addColorStop(0, `rgba(${r},${g},${b},0.2)`);
+          grad.addColorStop(1, `rgba(${r},${g},${b},0.02)`);
+          ctx.fillStyle = grad;
+          ctx.fill();
+          // 线
+          ctx.beginPath();
+          pts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
+          ctx.strokeStyle = `rgba(${r},${g},${b},0.8)`;
           ctx.lineWidth = 2;
+          ctx.lineJoin = 'round';
           ctx.stroke();
+          // 末端圆点 + 数值
+          const last = pts[pts.length - 1];
+          ctx.beginPath();
+          ctx.arc(last.x, last.y, 3, 0, Math.PI * 2);
+          ctx.fillStyle = `rgb(${r},${g},${b})`;
+          ctx.fill();
+          ctx.font = 'bold 10px sans-serif';
+          ctx.fillStyle = `rgba(${r},${g},${b},0.9)`;
+          ctx.textAlign = 'right';
+          ctx.textBaseline = 'bottom';
+          ctx.fillText(last.v + '%', last.x - 6, last.y - 4);
         }
 
-        drawLine(trend.good, 'rgba(78,158,255,0.8)');
-        drawLine(trend.evil, 'rgba(220,80,80,0.8)');
-
-        // 末端数值
-        function lastVal(data) {
-          for (let i = data.length - 1; i >= 0; i--) {
-            if (data[i] !== null && data[i] !== undefined) return data[i];
-          }
-          return null;
-        }
-        ctx.font = '10px sans-serif';
-        ctx.textBaseline = 'middle';
-        const gv = lastVal(trend.good), ev = lastVal(trend.evil);
-        if (gv !== null) {
-          ctx.fillStyle = 'rgba(78,158,255,0.9)';
-          ctx.textAlign = 'right';
-          ctx.fillText(gv + '%', W - padR, padT + ch * (1 - gv / 100));
-        }
-        if (ev !== null) {
-          ctx.fillStyle = 'rgba(220,80,80,0.9)';
-          ctx.textAlign = 'right';
-          ctx.fillText(ev + '%', W - padR - (gv !== null && Math.abs((gv || 0) - ev) < 10 ? 36 : 0), padT + ch * (1 - ev / 100));
-        }
+        drawArea(getPoints(trend.good), 78, 158, 255);
+        drawArea(getPoints(trend.evil), 220, 80, 80);
 
         ctx.restore();
       });

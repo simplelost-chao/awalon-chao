@@ -281,6 +281,13 @@ pre.json { background: rgba(255,255,255,.03); border-radius: 8px; padding: 12px;
       <div class="sub-tabs" id="cfg-role-tabs" style="margin-bottom:12px"></div>
       <div class="panel" style="padding:20px;margin-bottom:20px" id="cfg-role-editor"></div>
 
+      <!-- Stats config -->
+      <div class="section-label">统计系统配置</div>
+      <div class="panel" style="padding:20px;margin-bottom:20px" id="cfg-stats">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px" id="stats-config-grid"></div>
+        <button class="mt-12" style="background:rgba(78,158,255,.15);border:1px solid rgba(78,158,255,.35);color:#4e9eff;border-radius:8px;padding:8px 24px;font-size:13px;cursor:pointer;font-weight:600;" onclick="saveStatsConfig()">保存统计配置</button>
+      </div>
+
       <!-- Raw JSON -->
       <details style="margin-bottom:20px">
         <summary style="cursor:pointer;color:rgba(216,176,107,.5);font-size:12px;margin-bottom:8px">高级：原始 JSON 配置</summary>
@@ -1443,6 +1450,27 @@ function loadConfig() {
     const { reviewMode, defaultRoleConfig, ...rest } = d;
     document.getElementById('cfg-json').value = JSON.stringify(rest, null, 2);
   });
+  // Stats config
+  api('/api/admin/config/stats').then(d => {
+    const labels = {
+      statsRadarMaxGames: '雷达图：最近N局', statsRadarSmoothK: '雷达图：平滑系数',
+      statsPartnerMaxGames: '搭档：最近N局', statsPartnerMinGames: '搭档：最少N局',
+      statsPartnerSmoothK: '搭档：平滑系数', statsTrendMaxGames: '趋势图：最近N局',
+    };
+    const grid = document.getElementById('stats-config-grid');
+    grid.innerHTML = '';
+    for (const [key, val] of Object.entries(d)) {
+      grid.innerHTML += `<div style="display:flex;flex-direction:column;gap:4px"><label style="font-size:11px;color:rgba(242,229,200,.5)">${labels[key] || key}</label><input id="sc-${key}" type="number" value="${val}" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:8px;color:#f2e5c8;font-size:14px;width:100%;box-sizing:border-box"></div>`;
+    }
+  }).catch(() => {});
+}
+function saveStatsConfig() {
+  const keys = ['statsRadarMaxGames','statsRadarSmoothK','statsPartnerMaxGames','statsPartnerMinGames','statsPartnerSmoothK','statsTrendMaxGames'];
+  const body = {};
+  keys.forEach(k => { const el = document.getElementById('sc-' + k); if (el) body[k] = Number(el.value); });
+  api('/api/admin/config/stats', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+    .then(() => alert('统计配置已保存'))
+    .catch(() => alert('保存失败'));
 }
 function updateReviewToggle(isOn) {
   const t1 = document.getElementById('sidebar-review-toggle');

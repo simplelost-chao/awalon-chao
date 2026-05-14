@@ -543,6 +543,30 @@ function adminRoutes(app, { ADMIN_KEY, getRooms, getRuntimeReviewMode, setRuntim
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
+  // ── Stats Config ─────────────────────────────────────────────────
+  app.get('/api/admin/config/stats', requireAdmin, (req, res) => {
+    const { DEFAULTS } = require('./stats-config');
+    const cfg = loadConfig();
+    const result = {};
+    for (const key of Object.keys(DEFAULTS)) {
+      result[key] = cfg[key] !== undefined ? cfg[key] : DEFAULTS[key];
+    }
+    res.json(result);
+  });
+
+  app.post('/api/admin/config/stats', requireAdmin, (req, res) => {
+    try {
+      const { DEFAULTS } = require('./stats-config');
+      const cfg = loadConfig();
+      const body = req.body || {};
+      for (const key of Object.keys(DEFAULTS)) {
+        if (body[key] !== undefined) cfg[key] = Number(body[key]);
+      }
+      saveConfig(cfg);
+      res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
   // ── Assets ───────────────────────────────────────────────────────
   app.get('/api/admin/assets', requireAdmin, (req, res) => {
     const assetsRoot = path.join(__dirname, '..', 'public', 'mp-assets');
