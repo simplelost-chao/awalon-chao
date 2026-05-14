@@ -288,6 +288,7 @@ function buildRadar(phone, excludeAI) {
       destruction,
       winRate: evilWinRate,
     },
+    _maxGames: radarMaxGames,
   };
 }
 

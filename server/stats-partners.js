@@ -315,7 +315,7 @@ function buildPartners(phone, excludeAI) {
     },
   ];
 
-  return { pairs, matrix };
+  return { pairs, matrix, _maxGames: partnerMaxGames, _minGames: partnerMinGames };
 }
 
 module.exports = { buildPartners };

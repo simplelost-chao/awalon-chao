@@ -113,14 +113,12 @@ Page({
 
     app.globalData.roleStatsListener = (raw) => {
       this._rawStats = raw;
+      app.globalData.latestRoleStats = raw;
       this.applyStats(raw);
     };
 
-    if (app.globalData.latestRoleStats) {
-      this._rawStats = app.globalData.latestRoleStats;
-      this.applyStats(app.globalData.latestRoleStats);
-      return;
-    }
+    // 每次进入都重新请求（不用缓存，确保配置变更即时生效）
+    app.globalData.latestRoleStats = null;
     const indexPage = getIndexPage();
     if (indexPage && typeof indexPage.requestRoleStats === "function") {
       this.setData({ loading: true });
@@ -254,22 +252,26 @@ Page({
 
   onRadarHelp() {
     const isGood = this.data.radarFaction === 'good';
+    const s = this.data.roleStats;
+    const radarGames = s && s.radar && s.radar._maxGames || '?';
     const items = isGood
       ? [
-          { name: '识人', desc: '非梅林时投票准确率' },
-          { name: '领袖', desc: '好人当队长发车成功率' },
-          { name: '表水', desc: '通过队伍中有自己的比例' },
-          { name: '挡刀', desc: '非梅林时替梅林挡刀' },
-          { name: '躲刀', desc: '梅林时未被刺杀' },
-          { name: '胜率', desc: '好人阵营胜率' },
+          { name: '识人', desc: '非梅林时，坏车投反对+好车投赞成的准确率' },
+          { name: '领袖', desc: '好人当队长时队伍被投票通过的比例' },
+          { name: '表水', desc: '所有通过的队伍中包含自己的比例' },
+          { name: '挡刀', desc: '非梅林时被刺客选为刺杀目标的比例' },
+          { name: '躲刀', desc: '梅林时刺杀未命中的比例' },
+          { name: '胜率', desc: '正义阵营时的总胜率' },
+          { name: '说明', desc: `基于最近${radarGames}局，分数经贝叶斯平滑（局数少时偏向50分）` },
         ]
       : [
-          { name: '冲锋', desc: '含坏人队伍投赞成的比例' },
-          { name: '煽动', desc: '坏人当队长发车成功率' },
-          { name: '表水', desc: '通过队伍中有自己的比例' },
-          { name: '隐秘', desc: '上车后出成功票藏身份' },
-          { name: '破坏', desc: '上过车的局中出过失败票' },
-          { name: '胜率', desc: '坏人阵营胜率' },
+          { name: '冲锋', desc: '含坏人（含自己）的队伍投赞成的比例' },
+          { name: '煽动', desc: '坏人当队长时队伍被投票通过的比例' },
+          { name: '表水', desc: '所有通过的队伍中包含自己的比例' },
+          { name: '隐秘', desc: '上车后出成功票隐藏身份的比例' },
+          { name: '破坏', desc: '上过车的局中出过至少一次失败票的比例' },
+          { name: '胜率', desc: '邪恶阵营时的总胜率' },
+          { name: '说明', desc: `基于最近${radarGames}局，分数经贝叶斯平滑（局数少时偏向50分）` },
         ];
     this.setData({ helpVisible: true, helpTitle: isGood ? '正义能力维度' : '邪恶能力维度', helpItems: items });
   },
@@ -284,20 +286,24 @@ Page({
   },
 
   onPartnerHelp() {
+    const s = this.data.roleStats;
+    const pGames = s && s.partners && s.partners._maxGames || '?';
+    const pMin = s && s.partners && s.partners._minGames || '?';
     this.setData({
       helpVisible: true,
       helpTitle: '搭档称号说明',
       helpItems: [
-        { name: '黄金搭档', desc: '同阵营胜率最高' },
-        { name: '最坑队友', desc: '同阵营胜率最低' },
-        { name: '最佳狼队友', desc: '同为坏人胜率最高' },
-        { name: '最差狼队友', desc: '同为坏人胜率最低' },
-        { name: '最佳骑士', desc: '同为好人胜率最高' },
-        { name: '最差骑士', desc: '同为好人胜率最低' },
+        { name: '黄金搭档', desc: '同阵营胜率最高的搭档' },
+        { name: '最坑队友', desc: '同阵营胜率最低的搭档' },
+        { name: '最佳狼队友', desc: '同为坏人时胜率最高' },
+        { name: '最差狼队友', desc: '同为坏人时胜率最低' },
+        { name: '最佳骑士', desc: '同为好人时胜率最高' },
+        { name: '最差骑士', desc: '同为好人时胜率最低' },
         { name: '最佳梅派', desc: '梅林+派西组合胜率最高' },
         { name: '最坑梅派', desc: '梅林+派西组合胜率最低' },
-        { name: '血脉压制', desc: '对面阵营我胜率最高' },
-        { name: '天生冤家', desc: '对面阵营我胜率最低' },
+        { name: '血脉压制', desc: '对面阵营时我胜率最高' },
+        { name: '天生冤家', desc: '对面阵营时我胜率最低' },
+        { name: '说明', desc: `基于最近${pGames}局，至少同场${pMin}局才出称号，点击卡片可翻转` },
       ],
     });
   },
