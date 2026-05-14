@@ -23,8 +23,7 @@ const ROLE_FACTIONS = {
   '兰斯洛特（邪恶）': 'evil',
 };
 
-// Bayesian smoothing factor: pulls scores toward 50 when sample size is small
-const SMOOTH_K = 3;
+const { radarMaxGames, radarSmoothK: SMOOTH_K } = require('./stats-config');
 
 /**
  * Bayesian-smoothed score (0–100).
@@ -60,7 +59,7 @@ function buildRadar(phone, excludeAI) {
       AND COALESCE(gr.status,'completed') = 'completed'
       ${gpFilter}
     ORDER BY gr.ended_at DESC
-    LIMIT 100
+    LIMIT ${radarMaxGames}
   `).all(phone);
 
   // ── 2. Accumulators ────────────────────────────────────────────────────────

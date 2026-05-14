@@ -66,6 +66,7 @@ Page({
     partnerTitles: [],
     partnerMatrix: [],
     expandedPartner: null,
+    trendData: null,
     helpVisible: false,
     helpTitle: '',
     helpItems: [],
@@ -201,10 +202,12 @@ Page({
       goodMedals, evilMedals, roleMedals, loading: false,
       recentGames, recentDotsText, streakType, streakCount,
       radarData: roleStats.radar || null,
+      trendData: roleStats.trend || null,
       partnerTitles: this._buildPartnerTitles(roleStats.partners),
       partnerMatrix: this._buildPartnerMatrix(roleStats.partners)
     }, () => {
       if (roleStats.radar) this._drawRadarChart();
+      if (roleStats.trend) this._drawTrendChart();
     });
   },
 
@@ -328,6 +331,84 @@ Page({
         if (!radar) return;
         const data = faction === 'good' ? radar.good : radar.evil;
         drawRadar(ctx, data, faction, 320);
+      });
+  },
+
+  _drawTrendChart() {
+    const trend = this.data.trendData;
+    if (!trend) return;
+    const query = this.createSelectorQuery();
+    query.select('#trendCanvas')
+      .fields({ node: true, size: true })
+      .exec((res) => {
+        if (!res || !res[0] || !res[0].node) return;
+        const canvas = res[0].node;
+        const ctx = canvas.getContext('2d');
+        const dpr = wx.getWindowInfo().pixelRatio || 2;
+        const W = 320, H = 100;
+        canvas.width = W * dpr;
+        canvas.height = H * dpr;
+        ctx.clearRect(0, 0, W * dpr, H * dpr);
+        ctx.save();
+        ctx.scale(dpr, dpr);
+
+        const n = Math.max(trend.good.length, trend.evil.length);
+        if (n < 2) { ctx.restore(); return; }
+        const padL = 4, padR = 4, padT = 8, padB = 16;
+        const cw = W - padL - padR, ch = H - padT - padB;
+
+        // 网格线
+        for (let p = 0; p <= 100; p += 50) {
+          const y = padT + ch * (1 - p / 100);
+          ctx.beginPath();
+          ctx.moveTo(padL, y);
+          ctx.lineTo(W - padR, y);
+          ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+
+        function drawLine(data, color) {
+          ctx.beginPath();
+          let started = false;
+          for (let i = 0; i < n; i++) {
+            const v = data[i];
+            if (v === null || v === undefined) continue;
+            const x = padL + (i / (n - 1)) * cw;
+            const y = padT + ch * (1 - v / 100);
+            if (!started) { ctx.moveTo(x, y); started = true; }
+            else ctx.lineTo(x, y);
+          }
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+
+        drawLine(trend.good, 'rgba(78,158,255,0.8)');
+        drawLine(trend.evil, 'rgba(220,80,80,0.8)');
+
+        // 末端数值
+        function lastVal(data) {
+          for (let i = data.length - 1; i >= 0; i--) {
+            if (data[i] !== null && data[i] !== undefined) return data[i];
+          }
+          return null;
+        }
+        ctx.font = '10px sans-serif';
+        ctx.textBaseline = 'middle';
+        const gv = lastVal(trend.good), ev = lastVal(trend.evil);
+        if (gv !== null) {
+          ctx.fillStyle = 'rgba(78,158,255,0.9)';
+          ctx.textAlign = 'right';
+          ctx.fillText(gv + '%', W - padR, padT + ch * (1 - gv / 100));
+        }
+        if (ev !== null) {
+          ctx.fillStyle = 'rgba(220,80,80,0.9)';
+          ctx.textAlign = 'right';
+          ctx.fillText(ev + '%', W - padR - (gv !== null && Math.abs((gv || 0) - ev) < 10 ? 36 : 0), padT + ch * (1 - ev / 100));
+        }
+
+        ctx.restore();
       });
   },
 

@@ -2,6 +2,7 @@ const { userDb } = require('./db');
 const { MEDAL_DEFS } = require('./medals');
 const { buildRadar } = require('./stats-radar');
 const { buildPartners } = require('./stats-partners');
+const { trendMaxGames } = require('./stats-config');
 
 function getHistoryListForPhone(phone, limit = 30, offset = 0) {
   const stmt = userDb.prepare(
@@ -138,9 +139,39 @@ function _buildStats(phone, excludeAI) {
     return { code: r.code, name: (def && def.name) || r.code, faction: (def && def.faction) || 'neutral', total: Number(r.total || 0) };
   });
   const totalMedals = medals.reduce((s, m) => s + m.total, 0);
+
+  // 趋势图：最近 N 局按阵营分的逐局胜负（从旧到新）
+  const GOOD_ROLES = new Set(['梅林','派西维尔','忠臣','亚瑟的忠臣','兰斯洛特（正义）']);
+  const trendRows = userDb.prepare(
+    `SELECT gp.role, gp.result
+     FROM game_participants gp
+     JOIN game_records gr ON gr.id = gp.game_id
+     WHERE gp.phone = ? AND gp.role != '观战' AND COALESCE(gr.status,'completed') = 'completed'
+     ${gpFilter}
+     ORDER BY gr.ended_at DESC LIMIT ${trendMaxGames}`
+  ).all(phone);
+  const goodTrend = []; // 每个元素: 1=win, 0=lose, null=没打好人
+  const evilTrend = [];
+  let goodW = 0, goodT = 0, evilW = 0, evilT = 0;
+  for (let i = trendRows.length - 1; i >= 0; i--) {
+    const r = trendRows[i];
+    const isGood = GOOD_ROLES.has(r.role);
+    const win = r.result === 'win' ? 1 : 0;
+    if (isGood) {
+      goodT++; goodW += win;
+      goodTrend.push(Math.round(goodW / goodT * 100));
+      evilTrend.push(evilTrend.length ? evilTrend[evilTrend.length - 1] : null);
+    } else {
+      evilT++; evilW += win;
+      evilTrend.push(Math.round(evilW / evilT * 100));
+      goodTrend.push(goodTrend.length ? goodTrend[goodTrend.length - 1] : null);
+    }
+  }
+  const trend = { good: goodTrend, evil: evilTrend };
+
   const radar = buildRadar(phone, excludeAI);
   const partners = buildPartners(phone, excludeAI);
-  return { totalGames, totalWins, overallWinRate, byRole, medals, totalMedals, recentGames, streakType, streakCount, radar, partners };
+  return { totalGames, totalWins, overallWinRate, byRole, medals, totalMedals, recentGames, streakType, streakCount, trend, radar, partners };
 }
 
 function getRoleStatsForPhone(phone) {

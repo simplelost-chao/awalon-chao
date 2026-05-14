@@ -7,6 +7,7 @@
  */
 
 const { userDb } = require('./db');
+const { partnerMaxGames, partnerMinGames, partnerSmoothK } = require('./stats-config');
 
 const ROLE_FACTIONS = {
   梅林: 'good',
@@ -52,7 +53,7 @@ function buildPartners(phone, excludeAI) {
        AND COALESCE(gr.status, 'completed') = 'completed'
        ${gpFilter}
      ORDER BY gr.ended_at DESC
-     LIMIT 100`
+     LIMIT ${partnerMaxGames}`
   ).all(phone);
 
   // ── 2. Collect all partner phones for bulk nickname/avatar lookup ──────────
@@ -209,12 +210,10 @@ function buildPartners(phone, excludeAI) {
   matrix.sort((a, b) => b.totalGames - a.totalGames || a.phone.localeCompare(b.phone));
 
   // ── 6. Build titles ────────────────────────────────────────────────────────
-  // Bayesian smoothing for partner win rates (same k=3 as radar)
-  const SMOOTH_K = 3;
   function smoothWR(wins, games) {
     if (!games) return 50;
     const raw = (wins / games) * 100;
-    return (raw * games + 50 * SMOOTH_K) / (games + SMOOTH_K);
+    return (raw * games + 50 * partnerSmoothK) / (games + partnerSmoothK);
   }
 
   // Helper: pick best/worst using Bayesian-smoothed win rate for ranking
@@ -244,17 +243,17 @@ function buildPartners(phone, excludeAI) {
   }
 
   // golden: sameTeam smoothed winRate highest
-  const golden = pickBest(matrix, p => p.sameTeam.games, p => p.sameTeam.wins, 1, true);
+  const golden = pickBest(matrix, p => p.sameTeam.games, p => p.sameTeam.wins, partnerMinGames, true);
   // bestWolf: sameEvil smoothed winRate highest
-  const bestWolf = pickBest(matrix, p => p.sameEvil.games, p => p.sameEvil.wins, 1, true);
+  const bestWolf = pickBest(matrix, p => p.sameEvil.games, p => p.sameEvil.wins, partnerMinGames, true);
   // bestKnight: sameGood smoothed winRate highest
-  const bestKnight = pickBest(matrix, p => p.sameGood.games, p => p.sameGood.wins, 1, true);
+  const bestKnight = pickBest(matrix, p => p.sameGood.games, p => p.sameGood.wins, partnerMinGames, true);
   // worstTeammate: sameTeam smoothed winRate lowest
-  const worstTeammate = pickBest(matrix, p => p.sameTeam.games, p => p.sameTeam.wins, 1, false);
+  const worstTeammate = pickBest(matrix, p => p.sameTeam.games, p => p.sameTeam.wins, partnerMinGames, false);
   // worstWolf: sameEvil smoothed winRate lowest
-  const worstWolf = pickBest(matrix, p => p.sameEvil.games, p => p.sameEvil.wins, 1, false);
+  const worstWolf = pickBest(matrix, p => p.sameEvil.games, p => p.sameEvil.wins, partnerMinGames, false);
   // worstKnight: sameGood smoothed winRate lowest
-  const worstKnight = pickBest(matrix, p => p.sameGood.games, p => p.sameGood.wins, 1, false);
+  const worstKnight = pickBest(matrix, p => p.sameGood.games, p => p.sameGood.wins, partnerMinGames, false);
 
   // bestMerlinPerci / worstMerlinPerci: 梅林↔派西维尔 combo win rate
   const merlinPerciStats = new Map(); // phone -> { games, wins }
@@ -272,7 +271,7 @@ function buildPartners(phone, excludeAI) {
   function pickMerlinPerci(wantMax) {
     let best = null;
     for (const [phone, mp] of merlinPerciStats) {
-      if (mp.games < 1) continue;
+      if (mp.games < partnerMinGames) continue;
       const m = matrix.find(p => p.phone === phone);
       if (!m) continue;
       const swr = smoothWR(mp.wins, mp.games);
@@ -290,8 +289,8 @@ function buildPartners(phone, excludeAI) {
   }
 
   // nemesis (天生冤家): opponent winRate lowest / dominated (血脉压制): opponent winRate highest
-  const nemesis = pickBest(matrix, p => p.opponent.games, p => p.opponent.wins, 1, false);
-  const dominated = pickBest(matrix, p => p.opponent.games, p => p.opponent.wins, 1, true);
+  const nemesis = pickBest(matrix, p => p.opponent.games, p => p.opponent.wins, partnerMinGames, false);
+  const dominated = pickBest(matrix, p => p.opponent.games, p => p.opponent.wins, partnerMinGames, true);
 
   const pairs = [
     {
