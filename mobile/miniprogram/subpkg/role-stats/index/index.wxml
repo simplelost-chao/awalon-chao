@@ -124,7 +124,7 @@
           <view class="radar-tab {{radarFaction === 'good' ? 'radar-tab-active-good' : ''}}" data-faction="good" bindtap="onSwitchRadar">正义</view>
           <view class="radar-tab {{radarFaction === 'evil' ? 'radar-tab-active-evil' : ''}}" data-faction="evil" bindtap="onSwitchRadar">邪恶</view>
         </view>
-        <view class="radar-canvas-wrap" bindtap="onTapRadar">
+        <view class="radar-canvas-wrap" bindtap="onTapRadar" wx:if="{{!radarTipVisible}}">
           <canvas id="radarCanvas" type="2d" class="radar-canvas" style="width:320px;height:320px;"></canvas>
         </view>
         <view class="radar-hint" bindtap="onTapRadar">

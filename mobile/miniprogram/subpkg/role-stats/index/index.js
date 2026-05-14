@@ -257,7 +257,7 @@ Page({
           { name: '好人胜率', desc: '正义阵营时的胜率' },
         ]
       : [
-          { name: '冲锋能力', desc: '上车的队伍中含其他坏人队友的比例' },
+          { name: '冲锋能力', desc: '含坏人队友的队伍被提出时，投赞成且通过的比例' },
           { name: '隐秘性', desc: '在队伍中出成功票隐藏身份的比例' },
           { name: '表水能力', desc: '非队长时自己能上车的频率' },
           { name: '刺杀能力', desc: '带刀时刺中梅林的比例' },
@@ -272,7 +272,7 @@ Page({
   },
 
   onCloseRadarTip() {
-    this.setData({ radarTipVisible: false });
+    this.setData({ radarTipVisible: false }, () => this._drawRadarChart());
   },
 
   onTapTitle(e) {
