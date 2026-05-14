@@ -290,7 +290,11 @@ function adminRoutes(app, { ADMIN_KEY, getRooms, getRuntimeReviewMode, setRuntim
           }
           if (streakType === 'lose') streak = -streak;
         }
-        return { byRole, medals, recentGames, totalGames, wins: totalWins, winRate, medalCount, currentStreak: streak };
+        const { buildRadar } = require('./stats-radar');
+        const { buildPartners } = require('./stats-partners');
+        const radar = buildRadar(phone, excludeAI);
+        const partners = buildPartners(phone, excludeAI);
+        return { byRole, medals, recentGames, totalGames, wins: totalWins, winRate, medalCount, currentStreak: streak, radar, partners };
       }
       res.json({ user, pvp: buildStats(true), pve: buildStats(false) });
     } catch (e) { res.status(500).json({ error: e.message }); }
