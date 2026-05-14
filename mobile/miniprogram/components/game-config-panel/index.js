@@ -8,7 +8,6 @@ Component({
     phase:           { type: String,  value: '' },
     showHelp:        { type: Boolean, value: true },
     showActions:     { type: Boolean, value: true },
-    showAutoplay:    { type: Boolean, value: false },
     myAutoplay:      { type: Boolean, value: false },
   },
 

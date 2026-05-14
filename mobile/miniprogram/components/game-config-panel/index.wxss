@@ -1,5 +1,4 @@
-.game-config-autoplay {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 12rpx;
+.game-config-main-btn-active {
+  color: var(--aw-accent, #d8b06b);
+  background: rgba(216,176,107,0.12);
 }

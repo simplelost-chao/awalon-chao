@@ -71,8 +71,21 @@
       <view class="game-config-main-btn ap-btn-primary">重新开始</view>
     </view>
 
-    <!-- 修改配置 -->
-    <view class="btn-frame btn-frame-ghost game-config-main-frame" bindtap="onSettings">
+    <!-- 修改配置 / 托管（同一位置，根据游戏状态切换） -->
+    <view class="btn-frame btn-frame-ghost game-config-main-frame"
+      wx:if="{{started && phase !== 'end' && phase !== 'lobby'}}"
+      bindtap="onToggleAutoplay">
+      <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+      <view class="fb fb-left"></view><view class="fb fb-right"></view>
+      <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+      <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+      <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+      <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+      <view class="game-config-main-btn {{myAutoplay ? 'game-config-main-btn-active' : 'game-config-main-btn-ghost'}}">{{myAutoplay ? '取消托管' : '托管'}}</view>
+    </view>
+    <view class="btn-frame btn-frame-ghost game-config-main-frame"
+      wx:else
+      bindtap="onSettings">
       <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
       <view class="fb fb-left"></view><view class="fb fb-right"></view>
       <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
@@ -80,13 +93,6 @@
       <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
       <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
       <view class="game-config-main-btn game-config-main-btn-ghost">修改配置</view>
-    </view>
-  </view>
-
-  <!-- 托管按钮（游戏进行中，非结束非大厅） -->
-  <view class="game-config-autoplay" wx:if="{{showAutoplay && started && phase !== 'end' && phase !== 'lobby'}}">
-    <view class="resend-role-btn {{myAutoplay ? 'resend-role-btn-active' : ''}}" bindtap="onToggleAutoplay">
-      {{myAutoplay ? '取消托管' : '托管'}}
     </view>
   </view>
 </view>
