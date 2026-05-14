@@ -240,17 +240,17 @@ function buildPartners(phone, excludeAI) {
     p => p.sameTeam.winRate,
     3, true);
 
-  // bestWolf: sameEvil winRate highest (min 3)
+  // bestWolf: sameEvil winRate highest (min 2 — 同为坏人概率低，门槛放宽)
   const bestWolf = pickBest(matrix,
     p => p.sameEvil.games,
     p => p.sameEvil.winRate,
-    3, true);
+    2, true);
 
-  // bestKnight: sameGood winRate highest (min 3)
+  // bestKnight: sameGood winRate highest (min 2)
   const bestKnight = pickBest(matrix,
     p => p.sameGood.games,
     p => p.sameGood.winRate,
-    3, true);
+    2, true);
 
   // nemesis: opponent winRate lowest (min 3 games against)
   const nemesis = pickBest(matrix,
