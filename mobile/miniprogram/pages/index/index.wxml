@@ -1059,14 +1059,14 @@
           <text class="identity-card-back-title">身份卡</text>
           <text class="identity-card-back-sub">{{roleInfoLoading && !roleInfo ? '正在获取身份' : '点击翻牌'}}</text>
         </view>
-        <view class="identity-card-face identity-card-front {{(roleFactionText || (isAssassin ? '邪恶阵营' : '正义阵营')) === '邪恶阵营' ? 'identity-card-front-evil' : 'identity-card-front-good'}}">
+        <view class="identity-card-face identity-card-front {{roleFactionText === '邪恶阵营' ? 'identity-card-front-evil' : 'identity-card-front-good'}}">
           <view class="identity-card-corner identity-card-corner-tl">
             <text class="identity-card-corner-num">◆</text>
-            <text class="identity-card-corner-suit">{{isAssassin ? '邪恶' : '正义'}}</text>
+            <text class="identity-card-corner-suit">{{roleFactionText === '邪恶阵营' ? '邪恶' : '正义'}}</text>
           </view>
           <view class="identity-card-corner identity-card-corner-br">
             <text class="identity-card-corner-num">◆</text>
-            <text class="identity-card-corner-suit">{{isAssassin ? '邪恶' : '正义'}}</text>
+            <text class="identity-card-corner-suit">{{roleFactionText === '邪恶阵营' ? '邪恶' : '正义'}}</text>
           </view>
           <view class="identity-card-portrait-wrap">
             <image wx:if="{{roleInfoImage}}" class="identity-card-portrait" src="{{roleInfoImage}}" mode="aspectFill" />
