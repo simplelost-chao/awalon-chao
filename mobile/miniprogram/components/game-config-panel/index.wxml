@@ -1,0 +1,92 @@
+<view class="pf game-config-panel">
+  <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+  <view class="fb fb-left"></view><view class="fb fb-right"></view>
+  <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+  <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+  <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+  <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+
+  <!-- 标题 -->
+  <view class="game-config-head">
+    <view class="game-config-title-wrap mt-title-row">
+      <view class="mt-title-line"></view>
+      <text class="mt-title-deco">◆</text>
+      <text class="mt-title">{{title}}</text>
+      <view class="game-config-help" wx:if="{{showHelp}}" bindtap="onTapHelp">?</view>
+      <text class="mt-title-deco">◆</text>
+      <view class="mt-title-line"></view>
+    </view>
+    <view wx:if="{{started && phase !== 'end'}}" class="game-config-lock">进行中</view>
+  </view>
+
+  <!-- 角色条 -->
+  <view class="game-role-strip" wx:if="{{roleCards.length}}">
+    <view class="game-role-mini {{item.isEvil ? 'game-role-mini-evil' : 'game-role-mini-good'}} {{item.isHostRole ? 'game-role-mini-host' : ''}}"
+      wx:for="{{roleCards}}" wx:key="role"
+      data-role="{{item.role}}" data-description="{{item.description}}"
+      bindtap="onTapRole">
+      <image class="game-role-mini-img" wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFill" />
+      <text class="game-role-mini-tip" wx:if="{{item.roleBadgeText}}">{{item.roleBadgeText}}</text>
+      <text class="game-role-mini-name">{{item.role}}</text>
+      <text class="game-role-mini-count" wx:if="{{item.count > 1}}">×{{item.count}}</text>
+    </view>
+  </view>
+
+  <!-- 配置网格 -->
+  <view class="game-config-grid" wx:if="{{configLines.length}}">
+    <view class="game-config-cell" wx:for="{{configLines}}" wx:key="label">
+      <view class="game-config-label-wrap">
+        <image class="game-config-icon" wx:if="{{item.icon}}" src="{{item.icon}}" mode="aspectFit" />
+        <text class="game-config-label">{{item.label}}</text>
+      </view>
+      <text class="game-config-value">{{item.value}}</text>
+    </view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="game-config-actions" wx:if="{{showActions && isHost}}">
+    <!-- 开始游戏 -->
+    <view class="btn-frame game-config-main-frame" wx:if="{{!started}}" bindtap="onStartGame">
+      <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+      <view class="fb fb-left"></view><view class="fb fb-right"></view>
+      <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+      <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+      <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+      <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+      <text class="btn-diamond btn-diamond-l">◆</text>
+      <text class="btn-diamond btn-diamond-r">◆</text>
+      <view class="game-config-main-btn ap-btn-primary">开始游戏</view>
+    </view>
+
+    <!-- 重新开始 / 重发身份 -->
+    <view class="btn-frame game-config-main-frame" wx:elif="{{phase==='end'}}" bindtap="onRedeal">
+      <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+      <view class="fb fb-left"></view><view class="fb fb-right"></view>
+      <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+      <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+      <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+      <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+      <text class="btn-diamond btn-diamond-l">◆</text>
+      <text class="btn-diamond btn-diamond-r">◆</text>
+      <view class="game-config-main-btn ap-btn-primary">重新开始</view>
+    </view>
+
+    <!-- 修改配置 -->
+    <view class="btn-frame btn-frame-ghost game-config-main-frame" bindtap="onSettings">
+      <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+      <view class="fb fb-left"></view><view class="fb fb-right"></view>
+      <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+      <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+      <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+      <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+      <view class="game-config-main-btn game-config-main-btn-ghost">修改配置</view>
+    </view>
+  </view>
+
+  <!-- 托管按钮（游戏进行中，非结束非大厅） -->
+  <view class="game-config-autoplay" wx:if="{{showAutoplay && started && phase !== 'end' && phase !== 'lobby'}}">
+    <view class="resend-role-btn {{myAutoplay ? 'resend-role-btn-active' : ''}}" bindtap="onToggleAutoplay">
+      {{myAutoplay ? '取消托管' : '托管'}}
+    </view>
+  </view>
+</view>

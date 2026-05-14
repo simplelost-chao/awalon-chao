@@ -1,54 +1,20 @@
 <view class="control-wrap">
-  <!-- 当前角色 + 房间配置（复用当前配置面板样式） -->
-  <view class="pf rpp-section" wx:if="{{roomRoleCards.length}}">
-    <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
-    <view class="fb fb-left"></view><view class="fb fb-right"></view>
-    <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
-    <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
-    <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
-    <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
-
-    <view class="game-config-head">
-      <view class="game-config-title-wrap mt-title-row">
-        <view class="mt-title-line"></view>
-        <text class="mt-title-deco">◆</text>
-        <text class="mt-title">当前角色</text>
-        <text class="mt-title-deco">◆</text>
-        <view class="mt-title-line"></view>
-      </view>
-      <view class="section-title-row-actions">
-        <view class="resend-role-btn" wx:if="{{isHost && roomStarted}}" bindtap="onRedealIdentities">重发身份</view>
-        <view class="resend-role-btn {{myAutoplay ? 'resend-role-btn-active' : ''}}"
-          wx:if="{{roomStarted && phase !== 'end' && phase !== 'lobby'}}"
-          bindtap="onToggleAutoplay">{{myAutoplay ? '取消托管' : '托管'}}</view>
-      </view>
-    </view>
-
-    <view class="game-role-strip">
-      <view class="game-role-mini {{item.roleClass === 'role-evil' ? 'game-role-mini-evil' : 'game-role-mini-good'}}"
-        wx:for="{{roomRoleCards}}" wx:key="role"
-        data-role="{{item.role}}" data-description="{{item.description}}"
-        bindtap="onTapRoleCard">
-        <image class="game-role-mini-img" wx:if="{{item.image}}" src="{{item.image}}" mode="aspectFill" />
-        <view class="role-chip-label" wx:else>
-          <text class="role-chip-name">{{item.role}}</text>
-        </view>
-        <text class="game-role-mini-tip" wx:if="{{item.roleBadgeText}}">{{item.roleBadgeText}}</text>
-        <text class="game-role-mini-name">{{item.role}}</text>
-        <text class="game-role-mini-count" wx:if="{{item.count > 1}}">×{{item.count}}</text>
-      </view>
-    </view>
-
-    <view class="game-config-grid" wx:if="{{roomConfigLines.length}}">
-      <view class="game-config-cell" wx:for="{{roomConfigLines}}" wx:key="label">
-        <view class="game-config-label-wrap">
-          <image class="game-config-icon" wx:if="{{item.icon}}" src="{{item.icon}}" mode="aspectFit" />
-          <text class="game-config-label">{{item.label}}</text>
-        </view>
-        <text class="game-config-value">{{item.value}}</text>
-      </view>
-    </view>
-  </view>
+  <!-- 当前角色 + 房间配置（复用 game-config-panel 组件） -->
+  <game-config-panel wx:if="{{roomRoleCards.length}}"
+    title="当前角色"
+    role-cards="{{roomRoleCards}}"
+    config-lines="{{roomConfigLines}}"
+    is-host="{{isHost}}"
+    started="{{roomStarted}}"
+    phase="{{phase}}"
+    show-help="{{false}}"
+    show-actions="{{false}}"
+    show-autoplay="{{true}}"
+    my-autoplay="{{myAutoplay}}"
+    bind:taprole="onTapRoleCard"
+    bind:redeal="onRedealIdentities"
+    bind:toggleautoplay="onToggleAutoplay"
+  />
 
   <!-- 玩家列表 -->
   <view class="pf rpp-section">

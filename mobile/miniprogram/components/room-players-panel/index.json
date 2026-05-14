@@ -1,1 +1,1 @@
-{"component": true, "styleIsolation": "shared"}
+{"component": true, "styleIsolation": "shared", "usingComponents": {"game-config-panel": "/components/game-config-panel/index"}}
