@@ -341,8 +341,8 @@
 .radar-hint-text { font-size: 22rpx; color: rgba(255,255,255,0.25); }
 .radar-section .rs-title-line,
 .partner-title-section .rs-title-line { display: none; }
-.partner-title-section > .fb { display: none; }
-.partner-title-section > .fc-inner { display: none; }
+.partner-title-section .fb,
+.partner-title-section .fc-inner { display: none; }
 
 /* ─── 维度说明（内联展开） ─── */
 .radar-tip-inline { padding: 8rpx 48rpx 20rpx; }
