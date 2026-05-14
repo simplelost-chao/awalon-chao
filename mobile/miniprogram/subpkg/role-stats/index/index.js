@@ -272,7 +272,7 @@ Page({
   },
 
   onCloseRadarTip() {
-    this.setData({ radarTipVisible: false }, () => this._drawRadarChart());
+    this.setData({ radarTipVisible: false });
   },
 
   onTapTitle(e) {
