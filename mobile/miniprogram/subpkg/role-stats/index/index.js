@@ -65,7 +65,10 @@ Page({
     detailTab: 'roles',
     partnerTitles: [],
     partnerMatrix: [],
-    expandedPartner: null
+    expandedPartner: null,
+    radarTipVisible: false,
+    radarTipTitle: '',
+    radarTipItems: []
   },
 
   onLoad() {
@@ -244,15 +247,32 @@ Page({
 
   onTapRadar() {
     const isGood = this.data.radarFaction === 'good';
-    const content = isGood
-      ? '识人能力：非梅林时，含坏人队伍投反对的比例\n\n领袖力：当队长时队伍被投票通过的比例\n\n表水能力：非队长时被别人选入队伍的频率\n\n挡刀能力：非梅林时被刺客选为刺杀目标的比例\n\n躲刀能力：梅林牌时没有被刺杀的比例\n\n好人胜率：正义阵营时的胜率'
-      : '冲锋能力：通过的队伍中带上其他坏人队友的次数\n\n隐秘性：在队伍中出成功票隐藏身份的比例\n\n表水能力：非队长时自己能上车的频率\n\n刺杀能力：带刀时刺中梅林的比例\n\n破坏力：出失败票且任务确实失败的比例\n\n坏人胜率：邪恶阵营时的胜率';
-    wx.showModal({
-      title: isGood ? '正义能力维度' : '邪恶能力维度',
-      content,
-      showCancel: false,
-      confirmText: '知道了',
+    const items = isGood
+      ? [
+          { name: '识人能力', desc: '非梅林时，含坏人队伍投反对的比例' },
+          { name: '领袖力', desc: '当队长时队伍被投票通过的比例' },
+          { name: '表水能力', desc: '非队长时被别人选入队伍的频率' },
+          { name: '挡刀能力', desc: '非梅林时被刺客选为刺杀目标的比例' },
+          { name: '躲刀能力', desc: '梅林牌时没有被刺杀的比例' },
+          { name: '好人胜率', desc: '正义阵营时的胜率' },
+        ]
+      : [
+          { name: '冲锋能力', desc: '通过的队伍中带上其他坏人队友的次数' },
+          { name: '隐秘性', desc: '在队伍中出成功票隐藏身份的比例' },
+          { name: '表水能力', desc: '非队长时自己能上车的频率' },
+          { name: '刺杀能力', desc: '带刀时刺中梅林的比例' },
+          { name: '破坏力', desc: '出失败票且任务确实失败的比例' },
+          { name: '坏人胜率', desc: '邪恶阵营时的胜率' },
+        ];
+    this.setData({
+      radarTipVisible: true,
+      radarTipTitle: isGood ? '正义能力维度' : '邪恶能力维度',
+      radarTipItems: items,
     });
+  },
+
+  onCloseRadarTip() {
+    this.setData({ radarTipVisible: false });
   },
 
   onTapTitle(e) {

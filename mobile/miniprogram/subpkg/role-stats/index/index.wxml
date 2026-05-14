@@ -106,7 +106,7 @@
       </view>
 
       <!-- ── 能力雷达 ── -->
-      <view class="pf rs-section" wx:if="{{radarData}}">
+      <view class="pf rs-section radar-section" wx:if="{{radarData}}">
         <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
         <view class="fb fb-left"></view><view class="fb fb-right"></view>
         <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
@@ -294,5 +294,19 @@
       </block>
 
     </block>
+  </view>
+
+  <!-- ── 雷达维度说明弹窗 ── -->
+  <view class="tip-overlay" wx:if="{{radarTipVisible}}" bindtap="onCloseRadarTip">
+    <view class="tip-dialog" catchtap="">
+      <text class="tip-title">{{radarTipTitle}}</text>
+      <view class="tip-item" wx:for="{{radarTipItems}}" wx:key="name">
+        <text class="tip-name">{{item.name}}</text>
+        <text class="tip-desc">{{item.desc}}</text>
+      </view>
+      <view class="tip-close" bindtap="onCloseRadarTip">
+        <text class="tip-close-text">知道了</text>
+      </view>
+    </view>
   </view>
 </view>
