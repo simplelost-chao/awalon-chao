@@ -38,7 +38,13 @@
       </view>
 
       <!-- 已登录显示用户信息 -->
-      <view class="user-title-wrap" wx:if="{{loggedIn}}">
+      <view class="pf user-title-wrap" wx:if="{{loggedIn}}">
+        <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+        <view class="fb fb-left"></view><view class="fb fb-right"></view>
+        <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+        <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+        <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+        <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
         <view class="profile-head">
           <view class="profile-avatar-wrap" bindtap="onChangeAvatar">
             <image class="profile-avatar-img" wx:if="{{avatarImage}}" src="{{avatarImage}}" mode="aspectFill" />

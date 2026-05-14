@@ -283,10 +283,7 @@
 
 .user-title-wrap {
   margin-bottom: 12rpx;
-  padding: 10rpx 14rpx;
-  border-left: 6rpx solid var(--aw-accent);
-  clip-path: polygon(10px 0%, calc(100% - 10px) 0%, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0% calc(100% - 10px), 0% 10px);
-  background: linear-gradient(90deg, rgba(216, 176, 107, 0.24), rgba(216, 176, 107, 0.04));
+  padding: 16rpx 20rpx;
 }
 
 .profile-head {
