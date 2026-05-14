@@ -3,7 +3,7 @@
 const AXES = {
   good: {
     keys: ['recognition', 'leadership', 'trustworthiness', 'shield', 'dodge', 'winRate'],
-    labels: ['识人能力', '领袖力', '表水能力', '挡刀能力', '躲刀能力', '好人胜率'],
+    labels: ['识人', '领袖', '表水', '挡刀', '躲刀', '胜率'],
     fillColor: 'rgba(78,158,255,0.25)',
     strokeColor: 'rgba(78,158,255,0.8)',
     dotColor: 'rgba(78,158,255,1)',
@@ -11,7 +11,7 @@ const AXES = {
   },
   evil: {
     keys: ['charge', 'stealth', 'trustworthiness', 'assassination', 'destruction', 'winRate'],
-    labels: ['冲锋能力', '隐秘性', '表水能力', '刺杀能力', '破坏力', '坏人胜率'],
+    labels: ['冲锋', '隐秘', '表水', '刺杀', '破坏', '胜率'],
     fillColor: 'rgba(220,80,80,0.25)',
     strokeColor: 'rgba(220,80,80,0.8)',
     dotColor: 'rgba(220,80,80,1)',

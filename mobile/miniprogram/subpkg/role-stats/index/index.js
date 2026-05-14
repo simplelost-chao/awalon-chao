@@ -242,7 +242,11 @@ Page({
 
   onSwitchRadar(e) {
     const faction = e.currentTarget.dataset.faction;
-    this.setData({ radarFaction: faction }, () => this._drawRadarChart());
+    const wasVisible = this.data.radarTipVisible;
+    this.setData({ radarFaction: faction, radarTipVisible: false }, () => {
+      this._drawRadarChart();
+      if (wasVisible) this.onToggleRadarTip();
+    });
   },
 
   onToggleRadarTip() {
@@ -253,20 +257,20 @@ Page({
     const isGood = this.data.radarFaction === 'good';
     const items = isGood
       ? [
-          { name: '识人能力', desc: '非梅林时，含坏人队伍投反对的比例' },
-          { name: '领袖力', desc: '当队长时队伍被投票通过的比例' },
-          { name: '表水能力', desc: '非队长时被别人选入队伍的频率' },
-          { name: '挡刀能力', desc: '非梅林时被刺客选为刺杀目标的比例' },
-          { name: '躲刀能力', desc: '梅林牌时没有被刺杀的比例' },
-          { name: '好人胜率', desc: '正义阵营时的胜率' },
+          { name: '识人', desc: '非梅林时，含坏人队伍投反对的比例' },
+          { name: '领袖', desc: '当队长时队伍被投票通过的比例' },
+          { name: '表水', desc: '非队长时被别人选入队伍的频率' },
+          { name: '挡刀', desc: '非梅林时被刺客选为刺杀目标的比例' },
+          { name: '躲刀', desc: '梅林牌时没有被刺杀的比例' },
+          { name: '胜率', desc: '正义阵营时的胜率' },
         ]
       : [
-          { name: '冲锋能力', desc: '含坏人队友的队伍被提出时，投赞成且通过的比例' },
-          { name: '隐秘性', desc: '在队伍中出成功票隐藏身份的比例' },
-          { name: '表水能力', desc: '非队长时自己能上车的频率' },
-          { name: '刺杀能力', desc: '带刀时刺中梅林的比例' },
-          { name: '破坏力', desc: '作为坏人上过车的局中，出过失败票的局数比例' },
-          { name: '坏人胜率', desc: '邪恶阵营时的胜率' },
+          { name: '冲锋', desc: '含坏人队友的队伍被提出时，投赞成且通过的比例' },
+          { name: '隐秘', desc: '在队伍中出成功票隐藏身份的比例' },
+          { name: '表水', desc: '非队长时自己能上车的频率' },
+          { name: '刺杀', desc: '带刀时刺中梅林的比例' },
+          { name: '破坏', desc: '作为坏人上过车的局中，出过失败票的局数比例' },
+          { name: '胜率', desc: '邪恶阵营时的胜率' },
         ];
     this.setData({ radarTipVisible: true, radarTipItems: items });
   },
