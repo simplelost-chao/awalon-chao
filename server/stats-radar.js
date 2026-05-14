@@ -98,9 +98,9 @@ function buildRadar(phone, excludeAI) {
 
   // Evil accumulators
   const e = {
-    // charge: as evil leader, proposed teams that include other evil
-    chargeWithEvil: 0,      // my proposed teams that included other evil
-    chargeLeads: 0,         // total teams I proposed as evil leader
+    // charge: voted approve on teams containing other evil
+    chargeApproved: 0,      // times I voted approve on evil-containing teams
+    chargeTotal: 0,         // total times I voted on evil-containing teams
 
     // stealth: in missions, % of times evil player voted success (true=fail, false=success)
     stealthSuccess: 0,      // times I voted success (false)
@@ -209,12 +209,14 @@ function buildRadar(phone, excludeAI) {
       e.evilGames += 1;
       if (winner === 'evil') e.evilWins += 1;
 
-      // charge: as leader, proposed team that includes other evil (regardless of approval)
+      // charge: when a team has other evil on it, did I vote approve?
       for (const v of voteHistory) {
-        if (!v || !Array.isArray(v.team) || v.leaderId !== myId) continue;
-        e.chargeLeads += 1;
+        if (!v || !Array.isArray(v.team) || !v.votes) continue;
+        if (!(myId in v.votes)) continue;
         const hasOtherEvil = v.team.some((id) => id !== myId && factionById[id] === 'evil');
-        if (hasOtherEvil) e.chargeWithEvil += 1;
+        if (!hasOtherEvil) continue;
+        e.chargeTotal += 1;
+        if (v.votes[myId]) e.chargeApproved += 1; // true = approve
       }
 
       // stealth: in missions I participated in, voted success (false)
@@ -268,7 +270,7 @@ function buildRadar(phone, excludeAI) {
   const dodge          = scored(pct(g.dodgeMissed,       g.dodgeGames),          g.dodgeGames);
   const goodWinRate    = scored(pct(g.goodWins,          g.goodGames),           g.goodGames);
 
-  const charge         = scored(pct(e.chargeWithEvil,            e.chargeLeads),         e.chargeLeads);
+  const charge         = scored(pct(e.chargeApproved,            e.chargeTotal),         e.chargeTotal);
 
   const stealth        = scored(pct(e.stealthSuccess,           e.stealthMissions),     e.stealthMissions);
   const evilTrust      = scored(pct(e.evilTrustIncluded,        e.evilTrustTotal),      e.evilTrustTotal);
