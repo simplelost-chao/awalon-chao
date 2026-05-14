@@ -1029,21 +1029,9 @@
   min-width: 0;
   filter: drop-shadow(0 0 4rpx rgba(180, 120, 10, 0.6));
 }
-.btn-frame-ghost {
+.top-btn-frame {
   flex: 1;
-}
-.btn-frame-ghost .fb-top,
-.btn-frame-ghost .fb-bottom {
-  height: 2rpx;
-  background: linear-gradient(to right, #6b3e08 0%, #c8860a 20%, #f5cc52 45%, #fff4b0 50%, #f5cc52 55%, #c8860a 80%, #6b3e08 100%);
-}
-.btn-frame-ghost .fb-left,
-.btn-frame-ghost .fb-right {
-  width: 2rpx;
-  background: linear-gradient(to bottom, #6b3e08, #c8860a 40%, #c8860a 60%, #6b3e08);
-}
-.btn-frame-ghost .fc-inner {
-  display: none;
+  padding: 0;
 }
 
 /* 主按钮专属：加厚金色渐变边框 */

@@ -363,11 +363,13 @@
         <view class="btn-row">
 
           <!-- 房间详情按钮 -->
-          <view class="btn-frame btn-frame-ghost top-btn-frame" bindtap="togglePlayerList">
+          <view class="pf top-btn-frame" bindtap="togglePlayerList">
             <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
             <view class="fb fb-left"></view><view class="fb fb-right"></view>
             <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
             <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+            <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+            <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
             <view class="top-btn-inner">
               <text class="top-btn-icon">◈</text>
               <text class="top-btn-label">{{showPlayerList ? ('收起 · ' + room.code) : ('房间 · ' + room.code)}}</text>
@@ -376,11 +378,13 @@
           </view>
 
           <!-- 查看身份/视野按钮 -->
-          <view class="btn-frame btn-frame-ghost top-btn-frame {{!canViewIdentity ? 'top-btn-disabled' : ''}} {{identityMode ? 'top-btn-open' : ''}}" bindtap="toggleRolePanel">
+          <view class="pf top-btn-frame {{!canViewIdentity ? 'top-btn-disabled' : ''}} {{identityMode ? 'top-btn-open' : ''}}" bindtap="toggleRolePanel">
             <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
             <view class="fb fb-left"></view><view class="fb fb-right"></view>
             <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
             <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+            <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+            <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
             <view class="top-btn-inner">
               <text class="top-btn-icon">{{canViewIdentity ? (identityRevealSeen ? '◈' : '◉') : '◌'}}</text>
               <text class="top-btn-label">{{canViewIdentity ? (identityMode ? '收起' : (identityRevealSeen ? '视野' : '查看身份')) : '无身份'}}</text>
