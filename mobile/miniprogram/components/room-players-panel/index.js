@@ -14,7 +14,9 @@ Component({
   },
 
   methods: {
+    onStartGame()         { this.triggerEvent('startgame'); },
     onRedealIdentities()  { this.triggerEvent('redeal'); },
+    onSettings()          { this.triggerEvent('settings'); },
     onToggleAutoplay()    { this.triggerEvent('toggleautoplay'); },
     onTapRoleCard(e)      { this.triggerEvent('taprolecard', e.detail || e.currentTarget.dataset); },
     onKickPlayer(e)       { this.triggerEvent('kickplayer', e.currentTarget.dataset); },

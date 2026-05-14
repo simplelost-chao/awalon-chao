@@ -11,7 +11,9 @@
     show-actions="{{true}}"
     my-autoplay="{{myAutoplay}}"
     bind:taprole="onTapRoleCard"
+    bind:startgame="onStartGame"
     bind:redeal="onRedealIdentities"
+    bind:settings="onSettings"
     bind:toggleautoplay="onToggleAutoplay"
   />
 
