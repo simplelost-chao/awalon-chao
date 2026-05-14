@@ -324,18 +324,19 @@ Page({
 
   _buildPartnerTitles(partners) {
     if (!partners || !partners.titles) return [];
+    const CDN = 'https://www.awalon.top/mp-assets/titles';
     const TITLE_META = {
-      golden:          { label: '黄金搭档',      icon: '👑' },
-      bestWolf:        { label: '最佳狼队友',    icon: '🐺' },
-      bestKnight:      { label: '最佳骑士',      icon: '🛡️' },
-      bestMerlinPerci: { label: '梅林&派西',     icon: '🔮' },
-      nemesis:         { label: '天生冤家',      icon: '⚔️' },
-      worstTeammate:   { label: '最坑队友',      icon: '💀' },
+      golden:          { label: '黄金搭档',      icon: `${CDN}/golden.svg` },
+      bestWolf:        { label: '最佳狼队友',    icon: `${CDN}/best_wolf.svg` },
+      bestKnight:      { label: '最佳骑士',      icon: `${CDN}/best_knight.svg` },
+      bestMerlinPerci: { label: '梅林&派西',     icon: `${CDN}/merlin_perci.svg` },
+      nemesis:         { label: '天生冤家',      icon: `${CDN}/nemesis.svg` },
+      worstTeammate:   { label: '最坑队友',      icon: `${CDN}/worst_teammate.svg` },
     };
     return partners.titles.map(t => {
-      const meta = TITLE_META[t.type] || { label: t.type, icon: '?' };
+      const meta = TITLE_META[t.type] || { label: t.type, icon: '' };
       const isUrl = t.avatar && (t.avatar.startsWith('http') || t.avatar.startsWith('/'));
-      return { ...t, label: meta.label, icon: meta.icon, avatarImage: isUrl ? t.avatar : '', avatarText: isUrl ? '' : (t.avatar || '🐺') };
+      return { ...t, label: meta.label, iconUrl: meta.icon, avatarImage: isUrl ? t.avatar : '', avatarText: isUrl ? '' : (t.avatar || '🐺') };
     });
   },
 

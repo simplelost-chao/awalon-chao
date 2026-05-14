@@ -156,7 +156,7 @@
         <scroll-view scroll-x class="title-scroll" wx:if="{{partnerTitles.length}}">
           <view class="title-cards">
             <view class="title-card" wx:for="{{partnerTitles}}" wx:key="type" bindtap="onTapTitle" data-type="{{item.type}}" data-label="{{item.label}}">
-              <text class="title-icon">{{item.icon}}</text>
+              <image class="title-icon-img" src="{{item.iconUrl}}" mode="aspectFit" />
               <text class="title-label">{{item.label}}</text>
               <block wx:if="{{item.nickname}}">
                 <image class="title-avatar-img" wx:if="{{item.avatarImage}}" src="{{item.avatarImage}}" mode="aspectFill" />
@@ -164,11 +164,11 @@
                 <text class="title-nickname">{{item.nickname}}</text>
                 <view class="title-rate-row">
                   <view class="title-rate-bar-wrap">
-                    <view class="title-rate-bar" style="width:{{item.winRate}}%"></view>
+                    <view class="title-rate-bar {{item.winRate >= 60 ? 'rate-bar-high' : item.winRate >= 40 ? 'rate-bar-mid' : 'rate-bar-low'}}" style="width:{{item.winRate}}%"></view>
                   </view>
                   <text class="title-rate-num">{{item.winRate}}%</text>
+                  <text class="title-games-inline">{{item.games}}局</text>
                 </view>
-                <text class="title-games">{{item.games}}局</text>
               </block>
               <block wx:else>
                 <text class="title-avatar-text">?</text>
