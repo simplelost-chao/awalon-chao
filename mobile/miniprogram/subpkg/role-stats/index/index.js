@@ -217,6 +217,12 @@ Page({
     if (this._rawStats) this.applyStats(this._rawStats);
   },
 
+  onToggleMode() {
+    const mode = this.data.mode === 'pvp' ? 'pve' : 'pvp';
+    this.setData({ mode });
+    if (this._rawStats) this.applyStats(this._rawStats);
+  },
+
   onPickSkin(e) {
     const skinId = String(e.currentTarget.dataset.id || 'dark-gold');
     const app = getApp();
