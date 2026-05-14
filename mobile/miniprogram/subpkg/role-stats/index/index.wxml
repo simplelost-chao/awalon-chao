@@ -296,17 +296,17 @@
     </block>
   </view>
 
-  <!-- ── 雷达维度说明弹窗 ── -->
-  <view class="tip-overlay" wx:if="{{radarTipVisible}}" bindtap="onCloseRadarTip">
-    <view class="tip-dialog" catchtap="">
-      <text class="tip-title">{{radarTipTitle}}</text>
-      <view class="tip-item" wx:for="{{radarTipItems}}" wx:key="name">
-        <text class="tip-name">{{item.name}}</text>
-        <text class="tip-desc">{{item.desc}}</text>
-      </view>
-      <view class="tip-close" bindtap="onCloseRadarTip">
-        <text class="tip-close-text">知道了</text>
-      </view>
-    </view>
-  </view>
+  <!-- ── 雷达维度说明弹窗（cover-view 覆盖原生 Canvas） ── -->
+  <cover-view class="tip-overlay" wx:if="{{radarTipVisible}}" bindtap="onCloseRadarTip">
+    <cover-view class="tip-dialog" catchtap="">
+      <cover-view class="tip-title">{{radarTipTitle}}</cover-view>
+      <cover-view class="tip-item" wx:for="{{radarTipItems}}" wx:key="name">
+        <cover-view class="tip-name">{{item.name}}</cover-view>
+        <cover-view class="tip-desc">{{item.desc}}</cover-view>
+      </cover-view>
+      <cover-view class="tip-close" bindtap="onCloseRadarTip">
+        <cover-view class="tip-close-text">知道了</cover-view>
+      </cover-view>
+    </cover-view>
+  </cover-view>
 </view>
