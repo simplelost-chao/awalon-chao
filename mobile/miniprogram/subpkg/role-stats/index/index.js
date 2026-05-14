@@ -275,23 +275,13 @@ Page({
     this.setData({ radarTipVisible: true, radarTipItems: items });
   },
 
-  onTapTitle(e) {
-    const type = e.currentTarget.dataset.type;
-    const label = e.currentTarget.dataset.label;
-    const descriptions = {
-      golden: '同阵营（不分好人坏人）时胜率最高的搭档',
-      bestWolf: '同为坏人时胜率最高的搭档',
-      bestKnight: '同为好人时胜率最高的搭档',
-      bestMerlinPerci: '你梅林他派西（或反过来）时胜率最高的搭档',
-      nemesis: '对面阵营时你胜率最低的对手，最怕遇到的人',
-      worstTeammate: '同阵营时胜率最低的搭档',
-    };
-    wx.showModal({
-      title: label,
-      content: descriptions[type] || '',
-      showCancel: false,
-      confirmText: '知道了',
-    });
+  onFlipTitle(e) {
+    const idx = Number(e.currentTarget.dataset.idx);
+    const pairs = this.data.partnerTitles.slice();
+    if (pairs[idx]) {
+      pairs[idx] = { ...pairs[idx], flipped: !pairs[idx].flipped };
+      this.setData({ partnerTitles: pairs });
+    }
   },
 
   onSwitchDetailTab(e) {
@@ -329,15 +319,20 @@ Page({
       golden:          { label: '黄金搭档',      icon: `${CDN}/golden.svg` },
       bestWolf:        { label: '最佳狼队友',    icon: `${CDN}/best_wolf.svg` },
       bestKnight:      { label: '最佳骑士',      icon: `${CDN}/best_knight.svg` },
-      bestMerlinPerci: { label: '梅林&派西',     icon: `${CDN}/merlin_perci.svg` },
-      nemesis:         { label: '天生冤家',      icon: `${CDN}/nemesis.svg` },
       worstTeammate:   { label: '最坑队友',      icon: `${CDN}/worst_teammate.svg` },
+      worstWolf:       { label: '最差狼队友',    icon: `${CDN}/worst_teammate.svg` },
+      worstKnight:     { label: '最差骑士',      icon: `${CDN}/worst_teammate.svg` },
     };
-    return partners.titles.map(t => {
+    function decorateTitle(t) {
       const meta = TITLE_META[t.type] || { label: t.type, icon: '' };
       const isUrl = t.avatar && (t.avatar.startsWith('http') || t.avatar.startsWith('/'));
       return { ...t, label: meta.label, iconUrl: meta.icon, avatarImage: isUrl ? t.avatar : '', avatarText: isUrl ? '' : (t.avatar || '🐺') };
-    });
+    }
+    return (partners.pairs || []).map(p => ({
+      front: decorateTitle(p.front),
+      back: decorateTitle(p.back),
+      flipped: false,
+    }));
   },
 
   _buildPartnerMatrix(partners) {

@@ -252,71 +252,40 @@ function buildPartners(phone, excludeAI) {
     p => p.sameGood.winRate,
     2, true);
 
-  // nemesis: opponent winRate lowest (min 3 games against)
-  const nemesis = pickBest(matrix,
-    p => p.opponent.games,
-    p => p.opponent.winRate,
-    3, false);
-
   // worstTeammate: sameTeam winRate lowest (min 3)
   const worstTeammate = pickBest(matrix,
     p => p.sameTeam.games,
     p => p.sameTeam.winRate,
     3, false);
 
-  // bestMerlinPerci: one of us is 梅林, the other 派西维尔 in same game — winRate highest (min 2)
-  // This uses combo data: myRole=梅林,theirRole=派西维尔 OR myRole=派西维尔,theirRole=梅林
-  const merlinPerciMap = new Map(); // phone -> { games, wins }
-  for (const [theirPhone, data] of partnerMap) {
-    let games = 0, wins = 0;
-    for (const [key, combo] of data.combos) {
-      if (
-        (combo.myRole === '梅林' && combo.theirRole === '派西维尔') ||
-        (combo.myRole === '派西维尔' && combo.theirRole === '梅林')
-      ) {
-        games += combo.games;
-        wins  += combo.wins;
-      }
-    }
-    if (games > 0) merlinPerciMap.set(theirPhone, { games, wins });
-  }
+  // worstWolf: sameEvil winRate lowest (min 2)
+  const worstWolf = pickBest(matrix,
+    p => p.sameEvil.games,
+    p => p.sameEvil.winRate,
+    2, false);
 
-  // Find the matrix entry for best merlin/perci
-  let bestMerlinPerciPartner = null;
-  let bestMerlinPerciWR = -1;
-  for (const [theirPhone, mp] of merlinPerciMap) {
-    if (mp.games < 2) continue;
-    const rate = wr(mp.wins, mp.games);
-    if (rate > bestMerlinPerciWR) {
-      bestMerlinPerciWR = rate;
-      const matrixEntry = matrix.find(p => p.phone === theirPhone);
-      if (matrixEntry) {
-        bestMerlinPerciPartner = { ...matrixEntry, _mp: mp };
-      }
-    }
-  }
+  // worstKnight: sameGood winRate lowest (min 2)
+  const worstKnight = pickBest(matrix,
+    p => p.sameGood.games,
+    p => p.sameGood.winRate,
+    2, false);
 
-  const bestMerlinPerciTitle = bestMerlinPerciPartner
-    ? {
-        type: 'bestMerlinPerci',
-        phone:    bestMerlinPerciPartner.phone,
-        nickname: bestMerlinPerciPartner.nickname,
-        avatar:   bestMerlinPerciPartner.avatar,
-        winRate:  wr(bestMerlinPerciPartner._mp.wins, bestMerlinPerciPartner._mp.games),
-        games:    bestMerlinPerciPartner._mp.games,
-      }
-    : { type: 'bestMerlinPerci', phone: null, nickname: null, avatar: null, winRate: null, games: null };
-
-  const titles = [
-    toTitle('golden',        golden,      p => p.sameTeam.games, p => p.sameTeam.wins),
-    toTitle('bestWolf',      bestWolf,    p => p.sameEvil.games, p => p.sameEvil.wins),
-    toTitle('bestKnight',    bestKnight,  p => p.sameGood.games, p => p.sameGood.wins),
-    bestMerlinPerciTitle,
-    toTitle('nemesis',       nemesis,     p => p.opponent.games, p => p.opponent.wins),
-    toTitle('worstTeammate', worstTeammate, p => p.sameTeam.games, p => p.sameTeam.wins),
+  const pairs = [
+    {
+      front: toTitle('golden', golden, p => p.sameTeam.games, p => p.sameTeam.wins),
+      back:  toTitle('worstTeammate', worstTeammate, p => p.sameTeam.games, p => p.sameTeam.wins),
+    },
+    {
+      front: toTitle('bestWolf', bestWolf, p => p.sameEvil.games, p => p.sameEvil.wins),
+      back:  toTitle('worstWolf', worstWolf, p => p.sameEvil.games, p => p.sameEvil.wins),
+    },
+    {
+      front: toTitle('bestKnight', bestKnight, p => p.sameGood.games, p => p.sameGood.wins),
+      back:  toTitle('worstKnight', worstKnight, p => p.sameGood.games, p => p.sameGood.wins),
+    },
   ];
 
-  return { titles, matrix };
+  return { pairs, matrix };
 }
 
 module.exports = { buildPartners };

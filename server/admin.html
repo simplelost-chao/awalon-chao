@@ -994,20 +994,22 @@ function renderPlayerDetail() {
     html += '</div>';
   }
 
-  // Partner titles
-  if (s.partners && s.partners.titles) {
-    const titleNames = { golden:'黄金搭档', bestWolf:'最佳狼队友', bestKnight:'最佳骑士', bestMerlinPerci:'梅林&派西', nemesis:'天生冤家', worstTeammate:'最坑队友' };
-    const titleIcons = { golden:'👑', bestWolf:'🐺', bestKnight:'🛡️', bestMerlinPerci:'🔮', nemesis:'⚔️', worstTeammate:'💀' };
-    html += '<div class="section-label">搭档称号</div><div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">';
-    s.partners.titles.forEach(t => {
+  // Partner title pairs
+  if (s.partners && s.partners.pairs) {
+    const titleNames = { golden:'黄金搭档', bestWolf:'最佳狼队友', bestKnight:'最佳骑士', worstTeammate:'最坑队友', worstWolf:'最差狼队友', worstKnight:'最差骑士' };
+    const titleIcons = { golden:'👑', bestWolf:'🐺', bestKnight:'🛡️', worstTeammate:'💀', worstWolf:'💀', worstKnight:'💀' };
+    function titleCard(t, borderColor) {
       const name = titleNames[t.type] || t.type;
       const icon = titleIcons[t.type] || '?';
       if (t.phone && t.nickname) {
         const rateColor = t.winRate >= 60 ? '#3fb950' : t.winRate >= 40 ? '#d8b06b' : '#e05050';
-        html += `<div class="panel" style="flex:0 0 auto;min-width:140px;text-align:center;padding:12px 16px"><div style="font-size:20px">${icon}</div><div style="color:#d8b06b;font-size:11px;margin:4px 0">${name}</div><div style="font-size:14px;color:#f2e5c8">${esc(t.nickname)}</div><div style="font-size:12px;margin-top:4px"><span style="color:${rateColor}">${t.winRate}%</span> <span style="color:#555">· ${t.games}局</span></div></div>`;
-      } else {
-        html += `<div class="panel" style="flex:0 0 auto;min-width:140px;text-align:center;padding:12px 16px;opacity:0.4"><div style="font-size:20px">${icon}</div><div style="color:#d8b06b;font-size:11px;margin:4px 0">${name}</div><div style="font-size:12px;color:#555">局数不足</div></div>`;
+        return `<div style="text-align:center;padding:8px 12px;border:1px solid ${borderColor};border-radius:8px;min-width:120px"><div style="font-size:18px">${icon}</div><div style="color:${borderColor};font-size:11px;margin:4px 0">${name}</div><div style="font-size:13px;color:#f2e5c8">${esc(t.nickname)}</div><div style="font-size:11px;margin-top:4px"><span style="color:${rateColor}">${t.winRate}%</span> <span style="color:#555">· ${t.games}局</span></div></div>`;
       }
+      return `<div style="text-align:center;padding:8px 12px;border:1px solid ${borderColor};border-radius:8px;min-width:120px;opacity:0.4"><div style="font-size:18px">${icon}</div><div style="color:${borderColor};font-size:11px;margin:4px 0">${name}</div><div style="font-size:11px;color:#555">局数不足</div></div>`;
+    }
+    html += '<div class="section-label">搭档称号</div><div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px">';
+    s.partners.pairs.forEach(p => {
+      html += `<div class="panel" style="display:flex;gap:8px;align-items:center;padding:12px">${titleCard(p.front, '#d8b06b')}<span style="color:#555;font-size:16px">⇄</span>${titleCard(p.back, '#e05050')}</div>`;
     });
     html += '</div>';
   }

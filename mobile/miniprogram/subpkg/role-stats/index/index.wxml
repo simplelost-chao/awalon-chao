@@ -155,24 +155,53 @@
         </view>
         <scroll-view scroll-x class="title-scroll" wx:if="{{partnerTitles.length}}">
           <view class="title-cards">
-            <view class="title-card" wx:for="{{partnerTitles}}" wx:key="type" bindtap="onTapTitle" data-type="{{item.type}}" data-label="{{item.label}}">
-              <image class="title-icon-bg" src="{{item.iconUrl}}" mode="aspectFit" />
-              <text class="title-label">{{item.label}}</text>
-              <block wx:if="{{item.nickname}}">
-                <image class="title-avatar-img" wx:if="{{item.avatarImage}}" src="{{item.avatarImage}}" mode="aspectFill" />
-                <text class="title-avatar-text" wx:else>{{item.avatarText}}</text>
-                <text class="title-nickname">{{item.nickname}}</text>
-                <view class="title-rate-row">
-                  <view class="title-rate-bar-wrap">
-                    <view class="title-rate-bar {{item.winRate >= 60 ? 'rate-bar-high' : item.winRate >= 40 ? 'rate-bar-mid' : 'rate-bar-low'}}" style="width:{{item.winRate}}%"></view>
-                  </view>
-                  <text class="title-rate-num">{{item.winRate}}%</text>
-                  <text class="title-games-inline">{{item.games}}局</text>
+            <view class="title-flip-card" wx:for="{{partnerTitles}}" wx:key="index" bindtap="onFlipTitle" data-idx="{{index}}">
+              <!-- 用 flipped 控制显示正面还是反面 -->
+              <block wx:if="{{!item.flipped}}">
+                <view class="title-card title-card-front">
+                  <image class="title-icon-bg" src="{{item.front.iconUrl}}" mode="aspectFit" />
+                  <text class="title-label">{{item.front.label}}</text>
+                  <block wx:if="{{item.front.nickname}}">
+                    <image class="title-avatar-img" wx:if="{{item.front.avatarImage}}" src="{{item.front.avatarImage}}" mode="aspectFill" />
+                    <text class="title-avatar-text" wx:else>{{item.front.avatarText}}</text>
+                    <text class="title-nickname">{{item.front.nickname}}</text>
+                    <view class="title-rate-row">
+                      <view class="title-rate-bar-wrap">
+                        <view class="title-rate-bar {{item.front.winRate >= 60 ? 'rate-bar-high' : item.front.winRate >= 40 ? 'rate-bar-mid' : 'rate-bar-low'}}" style="width:{{item.front.winRate}}%"></view>
+                      </view>
+                      <text class="title-rate-num">{{item.front.winRate}}%</text>
+                      <text class="title-games-inline">{{item.front.games}}局</text>
+                    </view>
+                  </block>
+                  <block wx:else>
+                    <text class="title-avatar-text">?</text>
+                    <text class="title-nickname title-empty">局数不足</text>
+                  </block>
+                  <text class="title-flip-hint">点击翻转</text>
                 </view>
               </block>
               <block wx:else>
-                <text class="title-avatar-text">?</text>
-                <text class="title-nickname title-empty">局数不足</text>
+                <view class="title-card title-card-back">
+                  <image class="title-icon-bg" src="{{item.back.iconUrl}}" mode="aspectFit" />
+                  <text class="title-label title-label-bad">{{item.back.label}}</text>
+                  <block wx:if="{{item.back.nickname}}">
+                    <image class="title-avatar-img" wx:if="{{item.back.avatarImage}}" src="{{item.back.avatarImage}}" mode="aspectFill" />
+                    <text class="title-avatar-text" wx:else>{{item.back.avatarText}}</text>
+                    <text class="title-nickname">{{item.back.nickname}}</text>
+                    <view class="title-rate-row">
+                      <view class="title-rate-bar-wrap">
+                        <view class="title-rate-bar {{item.back.winRate >= 60 ? 'rate-bar-high' : item.back.winRate >= 40 ? 'rate-bar-mid' : 'rate-bar-low'}}" style="width:{{item.back.winRate}}%"></view>
+                      </view>
+                      <text class="title-rate-num">{{item.back.winRate}}%</text>
+                      <text class="title-games-inline">{{item.back.games}}局</text>
+                    </view>
+                  </block>
+                  <block wx:else>
+                    <text class="title-avatar-text">?</text>
+                    <text class="title-nickname title-empty">局数不足</text>
+                  </block>
+                  <text class="title-flip-hint">点击翻转</text>
+                </view>
               </block>
             </view>
           </view>
