@@ -107,8 +107,8 @@
         <!-- 趋势图 -->
         <view class="trend-wrap" wx:if="{{trendData}}">
           <view class="trend-legend">
-            <view class="trend-legend-item"><view class="trend-dot trend-dot-good"></view><text class="trend-legend-text">正义</text></view>
-            <view class="trend-legend-item"><view class="trend-dot trend-dot-evil"></view><text class="trend-legend-text">邪恶</text></view>
+            <text class="trend-legend-good">正义</text>
+            <text class="trend-legend-evil">邪恶</text>
           </view>
           <canvas id="trendCanvas" type="2d" class="trend-canvas" style="width:320px;height:100px;"></canvas>
         </view>

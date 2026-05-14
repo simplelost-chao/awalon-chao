@@ -360,11 +360,14 @@ Page({
 
         const n = Math.max(trend.good.length, trend.evil.length);
         if (n < 2) { ctx.restore(); return; }
-        const padL = 4, padR = 4, padT = 8, padB = 16;
+        const padL = 28, padR = 8, padT = 8, padB = 8;
         const cw = W - padL - padR, ch = H - padT - padB;
 
-        // 网格线
-        for (let p = 0; p <= 100; p += 50) {
+        // Y 轴坐标 + 网格线
+        ctx.font = '9px sans-serif';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        for (let p = 0; p <= 100; p += 25) {
           const y = padT + ch * (1 - p / 100);
           ctx.beginPath();
           ctx.moveTo(padL, y);
@@ -372,6 +375,8 @@ Page({
           ctx.strokeStyle = 'rgba(255,255,255,0.06)';
           ctx.lineWidth = 0.5;
           ctx.stroke();
+          ctx.fillStyle = 'rgba(255,255,255,0.2)';
+          ctx.fillText(p + '%', padL - 4, y);
         }
 
         function getPoints(data) {
@@ -393,28 +398,24 @@ Page({
           ctx.lineTo(pts[pts.length - 1].x, padT + ch);
           ctx.closePath();
           const grad = ctx.createLinearGradient(0, padT, 0, padT + ch);
-          grad.addColorStop(0, `rgba(${r},${g},${b},0.2)`);
-          grad.addColorStop(1, `rgba(${r},${g},${b},0.02)`);
+          grad.addColorStop(0, `rgba(${r},${g},${b},0.15)`);
+          grad.addColorStop(1, `rgba(${r},${g},${b},0.01)`);
           ctx.fillStyle = grad;
           ctx.fill();
           // 线
           ctx.beginPath();
           pts.forEach((p, i) => i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y));
           ctx.strokeStyle = `rgba(${r},${g},${b},0.8)`;
-          ctx.lineWidth = 2;
+          ctx.lineWidth = 1.5;
           ctx.lineJoin = 'round';
           ctx.stroke();
-          // 末端圆点 + 数值
-          const last = pts[pts.length - 1];
-          ctx.beginPath();
-          ctx.arc(last.x, last.y, 3, 0, Math.PI * 2);
-          ctx.fillStyle = `rgb(${r},${g},${b})`;
-          ctx.fill();
-          ctx.font = 'bold 10px sans-serif';
-          ctx.fillStyle = `rgba(${r},${g},${b},0.9)`;
-          ctx.textAlign = 'right';
-          ctx.textBaseline = 'bottom';
-          ctx.fillText(last.v + '%', last.x - 6, last.y - 4);
+          // 每局圆点
+          pts.forEach(p => {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(${r},${g},${b},0.9)`;
+            ctx.fill();
+          });
         }
 
         drawArea(getPoints(trend.good), 78, 158, 255);
