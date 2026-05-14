@@ -23,22 +23,18 @@ const ROLE_FACTIONS = {
   '兰斯洛特（邪恶）': 'evil',
 };
 
-// Minimum sample count to produce a meaningful score (< this → return -1)
-const MIN_SAMPLES = 1;
+// Bayesian smoothing factor: pulls scores toward 50 when sample size is small
+const SMOOTH_K = 3;
 
 /**
- * Scale a ratio (0–1) to a 0–100 integer, clamped.
+ * Bayesian-smoothed score (0–100).
+ * With few games, score gravitates toward 50. With many games, converges to true value.
+ * Returns -1 if no data at all (den === 0).
  */
-function pct(num, den) {
+function smoothScore(num, den) {
   if (den === 0) return -1;
-  return Math.round(Math.min(1, Math.max(0, num / den)) * 100);
-}
-
-/**
- * Return score only if we have enough samples, otherwise -1.
- */
-function scored(value, sampleCount) {
-  return sampleCount >= MIN_SAMPLES ? value : -1;
+  const raw = Math.min(1, Math.max(0, num / den)) * 100;
+  return Math.round((raw * den + 50 * SMOOTH_K) / (den + SMOOTH_K));
 }
 
 /**
@@ -260,21 +256,21 @@ function buildRadar(phone, excludeAI) {
 
   // ── 4. Compute final scores ────────────────────────────────────────────────
 
-  // Good
-  const recognition    = scored(pct(g.recognitionCorrect, g.recognitionTotal),  g.recognitionTotal);
-  const leadership     = scored(pct(g.leaderApproved,    g.leaderTotal),         g.leaderTotal);
-  const goodTrust      = scored(pct(g.goodTrustIncluded, g.goodTrustTotal),      g.goodTrustTotal);
-  const shield         = scored(pct(g.shieldTargeted,    g.shieldGames),         g.shieldGames);
-  const dodge          = scored(pct(g.dodgeMissed,       g.dodgeGames),          g.dodgeGames);
-  const goodWinRate    = scored(pct(g.goodWins,          g.goodGames),           g.goodGames);
+  // Good (Bayesian-smoothed)
+  const recognition    = smoothScore(g.recognitionCorrect, g.recognitionTotal);
+  const leadership     = smoothScore(g.leaderApproved,     g.leaderTotal);
+  const goodTrust      = smoothScore(g.goodTrustIncluded,  g.goodTrustTotal);
+  const shield         = smoothScore(g.shieldTargeted,     g.shieldGames);
+  const dodge          = smoothScore(g.dodgeMissed,        g.dodgeGames);
+  const goodWinRate    = smoothScore(g.goodWins,           g.goodGames);
 
-  const charge         = scored(pct(e.chargeApproved,            e.chargeTotal),         e.chargeTotal);
-
-  const stealth        = scored(pct(e.stealthSuccess,           e.stealthMissions),     e.stealthMissions);
-  const evilTrust      = scored(pct(e.evilTrustIncluded,        e.evilTrustTotal),      e.evilTrustTotal);
-  const incite         = scored(pct(e.inciteApproved,           e.inciteTotal),         e.inciteTotal);
-  const destruction    = scored(pct(e.destructionSabotaged,      e.destructionGames),    e.destructionGames);
-  const evilWinRate    = scored(pct(e.evilWins,                 e.evilGames),           e.evilGames);
+  // Evil (Bayesian-smoothed)
+  const charge         = smoothScore(e.chargeApproved,     e.chargeTotal);
+  const incite         = smoothScore(e.inciteApproved,     e.inciteTotal);
+  const evilTrust      = smoothScore(e.evilTrustIncluded,  e.evilTrustTotal);
+  const stealth        = smoothScore(e.stealthSuccess,     e.stealthMissions);
+  const destruction    = smoothScore(e.destructionSabotaged, e.destructionGames);
+  const evilWinRate    = smoothScore(e.evilWins,           e.evilGames);
 
   return {
     good: {
