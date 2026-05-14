@@ -360,14 +360,14 @@ Page({
 
         const n = Math.max(trend.good.length, trend.evil.length);
         if (n < 2) { ctx.restore(); return; }
-        const padL = 28, padR = 8, padT = 8, padB = 8;
+        const padL = 28, padR = 28, padT = 8, padB = 8;
         const cw = W - padL - padR, ch = H - padT - padB;
 
-        // Y 轴坐标 + 网格线
+        // Y 轴坐标 + 网格线（跳过 0%）
         ctx.font = '9px sans-serif';
-        ctx.textAlign = 'right';
         ctx.textBaseline = 'middle';
-        for (let p = 0; p <= 100; p += 25) {
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        for (let p = 25; p <= 100; p += 25) {
           const y = padT + ch * (1 - p / 100);
           ctx.beginPath();
           ctx.moveTo(padL, y);
@@ -375,8 +375,10 @@ Page({
           ctx.strokeStyle = 'rgba(255,255,255,0.06)';
           ctx.lineWidth = 0.5;
           ctx.stroke();
-          ctx.fillStyle = 'rgba(255,255,255,0.2)';
+          ctx.textAlign = 'right';
           ctx.fillText(p + '%', padL - 4, y);
+          ctx.textAlign = 'left';
+          ctx.fillText(p + '%', W - padR + 4, y);
         }
 
         function getPoints(data) {
