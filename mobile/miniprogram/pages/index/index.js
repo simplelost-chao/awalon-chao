@@ -2794,7 +2794,7 @@ Page({
   },
 
   onTapConfigRole(e) {
-    const role = String((e.currentTarget && e.currentTarget.dataset && e.currentTarget.dataset.role) || "角色");
+    const role = String((e.detail && e.detail.role) || (e.currentTarget && e.currentTarget.dataset && e.currentTarget.dataset.role) || "角色");
     this.openRoleGuideModal(role);
   },
 

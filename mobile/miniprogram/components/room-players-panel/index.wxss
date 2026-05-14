@@ -2,6 +2,7 @@
   margin-top: 16rpx;
   padding: 16rpx 20rpx;
   overflow: hidden;
+  background: rgba(10, 8, 16, 0.45);
 }
 .rpp-title {
   display: block;
