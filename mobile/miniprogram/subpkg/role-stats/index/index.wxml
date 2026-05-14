@@ -103,7 +103,6 @@
             </view>
           </view>
         </view>
-      </view>
 
         <!-- 趋势图 -->
         <view class="trend-wrap" wx:if="{{trendData}}">
@@ -113,6 +112,7 @@
           </view>
           <canvas id="trendCanvas" type="2d" class="trend-canvas" style="width:320px;height:100px;"></canvas>
         </view>
+      </view>
 
       <!-- ── 能力雷达 ── -->
       <view class="pf rs-section" wx:if="{{radarData}}">
