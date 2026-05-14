@@ -106,10 +106,6 @@
 
         <!-- 趋势图 -->
         <view class="trend-wrap" wx:if="{{trendData}}">
-          <view class="trend-legend">
-            <text class="trend-legend-good">正义</text>
-            <text class="trend-legend-evil">邪恶</text>
-          </view>
           <canvas id="trendCanvas" type="2d" class="trend-canvas" style="width:320px;height:100px;"></canvas>
         </view>
       </view>
@@ -140,7 +136,7 @@
       </view>
 
       <!-- ── 搭档称号 ── -->
-      <view class="pf rs-section">
+      <view class="pf rs-section partner-section">
         <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
         <view class="fb fb-left"></view><view class="fb fb-right"></view>
         <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
