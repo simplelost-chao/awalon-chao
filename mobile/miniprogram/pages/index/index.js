@@ -3254,7 +3254,7 @@ Page({
   },
 
   onPlayerNamePressStart(e) {
-    if (!this.data.isHost) return;
+    if (!this.data.isSuperPlayer) return;
     const playerId = String(e.detail.id || "");
     const seatNo = Number(e.detail.seat || 0);
     if (!playerId) return;

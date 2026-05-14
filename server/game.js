@@ -763,14 +763,20 @@ function setProfile(client, payload) {
   broadcastRoom(room);
 }
 
+let _superPlayerCache = null;
+let _superPlayerCacheTs = 0;
 function isSuperPlayer(phone) {
-  try {
-    const fs = require('fs');
-    const path = require('path');
-    const cfg = JSON.parse(fs.readFileSync(path.join(__dirname, 'admin-config.json'), 'utf8'));
-    const list = cfg.superPlayers || [];
-    return list.includes(phone);
-  } catch (_) { return false; }
+  const now = Date.now();
+  if (!_superPlayerCache || now - _superPlayerCacheTs > 10000) {
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const cfg = JSON.parse(fs.readFileSync(path.join(__dirname, 'admin-config.json'), 'utf8'));
+      _superPlayerCache = new Set(cfg.superPlayers || []);
+    } catch (_) { _superPlayerCache = new Set(); }
+    _superPlayerCacheTs = now;
+  }
+  return _superPlayerCache.has(phone);
 }
 
 function cheatReveal(client, payload) {

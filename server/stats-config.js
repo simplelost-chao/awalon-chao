@@ -19,12 +19,12 @@ function get() {
   let cfg = {};
   try { cfg = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8')); } catch (_) {}
   return {
-    radarMaxGames:   cfg.statsRadarMaxGames   || DEFAULTS.statsRadarMaxGames,
-    radarSmoothK:    cfg.statsRadarSmoothK    || DEFAULTS.statsRadarSmoothK,
-    partnerMaxGames: cfg.statsPartnerMaxGames || DEFAULTS.statsPartnerMaxGames,
-    partnerMinGames: cfg.statsPartnerMinGames || DEFAULTS.statsPartnerMinGames,
-    partnerSmoothK:  cfg.statsPartnerSmoothK  || DEFAULTS.statsPartnerSmoothK,
-    trendMaxGames:   cfg.statsTrendMaxGames   || DEFAULTS.statsTrendMaxGames,
+    radarMaxGames:   cfg.statsRadarMaxGames   ?? DEFAULTS.statsRadarMaxGames,
+    radarSmoothK:    cfg.statsRadarSmoothK    ?? DEFAULTS.statsRadarSmoothK,
+    partnerMaxGames: cfg.statsPartnerMaxGames ?? DEFAULTS.statsPartnerMaxGames,
+    partnerMinGames: cfg.statsPartnerMinGames ?? DEFAULTS.statsPartnerMinGames,
+    partnerSmoothK:  cfg.statsPartnerSmoothK  ?? DEFAULTS.statsPartnerSmoothK,
+    trendMaxGames:   cfg.statsTrendMaxGames   ?? DEFAULTS.statsTrendMaxGames,
   };
 }
 
