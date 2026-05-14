@@ -313,7 +313,7 @@ Page({
   },
 
   _buildPartnerTitles(partners) {
-    if (!partners || !partners.titles) return [];
+    if (!partners || !partners.pairs) return [];
     const CDN = 'https://www.awalon.top/mp-assets/titles';
     const TITLE_META = {
       golden:           { label: '黄金搭档',      icon: `${CDN}/golden.svg` },
