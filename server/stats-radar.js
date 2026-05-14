@@ -98,8 +98,8 @@ function buildRadar(phone, excludeAI) {
 
   // Evil accumulators
   const e = {
-    // charge: as evil leader, proposed teams with other evil that got approved
-    chargeSnuck: 0,         // my proposed teams with other evil AND approved
+    // charge: as evil leader, proposed teams that include other evil
+    chargeWithEvil: 0,      // my proposed teams that included other evil
     chargeLeads: 0,         // total teams I proposed as evil leader
 
     // stealth: in missions, % of times evil player voted success (true=fail, false=success)
@@ -163,14 +163,16 @@ function buildRadar(phone, excludeAI) {
 
       const isMerlin = myRole === '梅林';
 
-      // recognition: vote to reject teams containing evil
-      for (const v of voteHistory) {
-        if (!v || !v.votes || !Array.isArray(v.team)) continue;
-        if (!(myId in v.votes)) continue;
-        const evilInTeam = teamEvilCount(v.team);
-        if (evilInTeam > 0) {
-          g.recognitionTotal += 1;
-          if (!v.votes[myId]) g.recognitionReject += 1; // false = reject
+      // recognition: non-梅林 only (梅林开眼不算识人能力)
+      if (!isMerlin) {
+        for (const v of voteHistory) {
+          if (!v || !v.votes || !Array.isArray(v.team)) continue;
+          if (!(myId in v.votes)) continue;
+          const evilInTeam = teamEvilCount(v.team);
+          if (evilInTeam > 0) {
+            g.recognitionTotal += 1;
+            if (!v.votes[myId]) g.recognitionReject += 1; // false = reject
+          }
         }
       }
 
@@ -207,12 +209,12 @@ function buildRadar(phone, excludeAI) {
       e.evilGames += 1;
       if (winner === 'evil') e.evilWins += 1;
 
-      // charge: as leader, proposed team with other evil AND it got approved
+      // charge: as leader, proposed team that includes other evil (regardless of approval)
       for (const v of voteHistory) {
         if (!v || !Array.isArray(v.team) || v.leaderId !== myId) continue;
         e.chargeLeads += 1;
         const hasOtherEvil = v.team.some((id) => id !== myId && factionById[id] === 'evil');
-        if (hasOtherEvil && v.approved) e.chargeSnuck += 1;
+        if (hasOtherEvil) e.chargeWithEvil += 1;
       }
 
       // stealth: in missions I participated in, voted success (false)
@@ -266,7 +268,7 @@ function buildRadar(phone, excludeAI) {
   const dodge          = scored(pct(g.dodgeMissed,       g.dodgeGames),          g.dodgeGames);
   const goodWinRate    = scored(pct(g.goodWins,          g.goodGames),           g.goodGames);
 
-  const charge         = scored(pct(e.chargeSnuck,               e.chargeLeads),         e.chargeLeads);
+  const charge         = scored(pct(e.chargeWithEvil,            e.chargeLeads),         e.chargeLeads);
 
   const stealth        = scored(pct(e.stealthSuccess,           e.stealthMissions),     e.stealthMissions);
   const evilTrust      = scored(pct(e.evilTrustIncluded,        e.evilTrustTotal),      e.evilTrustTotal);
