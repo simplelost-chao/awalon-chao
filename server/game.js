@@ -83,8 +83,9 @@ function broadcastRoom(room) {
   for (const player of room.players.values()) {
     const ws = _clients.get(player.id);
     if (!ws || ws.readyState !== WebSocket.OPEN) continue;
-    // hostRole 只发给房主，其他人看到 null
-    const roomData = player.id === room.hostId ? base : { ...base, hostRole: null };
+    const isHost = player.id === room.hostId;
+    const superPlayer = !!(player.phone && isSuperPlayer(player.phone));
+    const roomData = isHost ? { ...base, _isSuperPlayer: superPlayer } : { ...base, hostRole: null, _isSuperPlayer: superPlayer };
     ws.send(JSON.stringify({ type: 'ROOM_STATE', room: roomData }));
   }
 }
@@ -762,11 +763,21 @@ function setProfile(client, payload) {
   broadcastRoom(room);
 }
 
+function isSuperPlayer(phone) {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const cfg = JSON.parse(fs.readFileSync(path.join(__dirname, 'admin-config.json'), 'utf8'));
+    const list = cfg.superPlayers || [];
+    return list.includes(phone);
+  } catch (_) { return false; }
+}
+
 function cheatReveal(client, payload) {
   if (!client.userPhone) return error(client, 'NEED_LOGIN');
   const room = _rooms.get(client.roomCode);
   if (!room) return error(client, 'ROOM_NOT_FOUND');
-  if (room.hostId !== client.id) return error(client, 'HOST_ONLY');
+  if (!isSuperPlayer(client.userPhone)) return error(client, 'NOT_SUPER_PLAYER');
   if (!room.started || !room.game || !room.game.assignments) return error(client, 'NOT_STARTED');
   const targetId = String((payload && payload.targetId) || '');
   if (!targetId || !room.players.has(targetId)) return error(client, 'INVALID_TARGET');

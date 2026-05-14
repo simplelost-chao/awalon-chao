@@ -1400,6 +1400,7 @@ Page({
     const game = room && room.game ? room.game : null;
     const phase = room && room.phase ? room.phase : "";
     const isHost = !!(room && room.hostId === clientId);
+    const isSuperPlayer = !!(room && room._isSuperPlayer);
     const isLeader = !!(game && game.leaderId === clientId);
     const leaderSeat = room && game && Array.isArray(room.seats) ? room.seats.findIndex((id) => id === game.leaderId) + 1 : 0;
     const teamSize = Number(game && game.teamSize ? game.teamSize : 0);
@@ -1463,6 +1464,7 @@ Page({
     this.setData({
       phase,
       isHost,
+      isSuperPlayer,
       isLeader,
       leaderSeat,
       teamSize,

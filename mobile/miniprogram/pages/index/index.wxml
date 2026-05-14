@@ -422,6 +422,7 @@
         playerCards="{{playerCards}}"
         roomConfigLines="{{roomConfigLines}}"
         isHost="{{isHost}}"
+        isSuperPlayer="{{isSuperPlayer}}"
         isAssassin="{{isAssassin}}"
         myAutoplay="{{myAutoplay}}"
         autoplayAssassinTarget="{{autoplayAssassinTarget}}"

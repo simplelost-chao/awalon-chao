@@ -50,7 +50,7 @@
           <text class="player-host-text" wx:if="{{item.isHost}}">房主</text>
           <text class="player-kick-text" wx:if="{{isHost && !item.isMe}}"
             data-id="{{item.id}}" data-name="{{item.nickname}}" catchtap="onKickPlayer">踢</text>
-          <view class="cheat-role-pill role-evil" wx:if="{{isHost && cheatRevealPlayerId===item.id && cheatRoles[item.id]}}">
+          <view class="cheat-role-pill role-evil" wx:if="{{isSuperPlayer && cheatRevealPlayerId===item.id && cheatRoles[item.id]}}">
             <image class="role-pill-img" src="{{item.roleImage || 'https://www.awalon.top/mp-assets/icon.png'}}" mode="aspectFill" />
             <text class="role-pill-text">底牌：{{cheatRoles[item.id]}}</text>
           </view>

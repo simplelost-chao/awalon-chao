@@ -281,6 +281,14 @@ pre.json { background: rgba(255,255,255,.03); border-radius: 8px; padding: 12px;
       <div class="sub-tabs" id="cfg-role-tabs" style="margin-bottom:12px"></div>
       <div class="panel" style="padding:20px;margin-bottom:20px" id="cfg-role-editor"></div>
 
+      <!-- Super players -->
+      <div class="section-label">超级玩家（可查看底牌）</div>
+      <div class="panel" style="padding:20px;margin-bottom:20px">
+        <div style="font-size:12px;color:rgba(242,229,200,.4);margin-bottom:8px">每行一个手机号，这些玩家在游戏中可以长按查看其他玩家底牌</div>
+        <textarea id="cfg-super-players" rows="4" style="width:100%;box-sizing:border-box;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:8px;color:#f2e5c8;font-size:14px;font-family:monospace;resize:vertical"></textarea>
+        <button class="mt-12" style="background:rgba(220,80,80,.15);border:1px solid rgba(220,80,80,.35);color:#e05050;border-radius:8px;padding:8px 24px;font-size:13px;cursor:pointer;font-weight:600;" onclick="saveSuperPlayers()">保存超级玩家</button>
+      </div>
+
       <!-- Stats config -->
       <div class="section-label">统计系统配置</div>
       <div class="panel" style="padding:20px;margin-bottom:20px" id="cfg-stats">
@@ -1450,6 +1458,10 @@ function loadConfig() {
     const { reviewMode, defaultRoleConfig, ...rest } = d;
     document.getElementById('cfg-json').value = JSON.stringify(rest, null, 2);
   });
+  // Super players
+  api('/api/admin/config/super-players').then(d => {
+    document.getElementById('cfg-super-players').value = (d.superPlayers || []).join('\n');
+  }).catch(() => {});
   // Stats config
   api('/api/admin/config/stats').then(d => {
     const labels = {
@@ -1463,6 +1475,13 @@ function loadConfig() {
       grid.innerHTML += `<div style="display:flex;flex-direction:column;gap:4px"><label style="font-size:11px;color:rgba(242,229,200,.5)">${labels[key] || key}</label><input id="sc-${key}" type="number" value="${val}" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:8px;color:#f2e5c8;font-size:14px;width:100%;box-sizing:border-box"></div>`;
     }
   }).catch(() => {});
+}
+function saveSuperPlayers() {
+  const text = document.getElementById('cfg-super-players').value;
+  const list = text.split('\n').map(s => s.trim()).filter(Boolean);
+  api('/api/admin/config/super-players', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ superPlayers: list }) })
+    .then(() => alert('超级玩家已保存'))
+    .catch(() => alert('保存失败'));
 }
 function saveStatsConfig() {
   const keys = ['statsRadarMaxGames','statsRadarSmoothK','statsPartnerMaxGames','statsPartnerMinGames','statsPartnerSmoothK','statsTrendMaxGames'];

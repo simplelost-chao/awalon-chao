@@ -9,6 +9,7 @@ Component({
     autoplayAssassinTarget: { type: Object, value: null },
     roomStarted:          { type: Boolean, value: false },
     phase:                { type: String,  value: '' },
+    isSuperPlayer:        { type: Boolean, value: false },
     cheatRevealPlayerId:  { type: String,  value: '' },
     cheatRoles:           { type: Object,  value: {} },
   },

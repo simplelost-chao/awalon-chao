@@ -543,6 +543,21 @@ function adminRoutes(app, { ADMIN_KEY, getRooms, getRuntimeReviewMode, setRuntim
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
+  // ── Super Players ────────────────────────────────────────────────
+  app.get('/api/admin/config/super-players', requireAdmin, (req, res) => {
+    const cfg = loadConfig();
+    res.json({ superPlayers: cfg.superPlayers || [] });
+  });
+
+  app.post('/api/admin/config/super-players', requireAdmin, (req, res) => {
+    try {
+      const cfg = loadConfig();
+      cfg.superPlayers = Array.isArray(req.body.superPlayers) ? req.body.superPlayers : [];
+      saveConfig(cfg);
+      res.json({ ok: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
   // ── Stats Config ─────────────────────────────────────────────────
   app.get('/api/admin/config/stats', requireAdmin, (req, res) => {
     const { DEFAULTS } = require('./stats-config');
