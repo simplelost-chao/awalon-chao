@@ -242,6 +242,38 @@ Page({
     this.setData({ radarFaction: faction }, () => this._drawRadarChart());
   },
 
+  onTapRadar() {
+    const isGood = this.data.radarFaction === 'good';
+    const content = isGood
+      ? '识人能力：非梅林时，含坏人队伍投反对的比例\n\n领袖力：当队长时队伍被投票通过的比例\n\n表水能力：非队长时被别人选入队伍的频率\n\n挡刀能力：非梅林时被刺客选为刺杀目标的比例\n\n躲刀能力：梅林牌时没有被刺杀的比例\n\n好人胜率：正义阵营时的胜率'
+      : '冲锋能力：通过的队伍中带上其他坏人队友的次数\n\n隐秘性：在队伍中出成功票隐藏身份的比例\n\n表水能力：非队长时自己能上车的频率\n\n刺杀能力：带刀时刺中梅林的比例\n\n破坏力：出失败票且任务确实失败的比例\n\n坏人胜率：邪恶阵营时的胜率';
+    wx.showModal({
+      title: isGood ? '正义能力维度' : '邪恶能力维度',
+      content,
+      showCancel: false,
+      confirmText: '知道了',
+    });
+  },
+
+  onTapTitle(e) {
+    const type = e.currentTarget.dataset.type;
+    const label = e.currentTarget.dataset.label;
+    const descriptions = {
+      golden: '同阵营（不分好人坏人）时胜率最高的搭档',
+      bestWolf: '同为坏人时胜率最高的搭档',
+      bestKnight: '同为好人时胜率最高的搭档',
+      bestMerlinPerci: '你梅林他派西（或反过来）时胜率最高的搭档',
+      nemesis: '对面阵营时你胜率最低的对手，最怕遇到的人',
+      worstTeammate: '同阵营时胜率最低的搭档',
+    };
+    wx.showModal({
+      title: label,
+      content: descriptions[type] || '',
+      showCancel: false,
+      confirmText: '知道了',
+    });
+  },
+
   onSwitchDetailTab(e) {
     this.setData({ detailTab: e.currentTarget.dataset.tab });
   },

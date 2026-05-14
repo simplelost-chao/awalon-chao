@@ -124,8 +124,11 @@
           <view class="radar-tab {{radarFaction === 'good' ? 'radar-tab-active-good' : ''}}" data-faction="good" bindtap="onSwitchRadar">正义</view>
           <view class="radar-tab {{radarFaction === 'evil' ? 'radar-tab-active-evil' : ''}}" data-faction="evil" bindtap="onSwitchRadar">邪恶</view>
         </view>
-        <view class="radar-canvas-wrap">
+        <view class="radar-canvas-wrap" bindtap="onTapRadar">
           <canvas id="radarCanvas" type="2d" class="radar-canvas" style="width:320px;height:320px;"></canvas>
+        </view>
+        <view class="radar-hint" bindtap="onTapRadar">
+          <text class="radar-hint-text">点击雷达图查看维度说明</text>
         </view>
       </view>
 
@@ -146,7 +149,7 @@
         </view>
         <scroll-view scroll-x class="title-scroll" wx:if="{{partnerTitles.length}}">
           <view class="title-cards">
-            <view class="title-card" wx:for="{{partnerTitles}}" wx:key="type">
+            <view class="title-card" wx:for="{{partnerTitles}}" wx:key="type" bindtap="onTapTitle" data-type="{{item.type}}" data-label="{{item.label}}">
               <text class="title-label">{{item.label}}</text>
               <block wx:if="{{item.nickname}}">
                 <image class="title-avatar-img" wx:if="{{item.avatarImage}}" src="{{item.avatarImage}}" mode="aspectFill" />

@@ -337,6 +337,8 @@
 .radar-tab-active-evil { color: #dc5050; background: rgba(220,80,80,0.15); }
 .radar-canvas-wrap { display: flex; justify-content: center; padding: 8rpx 0 16rpx; }
 .radar-canvas { width: 640rpx; height: 640rpx; }
+.radar-hint { text-align: center; padding: 0 0 16rpx; }
+.radar-hint-text { font-size: 22rpx; color: rgba(255,255,255,0.25); }
 
 /* ─── 搭档称号 ─── */
 .title-scroll { white-space: nowrap; padding: 8rpx 0 16rpx; }
