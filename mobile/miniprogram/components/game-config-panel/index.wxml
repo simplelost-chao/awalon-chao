@@ -16,7 +16,6 @@
       <text class="mt-title-deco">◆</text>
       <view class="mt-title-line"></view>
     </view>
-    <view wx:if="{{started && phase !== 'end'}}" class="game-config-lock">进行中</view>
   </view>
 
   <!-- 角色条 -->
@@ -44,9 +43,9 @@
   </view>
 
   <!-- 操作按钮 -->
-  <view class="game-config-actions" wx:if="{{showActions && isHost}}">
-    <!-- 开始游戏 -->
-    <view class="btn-frame game-config-main-frame" wx:if="{{!started}}" bindtap="onStartGame">
+  <view class="game-config-actions" wx:if="{{showActions}}">
+    <!-- 开始游戏（房主，游戏未开始） -->
+    <view class="btn-frame game-config-main-frame" wx:if="{{isHost && !started}}" bindtap="onStartGame">
       <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
       <view class="fb fb-left"></view><view class="fb fb-right"></view>
       <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
@@ -58,8 +57,8 @@
       <view class="game-config-main-btn ap-btn-primary">开始游戏</view>
     </view>
 
-    <!-- 重新开始 / 重发身份 -->
-    <view class="btn-frame game-config-main-frame" wx:elif="{{phase==='end'}}" bindtap="onRedeal">
+    <!-- 重新开始（房主，游戏结束） -->
+    <view class="btn-frame game-config-main-frame" wx:if="{{isHost && phase==='end'}}" bindtap="onRedeal">
       <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
       <view class="fb fb-left"></view><view class="fb fb-right"></view>
       <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
@@ -71,7 +70,7 @@
       <view class="game-config-main-btn ap-btn-primary">重新开始</view>
     </view>
 
-    <!-- 修改配置 / 托管（同一位置，根据游戏状态切换） -->
+    <!-- 托管（所有人，游戏进行中） -->
     <view class="btn-frame btn-frame-ghost game-config-main-frame"
       wx:if="{{started && phase !== 'end' && phase !== 'lobby'}}"
       bindtap="onToggleAutoplay">
@@ -83,8 +82,10 @@
       <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
       <view class="game-config-main-btn {{myAutoplay ? 'game-config-main-btn-active' : 'game-config-main-btn-ghost'}}">{{myAutoplay ? '取消托管' : '托管'}}</view>
     </view>
+
+    <!-- 修改配置（房主，游戏未开始或已结束） -->
     <view class="btn-frame btn-frame-ghost game-config-main-frame"
-      wx:else
+      wx:if="{{isHost && (!started || phase === 'end')}}"
       bindtap="onSettings">
       <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
       <view class="fb fb-left"></view><view class="fb fb-right"></view>

@@ -465,7 +465,7 @@
         bind:confirmassassinate="onConfirmAssassinate">
       </round-table>
 
-      <game-config-panel
+      <game-config-panel wx:if="{{!room.started || phase==='end'}}"
         title="当前配置"
         role-cards="{{roomRoleCards}}"
         config-lines="{{roomConfigLines}}"
