@@ -400,6 +400,7 @@
 .combo-tag { font-size: 20rpx; padding: 4rpx 12rpx; background: rgba(255,255,255,0.06); border-radius: 8rpx; color: rgba(255,255,255,0.5); }
 
 /* ─── 搭档空状态 ─── */
+.title-avatar-empty { width: 72rpx; height: 72rpx; line-height: 72rpx; text-align: center; font-size: 36rpx; color: rgba(255,255,255,0.2); border: 2rpx dashed rgba(255,255,255,0.15); border-radius: 50%; }
 .title-empty { color: rgba(255,255,255,0.3); font-size: 22rpx; }
 .partner-empty-tip { padding: 24rpx 0 32rpx; text-align: center; }
 .partner-empty-text { font-size: 24rpx; color: rgba(255,255,255,0.3); }
