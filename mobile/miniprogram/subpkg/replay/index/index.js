@@ -91,6 +91,7 @@ Page({
 
     var tablePlayers = this._buildTablePlayers(players);
     var steps = this._buildSteps(byId, voteHistory, missionHistory, payload);
+    console.log('[replay] steps:', steps.length, steps.map(function(s) { return s.type + '(r' + (s.round||'') + ')'; }).join(', '));
     this._rawPlayers = players;
     this._byId = byId;
     this._maxPlayers = Number(payload.maxPlayers) || players.length;
