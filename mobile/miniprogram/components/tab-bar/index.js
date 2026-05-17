@@ -8,10 +8,10 @@ Component({
 
   data: {
     tabs: [
-      { key: 'home',    icon: '🏠', label: '首页',  url: '/pages/index/index' },
-      { key: 'friends', icon: '👥', label: '好友',  url: '/subpkg/friends/index/index' },
-      { key: 'history', icon: '📋', label: '历史',  url: '/subpkg/history/index/index' },
-      { key: 'mine',    icon: '👤', label: '我的',  url: '/subpkg/role-stats/index/index' }
+      { key: 'home',    icon: 'https://www.awalon.top/mp-assets/icons/nav-home.svg',    label: '首页',  url: '/pages/index/index' },
+      { key: 'friends', icon: 'https://www.awalon.top/mp-assets/icons/nav-friends.svg', label: '好友',  url: '/subpkg/friends/index/index' },
+      { key: 'history', icon: 'https://www.awalon.top/mp-assets/icons/nav-history.svg', label: '历史',  url: '/subpkg/history/index/index' },
+      { key: 'mine',    icon: 'https://www.awalon.top/mp-assets/icons/nav-mine.svg',    label: '我的',  url: '/subpkg/role-stats/index/index' }
     ]
   },
 

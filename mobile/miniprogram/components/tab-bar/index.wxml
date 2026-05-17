@@ -7,7 +7,7 @@
     data-url="{{item.url}}"
     bind:tap="onTap"
   >
-    <text class="tab-icon">{{item.icon}}</text>
+    <image class="tab-icon" src="{{item.icon}}" mode="aspectFit" />
     <text class="tab-label">{{item.label}}</text>
   </view>
 </view>

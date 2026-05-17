@@ -23,8 +23,12 @@
 }
 
 .tab-icon {
-  font-size: 36rpx;
-  line-height: 1;
+  width: 40rpx;
+  height: 40rpx;
+  opacity: 0.5;
+}
+.tab-item.active .tab-icon {
+  opacity: 1;
 }
 
 .tab-label {
