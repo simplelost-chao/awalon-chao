@@ -613,12 +613,14 @@
     bind:directvote="onHostDirectVote">
   </speak-panel>
 
-  <emoji-bar
-    wx:if="{{room && room.started && phase !== 'end' && !isSpectator && !atHome}}"
-    bind:send="onSendEmoji"
-  />
 
 </view>
+
+<!-- 快捷表情栏（固定底部） -->
+<emoji-bar
+  wx:if="{{room && room.started && phase !== 'end' && !isSpectator && !atHome}}"
+  bind:send="onSendEmoji"
+/>
 
 <!-- 断线重连横幅 -->
 
