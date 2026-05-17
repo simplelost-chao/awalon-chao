@@ -685,7 +685,7 @@ function revealAll(room) {
   const revealed = {};
   for (const p of room.players.values()) {
     revealed[p.id] = room.game.assignments[p.id];
-    // 不清 autoplay，让托管在重发身份后延续
+    p.autoplay = false;
   }
   room.game.revealedRoles = revealed;
 }
@@ -1178,10 +1178,10 @@ function autoplaySkipSpeak(room) {
   if (!currentId) { console.log('[autoplaySkip] no currentId at index', room.speaking.index); return; }
   const p = room.players.get(currentId);
   if (!p || !p.autoplay || p.isAI) {
-    console.log(`[autoplaySkip] skip: player=${p && p.nickname}, autoplay=${p && p.autoplay}, isAI=${p && p.isAI}`);
+    if (p && !p.isAI) console.log(`[autoplaySkip] HUMAN skip: player=${p.nickname}, id=${currentId}, autoplay=${p.autoplay}, phone=${p.phone}`);
     return;
   }
-  console.log(`[autoplaySkip] will skip ${p.nickname} in 800ms`);
+  console.log(`[autoplaySkip] will skip ${p.nickname} in 800ms, id=${currentId}`);
   const gameRef = room.game;
   const speakingIndex = room.speaking.index;
   setTimeout(() => {

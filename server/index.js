@@ -1008,6 +1008,7 @@ wss.on('connection', (ws) => {
         const apPlayer = apRoom && apRoom.players.get(client.id);
         if (!apPlayer || apPlayer.isAI) break;
         apPlayer.autoplay = true;
+        console.log(`[AUTOPLAY_ON] ${apPlayer.nickname}, clientId=${client.id}, playerId in seats=${apRoom.seats.indexOf(client.id)}`);
         if (payload && payload.assassinTarget && apRoom.game && apRoom.game.assassinId === client.id) {
           apPlayer.autoplayTarget = payload.assassinTarget;
         }
