@@ -340,17 +340,17 @@ Page({
         }
       });
     } else if (step.type === "assassination") {
-      // Highlight assassin and target
+      // Highlight assassin (刀 action) and target (被刺 action)
       if (step.assassinId) {
         var aKey = "id_" + step.assassinId;
         if (seatIdx[aKey] !== undefined) {
-          tablePlayers[seatIdx[aKey]] = Object.assign({}, tablePlayers[seatIdx[aKey]], { isLeader: true });
+          tablePlayers[seatIdx[aKey]] = Object.assign({}, tablePlayers[seatIdx[aKey]], { voteLabel: '🗡️' });
         }
       }
       if (step.targetId) {
         var tKey = "id_" + step.targetId;
         if (seatIdx[tKey] !== undefined) {
-          tablePlayers[seatIdx[tKey]] = Object.assign({}, tablePlayers[seatIdx[tKey]], { isInTeam: true });
+          tablePlayers[seatIdx[tKey]] = Object.assign({}, tablePlayers[seatIdx[tKey]], { isInTeam: true, voteLabel: '🎯' });
         }
       }
     }
