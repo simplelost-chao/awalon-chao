@@ -1237,6 +1237,7 @@ Page({
           return;
         }
         if (msg.type === "LADY_OF_LAKE_RESULT") {
+          if (this.data.myAutoplay) return; // 托管中不弹窗
           const data = msg.data || {};
           const targetName = data.targetNickname || "未知玩家";
           const alignment = data.alignment === "evil" ? "邪恶" : "正义";
