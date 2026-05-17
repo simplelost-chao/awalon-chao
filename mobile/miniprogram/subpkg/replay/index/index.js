@@ -383,8 +383,10 @@ Page({
       // 湖女：持有者显示湖女标记，目标高亮
       if (step.holderId) {
         var hKey = "id_" + step.holderId;
+        console.log('[replay lady] holderId:', step.holderId, 'key:', hKey, 'found:', seatIdx[hKey] !== undefined);
         if (seatIdx[hKey] !== undefined) {
           tablePlayers[seatIdx[hKey]] = Object.assign({}, tablePlayers[seatIdx[hKey]], { isLadyHolder: true });
+          console.log('[replay lady] set isLadyHolder=true for', tablePlayers[seatIdx[hKey]].nickname);
         }
       }
       if (step.targetId) {
