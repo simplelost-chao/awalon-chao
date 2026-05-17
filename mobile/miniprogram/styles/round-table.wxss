@@ -254,8 +254,8 @@
   animation: emoji-float 3s ease-out forwards;
 }
 .emoji-bubble-img {
-  width: 60rpx;
-  height: 60rpx;
+  width: 80rpx;
+  height: 80rpx;
 }
 @keyframes emoji-float {
   0% { opacity: 0; transform: translateX(-50%) translateY(10rpx) scale(0.5); }
