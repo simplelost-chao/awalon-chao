@@ -388,8 +388,8 @@ Page({
         identityLabel: tp.role,
         identityRoleImage: tp.roleImage,
         factionClass: revClass,
-        action: actionText,
-        actionDone: !!actionText,
+        action: actionText === '赞成' ? '✓' : actionText === '反对' ? '✗' : actionText === '成功' ? '✓' : actionText === '失败' ? '✗' : actionText,
+        actionDone: actionText === '赞成' || actionText === '成功',
         badgeType: '',
       });
     }
