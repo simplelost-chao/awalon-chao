@@ -64,6 +64,18 @@
           </view>
         </block>
 
+        <!-- 湖中仙女 -->
+        <block wx:if="{{currentStep.type === 'lady'}}">
+          <text class="step-title">🧚 湖中仙女 · 第{{currentStep.round}}轮</text>
+          <text class="step-sub">{{currentStep.holderName}} 验 {{currentStep.targetName}}</text>
+          <view class="step-lady-result">
+            <text class="step-lady-role">{{currentStep.targetRole}}</text>
+            <text class="step-lady-alignment {{currentStep.alignment === 'evil' ? 'step-reject' : 'step-approve'}}">
+              {{currentStep.alignment === 'evil' ? '邪恶阵营' : '正义阵营'}}
+            </text>
+          </view>
+        </block>
+
         <!-- 刺杀 -->
         <block wx:if="{{currentStep.type === 'assassination'}}">
           <text class="step-title">刺杀阶段</text>

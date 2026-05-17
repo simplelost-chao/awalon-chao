@@ -256,6 +256,25 @@ Page({
             votes: missionVotes,
             teamMembers: teamMembers
           });
+
+          // 湖中仙女（该轮任务后验人）
+          var ladyHistory = payload.ladyOfLake && Array.isArray(payload.ladyOfLake.history) ? payload.ladyOfLake.history : [];
+          ladyHistory.forEach(function (lh) {
+            if (Number(lh.round) === round) {
+              var holder = byId[lh.holderId] || {};
+              var ladyTarget = byId[lh.targetId] || {};
+              steps.push({
+                type: "lady",
+                round: round,
+                holderId: lh.holderId,
+                holderName: (holder.seat || "?") + "号 " + (holder.nickname || "未知"),
+                targetId: lh.targetId,
+                targetName: (ladyTarget.seat || "?") + "号 " + (ladyTarget.nickname || "未知"),
+                targetRole: ladyTarget.role || "",
+                alignment: lh.alignment || "unknown"
+              });
+            }
+          });
         }
       }
     });
@@ -358,6 +377,23 @@ Page({
           });
         }
       });
+    } else if (step.type === "lady") {
+      // 湖女持有者标记，目标高亮
+      if (step.holderId) {
+        var hKey = "id_" + step.holderId;
+        if (seatIdx[hKey] !== undefined) {
+          tablePlayers[seatIdx[hKey]] = Object.assign({}, tablePlayers[seatIdx[hKey]], { voteLabel: '🧚' });
+        }
+      }
+      if (step.targetId) {
+        var ltKey = "id_" + step.targetId;
+        if (seatIdx[ltKey] !== undefined) {
+          tablePlayers[seatIdx[ltKey]] = Object.assign({}, tablePlayers[seatIdx[ltKey]], {
+            isInTeam: true,
+            voteLabel: step.alignment === 'evil' ? '👿' : '😇'
+          });
+        }
+      }
     } else if (step.type === "assassination") {
       // Highlight assassin (刀 action) and target (被刺 action)
       if (step.assassinId) {
