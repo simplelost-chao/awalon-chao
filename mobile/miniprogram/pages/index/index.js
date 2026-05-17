@@ -1,16 +1,16 @@
 const socket = require("../../utils/socket");
 const { decorateMedals } = require("../../utils/medals");
 const AI_AVATAR_URLS = [
-  "https://www.awalon.top/mp-assets/ai-avatars/ai-01-wizard.jpg?v=3",
-  "https://www.awalon.top/mp-assets/ai-avatars/ai-02-knight.jpg?v=3",
-  "https://www.awalon.top/mp-assets/ai-avatars/ai-03-assassin.jpg?v=3",
-  "https://www.awalon.top/mp-assets/ai-avatars/ai-04-noble.jpg?v=3",
-  "https://www.awalon.top/mp-assets/ai-avatars/ai-05-archer.jpg?v=3",
-  "https://www.awalon.top/mp-assets/ai-avatars/ai-06-mage.jpg?v=3",
-  "https://www.awalon.top/mp-assets/ai-avatars/ai-07-paladin.jpg?v=3",
-  "https://www.awalon.top/mp-assets/ai-avatars/ai-08-witch.jpg?v=3",
-  "https://www.awalon.top/mp-assets/ai-avatars/ai-09-guard.jpg?v=3",
-  "https://www.awalon.top/mp-assets/ai-avatars/ai-10-oracle.jpg?v=3",
+  "https://www.awalon.top/mp-assets/ai-avatars/ai-01-wizard.jpg?v=4",
+  "https://www.awalon.top/mp-assets/ai-avatars/ai-02-knight.jpg?v=4",
+  "https://www.awalon.top/mp-assets/ai-avatars/ai-03-assassin.jpg?v=4",
+  "https://www.awalon.top/mp-assets/ai-avatars/ai-04-noble.jpg?v=4",
+  "https://www.awalon.top/mp-assets/ai-avatars/ai-05-archer.jpg?v=4",
+  "https://www.awalon.top/mp-assets/ai-avatars/ai-06-mage.jpg?v=4",
+  "https://www.awalon.top/mp-assets/ai-avatars/ai-07-paladin.jpg?v=4",
+  "https://www.awalon.top/mp-assets/ai-avatars/ai-08-witch.jpg?v=4",
+  "https://www.awalon.top/mp-assets/ai-avatars/ai-09-guard.jpg?v=4",
+  "https://www.awalon.top/mp-assets/ai-avatars/ai-10-oracle.jpg?v=4",
 ];
 const {
   ROLE_IMAGE_MAP, EVIL_ROLES, roleImageFor, roleClassFor,
@@ -1252,12 +1252,12 @@ Page({
           const { seat, emojiId } = msg.data;
           if (seat >= 0 && emojiId) {
             const EMOJI_IMGS = {
-              good: 'https://www.awalon.top/mp-assets/emoji/good.png?v=3',
-              ride: 'https://www.awalon.top/mp-assets/emoji/ride.png?v=3',
-              vote: 'https://www.awalon.top/mp-assets/emoji/vote.png?v=3',
-              wolf: 'https://www.awalon.top/mp-assets/emoji/wolf.png?v=3',
-              perci: 'https://www.awalon.top/mp-assets/emoji/perci.png?v=3',
-              angry: 'https://www.awalon.top/mp-assets/emoji/angry.png?v=3',
+              good: 'https://www.awalon.top/mp-assets/emoji/good.png?v=4',
+              ride: 'https://www.awalon.top/mp-assets/emoji/ride.png?v=4',
+              vote: 'https://www.awalon.top/mp-assets/emoji/vote.png?v=4',
+              wolf: 'https://www.awalon.top/mp-assets/emoji/wolf.png?v=4',
+              perci: 'https://www.awalon.top/mp-assets/emoji/perci.png?v=4',
+              angry: 'https://www.awalon.top/mp-assets/emoji/angry.png?v=4',
             };
             const image = EMOJI_IMGS[emojiId];
             if (image) {
