@@ -2,7 +2,7 @@
   <image class="table-bg-img" src="{{tableUrl}}" mode="aspectFill" />
   <view class="table-ring"></view>
 
-  <view class="seat-card {{item.factionClass}} {{identityMode ? item.identityClass : ''}}"
+  <view class="seat-card {{item.factionClass}} {{identityMode ? item.identityClass : ''}} {{item.isAssassinated ? 'seat-assassinated' : ''}}"
     wx:for="{{seats}}"
     wx:key="seat"
     bindtap="onChooseSeat"

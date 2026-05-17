@@ -100,6 +100,14 @@
 /* 湖中仙女翅膀 */
 .seat-fairy-wings { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 1; }
 .seat-wing { position: absolute; }
+.seat-wing-ul { position: absolute; width: 44rpx; height: 58rpx; left: -36rpx; top: 6rpx; border-radius: 60% 40% 40% 60% / 55% 45% 55% 45%; background: radial-gradient(ellipse at 72% 40%, rgba(91,240,216,.44) 0%, rgba(123,159,255,.24) 55%, transparent 80%); border: 1rpx solid rgba(91,240,216,.62); box-shadow: 0 0 18rpx rgba(91,240,216,.34); transform-origin: right center; animation: fairy-wing-l 3.5s ease-in-out infinite; }
+.seat-wing-ll { position: absolute; width: 31rpx; height: 40rpx; left: -28rpx; top: 50rpx; border-radius: 50% 40% 60% 40% / 40% 50% 50% 60%; background: radial-gradient(ellipse at 70% 30%, rgba(123,159,255,.32) 0%, rgba(192,132,252,.18) 60%, transparent 85%); border: 1rpx solid rgba(123,159,255,.46); transform-origin: right top; animation: fairy-wing-l 3.5s ease-in-out infinite .18s; }
+.seat-wing-ur { position: absolute; width: 44rpx; height: 58rpx; right: -36rpx; top: 6rpx; border-radius: 40% 60% 60% 40% / 45% 55% 45% 55%; background: radial-gradient(ellipse at 28% 40%, rgba(91,240,216,.44) 0%, rgba(123,159,255,.24) 55%, transparent 80%); border: 1rpx solid rgba(91,240,216,.62); box-shadow: 0 0 18rpx rgba(91,240,216,.34); transform-origin: left center; animation: fairy-wing-r 3.5s ease-in-out infinite; }
+.seat-wing-lr { position: absolute; width: 31rpx; height: 40rpx; right: -28rpx; top: 50rpx; border-radius: 40% 50% 40% 60% / 50% 40% 60% 50%; background: radial-gradient(ellipse at 30% 30%, rgba(123,159,255,.32) 0%, rgba(192,132,252,.18) 60%, transparent 85%); border: 1rpx solid rgba(123,159,255,.46); transform-origin: left top; animation: fairy-wing-r 3.5s ease-in-out infinite .18s; }
+@keyframes fairy-wing-l { 0%, 100% { transform: scaleX(1) skewY(0deg); opacity: 1; } 30% { transform: scaleX(.58) skewY(5deg); opacity: .68; } 60% { transform: scaleX(.84) skewY(-2deg); opacity: .86; } }
+@keyframes fairy-wing-r { 0%, 100% { transform: scaleX(1) skewY(0deg); opacity: 1; } 30% { transform: scaleX(.58) skewY(-5deg); opacity: .68; } 60% { transform: scaleX(.84) skewY(2deg); opacity: .86; } }
+.wings-in-team .seat-wing { opacity: .25; animation-play-state: paused; }
+.wings-dead .seat-wing { opacity: .08; animation-play-state: paused; }
 
 /* 离线遮罩 */
 .seat-offline-mask {
