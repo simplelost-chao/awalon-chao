@@ -69,17 +69,15 @@
       </view>
     </view>
 
-  </view>
-
-  <!-- 分页 -->
-  <view class="pagination" wx:if="{{list.length || page > 1}}">
-    <view class="page-arrow {{page<=1||loading?'page-arrow-disabled':''}}" bindtap="onPrev">‹</view>
-    <view class="page-indicator">
-      <text class="page-num">{{pageDisplay}}</text>
-      <text class="page-label">当前页</text>
+    <!-- 分页 -->
+    <view class="pagination" wx:if="{{list.length || page > 1}}">
+      <view class="page-arrow {{page<=1||loading?'page-arrow-disabled':''}}" bindtap="onPrev">‹</view>
+      <view class="page-indicator">
+        <text class="page-num">{{pageDisplay}}</text>
+        <text class="page-label">当前页</text>
+      </view>
+      <view class="page-arrow {{!hasMore||loading?'page-arrow-disabled':''}}" bindtap="onNext">›</view>
     </view>
-    <view class="page-arrow {{!hasMore||loading?'page-arrow-disabled':''}}" bindtap="onNext">›</view>
-  </view>
 
   </view>
 
