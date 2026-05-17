@@ -27,15 +27,12 @@
 
 @import '../../../styles/theme-overrides.wxss';
 
-/* ─── CONTENT ───────────────────────────────────────── */
-.replay-content {
-  position: relative;
+/* ─── SCROLL ───────────────────────────────────────── */
+.replay-scroll {
+  position: fixed;
+  left: 0; right: 0; bottom: 120rpx;
   z-index: 1;
   padding: 0 20rpx;
-  padding-bottom: 120rpx;
-  display: flex;
-  flex-direction: column;
-  height: calc(100vh - 88px);
   box-sizing: border-box;
 }
 
@@ -239,10 +236,8 @@
 
 /* ─── STEP PANEL ───────────────────────────────────── */
 .step-panel {
-  flex: 1;
   padding: 20rpx;
-  margin: 8rpx 4rpx 0;
-  overflow-y: auto;
+  margin: 24rpx 4rpx 20rpx;
 }
 
 .step-title {

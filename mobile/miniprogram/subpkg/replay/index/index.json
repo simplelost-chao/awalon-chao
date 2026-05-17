@@ -1,5 +1,6 @@
 {
   "usingComponents": {
-    "nav-header": "/subpkg/components/nav-header/index"
+    "nav-header": "/subpkg/components/nav-header/index",
+    "round-table": "/components/round-table/index"
   }
 }

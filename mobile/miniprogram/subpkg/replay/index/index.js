@@ -1,5 +1,6 @@
 const socket = require("../../../utils/socket");
 const { getSkin } = require("../../../skins");
+const { buildRoundSeats } = require("../../../utils/gameUtils");
 
 const ROLE_IMAGE_MAP = {
   梅林: "https://www.awalon.top/mp-assets/role-split/merlin.png",
@@ -28,6 +29,7 @@ Page({
     gameId: 0,
     loading: true,
     tablePlayers: [],
+    replaySeats: [],
     steps: [],
     stepIndex: 0,
     currentStep: null,
@@ -350,11 +352,43 @@ Page({
       }
     }
 
+    // 构建 round-table 兼容的 seats
+    var replaySeats = tablePlayers.map(function (p) {
+      var fClass = p.role === '梅林' ? 'rev-merlin' : (EVIL_ROLES.has(p.role) ? 'rev-evil' : 'rev-good');
+      return {
+        index: p.seatIndex || 0,
+        seat: p.seat,
+        name: p.nickname,
+        playerId: p.id,
+        avatarImage: p.avatarImage,
+        avatarText: p.avatarText || '🐺',
+        offline: false,
+        autoplay: false,
+        isMe: false,
+        isLeader: p.isLeader,
+        isLadyHolder: false,
+        selectedTeam: p.isInTeam,
+        selectedAssassinate: false,
+        isAssassinated: false,
+        roleLabel: p.role,
+        roleImage: p.roleImage,
+        roleClass: fClass,
+        identityClass: fClass.replace('rev-', 'id-'),
+        identityLabel: p.role,
+        identityRoleImage: p.roleImage,
+        factionClass: fClass,
+        action: p.voteLabel || p.missionLabel || '',
+        actionDone: !!(p.voteLabel || p.missionLabel),
+        badgeType: '',
+      };
+    });
+
     this.setData({
       stepIndex: index,
       currentStep: step,
       stepProgress: (index + 1) + "/" + steps.length,
-      tablePlayers: tablePlayers
+      tablePlayers: tablePlayers,
+      replaySeats: buildRoundSeats(replaySeats, tablePlayers.length)
     });
   },
 
