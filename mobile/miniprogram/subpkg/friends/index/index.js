@@ -60,22 +60,22 @@ Page({
     if (!msg || !msg.type) return;
 
     if (msg.type === 'FRIENDS_LIST') {
-      const rawFriends = Array.isArray(msg.payload && msg.payload.friends) ? msg.payload.friends : [];
-      // Sort: online/in-game first, then offline
+      const d = msg.data || msg.payload || {};
+      const rawFriends = Array.isArray(d.friends) ? d.friends : [];
       const sorted = rawFriends.slice().sort((a, b) => {
         const aOnline = a.online ? 1 : 0;
         const bOnline = b.online ? 1 : 0;
         return bOnline - aOnline;
       });
-      const pendingRequests = Array.isArray(msg.payload && msg.payload.pendingRequests) ? msg.payload.pendingRequests : [];
+      const pendingRequests = Array.isArray(d.pending) ? d.pending : [];
       this.setData({ friends: sorted, pendingRequests, loading: false });
       return;
     }
 
     if (msg.type === 'FRIEND_STATUS') {
-      const { userId, online, roomCode } = msg.payload || {};
+      const { phone, online, roomCode } = msg.data || msg.payload || {};
       const friends = this.data.friends.map(f => {
-        if (f.userId === userId) {
+        if (f.phone === phone) {
           return { ...f, online: !!online, roomCode: roomCode || null };
         }
         return f;
@@ -90,9 +90,9 @@ Page({
     }
 
     if (msg.type === 'FRIEND_REQUEST_RECEIVED') {
-      const req = msg.payload;
-      if (!req || !req.userId) return;
-      const already = this.data.pendingRequests.some(r => r.userId === req.userId);
+      const req = msg.data || msg.payload;
+      if (!req || !req.fromPhone) return;
+      const already = this.data.pendingRequests.some(r => r.phone === req.fromPhone);
       if (!already) {
         this.setData({ pendingRequests: this.data.pendingRequests.concat([req]) });
       }
