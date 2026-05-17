@@ -71,6 +71,17 @@ function getPendingRequests(myPhone) {
   `).all(myPhone);
 }
 
+// 获取我发出的待确认请求
+function getSentRequests(myPhone) {
+  return userDb.prepare(`
+    SELECT f.phone_b AS phone, u.nickname, u.avatar
+    FROM friends f
+    JOIN users u ON u.phone = f.phone_b
+    WHERE f.phone_a = ? AND f.status = 'pending'
+    ORDER BY f.created_at DESC
+  `).all(myPhone);
+}
+
 // 获取所有已接受好友的手机号列表
 function getFriendPhones(myPhone) {
   const rows = userDb.prepare(`
@@ -87,5 +98,6 @@ module.exports = {
   deleteFriend,
   getFriendsList,
   getPendingRequests,
+  getSentRequests,
   getFriendPhones,
 };

@@ -12,101 +12,127 @@
 
   <view class="content" style="padding-top: {{navTotalHeight + 8}}px; padding-bottom: 180rpx;">
 
-    <!-- ── 好友请求 ── -->
-    <view class="pf friend-section" wx:if="{{pendingRequests.length}}">
-      <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
-      <view class="fb fb-left"></view><view class="fb fb-right"></view>
-      <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
-      <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
-      <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
-      <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
-
-      <text class="friend-section-title">好友请求</text>
-
-      <view
-        class="friend-request"
-        wx:for="{{pendingRequests}}"
-        wx:key="userId"
-      >
-        <image
-          wx:if="{{item.avatarImage}}"
-          class="friend-avatar"
-          src="{{item.avatarImage}}"
-          mode="aspectFill"
-        />
-        <text wx:else class="friend-avatar-text">{{item.avatarText || '🐺'}}</text>
-
-        <view class="friend-info">
-          <text class="friend-name">{{item.nickname || '未知玩家'}}</text>
-        </view>
-
-        <view class="friend-request-actions">
-          <view
-            class="friend-btn friend-btn-accept"
-            bindtap="onAcceptRequest"
-            data-userid="{{item.userId}}"
-          >同意</view>
-          <view
-            class="friend-btn friend-btn-reject"
-            bindtap="onRejectRequest"
-            data-userid="{{item.userId}}"
-          >拒绝</view>
-        </view>
+    <!-- Tab 切换 -->
+    <view class="friend-tabs">
+      <view class="friend-tab {{friendTab === 'list' ? 'friend-tab-active' : ''}}" bindtap="onSwitchTab" data-tab="list">好友 ({{friends.length}})</view>
+      <view class="friend-tab {{friendTab === 'requests' ? 'friend-tab-active' : ''}}" bindtap="onSwitchTab" data-tab="requests">
+        申请
+        <view class="friend-tab-badge" wx:if="{{pendingRequests.length}}">{{pendingRequests.length}}</view>
       </view>
     </view>
 
-    <!-- ── 好友列表 ── -->
-    <view class="pf friend-section">
-      <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
-      <view class="fb fb-left"></view><view class="fb fb-right"></view>
-      <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
-      <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
-      <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
-      <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+    <!-- ══════ 好友列表 Tab ══════ -->
+    <block wx:if="{{friendTab === 'list'}}">
+      <view class="pf friend-section">
+        <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+        <view class="fb fb-left"></view><view class="fb fb-right"></view>
+        <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+        <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+        <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+        <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
 
-      <view class="rs-title-row">
-        <view class="rs-title-line"></view>
-        <text class="rs-deco">◆</text>
-        <text class="rs-title">好友列表 ({{friends.length}})</text>
-        <text class="rs-deco">◆</text>
-        <view class="rs-title-line"></view>
-      </view>
+        <!-- 空状态 -->
+        <view class="friend-empty" wx:if="{{!loading && !friends.length}}">
+          <text class="friend-empty-text">还没有好友，在游戏中可以添加</text>
+        </view>
 
-      <!-- 空状态 -->
-      <view class="friend-empty" wx:if="{{!loading && !friends.length}}">
-        <text class="friend-empty-text">还没有好友，在游戏中可以添加</text>
-      </view>
-
-      <!-- 好友网格（分页显示） -->
-      <view class="friend-grid" wx:if="{{pagedFriends.length}}">
-        <view class="friend-card" wx:for="{{pagedFriends}}" wx:key="phone"
-          bindlongpress="onDeleteFriend" data-phone="{{item.phone}}" data-nickname="{{item.nickname}}">
-          <view class="friend-card-inner">
-            <view class="friend-avatar-wrap">
-              <image wx:if="{{item.avatarImage}}" class="friend-avatar" src="{{item.avatarImage}}" mode="aspectFill" />
-              <text wx:else class="friend-avatar-text">{{item.avatarText || '🐺'}}</text>
-              <view class="friend-dot {{item.online ? 'friend-dot-on' : 'friend-dot-off'}}"></view>
+        <!-- 好友网格 -->
+        <view class="friend-grid" wx:if="{{pagedFriends.length}}">
+          <view class="friend-card" wx:for="{{pagedFriends}}" wx:key="phone"
+            bindlongpress="onDeleteFriend" data-phone="{{item.phone}}" data-nickname="{{item.nickname}}">
+            <view class="friend-card-inner">
+              <view class="friend-avatar-wrap">
+                <image wx:if="{{item.avatarImage}}" class="friend-avatar" src="{{item.avatarImage}}" mode="aspectFill" />
+                <text wx:else class="friend-avatar-text">{{item.avatarText || '🐺'}}</text>
+                <view class="friend-dot {{item.online ? 'friend-dot-on' : 'friend-dot-off'}}"></view>
+              </view>
+              <text class="friend-name">{{item.nickname || '未知'}}</text>
+              <text class="friend-status {{item.online ? 'friend-online' : 'friend-offline'}}">{{item.online ? (item.roomCode ? '游戏中' : '在线') : '离线'}}</text>
+              <view wx:if="{{item.online && item.roomCode}}" class="friend-join-btn"
+                catchtap="onJoinRoom" data-roomcode="{{item.roomCode}}">
+                <text class="friend-join-text">加入 {{item.roomCode}}</text>
+              </view>
             </view>
-            <text class="friend-name">{{item.nickname || '未知'}}</text>
-            <text class="friend-status {{item.online ? 'friend-online' : 'friend-offline'}}">{{item.online ? (item.roomCode ? '游戏中' : '在线') : '离线'}}</text>
-            <view wx:if="{{item.online && item.roomCode}}" class="friend-join-btn"
-              catchtap="onJoinRoom" data-roomcode="{{item.roomCode}}">
-              <text class="friend-join-text">加入 {{item.roomCode}}</text>
-            </view>
+          </view>
+        </view>
+
+        <!-- 翻页 -->
+        <view class="pagination" wx:if="{{friends.length > pageSize}}">
+          <view class="page-arrow {{friendPage <= 1 ? 'page-arrow-disabled' : ''}}" bindtap="onPrevPage">‹</view>
+          <view class="page-indicator">
+            <text class="page-num">{{friendPageDisplay}}</text>
+            <text class="page-label">/ {{totalPages}}</text>
+          </view>
+          <view class="page-arrow {{friendPage >= totalPages ? 'page-arrow-disabled' : ''}}" bindtap="onNextPage">›</view>
+        </view>
+      </view>
+    </block>
+
+    <!-- ══════ 申请 Tab ══════ -->
+    <block wx:if="{{friendTab === 'requests'}}">
+      <!-- 收到的请求 -->
+      <view class="pf friend-section">
+        <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+        <view class="fb fb-left"></view><view class="fb fb-right"></view>
+        <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+        <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+        <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+        <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+
+        <view class="rs-title-row">
+          <view class="rs-title-line"></view>
+          <text class="rs-deco">◆</text>
+          <text class="rs-title">收到的请求</text>
+          <text class="rs-deco">◆</text>
+          <view class="rs-title-line"></view>
+        </view>
+
+        <view class="friend-empty" wx:if="{{!pendingRequests.length}}">
+          <text class="friend-empty-text">暂无待处理的好友请求</text>
+        </view>
+
+        <view class="friend-request" wx:for="{{pendingRequests}}" wx:key="phone">
+          <image wx:if="{{item.avatarImage}}" class="req-avatar" src="{{item.avatarImage}}" mode="aspectFill" />
+          <text wx:else class="req-avatar-text">{{item.avatarText || '🐺'}}</text>
+          <view class="req-info">
+            <text class="req-name">{{item.nickname || '未知玩家'}}</text>
+            <text class="req-hint">想加你为好友</text>
+          </view>
+          <view class="friend-request-actions">
+            <text class="friend-btn friend-btn-accept" bindtap="onAcceptRequest" data-phone="{{item.phone}}">同意</text>
+            <text class="friend-btn friend-btn-reject" bindtap="onRejectRequest" data-phone="{{item.phone}}">拒绝</text>
           </view>
         </view>
       </view>
 
-      <!-- 翻页 -->
-      <view class="pagination" wx:if="{{friends.length > pageSize}}">
-        <view class="page-arrow {{friendPage <= 1 ? 'page-arrow-disabled' : ''}}" bindtap="onPrevPage">‹</view>
-        <view class="page-indicator">
-          <text class="page-num">{{friendPageDisplay}}</text>
-          <text class="page-label">/ {{totalPages}}</text>
+      <!-- 我发出的请求 -->
+      <view class="pf friend-section" wx:if="{{sentRequests.length}}" style="margin-top:16rpx">
+        <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+        <view class="fb fb-left"></view><view class="fb fb-right"></view>
+        <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+        <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+        <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+        <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+
+        <view class="rs-title-row">
+          <view class="rs-title-line"></view>
+          <text class="rs-deco">◆</text>
+          <text class="rs-title">已发出</text>
+          <text class="rs-deco">◆</text>
+          <view class="rs-title-line"></view>
         </view>
-        <view class="page-arrow {{friendPage >= totalPages ? 'page-arrow-disabled' : ''}}" bindtap="onNextPage">›</view>
+
+        <view class="friend-request" wx:for="{{sentRequests}}" wx:key="phone">
+          <image wx:if="{{item.avatarImage}}" class="req-avatar" src="{{item.avatarImage}}" mode="aspectFill" />
+          <text wx:else class="req-avatar-text">{{item.avatarText || '🐺'}}</text>
+          <view class="req-info">
+            <text class="req-name">{{item.nickname || '未知玩家'}}</text>
+            <text class="req-hint">等待对方确认</text>
+          </view>
+          <text class="req-pending-tag">等待中</text>
+        </view>
       </view>
-    </view>
+    </block>
 
   </view>
 

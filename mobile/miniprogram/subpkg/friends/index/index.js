@@ -16,12 +16,14 @@ Page({
     navTotalHeight: 64,
     skinId: 'dark-gold',
     skinInGameBg: 'https://www.awalon.top/mp-assets/in-game-bg-optimized.jpg',
+    friendTab: 'list',
     friends: [],
     pagedFriends: [],
     friendPage: 1,
     friendPageDisplay: '01',
     totalPages: 1,
     pageSize: 10,
+    sentRequests: [],
     pendingRequests: [],
     loading: true
   },
@@ -73,7 +75,8 @@ Page({
         return bOnline - aOnline;
       });
       const pendingRequests = Array.isArray(d.pending) ? d.pending : [];
-      this.setData({ friends: sorted, pendingRequests, loading: false, friendPage: 1 });
+      const sentRequests = Array.isArray(d.sent) ? d.sent : [];
+      this.setData({ friends: sorted, pendingRequests, sentRequests, loading: false, friendPage: 1 });
       this._updatePage();
       return;
     }
@@ -132,18 +135,26 @@ Page({
     this._updatePage();
   },
 
+  onSwitchTab(e) {
+    const tab = e.currentTarget.dataset.tab;
+    if (tab === this.data.friendTab) return;
+    this.setData({ friendTab: tab });
+  },
+
   onAcceptRequest(e) {
-    const userId = e.currentTarget.dataset.userid;
-    socket.send({ type: 'FRIEND_RESPOND', payload: { userId, action: 'accept' } });
-    const pendingRequests = this.data.pendingRequests.filter(r => r.userId !== userId);
+    const phone = e.currentTarget.dataset.phone;
+    if (!phone) return;
+    socket.send({ type: 'FRIEND_RESPOND', payload: { phone, accept: true } });
+    const pendingRequests = this.data.pendingRequests.filter(r => r.phone !== phone);
     this.setData({ pendingRequests });
-    this.requestFriendsList();
+    setTimeout(() => this.requestFriendsList(), 500);
   },
 
   onRejectRequest(e) {
-    const userId = e.currentTarget.dataset.userid;
-    socket.send({ type: 'FRIEND_RESPOND', payload: { userId, action: 'reject' } });
-    const pendingRequests = this.data.pendingRequests.filter(r => r.userId !== userId);
+    const phone = e.currentTarget.dataset.phone;
+    if (!phone) return;
+    socket.send({ type: 'FRIEND_RESPOND', payload: { phone, accept: false } });
+    const pendingRequests = this.data.pendingRequests.filter(r => r.phone !== phone);
     this.setData({ pendingRequests });
   },
 
@@ -160,7 +171,7 @@ Page({
   },
 
   onDeleteFriend(e) {
-    const userId = e.currentTarget.dataset.userid;
+    const phone = e.currentTarget.dataset.phone;
     const nickname = e.currentTarget.dataset.nickname || '该好友';
     wx.showModal({
       title: '删除好友',
@@ -170,9 +181,10 @@ Page({
       cancelText: '取消',
       success: (res) => {
         if (!res.confirm) return;
-        socket.send({ type: 'FRIEND_DELETE', payload: { userId } });
-        const friends = this.data.friends.filter(f => f.userId !== userId);
+        socket.send({ type: 'FRIEND_DELETE', payload: { phone } });
+        const friends = this.data.friends.filter(f => f.phone !== phone);
         this.setData({ friends });
+        this._updatePage();
       }
     });
   },

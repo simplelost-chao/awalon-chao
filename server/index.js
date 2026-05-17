@@ -27,7 +27,7 @@ const {
 } = require('./history');
 const {
   sendFriendRequest, respondFriendRequest, deleteFriend,
-  getFriendsList, getPendingRequests, getFriendPhones,
+  getFriendsList, getPendingRequests, getSentRequests, getFriendPhones,
 } = require('./friends');
 const {
   init: initGameAi,
@@ -925,6 +925,7 @@ wss.on('connection', (ws) => {
         if (!client.userPhone) { send(client, { type: 'ERROR', data: { code: 'NEED_LOGIN' } }); break; }
         const fl = getFriendsList(client.userPhone);
         const fp = getPendingRequests(client.userPhone);
+        const fs = getSentRequests(client.userPhone);
         const friendsData = fl.map(f => {
           let online = false, fRoomCode = null;
           for (const [, r] of rooms) {
@@ -940,7 +941,11 @@ wss.on('connection', (ws) => {
           const isUrl = p.avatar && (p.avatar.startsWith('http') || p.avatar.startsWith('/'));
           return { ...p, avatarImage: isUrl ? p.avatar : '', avatarText: isUrl ? '' : (p.avatar || '🐺') };
         });
-        send(client, { type: 'FRIENDS_LIST', data: { friends: friendsData, pending: pendingData } });
+        const sentData = fs.map(s => {
+          const isUrl = s.avatar && (s.avatar.startsWith('http') || s.avatar.startsWith('/'));
+          return { ...s, avatarImage: isUrl ? s.avatar : '', avatarText: isUrl ? '' : (s.avatar || '🐺') };
+        });
+        send(client, { type: 'FRIENDS_LIST', data: { friends: friendsData, pending: pendingData, sent: sentData } });
         break;
       }
       case 'FRIEND_REQUEST': {
