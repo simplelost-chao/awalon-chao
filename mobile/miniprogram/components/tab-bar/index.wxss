@@ -3,13 +3,14 @@
   bottom: 0;
   left: 0;
   right: 0;
-  z-index: 50;
+  z-index: 999;
   display: flex;
   flex-direction: row;
   align-items: center;
   height: 100rpx;
+  padding-bottom: constant(safe-area-inset-bottom);
   padding-bottom: env(safe-area-inset-bottom);
-  background: rgba(10, 8, 16, 0.92);
+  background-color: rgba(10, 8, 16, 0.95);
   border-top: 1rpx solid rgba(216, 176, 107, 0.15);
 }
 
@@ -25,10 +26,6 @@
 .tab-icon {
   width: 40rpx;
   height: 40rpx;
-  opacity: 0.5;
-}
-.tab-item.active .tab-icon {
-  opacity: 1;
 }
 
 .tab-label {
