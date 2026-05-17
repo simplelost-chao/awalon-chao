@@ -47,10 +47,12 @@
 .identity-mode .seat-card.id-good .seat-name,
 .identity-mode .seat-card.id-merlin .seat-name { color: #bfdbfe; }
 
-/* 队伍选中（绿色发光）— 优先级要高于 identity mode 阵营色 */
-.seat-av-team,
-.identity-mode .seat-av-team,
-.identity-mode .seat-card .seat-av-team {
+/* 队伍选中（绿色发光）— 最高优先级 */
+.seat-avatar.seat-av-team,
+.identity-mode .seat-card .seat-avatar.seat-av-team,
+.identity-mode .seat-card.id-good .seat-avatar.seat-av-team,
+.identity-mode .seat-card.id-evil .seat-avatar.seat-av-team,
+.identity-mode .seat-card.id-merlin .seat-avatar.seat-av-team {
   border-color: rgba(80,230,140,1) !important;
   box-shadow: 0 0 0 4rpx rgba(60,200,110,0.35), 0 0 20rpx rgba(60,200,110,0.7), 0 0 50rpx rgba(60,200,110,0.45) !important;
   background: rgba(10,50,22,0.92) !important;
