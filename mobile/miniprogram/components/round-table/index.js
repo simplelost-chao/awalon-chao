@@ -17,6 +17,7 @@ Component({
     leaderActionClass:   { type: String,  value: '' },
     leaderActionDisabled:{ type: Boolean, value: false },
     selectedAssassinate: { type: String,  value: '' },
+    emojiBubbles:        { type: Object,  value: {} },
   },
 
   methods: {

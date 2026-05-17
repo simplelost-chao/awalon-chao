@@ -209,6 +209,7 @@ Page({
     cheatPendingPlayerId: "",
     cheatRevealPlayerId: "",
     cheatRoles: {},
+    emojiBubbles: {},
     gameTip: "开始游戏后，这里会显示阶段控制。",
     phasePrompt: null,
     phase: "",
@@ -1247,6 +1248,36 @@ Page({
           });
           return;
         }
+        if (msg.type === "EMOJI" && msg.data) {
+          const { seat, emojiId } = msg.data;
+          if (seat >= 0 && emojiId) {
+            const EMOJI_IMGS = {
+              good: 'https://www.awalon.top/mp-assets/emoji/good.png',
+              ride: 'https://www.awalon.top/mp-assets/emoji/ride.png',
+              vote: 'https://www.awalon.top/mp-assets/emoji/vote.png',
+              wolf: 'https://www.awalon.top/mp-assets/emoji/wolf.png',
+              perci: 'https://www.awalon.top/mp-assets/emoji/perci.png',
+              angry: 'https://www.awalon.top/mp-assets/emoji/angry.png',
+            };
+            const image = EMOJI_IMGS[emojiId];
+            if (image) {
+              const ts = Date.now();
+              const bubbles = { ...this.data.emojiBubbles };
+              bubbles[seat] = { emojiId, image, ts };
+              this.setData({ emojiBubbles: bubbles });
+              setTimeout(() => {
+                const cur = this.data.emojiBubbles[seat];
+                if (cur && cur.ts === ts) {
+                  const next = { ...this.data.emojiBubbles };
+                  delete next[seat];
+                  this.setData({ emojiBubbles: next });
+                }
+              }, 3000);
+            }
+          }
+          return;
+        }
+
         if (msg.type === "CHEAT_REVEAL_ROLE") {
           const data = msg.data || {};
           const pid = data.playerId || "";
@@ -3794,6 +3825,12 @@ Page({
   onHostDirectVote() {
     this.send("HOST_SKIP_TO_VOTE");
     wx.showToast({ title: "已请求直接投票", icon: "none", duration: 900 });
+  },
+
+  onSendEmoji(e) {
+    const emojiId = e.detail && e.detail.emojiId;
+    if (!emojiId) return;
+    this.send('SEND_EMOJI', { emojiId });
   },
 
   onAutoplayToggle() {

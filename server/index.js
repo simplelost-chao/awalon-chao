@@ -917,6 +917,22 @@ wss.on('connection', (ws) => {
       case 'GET_ROLE_STATS':
         fetchRoleStats(client);
         break;
+      case 'SEND_EMOJI': {
+        const emojiRoom = rooms.get(client.roomCode);
+        if (!emojiRoom || !emojiRoom.started) break;
+        const emojiPlayer = emojiRoom.players.get(client.id);
+        if (!emojiPlayer || emojiPlayer.spectator) break;
+        const emojiId = payload && payload.emojiId;
+        if (!emojiId) break;
+        const emojiNow = Date.now();
+        if (emojiPlayer._lastEmoji && emojiNow - emojiPlayer._lastEmoji < 3000) break;
+        emojiPlayer._lastEmoji = emojiNow;
+        const emojiSeat = Array.isArray(emojiRoom.seats) ? emojiRoom.seats.indexOf(client.id) : -1;
+        for (const ep of emojiRoom.players.values()) {
+          send(ep, { type: 'EMOJI', data: { playerId: client.id, emojiId, seat: emojiSeat } });
+        }
+        break;
+      }
       case 'AUTOPLAY_ON': {
         const apRoom = rooms.get(client.roomCode);
         const apPlayer = apRoom && apRoom.players.get(client.id);

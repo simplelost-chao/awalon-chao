@@ -1,0 +1,14 @@
+<view class="emoji-bar {{cooldown ? 'emoji-bar--cooldown' : ''}}">
+  <view
+    wx:for="{{emojis}}"
+    wx:key="id"
+    class="emoji-btn"
+    data-id="{{item.id}}"
+    bindtap="onTap"
+    hover-class="emoji-btn--active"
+    hover-stay-time="150"
+  >
+    <image class="emoji-img" src="{{item.image}}" mode="aspectFit" />
+    <text class="emoji-label">{{item.label}}</text>
+  </view>
+</view>

@@ -445,6 +445,7 @@
         seats="{{roundSeats}}"
         identityMode="{{identityMode}}"
         seatNotes="{{seatNotes}}"
+        emojiBubbles="{{emojiBubbles}}"
         showCenterResult="{{showCenterResult}}"
         centerResultText="{{centerResultText}}"
         centerResultSub="{{centerResultSub}}"
@@ -611,6 +612,11 @@
     bind:skipspeak="onHostSkipSpeak"
     bind:directvote="onHostDirectVote">
   </speak-panel>
+
+  <emoji-bar
+    wx:if="{{room && room.started && phase !== 'end' && !isSpectator && !atHome}}"
+    bind:send="onSendEmoji"
+  />
 
 </view>
 

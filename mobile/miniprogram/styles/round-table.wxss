@@ -239,3 +239,27 @@
 .theme-celestial .seat-card.rev-good .seat-name { color: rgba(26, 74, 138, 0.90); }
 .theme-celestial .seat-card.rev-evil .seat-name { color: rgba(138, 26, 26, 0.90); }
 .theme-celestial .seat-card.rev-merlin .seat-name { color: rgba(90, 26, 138, 0.90); }
+
+/* ─── 表情气泡 ─── */
+.emoji-bubble {
+  position: absolute;
+  top: -50rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  opacity: 0;
+  pointer-events: none;
+}
+.emoji-bubble-show {
+  animation: emoji-float 3s ease-out forwards;
+}
+.emoji-bubble-img {
+  width: 60rpx;
+  height: 60rpx;
+}
+@keyframes emoji-float {
+  0% { opacity: 0; transform: translateX(-50%) translateY(10rpx) scale(0.5); }
+  10% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+  80% { opacity: 1; transform: translateX(-50%) translateY(-20rpx) scale(1); }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-40rpx) scale(0.8); }
+}

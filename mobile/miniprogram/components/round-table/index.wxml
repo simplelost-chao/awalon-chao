@@ -15,6 +15,10 @@
     <view class="seat-leader-mark" wx:if="{{item.isLeader}}">
       <image class="seat-leader-icon" src="https://www.awalon.top/mp-assets/icons/seat-leader.svg" mode="aspectFit" />
     </view>
+    <view class="emoji-bubble {{emojiBubbles[item.index] ? 'emoji-bubble-show' : ''}}"
+      wx:if="{{emojiBubbles[item.index]}}">
+      <image class="emoji-bubble-img" src="{{emojiBubbles[item.index].image}}" mode="aspectFit" />
+    </view>
     <view class="seat-avatar-wrap">
       <view class="seat-id-aura"></view>
       <view class="seat-status-badge seat-badge-{{item.badgeType}}" wx:if="{{item.badgeType}}">

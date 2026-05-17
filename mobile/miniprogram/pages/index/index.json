@@ -12,6 +12,7 @@
     "identity-panel": "/components/identity-panel/index",
     "room-players-panel": "/components/room-players-panel/index",
     "game-config-panel": "/components/game-config-panel/index",
+    "emoji-bar": "/components/emoji-bar/index",
     "round-table": "/components/round-table/index",
     "nav-header": "/components/nav-header/index",
     "panel-frame": "/components/panel-frame/index"
