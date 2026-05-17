@@ -81,7 +81,6 @@ Page({
     }
 
     var payload = msg.detail;
-    console.log('[replay] ladyOfLake:', JSON.stringify(payload.ladyOfLake));
     var players = Array.isArray(payload.players) ? payload.players : [];
     var voteHistory = Array.isArray(payload.voteHistory) ? payload.voteHistory : [];
     var missionHistory = Array.isArray(payload.missionHistory) ? payload.missionHistory : [];
@@ -91,7 +90,6 @@ Page({
 
     var tablePlayers = this._buildTablePlayers(players);
     var steps = this._buildSteps(byId, voteHistory, missionHistory, payload);
-    console.log('[replay] steps:', steps.length, steps.map(function(s) { return s.type + '(r' + (s.round||'') + ')'; }).join(', '));
     this._rawPlayers = players;
     this._byId = byId;
     this._maxPlayers = Number(payload.maxPlayers) || players.length;
