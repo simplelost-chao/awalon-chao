@@ -49,9 +49,12 @@
 
 /* 队长标记 */
 .seat-leader-mark {
-  position: absolute; top: -16rpx; left: 50%; transform: translateX(-50%);
-  z-index: 8;
+  position: absolute; top: -38rpx; left: 50%; transform: translateX(-50%);
+  z-index: 8; width: 48rpx; height: 42rpx;
+  display: flex; align-items: center; justify-content: center;
+  filter: drop-shadow(0 2rpx 5rpx rgba(18,10,2,0.82)) drop-shadow(0 0 8rpx rgba(200,134,10,0.45));
 }
+.seat-leader-icon { width: 42rpx; height: 42rpx; filter: brightness(1.28); }
 
 /* 湖中仙女翅膀 */
 .seat-fairy-wings { position: absolute; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 1; }

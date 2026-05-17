@@ -53,7 +53,7 @@
 /* ─── STEP PANEL ───────────────────────────────────── */
 .step-panel {
   padding: 20rpx;
-  margin: 24rpx 4rpx 20rpx;
+  margin: 48rpx 4rpx 20rpx;
 }
 
 .step-title {
