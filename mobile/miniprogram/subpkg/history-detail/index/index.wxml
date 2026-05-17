@@ -85,7 +85,7 @@
 
       <!-- ── 复盘入口 ── -->
       <view class="replay-entry" bindtap="onOpenReplay">
-        <text class="replay-entry-icon">📋</text>
+        <image class="replay-entry-icon" src="https://www.awalon.top/mp-assets/icons/nav-replay.svg" mode="aspectFit" />
         <text class="replay-entry-text">上帝视角复盘</text>
         <text class="replay-entry-arrow">›</text>
       </view>

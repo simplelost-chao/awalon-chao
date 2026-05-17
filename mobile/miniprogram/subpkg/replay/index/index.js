@@ -24,18 +24,21 @@ Page({
     navTotalHeight: 64,
     skinId: "dark-gold",
     skinInGameBg: "https://www.awalon.top/mp-assets/in-game-bg-optimized.jpg",
+    skinTableUrl: "https://www.awalon.top/mp-assets/table.png",
     gameId: 0,
     loading: true,
-    identityBar: [],
-    rounds: [],
-    endCard: null,
-    currentRound: 0
+    tablePlayers: [],
+    steps: [],
+    stepIndex: 0,
+    currentStep: null,
+    stepTotal: 0,
+    stepProgress: "0/0"
   },
 
-  onLoad(options) {
-    const app = getApp();
-    const nav = (app.globalData && app.globalData.nav) || {};
-    const skinId = (app.globalData && app.globalData.skinId) || "dark-gold";
+  onLoad: function (options) {
+    var app = getApp();
+    var nav = (app.globalData && app.globalData.nav) || {};
+    var skinId = (app.globalData && app.globalData.skinId) || "dark-gold";
 
     this.setData({
       statusBarHeight: nav.statusBarHeight || 20,
@@ -47,12 +50,12 @@ Page({
     });
 
     // Set up listener for history detail response
-    app.globalData.historyDetailListener = (msg) => {
+    app.globalData.historyDetailListener = function (msg) {
       this.onHistoryDetail(msg);
-    };
+    }.bind(this);
 
     // Request game history detail
-    const gameId = Number(options && options.gameId) || 0;
+    var gameId = Number(options && options.gameId) || 0;
     if (gameId) {
       socket.send({
         type: "GET_GAME_HISTORY_DETAIL",
@@ -61,188 +64,313 @@ Page({
     }
   },
 
-  onUnload() {
-    const app = getApp();
+  onUnload: function () {
+    var app = getApp();
     if (app.globalData.historyDetailListener) {
       app.globalData.historyDetailListener = null;
     }
   },
 
-  onHistoryDetail(msg) {
+  onHistoryDetail: function (msg) {
     if (!msg || !msg.detail) {
       this.setData({ loading: false });
       wx.showToast({ title: "记录不存在", icon: "none" });
       return;
     }
 
-    const payload = msg.detail;
-    const players = Array.isArray(payload.players) ? payload.players : [];
-    const voteHistory = Array.isArray(payload.voteHistory) ? payload.voteHistory : [];
-    const missionHistory = Array.isArray(payload.missionHistory) ? payload.missionHistory : [];
+    var payload = msg.detail;
+    var players = Array.isArray(payload.players) ? payload.players : [];
+    var voteHistory = Array.isArray(payload.voteHistory) ? payload.voteHistory : [];
+    var missionHistory = Array.isArray(payload.missionHistory) ? payload.missionHistory : [];
 
-    const identityBar = this._buildIdentityBar(players);
-    const rounds = this._buildRounds(players, voteHistory, missionHistory);
-    const endCard = this._buildEndCard(payload, players);
+    var byId = {};
+    players.forEach(function (p) { byId[p.id] = p; });
+
+    var tablePlayers = this._buildTablePlayers(players);
+    var steps = this._buildSteps(byId, voteHistory, missionHistory, payload);
 
     this.setData({
       loading: false,
-      identityBar: identityBar,
-      rounds: rounds,
-      endCard: endCard,
-      currentRound: 0
+      tablePlayers: tablePlayers,
+      steps: steps,
+      stepTotal: steps.length,
+      stepIndex: 0
+    });
+
+    if (steps.length > 0) {
+      this._applyStep(0);
+    }
+  },
+
+  _buildTablePlayers: function (players) {
+    var seated = players
+      .filter(function (p) { return p.role !== "观战"; })
+      .sort(function (a, b) { return (a.seat || 0) - (b.seat || 0); });
+
+    var count = seated.length;
+
+    return seated.map(function (p, idx) {
+      var av = String(p.avatar || "");
+      var isUrl = /^https?:\/\//i.test(av);
+      var fallback = (p.isAI || !p.phone) ? "🤖" : String(p.nickname || "玩").charAt(0);
+      var isEvil = EVIL_ROLES.has(p.role);
+      var factionClass = p.role === "梅林" ? "merlin" : isEvil ? "evil" : "good";
+
+      // Calculate circular position
+      var angle = (2 * Math.PI * idx) / count - Math.PI / 2;
+      var r = 38;
+      var left = 50 + r * Math.cos(angle);
+      var top = 50 + r * Math.sin(angle);
+      var posStyle = "left:" + left.toFixed(1) + "%;top:" + top.toFixed(1) + "%;";
+
+      return {
+        seat: p.seat,
+        id: p.id,
+        nickname: p.nickname || "玩家",
+        role: p.role || "",
+        roleImage: ROLE_IMAGE_MAP[p.role] || "",
+        faction: isEvil ? "evil" : "good",
+        factionClass: factionClass,
+        avatarImage: isUrl ? av : "",
+        avatarText: isUrl ? "" : (av || fallback),
+        posStyle: posStyle,
+        isInTeam: false,
+        isLeader: false,
+        voteLabel: "",
+        missionLabel: ""
+      };
     });
   },
 
-  _buildIdentityBar(players) {
-    return players
-      .filter(function(p) { return p.role !== "观战"; })
-      .sort(function(a, b) { return (a.seat || 0) - (b.seat || 0); })
-      .map(function(p) {
-        var av = String(p.avatar || "");
-        var isUrl = /^https?:\/\//i.test(av);
-        var fallback = (p.isAI || !p.phone) ? "🤖" : String(p.nickname || "玩").charAt(0);
-        var isEvil = EVIL_ROLES.has(p.role);
-        var factionClass = p.role === "梅林" ? "merlin" : isEvil ? "evil" : "good";
-        return {
-          seat: p.seat,
-          nickname: p.nickname || "玩家",
-          role: p.role || "",
-          roleImage: ROLE_IMAGE_MAP[p.role] || "",
-          faction: isEvil ? "evil" : "good",
-          factionClass: factionClass,
-          avatarImage: isUrl ? av : "",
-          avatarText: isUrl ? "" : (av || fallback)
-        };
-      });
-  },
-
-  _buildRounds(players, voteHistory, missionHistory) {
-    var byId = {};
-    players.forEach(function(p) { byId[p.id] = p; });
+  _buildSteps: function (byId, voteHistory, missionHistory, payload) {
+    var steps = [];
 
     var missionByRound = {};
-    missionHistory.forEach(function(m) {
+    missionHistory.forEach(function (m) {
       missionByRound[Number(m.round || 0)] = m;
     });
 
-    // Sort by round ASC, then attempt ASC
-    var sorted = voteHistory.slice().sort(function(a, b) {
+    // Sort vote history by round ASC, then attempt ASC
+    var sorted = voteHistory.slice().sort(function (a, b) {
       var ar = Number(a.round || 0);
       var br = Number(b.round || 0);
       if (ar !== br) return ar - br;
       return Number(a.attempt || 0) - Number(b.attempt || 0);
     });
 
-    return sorted.map(function(v, idx) {
+    sorted.forEach(function (v) {
       var round = Number(v.round || 0);
       var attempt = Number(v.attempt || 0);
       var leader = byId[v.leaderId] || {};
       var leaderSeat = leader.seat || "?";
       var leaderName = leader.nickname || "未知";
+      var leaderIsEvil = EVIL_ROLES.has(leader.role);
+      var leaderFaction = leaderIsEvil ? "evil" : "good";
 
-      // Build team
-      var team = (v.team || []).map(function(pid) {
+      // Build team members
+      var teamMembers = (v.team || []).map(function (pid) {
         var p = byId[pid] || {};
         var isEvil = EVIL_ROLES.has(p.role);
         return {
           seat: p.seat || "?",
+          id: pid,
           nickname: p.nickname || "未知",
           faction: isEvil ? "evil" : "good",
           factionClass: p.role === "梅林" ? "merlin" : isEvil ? "evil" : "good"
         };
-      }).sort(function(a, b) { return Number(a.seat) - Number(b.seat); });
+      }).sort(function (a, b) { return Number(a.seat) - Number(b.seat); });
 
-      // Build votes
+      // Team step
+      steps.push({
+        type: "team",
+        round: round,
+        attempt: attempt,
+        leaderName: leaderName,
+        leaderSeat: leaderSeat,
+        leaderId: v.leaderId,
+        leaderFaction: leaderFaction,
+        teamMembers: teamMembers
+      });
+
+      // Vote step
       var approveCount = 0;
       var rejectCount = 0;
-      var votes = Object.keys(v.votes || {}).map(function(pid) {
+      var votes = Object.keys(v.votes || {}).map(function (pid) {
         var p = byId[pid] || {};
         var approved = !!(v.votes[pid]);
         if (approved) approveCount++; else rejectCount++;
         var isEvil = EVIL_ROLES.has(p.role);
         return {
           seat: p.seat || "?",
+          id: pid,
           nickname: p.nickname || "未知",
           role: p.role || "",
           approved: approved,
           faction: isEvil ? "evil" : "good",
           factionClass: p.role === "梅林" ? "merlin" : isEvil ? "evil" : "good"
         };
-      }).sort(function(a, b) { return Number(a.seat) - Number(b.seat); });
+      }).sort(function (a, b) { return Number(a.seat) - Number(b.seat); });
 
-      // Build mission if approved
-      var mission = null;
+      steps.push({
+        type: "vote",
+        round: round,
+        attempt: attempt,
+        votes: votes,
+        approveCount: approveCount,
+        rejectCount: rejectCount,
+        passed: !!v.approved
+      });
+
+      // Mission step (if vote passed)
       if (v.approved) {
         var m = missionByRound[round];
         if (m) {
-          var missionVotes = (v.team || []).map(function(pid) {
+          var missionVotes = (v.team || []).map(function (pid) {
             var p = byId[pid] || {};
             var votedFail = !!(m.missionVotes && m.missionVotes[pid]);
             var isEvil = EVIL_ROLES.has(p.role);
             return {
               seat: p.seat || "?",
+              id: pid,
               nickname: p.nickname || "未知",
               role: p.role || "",
               votedFail: votedFail,
               faction: isEvil ? "evil" : "good",
               factionClass: p.role === "梅林" ? "merlin" : isEvil ? "evil" : "good"
             };
-          }).sort(function(a, b) { return Number(a.seat) - Number(b.seat); });
+          }).sort(function (a, b) { return Number(a.seat) - Number(b.seat); });
 
-          mission = {
+          steps.push({
+            type: "mission",
+            round: round,
             success: !!m.success,
             fails: m.fails || 0,
-            votes: missionVotes
-          };
+            votes: missionVotes,
+            teamMembers: teamMembers
+          });
         }
       }
-
-      return {
-        key: round + "-" + attempt,
-        round: round,
-        attempt: attempt,
-        leaderSeat: leaderSeat,
-        leaderName: leaderName,
-        team: team,
-        votes: votes,
-        approveCount: approveCount,
-        rejectCount: rejectCount,
-        approved: !!v.approved,
-        mission: mission
-      };
     });
-  },
 
-  _buildEndCard(payload, players) {
-    var byId = {};
-    players.forEach(function(p) { byId[p.id] = p; });
-
-    var endCard = {
-      winner: payload.winner || "",
-      endReason: payload.endReason || ""
-    };
-
+    // Assassination step
     if (payload.assassination) {
       var assassin = byId[payload.assassination.assassinId] || {};
       var target = byId[payload.assassination.targetId] || {};
-      endCard.assassination = {
+      steps.push({
+        type: "assassination",
         assassinName: (assassin.seat || "?") + "号 " + (assassin.nickname || "刺客"),
+        assassinId: payload.assassination.assassinId,
         targetName: (target.seat || "?") + "号 " + (target.nickname || "未知"),
+        targetId: payload.assassination.targetId,
         targetRole: target.role || "",
         hit: !!payload.assassination.hit
-      };
-    } else {
-      endCard.assassination = null;
+      });
     }
 
-    return endCard;
+    // End step
+    steps.push({
+      type: "end",
+      winner: payload.winner || "",
+      endReason: payload.endReason || ""
+    });
+
+    return steps;
   },
 
-  onSwiperChange(e) {
-    this.setData({ currentRound: e.detail.current || 0 });
+  _applyStep: function (index) {
+    var steps = this.data.steps;
+    if (index < 0 || index >= steps.length) return;
+
+    var step = steps[index];
+    var tablePlayers = this.data.tablePlayers.slice();
+
+    // Reset all highlights
+    for (var i = 0; i < tablePlayers.length; i++) {
+      tablePlayers[i] = Object.assign({}, tablePlayers[i], {
+        isInTeam: false,
+        isLeader: false,
+        voteLabel: "",
+        missionLabel: ""
+      });
+    }
+
+    // Build seat-to-index lookup
+    var seatIdx = {};
+    tablePlayers.forEach(function (p, idx) {
+      seatIdx[String(p.seat)] = idx;
+      if (p.id) seatIdx["id_" + p.id] = idx;
+    });
+
+    if (step.type === "team") {
+      // Highlight leader
+      var leaderKey = "id_" + step.leaderId;
+      if (seatIdx[leaderKey] !== undefined) {
+        tablePlayers[seatIdx[leaderKey]] = Object.assign({}, tablePlayers[seatIdx[leaderKey]], { isLeader: true });
+      }
+      // Highlight team members
+      step.teamMembers.forEach(function (m) {
+        var key = m.id ? "id_" + m.id : String(m.seat);
+        if (seatIdx[key] !== undefined) {
+          tablePlayers[seatIdx[key]] = Object.assign({}, tablePlayers[seatIdx[key]], { isInTeam: true });
+        }
+      });
+    } else if (step.type === "vote") {
+      step.votes.forEach(function (v) {
+        var key = v.id ? "id_" + v.id : String(v.seat);
+        if (seatIdx[key] !== undefined) {
+          tablePlayers[seatIdx[key]] = Object.assign({}, tablePlayers[seatIdx[key]], {
+            voteLabel: v.approved ? "赞成" : "反对"
+          });
+        }
+      });
+    } else if (step.type === "mission") {
+      // Highlight team members and show mission labels
+      step.votes.forEach(function (v) {
+        var key = v.id ? "id_" + v.id : String(v.seat);
+        if (seatIdx[key] !== undefined) {
+          tablePlayers[seatIdx[key]] = Object.assign({}, tablePlayers[seatIdx[key]], {
+            isInTeam: true,
+            missionLabel: v.votedFail ? "失败" : "成功"
+          });
+        }
+      });
+    } else if (step.type === "assassination") {
+      // Highlight assassin and target
+      if (step.assassinId) {
+        var aKey = "id_" + step.assassinId;
+        if (seatIdx[aKey] !== undefined) {
+          tablePlayers[seatIdx[aKey]] = Object.assign({}, tablePlayers[seatIdx[aKey]], { isLeader: true });
+        }
+      }
+      if (step.targetId) {
+        var tKey = "id_" + step.targetId;
+        if (seatIdx[tKey] !== undefined) {
+          tablePlayers[seatIdx[tKey]] = Object.assign({}, tablePlayers[seatIdx[tKey]], { isInTeam: true });
+        }
+      }
+    }
+
+    this.setData({
+      stepIndex: index,
+      currentStep: step,
+      stepProgress: (index + 1) + "/" + steps.length,
+      tablePlayers: tablePlayers
+    });
   },
 
-  onBackHome() {
+  onPrevStep: function () {
+    if (this.data.stepIndex > 0) {
+      this._applyStep(this.data.stepIndex - 1);
+    }
+  },
+
+  onNextStep: function () {
+    if (this.data.stepIndex < this.data.stepTotal - 1) {
+      this._applyStep(this.data.stepIndex + 1);
+    }
+  },
+
+  onBackHome: function () {
     var pages = getCurrentPages();
     if (pages.length > 1) {
       wx.navigateBack({ delta: 1 });

@@ -28,10 +28,11 @@
 @import '../../../styles/theme-overrides.wxss';
 
 /* ─── CONTENT ───────────────────────────────────────── */
-.content {
+.replay-content {
   position: relative;
   z-index: 1;
   padding: 0 20rpx;
+  padding-bottom: 140rpx;
 }
 
 /* ─── LOADING ───────────────────────────────────────── */
@@ -46,161 +47,282 @@
   color: rgba(255, 255, 255, 0.5);
 }
 
-/* ─── IDENTITY BAR ──────────────────────────────────── */
-.identity-bar {
-  white-space: nowrap;
-  padding: 8rpx 0 16rpx;
+/* ─── ROUND TABLE ──────────────────────────────────── */
+.replay-table-wrap {
+  position: relative;
+  width: 600rpx;
+  height: 600rpx;
+  margin: 16rpx auto 0;
 }
 
-.id-card {
-  display: inline-flex;
+.replay-table-bg {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 340rpx;
+  height: 340rpx;
+  border-radius: 50%;
+  opacity: 0.5;
+}
+
+/* ─── SEAT ─────────────────────────────────────────── */
+.replay-seat {
+  position: absolute;
+  display: flex;
   flex-direction: column;
   align-items: center;
-  width: 100rpx;
-  margin-right: 12rpx;
-  padding: 8rpx 4rpx;
-  border-radius: 12rpx;
-  border: 2rpx solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.03);
+  width: 120rpx;
+  margin-left: -60rpx;
+  margin-top: -50rpx;
 }
 
-.id-card-good {
-  border-color: rgba(78, 158, 255, 0.4);
-}
-
-.id-card-evil {
-  border-color: rgba(220, 80, 80, 0.4);
-}
-
-.id-card-merlin {
-  border-color: rgba(167, 139, 250, 0.5);
-}
-
-.id-avatar {
-  width: 56rpx;
-  height: 56rpx;
+/* ─── AVATAR WRAP ──────────────────────────────────── */
+.replay-avatar-wrap {
+  position: relative;
+  width: 72rpx;
+  height: 72rpx;
   border-radius: 50%;
+  overflow: visible;
 }
 
-.id-avatar-text {
+.replay-avatar {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  border: 3rpx solid rgba(255, 255, 255, 0.2);
+}
+
+.replay-avatar-good {
+  border-color: rgba(78, 158, 255, 0.6);
+}
+
+.replay-avatar-evil {
+  border-color: rgba(220, 80, 80, 0.6);
+}
+
+.replay-avatar-merlin {
+  border-color: rgba(167, 139, 250, 0.6);
+}
+
+.replay-avatar-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
   font-size: 28rpx;
-  width: 56rpx;
-  height: 56rpx;
-  line-height: 56rpx;
-  text-align: center;
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.08);
+  border: 3rpx solid rgba(255, 255, 255, 0.2);
 }
 
-.id-seat {
+.replay-avatar-text-good {
+  border-color: rgba(78, 158, 255, 0.6);
+  background: rgba(78, 158, 255, 0.1);
+}
+
+.replay-avatar-text-evil {
+  border-color: rgba(220, 80, 80, 0.6);
+  background: rgba(220, 80, 80, 0.1);
+}
+
+.replay-avatar-text-merlin {
+  border-color: rgba(167, 139, 250, 0.6);
+  background: rgba(167, 139, 250, 0.1);
+}
+
+/* ─── HIGHLIGHTS ───────────────────────────────────── */
+.replay-in-team .replay-avatar,
+.replay-in-team .replay-avatar-text {
+  border-color: #34d399 !important;
+  box-shadow: 0 0 16rpx rgba(52, 211, 153, 0.5);
+}
+
+.replay-is-leader .replay-avatar,
+.replay-is-leader .replay-avatar-text {
+  border-color: rgba(216, 176, 107, 0.9) !important;
+  box-shadow: 0 0 16rpx rgba(216, 176, 107, 0.6);
+}
+
+/* ─── LABEL (vote/mission overlay) ─────────────────── */
+.replay-label {
+  position: absolute;
+  bottom: -20rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 16rpx;
+  font-weight: 700;
+  padding: 2rpx 10rpx;
+  border-radius: 999rpx;
+  white-space: nowrap;
+}
+
+.replay-label-approve {
+  color: #fff;
+  background: rgba(52, 211, 153, 0.85);
+}
+
+.replay-label-reject {
+  color: #fff;
+  background: rgba(248, 113, 113, 0.85);
+}
+
+.replay-label-success {
+  color: #fff;
+  background: rgba(52, 211, 153, 0.85);
+}
+
+.replay-label-fail {
+  color: #fff;
+  background: rgba(248, 113, 113, 0.85);
+}
+
+/* ─── SEAT INFO ────────────────────────────────────── */
+.replay-seat-no {
   font-size: 18rpx;
   color: rgba(255, 255, 255, 0.5);
   margin-top: 4rpx;
+  line-height: 1.2;
 }
 
-.id-name {
+.replay-seat-name {
   font-size: 18rpx;
   color: rgba(255, 255, 255, 0.7);
-  max-width: 96rpx;
+  max-width: 110rpx;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  line-height: 1.2;
 }
 
-.id-role-img {
-  width: 32rpx;
-  height: 32rpx;
+.replay-role-badge {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  margin-top: 2rpx;
+}
+
+.replay-role-img {
+  width: 24rpx;
+  height: 24rpx;
   border-radius: 50%;
-  margin-top: 4rpx;
 }
 
-.id-role {
+.replay-role-name {
   font-size: 16rpx;
-  color: rgba(255, 255, 255, 0.5);
+  line-height: 1.2;
 }
 
-/* ─── SWIPER ────────────────────────────────────────── */
-.round-swiper {
-  height: calc(100vh - 300rpx);
+.replay-role-good {
+  color: rgba(78, 158, 255, 0.8);
 }
 
-.round-scroll {
-  height: 100%;
+.replay-role-evil {
+  color: rgba(220, 80, 80, 0.8);
 }
 
-.round-card {
-  padding: 20rpx;
+.replay-role-merlin {
+  color: rgba(167, 139, 250, 0.8);
+}
+
+/* ─── STEP SCROLL ──────────────────────────────────── */
+.step-scroll {
+  max-height: 420rpx;
+  margin-top: 16rpx;
+}
+
+/* ─── STEP PANEL ───────────────────────────────────── */
+.step-panel {
+  padding: 24rpx 20rpx;
   margin: 0 4rpx;
-  overflow: hidden;
 }
 
-/* ─── ROUND TITLE ───────────────────────────────────── */
-.round-title {
-  text-align: center;
-  margin-bottom: 16rpx;
-}
-
-.round-title-text {
+.step-title {
+  display: block;
   font-size: 30rpx;
   font-weight: 700;
   color: rgba(216, 176, 107, 0.9);
+  text-align: center;
+  margin-bottom: 8rpx;
+}
+
+.step-title-end {
+  font-size: 40rpx;
+  font-weight: 900;
+}
+
+.step-title-good {
+  color: rgba(78, 158, 255, 0.9);
+}
+
+.step-title-evil {
+  color: rgba(220, 80, 80, 0.9);
+}
+
+.step-sub {
   display: block;
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  margin-bottom: 12rpx;
 }
 
-.round-leader {
-  font-size: 22rpx;
-  color: rgba(255, 255, 255, 0.5);
+.step-sub-good {
+  color: rgba(78, 158, 255, 0.8);
+}
+
+.step-sub-evil {
+  color: rgba(220, 80, 80, 0.8);
+}
+
+.step-result {
   display: block;
-  margin-top: 4rpx;
+  font-size: 32rpx;
+  font-weight: 700;
+  text-align: center;
+  margin-top: 12rpx;
 }
 
-/* ─── SECTION LABELS ────────────────────────────────── */
-.round-section-label {
-  font-size: 22rpx;
-  color: rgba(216, 176, 107, 0.7);
-  margin: 12rpx 0 8rpx;
-  font-weight: 600;
-}
-
-/* ─── TEAM ROW ──────────────────────────────────────── */
-.team-row {
+/* ─── TEAM MEMBERS ─────────────────────────────────── */
+.step-team {
   display: flex;
   flex-wrap: wrap;
   gap: 8rpx;
+  justify-content: center;
 }
 
-.team-member {
+.step-team-member {
   padding: 6rpx 16rpx;
   border-radius: 999rpx;
   font-size: 22rpx;
 }
 
-.team-member-good {
+.step-team-good {
   background: rgba(78, 158, 255, 0.12);
   color: rgba(78, 158, 255, 0.9);
   border: 1rpx solid rgba(78, 158, 255, 0.3);
 }
 
-.team-member-evil {
+.step-team-evil {
   background: rgba(220, 80, 80, 0.12);
   color: rgba(220, 80, 80, 0.9);
   border: 1rpx solid rgba(220, 80, 80, 0.3);
 }
 
-.team-member-merlin {
+.step-team-merlin {
   background: rgba(167, 139, 250, 0.12);
   color: rgba(167, 139, 250, 0.9);
   border: 1rpx solid rgba(167, 139, 250, 0.3);
 }
 
-.team-seat {
-  font-weight: 600;
+/* ─── VOTE / MISSION LIST ──────────────────────────── */
+.step-vote-list {
+  margin-top: 4rpx;
 }
 
-.team-name {
-  margin-left: 4rpx;
-}
-
-/* ─── VOTE LIST ─────────────────────────────────────── */
-.vote-row {
+.step-vote-row {
   display: flex;
   align-items: center;
   gap: 8rpx;
@@ -209,191 +331,107 @@
   border-radius: 8rpx;
 }
 
-.vote-row-good {
+.step-vote-good {
   background: rgba(78, 158, 255, 0.06);
 }
 
-.vote-row-evil {
+.step-vote-evil {
   background: rgba(220, 80, 80, 0.06);
 }
 
-.vote-row-merlin {
+.step-vote-merlin {
   background: rgba(167, 139, 250, 0.06);
 }
 
-.vote-seat {
+.step-vote-seat {
   font-size: 22rpx;
   color: rgba(255, 255, 255, 0.6);
   width: 60rpx;
   flex-shrink: 0;
 }
 
-.vote-name {
+.step-vote-name {
   font-size: 22rpx;
   color: rgba(255, 255, 255, 0.8);
   flex: 1;
 }
 
-.vote-role-tag {
+.step-vote-role {
   font-size: 18rpx;
   padding: 2rpx 10rpx;
   border-radius: 999rpx;
   flex-shrink: 0;
 }
 
-.vote-role-good {
+.step-role-good {
   color: rgba(78, 158, 255, 0.8);
   background: rgba(78, 158, 255, 0.1);
 }
 
-.vote-role-evil {
+.step-role-evil {
   color: rgba(220, 80, 80, 0.8);
   background: rgba(220, 80, 80, 0.1);
 }
 
-.vote-role-merlin {
+.step-role-merlin {
   color: rgba(167, 139, 250, 0.8);
   background: rgba(167, 139, 250, 0.1);
 }
 
-.vote-result {
+.step-vote-val {
   font-size: 22rpx;
   font-weight: 600;
   flex-shrink: 0;
 }
 
-.vote-approve {
+.step-approve {
   color: #34d399;
 }
 
-.vote-reject {
+.step-reject {
   color: #f87171;
 }
 
-/* ─── MISSION VOTES ─────────────────────────────────── */
-.mission-vote-row {
+/* ─── STEP NAVIGATION ──────────────────────────────── */
+.step-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
   display: flex;
   align-items: center;
-  gap: 8rpx;
-  padding: 8rpx 12rpx;
-  margin-bottom: 4rpx;
-  border-radius: 8rpx;
+  justify-content: space-between;
+  padding: 20rpx 40rpx;
+  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, rgba(6, 8, 16, 0) 0%, rgba(6, 8, 16, 0.95) 30%);
+  z-index: 10;
 }
 
-.mission-vote-good {
-  background: rgba(78, 158, 255, 0.06);
-}
-
-.mission-vote-evil {
-  background: rgba(220, 80, 80, 0.06);
-}
-
-.mission-vote-merlin {
-  background: rgba(167, 139, 250, 0.06);
-}
-
-.mv-seat {
-  font-size: 22rpx;
-  color: rgba(255, 255, 255, 0.7);
-  flex: 1;
-}
-
-.mv-role-tag {
-  font-size: 18rpx;
-  padding: 2rpx 10rpx;
-  border-radius: 999rpx;
-}
-
-.mv-role-good {
-  color: rgba(78, 158, 255, 0.8);
-  background: rgba(78, 158, 255, 0.1);
-}
-
-.mv-role-evil {
-  color: rgba(220, 80, 80, 0.8);
-  background: rgba(220, 80, 80, 0.1);
-}
-
-.mv-role-merlin {
-  color: rgba(167, 139, 250, 0.8);
-  background: rgba(167, 139, 250, 0.1);
-}
-
-.mv-result {
-  font-size: 22rpx;
-  font-weight: 600;
-  flex-shrink: 0;
-}
-
-.mv-success {
-  color: #34d399;
-}
-
-.mv-fail {
-  color: #f87171;
-}
-
-/* ─── END CARD ──────────────────────────────────────── */
-.end-card {
-  text-align: center;
-}
-
-.end-title {
-  margin-bottom: 24rpx;
-}
-
-.end-winner {
-  font-size: 44rpx;
-  font-weight: 900;
-  display: block;
-}
-
-.end-winner-good {
-  color: rgba(78, 158, 255, 0.9);
-}
-
-.end-winner-evil {
-  color: rgba(220, 80, 80, 0.9);
-}
-
-.end-reason {
-  font-size: 22rpx;
-  color: rgba(255, 255, 255, 0.4);
-  display: block;
-  margin-top: 8rpx;
-}
-
-.end-assassination {
-  margin-top: 24rpx;
-  padding: 16rpx;
-  background: rgba(255, 255, 255, 0.03);
+.step-btn {
+  padding: 14rpx 32rpx;
+  border: 2rpx solid rgba(216, 176, 107, 0.5);
   border-radius: 12rpx;
+  background: rgba(216, 176, 107, 0.08);
 }
 
-.end-ass-label {
-  font-size: 24rpx;
-  color: rgba(216, 176, 107, 0.7);
-  display: block;
-  margin-bottom: 8rpx;
-}
-
-.end-ass-detail {
+.step-btn-text {
   font-size: 26rpx;
-  color: rgba(255, 255, 255, 0.8);
-  display: block;
+  font-weight: 600;
+  color: rgba(216, 176, 107, 0.9);
 }
 
-.end-ass-result {
-  font-size: 28rpx;
-  font-weight: 700;
-  display: block;
-  margin-top: 8rpx;
+.step-btn-disabled {
+  opacity: 0.3;
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.03);
 }
 
-.end-ass-hit {
-  color: #f87171;
+.step-btn-disabled .step-btn-text {
+  color: rgba(255, 255, 255, 0.3);
 }
 
-.end-ass-miss {
-  color: #34d399;
+.step-progress {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 600;
 }

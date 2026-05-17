@@ -1,111 +1,111 @@
 <view class="page theme-{{skinId}}">
   <image class="bg" src="{{skinInGameBg}}" mode="aspectFill" />
   <view class="mask"></view>
-
   <nav-header title="复盘" statusBarHeight="{{statusBarHeight}}" navBarHeight="{{navBarHeight}}" bind:back="onBackHome"></nav-header>
 
-  <view class="content" style="padding-top:{{navTotalHeight+8}}px;">
+  <view class="replay-content" style="padding-top:{{navTotalHeight+8}}px;">
 
     <!-- Loading -->
     <view class="panel" wx:if="{{loading}}">
       <text class="loading-text">加载中...</text>
     </view>
 
-    <block wx:if="{{!loading}}">
+    <block wx:if="{{!loading && currentStep}}">
 
-      <!-- 身份一览 -->
-      <scroll-view scroll-x class="identity-bar">
-        <view class="id-card id-card-{{item.factionClass}}" wx:for="{{identityBar}}" wx:key="seat">
-          <image class="id-avatar" wx:if="{{item.avatarImage}}" src="{{item.avatarImage}}" mode="aspectFill" />
-          <text class="id-avatar-text" wx:else>{{item.avatarText}}</text>
-          <text class="id-seat">{{item.seat}}号</text>
-          <text class="id-name">{{item.nickname}}</text>
-          <image class="id-role-img" wx:if="{{item.roleImage}}" src="{{item.roleImage}}" mode="aspectFit" />
-          <text class="id-role">{{item.role}}</text>
+      <!-- Round table with identities -->
+      <view class="replay-table-wrap">
+        <image class="replay-table-bg" src="{{skinTableUrl}}" mode="aspectFill" />
+        <view class="replay-seat" wx:for="{{tablePlayers}}" wx:key="seat" style="{{item.posStyle}}">
+          <view class="replay-avatar-wrap {{item.isInTeam ? 'replay-in-team' : ''}} {{item.isLeader ? 'replay-is-leader' : ''}}">
+            <image class="replay-avatar replay-avatar-{{item.factionClass}}" wx:if="{{item.avatarImage}}" src="{{item.avatarImage}}" mode="aspectFill" />
+            <text class="replay-avatar-text replay-avatar-text-{{item.factionClass}}" wx:else>{{item.avatarText}}</text>
+            <!-- Vote/mission label overlay -->
+            <text class="replay-label replay-label-approve" wx:if="{{item.voteLabel === '赞成'}}">赞成</text>
+            <text class="replay-label replay-label-reject" wx:if="{{item.voteLabel === '反对'}}">反对</text>
+            <text class="replay-label replay-label-success" wx:if="{{item.missionLabel === '成功'}}">成功</text>
+            <text class="replay-label replay-label-fail" wx:if="{{item.missionLabel === '失败'}}">失败</text>
+          </view>
+          <text class="replay-seat-no">{{item.seat}}号</text>
+          <text class="replay-seat-name">{{item.nickname}}</text>
+          <view class="replay-role-badge">
+            <image class="replay-role-img" wx:if="{{item.roleImage}}" src="{{item.roleImage}}" mode="aspectFit" />
+            <text class="replay-role-name replay-role-{{item.factionClass}}">{{item.role}}</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- Step info panel -->
+      <scroll-view scroll-y class="step-scroll">
+        <view class="pf step-panel">
+          <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+          <view class="fb fb-left"></view><view class="fb fb-right"></view>
+          <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+          <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+          <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+          <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+
+          <!-- Team step -->
+          <block wx:if="{{currentStep.type === 'team'}}">
+            <text class="step-title">第{{currentStep.round}}轮 · 第{{currentStep.attempt}}次组队</text>
+            <text class="step-sub">队长：{{currentStep.leaderSeat}}号 {{currentStep.leaderName}}</text>
+            <view class="step-team">
+              <text class="step-team-member step-team-{{item.factionClass}}" wx:for="{{currentStep.teamMembers}}" wx:key="seat">{{item.seat}}号 {{item.nickname}}</text>
+            </view>
+          </block>
+
+          <!-- Vote step -->
+          <block wx:if="{{currentStep.type === 'vote'}}">
+            <text class="step-title">投票结果</text>
+            <text class="step-sub">{{currentStep.approveCount}}赞成 / {{currentStep.rejectCount}}反对 → {{currentStep.passed ? '通过' : '否决'}}</text>
+            <view class="step-vote-list">
+              <view class="step-vote-row step-vote-{{item.factionClass}}" wx:for="{{currentStep.votes}}" wx:key="seat">
+                <text class="step-vote-seat">{{item.seat}}号</text>
+                <text class="step-vote-name">{{item.nickname}}</text>
+                <text class="step-vote-role step-role-{{item.factionClass}}">{{item.role}}</text>
+                <text class="step-vote-val {{item.approved ? 'step-approve' : 'step-reject'}}">{{item.approved ? '赞成' : '反对'}}</text>
+              </view>
+            </view>
+          </block>
+
+          <!-- Mission step -->
+          <block wx:if="{{currentStep.type === 'mission'}}">
+            <text class="step-title">第{{currentStep.round}}轮任务</text>
+            <text class="step-sub step-sub-{{currentStep.success ? 'good' : 'evil'}}">{{currentStep.success ? '任务成功' : '任务失败'}} (失败票: {{currentStep.fails}})</text>
+            <view class="step-vote-list">
+              <view class="step-vote-row step-vote-{{item.factionClass}}" wx:for="{{currentStep.votes}}" wx:key="seat">
+                <text class="step-vote-seat">{{item.seat}}号</text>
+                <text class="step-vote-name">{{item.nickname}}</text>
+                <text class="step-vote-role step-role-{{item.factionClass}}">{{item.role}}</text>
+                <text class="step-vote-val {{item.votedFail ? 'step-reject' : 'step-approve'}}">{{item.votedFail ? '失败票' : '成功票'}}</text>
+              </view>
+            </view>
+          </block>
+
+          <!-- Assassination step -->
+          <block wx:if="{{currentStep.type === 'assassination'}}">
+            <text class="step-title">刺杀阶段</text>
+            <text class="step-sub">{{currentStep.assassinName}} 选择刺杀 {{currentStep.targetName}} ({{currentStep.targetRole}})</text>
+            <text class="step-result {{currentStep.hit ? 'step-reject' : 'step-approve'}}">{{currentStep.hit ? '命中梅林！' : '未命中'}}</text>
+          </block>
+
+          <!-- End step -->
+          <block wx:if="{{currentStep.type === 'end'}}">
+            <text class="step-title step-title-end step-title-{{currentStep.winner}}">{{currentStep.winner === 'good' ? '正义胜利' : '邪恶胜利'}}</text>
+            <text class="step-sub" wx:if="{{currentStep.endReason}}">{{currentStep.endReason}}</text>
+          </block>
         </view>
       </scroll-view>
 
-      <!-- Swiper rounds -->
-      <swiper class="round-swiper" indicator-dots indicator-color="rgba(255,255,255,0.2)" indicator-active-color="rgba(216,176,107,0.8)" current="{{currentRound}}" bindchange="onSwiperChange">
-
-        <swiper-item wx:for="{{rounds}}" wx:key="key">
-          <scroll-view scroll-y class="round-scroll">
-            <view class="pf round-card">
-              <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
-              <view class="fb fb-left"></view><view class="fb fb-right"></view>
-              <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
-              <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
-              <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
-              <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
-
-              <!-- Round title -->
-              <view class="round-title">
-                <text class="round-title-text">第{{item.round}}轮 · 第{{item.attempt}}次</text>
-                <text class="round-leader">队长：{{item.leaderSeat}}号 {{item.leaderName}}</text>
-              </view>
-
-              <!-- Team -->
-              <view class="round-section-label">队伍</view>
-              <view class="team-row">
-                <view class="team-member team-member-{{m.factionClass}}" wx:for="{{item.team}}" wx:for-item="m" wx:key="seat">
-                  <text class="team-seat">{{m.seat}}号</text>
-                  <text class="team-name">{{m.nickname}}</text>
-                </view>
-              </view>
-
-              <!-- Votes -->
-              <view class="round-section-label">投票 ({{item.approveCount}}赞成 / {{item.rejectCount}}反对) → {{item.approved ? '通过' : '否决'}}</view>
-              <view class="vote-list">
-                <view class="vote-row vote-row-{{v.factionClass}}" wx:for="{{item.votes}}" wx:for-item="v" wx:key="seat">
-                  <text class="vote-seat">{{v.seat}}号</text>
-                  <text class="vote-name">{{v.nickname}}</text>
-                  <text class="vote-role-tag vote-role-{{v.factionClass}}">{{v.role}}</text>
-                  <text class="vote-result {{v.approved ? 'vote-approve' : 'vote-reject'}}">{{v.approved ? '赞成' : '反对'}}</text>
-                </view>
-              </view>
-
-              <!-- Mission (if approved) -->
-              <block wx:if="{{item.mission}}">
-                <view class="round-section-label">任务 → {{item.mission.success ? '成功' : '失败'}} (失败票: {{item.mission.fails}})</view>
-                <view class="mission-votes">
-                  <view class="mission-vote-row mission-vote-{{mv.factionClass}}" wx:for="{{item.mission.votes}}" wx:for-item="mv" wx:key="seat">
-                    <text class="mv-seat">{{mv.seat}}号 {{mv.nickname}}</text>
-                    <text class="mv-role-tag mv-role-{{mv.factionClass}}">{{mv.role}}</text>
-                    <text class="mv-result {{mv.votedFail ? 'mv-fail' : 'mv-success'}}">{{mv.votedFail ? '失败票' : '成功票'}}</text>
-                  </view>
-                </view>
-              </block>
-            </view>
-          </scroll-view>
-        </swiper-item>
-
-        <!-- End card -->
-        <swiper-item wx:if="{{endCard}}">
-          <scroll-view scroll-y class="round-scroll">
-            <view class="pf round-card end-card">
-              <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
-              <view class="fb fb-left"></view><view class="fb fb-right"></view>
-              <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
-              <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
-              <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
-              <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
-
-              <view class="end-title">
-                <text class="end-winner {{endCard.winner === 'good' ? 'end-winner-good' : 'end-winner-evil'}}">{{endCard.winner === 'good' ? '正义胜利' : '邪恶胜利'}}</text>
-                <text class="end-reason" wx:if="{{endCard.endReason}}">{{endCard.endReason}}</text>
-              </view>
-              <block wx:if="{{endCard.assassination}}">
-                <view class="end-assassination">
-                  <text class="end-ass-label">刺杀</text>
-                  <text class="end-ass-detail">{{endCard.assassination.assassinName}} → {{endCard.assassination.targetName}} ({{endCard.assassination.targetRole}})</text>
-                  <text class="end-ass-result {{endCard.assassination.hit ? 'end-ass-hit' : 'end-ass-miss'}}">{{endCard.assassination.hit ? '命中梅林' : '未命中'}}</text>
-                </view>
-              </block>
-            </view>
-          </scroll-view>
-        </swiper-item>
-
-      </swiper>
+      <!-- Step navigation -->
+      <view class="step-nav">
+        <view class="step-btn {{stepIndex <= 0 ? 'step-btn-disabled' : ''}}" bindtap="onPrevStep">
+          <text class="step-btn-text">‹ 上一步</text>
+        </view>
+        <text class="step-progress">{{stepProgress}}</text>
+        <view class="step-btn {{stepIndex >= stepTotal - 1 ? 'step-btn-disabled' : ''}}" bindtap="onNextStep">
+          <text class="step-btn-text">下一步 ›</text>
+        </view>
+      </view>
 
     </block>
   </view>
