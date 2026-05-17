@@ -49,13 +49,13 @@
 }
 
 /* 圆桌上方留更多空间 */
-.table-wrap { margin-top: 100rpx; }
+.table-wrap { margin-top: 140rpx; }
 
-/* 复盘圆桌上的赞成/反对标签（左上角） */
+/* 复盘圆桌上的赞成/反对标签 */
 .seat-action {
   position: absolute;
-  top: -8rpx;
-  left: -8rpx;
+  top: 0rpx;
+  left: 0rpx;
   z-index: 10;
   min-width: 36rpx;
   height: 36rpx;

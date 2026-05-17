@@ -220,6 +220,7 @@ Page({
         type: "vote",
         round: round,
         attempt: attempt,
+        leaderId: v.leaderId,
         votes: votes,
         approveCount: approveCount,
         rejectCount: rejectCount,
@@ -248,6 +249,7 @@ Page({
           steps.push({
             type: "mission",
             round: round,
+            leaderId: v.leaderId,
             success: !!m.success,
             fails: m.fails || 0,
             votes: missionVotes,
@@ -305,6 +307,14 @@ Page({
       seatIdx[String(p.seat)] = idx;
       if (p.id) seatIdx["id_" + p.id] = idx;
     });
+
+    // 队长标志始终显示（team/vote/mission 步骤都有 leaderId）
+    if (step.leaderId) {
+      var lKey = "id_" + step.leaderId;
+      if (seatIdx[lKey] !== undefined) {
+        tablePlayers[seatIdx[lKey]] = Object.assign({}, tablePlayers[seatIdx[lKey]], { isLeader: true });
+      }
+    }
 
     if (step.type === "team") {
       // Highlight leader
@@ -365,6 +375,7 @@ Page({
         continue;
       }
       var revClass = tp.role === '梅林' ? 'rev-merlin' : (EVIL_ROLES.has(tp.role) ? 'rev-evil' : 'rev-good');
+      var idClass = tp.role === '梅林' ? 'id-merlin' : (EVIL_ROLES.has(tp.role) ? 'id-evil' : 'id-good');
       var actionText = tp.voteLabel || tp.missionLabel || '';
       seatSlots.push({
         index: si,
@@ -384,7 +395,7 @@ Page({
         roleLabel: tp.role,
         roleImage: tp.roleImage,
         roleClass: revClass,
-        identityClass: revClass,
+        identityClass: idClass,
         identityLabel: tp.role,
         identityRoleImage: tp.roleImage,
         factionClass: revClass,

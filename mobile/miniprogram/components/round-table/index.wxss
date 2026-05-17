@@ -28,6 +28,25 @@
 }
 .seat-leader-icon { width: 42rpx; height: 42rpx; filter: brightness(1.28); }
 
+/* identity mode 阵营色（复盘等页面需要） */
+.identity-mode .seat-card.id-evil .seat-avatar {
+  border-color: rgba(248,113,113,0.9) !important;
+  box-shadow: 0 0 0 4rpx rgba(248,113,113,0.2), 0 0 32rpx rgba(248,113,113,0.55) !important;
+  background: rgba(127,29,29,0.4) !important;
+}
+.identity-mode .seat-card.id-evil .seat-id-tag { background: rgba(127,29,29,0.65); border-color: rgba(248,113,113,0.5); color: #fecaca; }
+.identity-mode .seat-card.id-evil .seat-name { color: #fecaca; }
+.identity-mode .seat-card.id-good .seat-avatar,
+.identity-mode .seat-card.id-merlin .seat-avatar {
+  border-color: rgba(78,158,255,0.85) !important;
+  box-shadow: 0 0 0 4rpx rgba(78,158,255,0.18), 0 0 28rpx rgba(78,158,255,0.45) !important;
+  background: rgba(7,50,120,0.35) !important;
+}
+.identity-mode .seat-card.id-good .seat-id-tag,
+.identity-mode .seat-card.id-merlin .seat-id-tag { background: rgba(7,50,120,0.6); border-color: rgba(78,158,255,0.45); color: #bfdbfe; }
+.identity-mode .seat-card.id-good .seat-name,
+.identity-mode .seat-card.id-merlin .seat-name { color: #bfdbfe; }
+
 /* 动作文字（投票中/已投票等） */
 .seat-action { font-size: 18rpx; }
 .seat-action-done { color: #7fe1ac; }
