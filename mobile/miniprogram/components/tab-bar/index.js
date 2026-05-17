@@ -20,31 +20,19 @@ Component({
       const { key, url } = e.currentTarget.dataset;
       if (key === this.properties.active) return;
       const pages = getCurrentPages();
+      const isOnHome = pages[pages.length - 1].route === 'pages/index/index';
+
       if (key === 'home') {
-        // 回首页：navigateBack 到首页层
-        const homeIdx = pages.findIndex(p => p.route === 'pages/index/index');
-        if (homeIdx >= 0) {
-          wx.navigateBack({ delta: pages.length - 1 - homeIdx });
-        } else {
-          wx.reLaunch({ url });
+        // 回首页：navigateBack（快速，无黑屏）
+        if (!isOnHome) {
+          wx.navigateBack({ delta: pages.length - 1 });
         }
+      } else if (isOnHome) {
+        // 从首页去子页面：navigateTo（首页留在栈里保持 WS）
+        wx.navigateTo({ url });
       } else {
-        // 子页面切换：如果当前不在首页，先回首页再跳
-        const cur = pages[pages.length - 1];
-        if (cur && cur.route !== 'pages/index/index') {
-          // 当前在其他子页面，先 back 到首页再 navigate
-          const homeIdx = pages.findIndex(p => p.route === 'pages/index/index');
-          if (homeIdx >= 0) {
-            wx.navigateBack({
-              delta: pages.length - 1 - homeIdx,
-              success: () => setTimeout(() => wx.navigateTo({ url }), 50),
-            });
-          } else {
-            wx.redirectTo({ url });
-          }
-        } else {
-          wx.navigateTo({ url });
-        }
+        // 子页面之间切换：redirectTo（替换当前页，栈不增长）
+        wx.redirectTo({ url });
       }
     }
   }
