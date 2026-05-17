@@ -93,6 +93,7 @@ Page({
     this._rawPlayers = players;
     this._byId = byId;
     this._maxPlayers = Number(payload.maxPlayers) || players.length;
+    this._ladyOfLake = payload.ladyOfLake || null;
 
     this.setData({
       loading: false,
@@ -330,6 +331,27 @@ Page({
       if (p.id) seatIdx["id_" + p.id] = idx;
     });
 
+    // 湖中仙女持有者始终显示（根据当前轮次计算）
+    var lady = this._ladyOfLake;
+    if (lady && lady.enabled) {
+      var currentRound = step.round || 0;
+      // 初始持有者
+      var holderId = lady.holderId || null;
+      // 按历史转交（round <= 当前轮次的都已经转交了）
+      var history = Array.isArray(lady.history) ? lady.history : [];
+      history.forEach(function (lh) {
+        if (Number(lh.round) <= currentRound) {
+          holderId = lh.targetId; // 转交给被验的人
+        }
+      });
+      if (holderId) {
+        var ladyKey = "id_" + holderId;
+        if (seatIdx[ladyKey] !== undefined) {
+          tablePlayers[seatIdx[ladyKey]] = Object.assign({}, tablePlayers[seatIdx[ladyKey]], { isLadyHolder: true });
+        }
+      }
+    }
+
     // 队长标志始终显示（team/vote/mission 步骤都有 leaderId）
     if (step.leaderId) {
       var lKey = "id_" + step.leaderId;
@@ -380,15 +402,7 @@ Page({
         }
       });
     } else if (step.type === "lady") {
-      // 湖女：持有者显示湖女标记，目标高亮
-      if (step.holderId) {
-        var hKey = "id_" + step.holderId;
-        console.log('[replay lady] holderId:', step.holderId, 'key:', hKey, 'found:', seatIdx[hKey] !== undefined);
-        if (seatIdx[hKey] !== undefined) {
-          tablePlayers[seatIdx[hKey]] = Object.assign({}, tablePlayers[seatIdx[hKey]], { isLadyHolder: true });
-          console.log('[replay lady] set isLadyHolder=true for', tablePlayers[seatIdx[hKey]].nickname);
-        }
-      }
+      // 被验目标高亮
       if (step.targetId) {
         var ltKey = "id_" + step.targetId;
         if (seatIdx[ltKey] !== undefined) {
