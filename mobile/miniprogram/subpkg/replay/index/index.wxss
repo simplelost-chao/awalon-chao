@@ -1,0 +1,399 @@
+/* ─── RESET & PAGE ─────────────────────────────────── */
+.page {
+  min-height: 100vh;
+  position: relative;
+  background: var(--aw-bg);
+}
+
+.bg, .mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+}
+
+.bg {
+  width: 100vw;
+  height: 100vh;
+}
+
+.mask {
+  background: linear-gradient(180deg,
+    rgba(6, 8, 16, 0.72) 0%,
+    rgba(8, 10, 20, 0.88) 40%,
+    rgba(6, 8, 16, 0.96) 100%);
+}
+
+@import '../../../styles/theme-overrides.wxss';
+
+/* ─── CONTENT ───────────────────────────────────────── */
+.content {
+  position: relative;
+  z-index: 1;
+  padding: 0 20rpx;
+}
+
+/* ─── LOADING ───────────────────────────────────────── */
+.panel {
+  margin-top: 18rpx;
+  padding: 32rpx;
+  text-align: center;
+}
+
+.loading-text {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* ─── IDENTITY BAR ──────────────────────────────────── */
+.identity-bar {
+  white-space: nowrap;
+  padding: 8rpx 0 16rpx;
+}
+
+.id-card {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100rpx;
+  margin-right: 12rpx;
+  padding: 8rpx 4rpx;
+  border-radius: 12rpx;
+  border: 2rpx solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.id-card-good {
+  border-color: rgba(78, 158, 255, 0.4);
+}
+
+.id-card-evil {
+  border-color: rgba(220, 80, 80, 0.4);
+}
+
+.id-card-merlin {
+  border-color: rgba(167, 139, 250, 0.5);
+}
+
+.id-avatar {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+}
+
+.id-avatar-text {
+  font-size: 28rpx;
+  width: 56rpx;
+  height: 56rpx;
+  line-height: 56rpx;
+  text-align: center;
+}
+
+.id-seat {
+  font-size: 18rpx;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 4rpx;
+}
+
+.id-name {
+  font-size: 18rpx;
+  color: rgba(255, 255, 255, 0.7);
+  max-width: 96rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.id-role-img {
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 50%;
+  margin-top: 4rpx;
+}
+
+.id-role {
+  font-size: 16rpx;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* ─── SWIPER ────────────────────────────────────────── */
+.round-swiper {
+  height: calc(100vh - 300rpx);
+}
+
+.round-scroll {
+  height: 100%;
+}
+
+.round-card {
+  padding: 20rpx;
+  margin: 0 4rpx;
+  overflow: hidden;
+}
+
+/* ─── ROUND TITLE ───────────────────────────────────── */
+.round-title {
+  text-align: center;
+  margin-bottom: 16rpx;
+}
+
+.round-title-text {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: rgba(216, 176, 107, 0.9);
+  display: block;
+}
+
+.round-leader {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.5);
+  display: block;
+  margin-top: 4rpx;
+}
+
+/* ─── SECTION LABELS ────────────────────────────────── */
+.round-section-label {
+  font-size: 22rpx;
+  color: rgba(216, 176, 107, 0.7);
+  margin: 12rpx 0 8rpx;
+  font-weight: 600;
+}
+
+/* ─── TEAM ROW ──────────────────────────────────────── */
+.team-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+}
+
+.team-member {
+  padding: 6rpx 16rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+}
+
+.team-member-good {
+  background: rgba(78, 158, 255, 0.12);
+  color: rgba(78, 158, 255, 0.9);
+  border: 1rpx solid rgba(78, 158, 255, 0.3);
+}
+
+.team-member-evil {
+  background: rgba(220, 80, 80, 0.12);
+  color: rgba(220, 80, 80, 0.9);
+  border: 1rpx solid rgba(220, 80, 80, 0.3);
+}
+
+.team-member-merlin {
+  background: rgba(167, 139, 250, 0.12);
+  color: rgba(167, 139, 250, 0.9);
+  border: 1rpx solid rgba(167, 139, 250, 0.3);
+}
+
+.team-seat {
+  font-weight: 600;
+}
+
+.team-name {
+  margin-left: 4rpx;
+}
+
+/* ─── VOTE LIST ─────────────────────────────────────── */
+.vote-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 8rpx 12rpx;
+  margin-bottom: 4rpx;
+  border-radius: 8rpx;
+}
+
+.vote-row-good {
+  background: rgba(78, 158, 255, 0.06);
+}
+
+.vote-row-evil {
+  background: rgba(220, 80, 80, 0.06);
+}
+
+.vote-row-merlin {
+  background: rgba(167, 139, 250, 0.06);
+}
+
+.vote-seat {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.6);
+  width: 60rpx;
+  flex-shrink: 0;
+}
+
+.vote-name {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.8);
+  flex: 1;
+}
+
+.vote-role-tag {
+  font-size: 18rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 999rpx;
+  flex-shrink: 0;
+}
+
+.vote-role-good {
+  color: rgba(78, 158, 255, 0.8);
+  background: rgba(78, 158, 255, 0.1);
+}
+
+.vote-role-evil {
+  color: rgba(220, 80, 80, 0.8);
+  background: rgba(220, 80, 80, 0.1);
+}
+
+.vote-role-merlin {
+  color: rgba(167, 139, 250, 0.8);
+  background: rgba(167, 139, 250, 0.1);
+}
+
+.vote-result {
+  font-size: 22rpx;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.vote-approve {
+  color: #34d399;
+}
+
+.vote-reject {
+  color: #f87171;
+}
+
+/* ─── MISSION VOTES ─────────────────────────────────── */
+.mission-vote-row {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 8rpx 12rpx;
+  margin-bottom: 4rpx;
+  border-radius: 8rpx;
+}
+
+.mission-vote-good {
+  background: rgba(78, 158, 255, 0.06);
+}
+
+.mission-vote-evil {
+  background: rgba(220, 80, 80, 0.06);
+}
+
+.mission-vote-merlin {
+  background: rgba(167, 139, 250, 0.06);
+}
+
+.mv-seat {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.7);
+  flex: 1;
+}
+
+.mv-role-tag {
+  font-size: 18rpx;
+  padding: 2rpx 10rpx;
+  border-radius: 999rpx;
+}
+
+.mv-role-good {
+  color: rgba(78, 158, 255, 0.8);
+  background: rgba(78, 158, 255, 0.1);
+}
+
+.mv-role-evil {
+  color: rgba(220, 80, 80, 0.8);
+  background: rgba(220, 80, 80, 0.1);
+}
+
+.mv-role-merlin {
+  color: rgba(167, 139, 250, 0.8);
+  background: rgba(167, 139, 250, 0.1);
+}
+
+.mv-result {
+  font-size: 22rpx;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.mv-success {
+  color: #34d399;
+}
+
+.mv-fail {
+  color: #f87171;
+}
+
+/* ─── END CARD ──────────────────────────────────────── */
+.end-card {
+  text-align: center;
+}
+
+.end-title {
+  margin-bottom: 24rpx;
+}
+
+.end-winner {
+  font-size: 44rpx;
+  font-weight: 900;
+  display: block;
+}
+
+.end-winner-good {
+  color: rgba(78, 158, 255, 0.9);
+}
+
+.end-winner-evil {
+  color: rgba(220, 80, 80, 0.9);
+}
+
+.end-reason {
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.4);
+  display: block;
+  margin-top: 8rpx;
+}
+
+.end-assassination {
+  margin-top: 24rpx;
+  padding: 16rpx;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12rpx;
+}
+
+.end-ass-label {
+  font-size: 24rpx;
+  color: rgba(216, 176, 107, 0.7);
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.end-ass-detail {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.8);
+  display: block;
+}
+
+.end-ass-result {
+  font-size: 28rpx;
+  font-weight: 700;
+  display: block;
+  margin-top: 8rpx;
+}
+
+.end-ass-hit {
+  color: #f87171;
+}
+
+.end-ass-miss {
+  color: #34d399;
+}

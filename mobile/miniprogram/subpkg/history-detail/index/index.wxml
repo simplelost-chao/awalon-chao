@@ -83,6 +83,13 @@
         </view>
       </view>
 
+      <!-- ── 复盘入口 ── -->
+      <view class="replay-entry" bindtap="onOpenReplay">
+        <text class="replay-entry-icon">📋</text>
+        <text class="replay-entry-text">上帝视角复盘</text>
+        <text class="replay-entry-arrow">›</text>
+      </view>
+
       <!-- ── 圆桌回放 ── -->
       <view class="pf hd-section" style="overflow:visible; margin-top:18rpx;">
         <view class="fb fb-top"></view><view class="fb fb-bottom"></view>

@@ -127,6 +127,12 @@ Page({
     if (app.globalData.historyRecapGeneratingListener) app.globalData.historyRecapGeneratingListener = null;
   },
 
+  onOpenReplay() {
+    const gameId = this.data.gameId;
+    if (!gameId) return;
+    wx.navigateTo({ url: `/subpkg/replay/index/index?gameId=${gameId}` });
+  },
+
   onBackHome() {
     const pages = getCurrentPages();
     if (pages.length > 1) {
