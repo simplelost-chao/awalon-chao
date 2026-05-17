@@ -1,14 +1,21 @@
-<view class="emoji-bar {{cooldown ? 'emoji-bar--cooldown' : ''}}">
-  <view
-    wx:for="{{emojis}}"
-    wx:key="id"
-    class="emoji-btn"
-    data-id="{{item.id}}"
-    bindtap="onTap"
-    hover-class="emoji-btn--active"
-    hover-stay-time="150"
-  >
-    <image class="emoji-img" src="{{item.image}}" mode="aspectFit" />
-    <text class="emoji-label">{{item.label}}</text>
+<!-- 表情触发按钮 -->
+<view class="emoji-trigger" bindtap="onToggle">
+  <text class="emoji-trigger-icon">😀</text>
+</view>
+
+<!-- 表情选择面板 -->
+<view class="emoji-panel {{open ? 'emoji-panel-show' : ''}}" wx:if="{{open}}">
+  <view class="emoji-panel-mask" bindtap="onToggle"></view>
+  <view class="emoji-panel-body {{cooldown ? 'emoji-panel-cooldown' : ''}}">
+    <view
+      wx:for="{{emojis}}"
+      wx:key="id"
+      class="emoji-item"
+      data-id="{{item.id}}"
+      bindtap="onTap"
+    >
+      <image class="emoji-item-img" src="{{item.image}}" mode="aspectFit" />
+      <text class="emoji-item-label">{{item.label}}</text>
+    </view>
   </view>
 </view>

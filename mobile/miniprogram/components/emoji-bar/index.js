@@ -1,5 +1,6 @@
 Component({
   data: {
+    open: false,
     cooldown: false,
     emojis: [
       { id: 'good',  label: '我是好人', image: 'https://www.awalon.top/mp-assets/emoji/good.png' },
@@ -12,14 +13,15 @@ Component({
   },
 
   methods: {
+    onToggle() {
+      this.setData({ open: !this.data.open });
+    },
     onTap(e) {
       if (this.data.cooldown) return;
       const emojiId = e.currentTarget.dataset.id;
-      this.setData({ cooldown: true });
       this.triggerEvent('send', { emojiId });
-      setTimeout(() => {
-        this.setData({ cooldown: false });
-      }, 3000);
+      this.setData({ cooldown: true, open: false });
+      setTimeout(() => this.setData({ cooldown: false }), 3000);
     },
   },
 });
