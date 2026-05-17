@@ -3,7 +3,7 @@
   <view class="mask"></view>
   <nav-header title="复盘" statusBarHeight="{{statusBarHeight}}" navBarHeight="{{navBarHeight}}" bind:back="onBackHome"></nav-header>
 
-  <scroll-view scroll-y class="replay-scroll" style="top:{{navTotalHeight+8}}px;">
+  <view class="replay-scroll" style="padding-top:{{navTotalHeight+8}}px;">
 
     <view wx:if="{{loading}}" style="padding:40rpx;text-align:center">
       <text style="color:rgba(255,255,255,0.4)">加载中...</text>
@@ -79,7 +79,7 @@
       </view>
 
     </block>
-  </scroll-view>
+  </view>
 
   <!-- 底部导航（固定） -->
   <view class="step-nav" wx:if="{{!loading && currentStep}}">
