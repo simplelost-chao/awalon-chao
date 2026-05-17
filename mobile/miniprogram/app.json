@@ -5,7 +5,8 @@
     "subpkg/rules/index/index",
     "subpkg/history/index/index",
     "subpkg/history-detail/index/index",
-    "subpkg/role-stats/index/index"
+    "subpkg/role-stats/index/index",
+    "subpkg/friends/index/index"
   ],
   "window": {
     "navigationBarTitleText": "Awalon",

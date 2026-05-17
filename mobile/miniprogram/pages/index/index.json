@@ -15,6 +15,7 @@
     "emoji-bar": "/components/emoji-bar/index",
     "round-table": "/components/round-table/index",
     "nav-header": "/components/nav-header/index",
-    "panel-frame": "/components/panel-frame/index"
+    "panel-frame": "/components/panel-frame/index",
+    "tab-bar": "/components/tab-bar/index"
   }
 }

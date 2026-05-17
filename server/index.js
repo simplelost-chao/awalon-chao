@@ -26,6 +26,10 @@ const {
   getRoleStatsForPhone, savePeerVoteForHistory,
 } = require('./history');
 const {
+  sendFriendRequest, respondFriendRequest, deleteFriend,
+  getFriendsList, getPendingRequests, getFriendPhones,
+} = require('./friends');
+const {
   init: initGameAi,
   AI_CHARACTERS,
   assassinAutoplayTimers,
@@ -917,6 +921,67 @@ wss.on('connection', (ws) => {
       case 'GET_ROLE_STATS':
         fetchRoleStats(client);
         break;
+      case 'GET_FRIENDS': {
+        if (!client.userPhone) { send(client, { type: 'ERROR', data: { code: 'NEED_LOGIN' } }); break; }
+        const fl = getFriendsList(client.userPhone);
+        const fp = getPendingRequests(client.userPhone);
+        const friendsData = fl.map(f => {
+          let online = false, fRoomCode = null;
+          for (const [, r] of rooms) {
+            for (const [, p] of r.players) {
+              if (p.phone === f.phone && !p.offline) { online = true; fRoomCode = r.code; break; }
+            }
+            if (online) break;
+          }
+          const isUrl = f.avatar && (f.avatar.startsWith('http') || f.avatar.startsWith('/'));
+          return { ...f, online, roomCode: fRoomCode, avatarImage: isUrl ? f.avatar : '', avatarText: isUrl ? '' : (f.avatar || '🐺') };
+        });
+        const pendingData = fp.map(p => {
+          const isUrl = p.avatar && (p.avatar.startsWith('http') || p.avatar.startsWith('/'));
+          return { ...p, avatarImage: isUrl ? p.avatar : '', avatarText: isUrl ? '' : (p.avatar || '🐺') };
+        });
+        send(client, { type: 'FRIENDS_LIST', data: { friends: friendsData, pending: pendingData } });
+        break;
+      }
+      case 'FRIEND_REQUEST': {
+        if (!client.userPhone) break;
+        const frTargetPhone = payload && payload.targetPhone;
+        if (!frTargetPhone) break;
+        const frResult = sendFriendRequest(client.userPhone, frTargetPhone);
+        if (frResult.ok) {
+          const frUser = userDb.prepare('SELECT nickname, avatar FROM users WHERE phone=?').get(client.userPhone);
+          for (const [, ws] of clients) {
+            if (ws.userPhone === frTargetPhone) {
+              send(ws, { type: 'FRIEND_REQUEST_RECEIVED', data: { fromPhone: client.userPhone, fromNickname: frUser ? frUser.nickname : '玩家', fromAvatar: frUser ? frUser.avatar : '' } });
+            }
+          }
+        }
+        send(client, { type: 'FRIEND_REQUEST_RESULT', data: frResult });
+        break;
+      }
+      case 'FRIEND_RESPOND': {
+        if (!client.userPhone) break;
+        const frRespPhone = payload && payload.phone;
+        const frAccept = !!(payload && payload.accept);
+        if (!frRespPhone) break;
+        const frRespResult = respondFriendRequest(client.userPhone, frRespPhone, frAccept);
+        if (frRespResult.ok && frRespResult.accepted) {
+          for (const [, ws] of clients) {
+            if (ws.userPhone === frRespPhone) {
+              send(ws, { type: 'FRIEND_RESPONSE', data: { phone: client.userPhone, accepted: true } });
+            }
+          }
+        }
+        send(client, { type: 'FRIEND_RESPOND_RESULT', data: frRespResult });
+        break;
+      }
+      case 'FRIEND_DELETE': {
+        if (!client.userPhone) break;
+        const frDelPhone = payload && payload.phone;
+        if (!frDelPhone) break;
+        deleteFriend(client.userPhone, frDelPhone);
+        break;
+      }
       case 'SEND_EMOJI': {
         const emojiRoom = rooms.get(client.roomCode);
         if (!emojiRoom || !emojiRoom.started) break;

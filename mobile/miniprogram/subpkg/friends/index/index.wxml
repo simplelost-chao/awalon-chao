@@ -1,0 +1,110 @@
+<view class="page theme-{{skinId}}">
+  <image class="bg" src="{{skinInGameBg}}" mode="aspectFill" />
+  <view class="mask"></view>
+
+  <view class="sub-nav" style="padding-top: {{statusBarHeight}}px; height: {{navBarHeight}}px;">
+    <view class="sub-nav-inner">
+      <view class="sub-nav-back" bindtap="onBackHome"><text class="sub-nav-back-arrow">‹</text></view>
+      <text class="sub-nav-title">好友</text>
+      <view class="sub-nav-placeholder"></view>
+    </view>
+  </view>
+
+  <view class="content" style="padding-top: {{navTotalHeight + 8}}px; padding-bottom: 120rpx;">
+
+    <!-- ── 好友请求 ── -->
+    <view class="pf friend-section" wx:if="{{pendingRequests.length}}">
+      <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+      <view class="fb fb-left"></view><view class="fb fb-right"></view>
+      <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+      <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+      <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+      <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+
+      <text class="friend-section-title">好友请求</text>
+
+      <view
+        class="friend-request"
+        wx:for="{{pendingRequests}}"
+        wx:key="userId"
+      >
+        <image
+          wx:if="{{item.avatarImage}}"
+          class="friend-avatar"
+          src="{{item.avatarImage}}"
+          mode="aspectFill"
+        />
+        <text wx:else class="friend-avatar-text">{{item.avatarText || '🐺'}}</text>
+
+        <view class="friend-info">
+          <text class="friend-name">{{item.nickname || '未知玩家'}}</text>
+        </view>
+
+        <view class="friend-request-actions">
+          <view
+            class="friend-btn friend-btn-accept"
+            bindtap="onAcceptRequest"
+            data-userid="{{item.userId}}"
+          >同意</view>
+          <view
+            class="friend-btn friend-btn-reject"
+            bindtap="onRejectRequest"
+            data-userid="{{item.userId}}"
+          >拒绝</view>
+        </view>
+      </view>
+    </view>
+
+    <!-- ── 好友列表 ── -->
+    <view class="pf friend-section">
+      <view class="fb fb-top"></view><view class="fb fb-bottom"></view>
+      <view class="fb fb-left"></view><view class="fb fb-right"></view>
+      <view class="fb fb-ctl"></view><view class="fb fb-ctr"></view>
+      <view class="fb fb-cbl"></view><view class="fb fb-cbr"></view>
+      <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
+      <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
+
+      <text class="friend-section-title">好友列表 ({{friends.length}})</text>
+
+      <!-- 空状态 -->
+      <view class="friend-empty" wx:if="{{!loading && !friends.length}}">
+        <text class="friend-empty-text">还没有好友，在游戏中可以添加</text>
+      </view>
+
+      <!-- 好友条目 -->
+      <view
+        class="friend-item"
+        wx:for="{{friends}}"
+        wx:key="userId"
+        bindlongpress="onDeleteFriend"
+        data-userid="{{item.userId}}"
+        data-nickname="{{item.nickname}}"
+      >
+        <image
+          wx:if="{{item.avatarImage}}"
+          class="friend-avatar"
+          src="{{item.avatarImage}}"
+          mode="aspectFill"
+        />
+        <text wx:else class="friend-avatar-text">{{item.avatarText || '🐺'}}</text>
+
+        <view class="friend-info">
+          <text class="friend-name">{{item.nickname || '未知玩家'}}</text>
+          <text wx:if="{{item.online && item.roomCode}}" class="friend-status friend-online">游戏中 · {{item.roomCode}}</text>
+          <text wx:elif="{{item.online}}" class="friend-status friend-online">在线</text>
+          <text wx:else class="friend-status friend-offline">离线</text>
+        </view>
+
+        <view
+          wx:if="{{item.online && item.roomCode}}"
+          class="friend-join-btn"
+          bindtap="onJoinRoom"
+          data-roomcode="{{item.roomCode}}"
+        >加入</view>
+      </view>
+    </view>
+
+  </view>
+
+  <tab-bar active="friends" />
+</view>

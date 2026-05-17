@@ -20,6 +20,7 @@ Component({
     onSettings()          { this.triggerEvent('settings'); },
     onToggleAutoplay()    { this.triggerEvent('toggleautoplay'); },
     onTapRoleCard(e)      { this.triggerEvent('taprolecard', e.detail || e.currentTarget.dataset); },
+    onAddFriend(e)        { this.triggerEvent('addfriend', e.currentTarget.dataset); },
     onKickPlayer(e)       { this.triggerEvent('kickplayer', e.currentTarget.dataset); },
     onPlayerPressStart(e) { this.triggerEvent('playerpressstart', e.currentTarget.dataset); },
     onPlayerPressEnd(e)   { this.triggerEvent('playerpressend',   e.currentTarget.dataset); },

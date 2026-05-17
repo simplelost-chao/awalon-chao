@@ -1248,6 +1248,15 @@ Page({
           });
           return;
         }
+        if (['FRIENDS_LIST', 'FRIEND_STATUS', 'FRIEND_REQUEST_RECEIVED', 'FRIEND_RESPONSE', 'FRIEND_REQUEST_RESULT', 'FRIEND_RESPOND_RESULT'].includes(msg.type)) {
+          const _app = getApp();
+          if (_app.globalData.friendsListener) _app.globalData.friendsListener(msg);
+          if (msg.type === 'FRIEND_REQUEST_RECEIVED' && msg.data) {
+            wx.showToast({ title: `${msg.data.fromNickname} 请求加你好友`, icon: 'none', duration: 3000 });
+          }
+          return;
+        }
+
         if (msg.type === "EMOJI" && msg.data) {
           const { seat, emojiId } = msg.data;
           if (seat >= 0 && emojiId) {
@@ -3825,6 +3834,13 @@ Page({
   onHostDirectVote() {
     this.send("HOST_SKIP_TO_VOTE");
     wx.showToast({ title: "已请求直接投票", icon: "none", duration: 900 });
+  },
+
+  onAddFriend(e) {
+    const phone = e.detail && e.detail.phone;
+    if (!phone) return;
+    this.send('FRIEND_REQUEST', { targetPhone: phone });
+    wx.showToast({ title: '已发送好友请求', icon: 'none' });
   },
 
   onSendEmoji(e) {

@@ -4,6 +4,9 @@
   overflow: hidden;
   background: rgba(10, 8, 16, 0.45);
 }
+.friend-add-btn { font-size: 20rpx; color: #4e9eff; padding: 4rpx 12rpx; border: 1rpx solid rgba(78,158,255,0.3); border-radius: 999rpx; flex-shrink: 0; }
+.friend-tag { font-size: 20rpx; color: rgba(52,211,153,0.7); padding: 4rpx 12rpx; border: 1rpx solid rgba(52,211,153,0.25); border-radius: 999rpx; flex-shrink: 0; }
+
 .rpp-title {
   display: block;
   font-size: 26rpx;

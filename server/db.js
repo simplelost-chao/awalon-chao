@@ -74,6 +74,17 @@ userDb.exec(`
     updated_at INTEGER NOT NULL
   );
   CREATE INDEX IF NOT EXISTS idx_active_room_players_room_code ON active_room_players(room_code);
+  CREATE TABLE IF NOT EXISTS friends (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    phone_a TEXT NOT NULL,
+    phone_b TEXT NOT NULL,
+    status TEXT DEFAULT 'pending',
+    created_at INTEGER,
+    accepted_at INTEGER,
+    UNIQUE(phone_a, phone_b)
+  );
+  CREATE INDEX IF NOT EXISTS idx_friends_a ON friends(phone_a);
+  CREATE INDEX IF NOT EXISTS idx_friends_b ON friends(phone_b);
 `);
 
 // ── 迁移：game_records 加 status 字段（留局标记）──────────────────

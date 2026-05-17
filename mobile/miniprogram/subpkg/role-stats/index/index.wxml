@@ -338,4 +338,6 @@
       </view>
     </view>
   </view>
+
+  <tab-bar active="mine" />
 </view>

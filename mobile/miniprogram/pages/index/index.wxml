@@ -60,39 +60,6 @@
           <view class="logout-btn" bindtap="onLogout">登出</view>
         </view>
       </view>
-      <view class="home-action-grid" wx:if="{{loggedIn}}">
-        <view class="home-action-frame">
-          <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
-          <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
-          <view class="cf cf-md cf-gold">
-            <button class="btn ghost home-action-btn cf-in-md" bindtap="openHistory">
-              <image class="home-action-icon" src="https://www.awalon.top/mp-assets/icons/nav-history.svg" mode="aspectFit" />
-              <text class="home-action-text">历史对战</text>
-            </button>
-          </view>
-        </view>
-        <view class="home-action-frame">
-          <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
-          <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
-          <view class="cf cf-md cf-gold">
-            <button class="btn ghost home-action-btn cf-in-md" bindtap="openRoleStats">
-              <image class="home-action-icon" src="https://www.awalon.top/mp-assets/icons/nav-stats.svg" mode="aspectFit" />
-              <text class="home-action-text">角色统计</text>
-            </button>
-          </view>
-        </view>
-        <view class="home-action-frame">
-          <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
-          <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
-          <view class="cf cf-md cf-gold">
-            <button class="btn ghost home-action-btn cf-in-md" bindtap="openRules">
-              <image class="home-action-icon" src="https://www.awalon.top/mp-assets/icons/nav-rules.svg" mode="aspectFit" />
-              <text class="home-action-text">游戏规则</text>
-            </button>
-          </view>
-        </view>
-      </view>
-
       <!-- 在房间时：重新进入 / 退出 -->
       <view class="home-cta-wrap" wx:if="{{atHome && room}}">
         <view class="btn-frame">
@@ -435,6 +402,7 @@
         bind:settings="onOpenRoomSettings"
         bind:toggleautoplay="onAutoplayToggle"
         bind:taprolecard="onTapRoomRoleCard"
+        bind:addfriend="onAddFriend"
         bind:kickplayer="onKickFromList"
         bind:playerpressstart="onPlayerNamePressStart"
         bind:playerpressend="onPlayerNamePressEnd">
@@ -613,6 +581,7 @@
     bind:directvote="onHostDirectVote">
   </speak-panel>
 
+  <tab-bar wx:if="{{atHome || !room}}" active="home" />
 
 </view>
 

@@ -48,6 +48,9 @@
             <text class="player-compact-name">{{item.nickname}}</text>
           </view>
           <text class="player-host-text" wx:if="{{item.isHost}}">房主</text>
+          <text class="friend-add-btn" wx:if="{{!item.isMe && !item.isAI && item.phone && !item.isFriend}}"
+            data-phone="{{item.phone}}" catchtap="onAddFriend">加好友</text>
+          <text class="friend-tag" wx:if="{{item.isFriend}}">好友</text>
           <text class="player-kick-text" wx:if="{{isHost && !item.isMe}}"
             data-id="{{item.id}}" data-name="{{item.nickname}}" catchtap="onKickPlayer">踢</text>
           <view class="cheat-role-pill role-evil" wx:if="{{isSuperPlayer && cheatRevealPlayerId===item.id && cheatRoles[item.id]}}">
