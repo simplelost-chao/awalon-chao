@@ -17,6 +17,11 @@ Page({
     skinId: 'dark-gold',
     skinInGameBg: 'https://www.awalon.top/mp-assets/in-game-bg-optimized.jpg',
     friends: [],
+    pagedFriends: [],
+    friendPage: 1,
+    friendPageDisplay: '01',
+    totalPages: 1,
+    pageSize: 10,
     pendingRequests: [],
     loading: true
   },
@@ -68,7 +73,8 @@ Page({
         return bOnline - aOnline;
       });
       const pendingRequests = Array.isArray(d.pending) ? d.pending : [];
-      this.setData({ friends: sorted, pendingRequests, loading: false });
+      this.setData({ friends: sorted, pendingRequests, loading: false, friendPage: 1 });
+      this._updatePage();
       return;
     }
 
@@ -103,6 +109,27 @@ Page({
       // Refresh full list after a response (accept/reject from other side)
       this.requestFriendsList();
     }
+  },
+
+  _updatePage() {
+    const { friends, friendPage, pageSize } = this.data;
+    const totalPages = Math.max(1, Math.ceil(friends.length / pageSize));
+    const page = Math.min(friendPage, totalPages);
+    const start = (page - 1) * pageSize;
+    const pagedFriends = friends.slice(start, start + pageSize);
+    this.setData({ pagedFriends, friendPage: page, friendPageDisplay: String(page).padStart(2, '0'), totalPages });
+  },
+
+  onPrevPage() {
+    if (this.data.friendPage <= 1) return;
+    this.setData({ friendPage: this.data.friendPage - 1 });
+    this._updatePage();
+  },
+
+  onNextPage() {
+    if (this.data.friendPage >= this.data.totalPages) return;
+    this.setData({ friendPage: this.data.friendPage + 1 });
+    this._updatePage();
   },
 
   onAcceptRequest(e) {

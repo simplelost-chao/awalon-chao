@@ -64,16 +64,22 @@
       <view class="fc-inner fc-tl"></view><view class="fc-inner fc-tr"></view>
       <view class="fc-inner fc-bl"></view><view class="fc-inner fc-br"></view>
 
-      <text class="friend-section-title">好友列表 ({{friends.length}})</text>
+      <view class="rs-title-row">
+        <view class="rs-title-line"></view>
+        <text class="rs-deco">◆</text>
+        <text class="rs-title">好友列表 ({{friends.length}})</text>
+        <text class="rs-deco">◆</text>
+        <view class="rs-title-line"></view>
+      </view>
 
       <!-- 空状态 -->
       <view class="friend-empty" wx:if="{{!loading && !friends.length}}">
         <text class="friend-empty-text">还没有好友，在游戏中可以添加</text>
       </view>
 
-      <!-- 好友网格 -->
-      <view class="friend-grid">
-        <view class="friend-card" wx:for="{{friends}}" wx:key="phone"
+      <!-- 好友网格（分页显示） -->
+      <view class="friend-grid" wx:if="{{pagedFriends.length}}">
+        <view class="friend-card" wx:for="{{pagedFriends}}" wx:key="phone"
           bindlongpress="onDeleteFriend" data-phone="{{item.phone}}" data-nickname="{{item.nickname}}">
           <view class="friend-card-inner">
             <view class="friend-avatar-wrap">
@@ -89,6 +95,16 @@
             </view>
           </view>
         </view>
+      </view>
+
+      <!-- 翻页 -->
+      <view class="pagination" wx:if="{{friends.length > pageSize}}">
+        <view class="page-arrow {{friendPage <= 1 ? 'page-arrow-disabled' : ''}}" bindtap="onPrevPage">‹</view>
+        <view class="page-indicator">
+          <text class="page-num">{{friendPageDisplay}}</text>
+          <text class="page-label">/ {{totalPages}}</text>
+        </view>
+        <view class="page-arrow {{friendPage >= totalPages ? 'page-arrow-disabled' : ''}}" bindtap="onNextPage">›</view>
       </view>
     </view>
 
