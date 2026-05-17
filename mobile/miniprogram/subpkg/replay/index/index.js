@@ -334,7 +334,7 @@ Page({
     // 湖中仙女持有者始终显示（根据当前步骤计算）
     var lady = this._ladyOfLake;
     if (lady && lady.enabled) {
-      var currentRound = step.round || 0;
+      var currentRound = step.round || 999;
       var history = Array.isArray(lady.history) ? lady.history : [];
       // 初始持有者 = 第一次验人的人（history[0].holderId）
       var holderId = history.length ? history[0].holderId : (lady.holderId || null);
