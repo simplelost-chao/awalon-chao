@@ -10,7 +10,7 @@
     </view>
   </view>
 
-  <scroll-view class="content" scroll-y style="position:fixed; top:{{navTotalHeight + 8}}px; bottom:100rpx; left:0; right:0; padding: 0 0 20rpx;">
+  <view class="content" style="padding-top: {{navTotalHeight + 8}}px; padding-bottom: 120rpx;">
 
     <!-- ── 用户资料 + PVP/PVE 切换 ── -->
     <view class="pf rs-section">
@@ -323,7 +323,7 @@
       </block>
 
     </block>
-  </scroll-view>
+  </view>
 
   <!-- ── 自定义帮助弹窗 ── -->
   <view class="help-overlay" wx:if="{{helpVisible}}" bindtap="onCloseHelp">
