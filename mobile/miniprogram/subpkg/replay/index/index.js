@@ -331,17 +331,21 @@ Page({
       if (p.id) seatIdx["id_" + p.id] = idx;
     });
 
-    // 湖中仙女持有者始终显示（根据当前轮次计算）
+    // 湖中仙女持有者始终显示（根据当前步骤计算）
     var lady = this._ladyOfLake;
     if (lady && lady.enabled) {
       var currentRound = step.round || 0;
-      // 初始持有者
-      var holderId = lady.holderId || null;
-      // 按历史转交（round <= 当前轮次的都已经转交了）
       var history = Array.isArray(lady.history) ? lady.history : [];
+      // 初始持有者 = 第一次验人的人（history[0].holderId）
+      var holderId = history.length ? history[0].holderId : (lady.holderId || null);
+      // 按已完成的验人转交：只有当步骤已经过了该轮的 lady 步骤才转交
+      // lady 步骤出现在 mission 之后，所以 round < currentRound 的都转交了
+      // round == currentRound 且当前步骤类型在 lady 之后（assassination/end）也转交
+      var isAfterLady = (step.type === 'assassination' || step.type === 'end');
       history.forEach(function (lh) {
-        if (Number(lh.round) <= currentRound) {
-          holderId = lh.targetId; // 转交给被验的人
+        var lhRound = Number(lh.round);
+        if (lhRound < currentRound || (lhRound === currentRound && isAfterLady)) {
+          holderId = lh.targetId;
         }
       });
       if (holderId) {
