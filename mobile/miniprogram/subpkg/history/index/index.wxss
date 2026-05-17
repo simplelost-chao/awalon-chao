@@ -236,8 +236,8 @@
 
 /* ─── 分页 ─── */
 .pagination {
-  position: fixed; bottom: 0; left: 0; right: 0; z-index: 20;
-  padding: 20rpx 40rpx 50rpx;
+  position: fixed; bottom: 100rpx; left: 0; right: 0; z-index: 20;
+  padding: 20rpx 40rpx calc(20rpx + env(safe-area-inset-bottom));
   background: linear-gradient(0deg, rgba(6,8,15,1) 55%, rgba(6,8,15,0.85) 80%, transparent);
   display: flex; align-items: center; justify-content: center; gap: 48rpx;
 }
