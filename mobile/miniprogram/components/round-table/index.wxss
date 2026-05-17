@@ -76,5 +76,13 @@
   display: flex; align-items: center; justify-content: center;
 }
 
+/* 动作文字 */
+.seat-action { font-size: 18rpx; }
+.seat-action-done { color: #7fe1ac; }
+.seat-action-pending { color: #d8c99b; }
+
+/* 离线 */
+.seat-offline { font-size: 18rpx; color: rgba(255,255,255,0.35); }
+
 /* 下方角色/身份区 */
 .seat-below-wrap { display: flex; flex-direction: column; align-items: center; gap: 4rpx; }

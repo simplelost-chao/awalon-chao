@@ -48,12 +48,13 @@
   color: rgba(255, 255, 255, 0.5);
 }
 
-/* 不再需要手动补 round-table 样式，组件已自包含 */
+/* 圆桌下移，给皇冠留空间 */
+.table-wrap { margin-top: 40rpx; }
 
 /* ─── STEP PANEL ───────────────────────────────────── */
 .step-panel {
   padding: 20rpx;
-  margin: 48rpx 4rpx 20rpx;
+  margin: 80rpx 4rpx 20rpx;
 }
 
 .step-title {

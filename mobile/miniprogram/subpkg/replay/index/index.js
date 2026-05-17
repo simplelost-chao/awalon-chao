@@ -390,7 +390,7 @@ Page({
         factionClass: revClass,
         action: actionText,
         actionDone: !!actionText,
-        badgeType: actionText ? (actionText === '赞成' || actionText === '成功' ? 'voted' : 'voting') : '',
+        badgeType: '',
       });
     }
 
