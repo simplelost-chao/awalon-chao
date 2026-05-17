@@ -1,6 +1,6 @@
 <!-- 表情触发按钮 -->
 <view class="emoji-trigger" bindtap="onToggle">
-  <text class="emoji-trigger-icon">😀</text>
+  <image class="emoji-trigger-icon" src="https://www.awalon.top/mp-assets/icons/emoji-trigger.svg" mode="aspectFit" />
 </view>
 
 <!-- 表情选择面板 -->
