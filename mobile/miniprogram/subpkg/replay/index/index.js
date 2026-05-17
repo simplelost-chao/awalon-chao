@@ -316,6 +316,8 @@ Page({
       tablePlayers[i] = Object.assign({}, tablePlayers[i], {
         isInTeam: false,
         isLeader: false,
+        isLadyHolder: false,
+        isAssassinated: false,
         voteLabel: "",
         missionLabel: ""
       });
@@ -378,34 +380,25 @@ Page({
         }
       });
     } else if (step.type === "lady") {
-      // 湖女持有者标记，目标高亮
+      // 湖女：持有者显示湖女标记，目标高亮
       if (step.holderId) {
         var hKey = "id_" + step.holderId;
         if (seatIdx[hKey] !== undefined) {
-          tablePlayers[seatIdx[hKey]] = Object.assign({}, tablePlayers[seatIdx[hKey]], { voteLabel: '🧚' });
+          tablePlayers[seatIdx[hKey]] = Object.assign({}, tablePlayers[seatIdx[hKey]], { isLadyHolder: true });
         }
       }
       if (step.targetId) {
         var ltKey = "id_" + step.targetId;
         if (seatIdx[ltKey] !== undefined) {
-          tablePlayers[seatIdx[ltKey]] = Object.assign({}, tablePlayers[seatIdx[ltKey]], {
-            isInTeam: true,
-            voteLabel: step.alignment === 'evil' ? '👿' : '😇'
-          });
+          tablePlayers[seatIdx[ltKey]] = Object.assign({}, tablePlayers[seatIdx[ltKey]], { isInTeam: true });
         }
       }
     } else if (step.type === "assassination") {
-      // Highlight assassin (刀 action) and target (被刺 action)
-      if (step.assassinId) {
-        var aKey = "id_" + step.assassinId;
-        if (seatIdx[aKey] !== undefined) {
-          tablePlayers[seatIdx[aKey]] = Object.assign({}, tablePlayers[seatIdx[aKey]], { voteLabel: '🗡️' });
-        }
-      }
+      // 被刺杀目标：显示 kill 效果（跟游戏中一样）
       if (step.targetId) {
         var tKey = "id_" + step.targetId;
         if (seatIdx[tKey] !== undefined) {
-          tablePlayers[seatIdx[tKey]] = Object.assign({}, tablePlayers[seatIdx[tKey]], { isInTeam: true, voteLabel: '🎯' });
+          tablePlayers[seatIdx[tKey]] = Object.assign({}, tablePlayers[seatIdx[tKey]], { isAssassinated: true });
         }
       }
     }
@@ -433,10 +426,10 @@ Page({
         autoplay: false,
         isMe: false,
         isLeader: tp.isLeader,
-        isLadyHolder: false,
+        isLadyHolder: !!tp.isLadyHolder,
         selectedTeam: tp.isInTeam,
         selectedAssassinate: false,
-        isAssassinated: false,
+        isAssassinated: !!tp.isAssassinated,
         roleLabel: tp.role,
         roleImage: tp.roleImage,
         roleClass: revClass,

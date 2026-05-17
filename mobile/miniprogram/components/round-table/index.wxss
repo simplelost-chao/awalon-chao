@@ -60,6 +60,24 @@
 .seat-name-team { color: #7df5aa !important; text-shadow: 0 0 12rpx rgba(60,200,110,0.9) !important; }
 .seat-av-me { border-color: rgba(216,176,107,0.85) !important; }
 
+/* 湖中仙女持有者 */
+.seat-avatar-lady {
+  border-color: rgba(125,255,226,1) !important;
+  box-shadow: 0 0 0 6rpx rgba(91,240,216,0.26), 0 0 24rpx rgba(91,240,216,0.72), 0 0 54rpx rgba(123,159,255,0.38) !important;
+  background: rgba(8,46,48,0.92) !important;
+}
+
+/* 被刺杀（半透明） */
+.seat-av-assassinated { opacity: 0.72; }
+
+/* 刺杀 kill 图标 */
+.seat-killed-icon {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-32%, -62%) rotate(-20deg);
+  width: 100rpx; height: 100rpx;
+  pointer-events: none; opacity: 0.92; z-index: 10;
+}
+
 /* 动作文字（投票中/已投票等） */
 .seat-action { font-size: 18rpx; }
 .seat-action-done { color: #7fe1ac; }
