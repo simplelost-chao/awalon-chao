@@ -51,7 +51,8 @@
 /* ─── 补充 round-table 组件依赖的样式（主页面才有） ─── */
 .seat-avatar-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
 .seat-avatar { overflow: hidden !important; }
-.seat-card image { max-width: 84rpx; max-height: 84rpx; }
+.seat-id-role-img { width: 28rpx; height: 28rpx; border-radius: 4rpx; flex: 0 0 24rpx; }
+.seat-role-img { width: 28rpx; height: 28rpx; border-radius: 50%; }
 .seat-avatar-empty-text { font-size: 36rpx; font-weight: 200; color: rgba(255,255,255,0.3); line-height: 1; }
 .seat-av-team { border-color: rgba(80,230,140,1) !important; box-shadow: 0 0 0 4rpx rgba(60,200,110,0.35), 0 0 20rpx rgba(60,200,110,0.5); }
 .seat-av-me { border-color: rgba(216,176,107,0.85) !important; }
