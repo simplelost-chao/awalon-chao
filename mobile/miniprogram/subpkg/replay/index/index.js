@@ -81,6 +81,7 @@ Page({
     }
 
     var payload = msg.detail;
+    console.log('[replay] ladyOfLake:', JSON.stringify(payload.ladyOfLake));
     var players = Array.isArray(payload.players) ? payload.players : [];
     var voteHistory = Array.isArray(payload.voteHistory) ? payload.voteHistory : [];
     var missionHistory = Array.isArray(payload.missionHistory) ? payload.missionHistory : [];
