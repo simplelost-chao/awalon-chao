@@ -90,6 +90,9 @@ Page({
 
     var tablePlayers = this._buildTablePlayers(players);
     var steps = this._buildSteps(byId, voteHistory, missionHistory, payload);
+    this._rawPlayers = players;
+    this._byId = byId;
+    this._maxPlayers = Number(payload.maxPlayers) || players.length;
 
     this.setData({
       loading: false,
@@ -352,43 +355,51 @@ Page({
       }
     }
 
-    // 构建 round-table 兼容的 seats
-    var replaySeats = tablePlayers.map(function (p) {
-      var fClass = p.role === '梅林' ? 'rev-merlin' : (EVIL_ROLES.has(p.role) ? 'rev-evil' : 'rev-good');
-      return {
-        index: p.seatIndex || 0,
-        seat: p.seat,
-        name: p.nickname,
-        playerId: p.id,
-        avatarImage: p.avatarImage,
-        avatarText: p.avatarText || '🐺',
+    // 构建 round-table seats
+    var maxP = this._maxPlayers || tablePlayers.length;
+    var seatSlots = [];
+    for (var si = 0; si < maxP; si++) {
+      var tp = tablePlayers[si];
+      if (!tp) {
+        seatSlots.push({ index: si, seat: si + 1, name: '空位', playerId: null, avatarImage: '', avatarText: '', offline: false, autoplay: false, isMe: false, isLeader: false, isLadyHolder: false, selectedTeam: false, selectedAssassinate: false, isAssassinated: false, roleLabel: '', roleImage: '', roleClass: '', identityClass: '', identityLabel: '', identityRoleImage: '', factionClass: '', action: '', actionDone: false, badgeType: '' });
+        continue;
+      }
+      var revClass = tp.role === '梅林' ? 'rev-merlin' : (EVIL_ROLES.has(tp.role) ? 'rev-evil' : 'rev-good');
+      var actionText = tp.voteLabel || tp.missionLabel || '';
+      seatSlots.push({
+        index: si,
+        seat: tp.seat,
+        name: tp.nickname,
+        playerId: tp.id,
+        avatarImage: tp.avatarImage,
+        avatarText: tp.avatarText || '🐺',
         offline: false,
         autoplay: false,
         isMe: false,
-        isLeader: p.isLeader,
+        isLeader: tp.isLeader,
         isLadyHolder: false,
-        selectedTeam: p.isInTeam,
+        selectedTeam: tp.isInTeam,
         selectedAssassinate: false,
         isAssassinated: false,
-        roleLabel: p.role,
-        roleImage: p.roleImage,
-        roleClass: fClass,
-        identityClass: fClass.replace('rev-', 'id-'),
-        identityLabel: p.role,
-        identityRoleImage: p.roleImage,
-        factionClass: fClass,
-        action: p.voteLabel || p.missionLabel || '',
-        actionDone: !!(p.voteLabel || p.missionLabel),
-        badgeType: '',
-      };
-    });
+        roleLabel: tp.role,
+        roleImage: tp.roleImage,
+        roleClass: revClass,
+        identityClass: revClass,
+        identityLabel: tp.role,
+        identityRoleImage: tp.roleImage,
+        factionClass: revClass,
+        action: actionText,
+        actionDone: !!actionText,
+        badgeType: actionText ? (actionText === '赞成' || actionText === '成功' ? 'voted' : 'voting') : '',
+      });
+    }
 
     this.setData({
       stepIndex: index,
       currentStep: step,
       stepProgress: (index + 1) + "/" + steps.length,
       tablePlayers: tablePlayers,
-      replaySeats: buildRoundSeats(replaySeats, tablePlayers.length)
+      replaySeats: buildRoundSeats(seatSlots, maxP)
     });
   },
 
