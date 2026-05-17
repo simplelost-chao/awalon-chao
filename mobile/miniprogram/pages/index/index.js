@@ -1252,12 +1252,12 @@ Page({
           const { seat, emojiId } = msg.data;
           if (seat >= 0 && emojiId) {
             const EMOJI_IMGS = {
-              good: 'https://www.awalon.top/mp-assets/emoji/good.png',
-              ride: 'https://www.awalon.top/mp-assets/emoji/ride.png',
-              vote: 'https://www.awalon.top/mp-assets/emoji/vote.png',
-              wolf: 'https://www.awalon.top/mp-assets/emoji/wolf.png',
-              perci: 'https://www.awalon.top/mp-assets/emoji/perci.png',
-              angry: 'https://www.awalon.top/mp-assets/emoji/angry.png',
+              good: 'https://www.awalon.top/mp-assets/emoji/good.png?v=2',
+              ride: 'https://www.awalon.top/mp-assets/emoji/ride.png?v=2',
+              vote: 'https://www.awalon.top/mp-assets/emoji/vote.png?v=2',
+              wolf: 'https://www.awalon.top/mp-assets/emoji/wolf.png?v=2',
+              perci: 'https://www.awalon.top/mp-assets/emoji/perci.png?v=2',
+              angry: 'https://www.awalon.top/mp-assets/emoji/angry.png?v=2',
             };
             const image = EMOJI_IMGS[emojiId];
             if (image) {

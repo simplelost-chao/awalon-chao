@@ -3,12 +3,12 @@ Component({
     open: false,
     cooldown: false,
     emojis: [
-      { id: 'good',  label: '我是好人', image: 'https://www.awalon.top/mp-assets/emoji/good.png' },
-      { id: 'ride',  label: '我要上车', image: 'https://www.awalon.top/mp-assets/emoji/ride.png' },
-      { id: 'vote',  label: '冲一票',   image: 'https://www.awalon.top/mp-assets/emoji/vote.png' },
-      { id: 'wolf',  label: '这车有狼', image: 'https://www.awalon.top/mp-assets/emoji/wolf.png' },
-      { id: 'perci', label: '听派指车', image: 'https://www.awalon.top/mp-assets/emoji/perci.png' },
-      { id: 'angry', label: '我不满意', image: 'https://www.awalon.top/mp-assets/emoji/angry.png' },
+      { id: 'good',  label: '我是好人', image: 'https://www.awalon.top/mp-assets/emoji/good.png?v=2' },
+      { id: 'ride',  label: '我要上车', image: 'https://www.awalon.top/mp-assets/emoji/ride.png?v=2' },
+      { id: 'vote',  label: '冲一票',   image: 'https://www.awalon.top/mp-assets/emoji/vote.png?v=2' },
+      { id: 'wolf',  label: '这车有狼', image: 'https://www.awalon.top/mp-assets/emoji/wolf.png?v=2' },
+      { id: 'perci', label: '听派指车', image: 'https://www.awalon.top/mp-assets/emoji/perci.png?v=2' },
+      { id: 'angry', label: '我不满意', image: 'https://www.awalon.top/mp-assets/emoji/angry.png?v=2' },
     ],
   },
 
