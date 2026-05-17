@@ -10,7 +10,7 @@
     </view>
   </view>
 
-  <view class="content" style="padding-top: {{navTotalHeight + 8}}px; padding-bottom: 120rpx;">
+  <view class="content" style="padding-top: {{navTotalHeight + 8}}px; padding-bottom: 180rpx;">
 
     <!-- ── 好友请求 ── -->
     <view class="pf friend-section" wx:if="{{pendingRequests.length}}">
