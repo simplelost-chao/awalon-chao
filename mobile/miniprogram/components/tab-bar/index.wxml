@@ -1,5 +1,5 @@
-<view class="tab-bar">
-  <view
+<cover-view class="tab-bar">
+  <cover-view
     wx:for="{{tabs}}"
     wx:key="key"
     class="tab-item {{item.key === active ? 'active' : ''}}"
@@ -7,7 +7,7 @@
     data-url="{{item.url}}"
     bind:tap="onTap"
   >
-    <image class="tab-icon" src="{{item.icon}}" mode="aspectFit" />
-    <text class="tab-label">{{item.label}}</text>
-  </view>
-</view>
+    <cover-image class="tab-icon" src="{{item.icon}}" />
+    <cover-view class="tab-label">{{item.label}}</cover-view>
+  </cover-view>
+</cover-view>
