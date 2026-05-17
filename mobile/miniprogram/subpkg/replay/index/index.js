@@ -221,6 +221,7 @@ Page({
         round: round,
         attempt: attempt,
         leaderId: v.leaderId,
+        teamIds: v.team || [],
         votes: votes,
         approveCount: approveCount,
         rejectCount: rejectCount,
@@ -330,6 +331,14 @@ Page({
         }
       });
     } else if (step.type === "vote") {
+      // 高亮队伍成员
+      (step.teamIds || []).forEach(function (pid) {
+        var key = "id_" + pid;
+        if (seatIdx[key] !== undefined) {
+          tablePlayers[seatIdx[key]] = Object.assign({}, tablePlayers[seatIdx[key]], { isInTeam: true });
+        }
+      });
+      // 显示投票结果
       step.votes.forEach(function (v) {
         var key = v.id ? "id_" + v.id : String(v.seat);
         if (seatIdx[key] !== undefined) {
