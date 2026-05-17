@@ -685,7 +685,7 @@ function revealAll(room) {
   const revealed = {};
   for (const p of room.players.values()) {
     revealed[p.id] = room.game.assignments[p.id];
-    p.autoplay = false;
+    // 不清 autoplay，让托管在重发身份后延续
   }
   room.game.revealedRoles = revealed;
 }
@@ -1185,10 +1185,14 @@ function autoplaySkipSpeak(room) {
   const gameRef = room.game;
   const speakingIndex = room.speaking.index;
   setTimeout(() => {
-    if (!room.game || room.game !== gameRef || room.phase !== 'speaking' || !room.speaking) return;
-    if (room.speaking.index !== speakingIndex || room.seats[room.speaking.index] !== currentId) return;
+    if (!room.game || room.game !== gameRef) { console.log(`[autoplaySkip] 800ms: game changed`); return; }
+    if (room.phase !== 'speaking') { console.log(`[autoplaySkip] 800ms: phase=${room.phase} not speaking`); return; }
+    if (!room.speaking) { console.log(`[autoplaySkip] 800ms: no speaking obj`); return; }
+    if (room.speaking.index !== speakingIndex) { console.log(`[autoplaySkip] 800ms: index changed ${speakingIndex} -> ${room.speaking.index}`); return; }
+    if (room.seats[room.speaking.index] !== currentId) { console.log(`[autoplaySkip] 800ms: seat mismatch`); return; }
     const player = room.players.get(currentId);
-    if (!player || !player.autoplay) return;
+    if (!player || !player.autoplay) { console.log(`[autoplaySkip] 800ms: autoplay=${player && player.autoplay}`); return; }
+    console.log(`[autoplaySkip] 800ms: executing skip for ${player.nickname}`);
     if (room.speakingTimeout) { clearTimeout(room.speakingTimeout); room.speakingTimeout = null; }
     room.game.spokeThisRound[currentId] = true;
     if (room.game.leaderId === currentId) {
