@@ -71,36 +71,24 @@
         <text class="friend-empty-text">还没有好友，在游戏中可以添加</text>
       </view>
 
-      <!-- 好友条目 -->
-      <view
-        class="friend-item"
-        wx:for="{{friends}}"
-        wx:key="userId"
-        bindlongpress="onDeleteFriend"
-        data-userid="{{item.userId}}"
-        data-nickname="{{item.nickname}}"
-      >
-        <image
-          wx:if="{{item.avatarImage}}"
-          class="friend-avatar"
-          src="{{item.avatarImage}}"
-          mode="aspectFill"
-        />
-        <text wx:else class="friend-avatar-text">{{item.avatarText || '🐺'}}</text>
-
-        <view class="friend-info">
-          <text class="friend-name">{{item.nickname || '未知玩家'}}</text>
-          <text wx:if="{{item.online && item.roomCode}}" class="friend-status friend-online">游戏中 · {{item.roomCode}}</text>
-          <text wx:elif="{{item.online}}" class="friend-status friend-online">在线</text>
-          <text wx:else class="friend-status friend-offline">离线</text>
+      <!-- 好友网格 -->
+      <view class="friend-grid">
+        <view class="friend-card" wx:for="{{friends}}" wx:key="phone"
+          bindlongpress="onDeleteFriend" data-phone="{{item.phone}}" data-nickname="{{item.nickname}}">
+          <view class="friend-card-inner">
+            <view class="friend-avatar-wrap">
+              <image wx:if="{{item.avatarImage}}" class="friend-avatar" src="{{item.avatarImage}}" mode="aspectFill" />
+              <text wx:else class="friend-avatar-text">{{item.avatarText || '🐺'}}</text>
+              <view class="friend-dot {{item.online ? 'friend-dot-on' : 'friend-dot-off'}}"></view>
+            </view>
+            <text class="friend-name">{{item.nickname || '未知'}}</text>
+            <text class="friend-status {{item.online ? 'friend-online' : 'friend-offline'}}">{{item.online ? (item.roomCode ? '游戏中' : '在线') : '离线'}}</text>
+            <view wx:if="{{item.online && item.roomCode}}" class="friend-join-btn"
+              catchtap="onJoinRoom" data-roomcode="{{item.roomCode}}">
+              <text class="friend-join-text">加入 {{item.roomCode}}</text>
+            </view>
+          </view>
         </view>
-
-        <view
-          wx:if="{{item.online && item.roomCode}}"
-          class="friend-join-btn"
-          bindtap="onJoinRoom"
-          data-roomcode="{{item.roomCode}}"
-        >加入</view>
       </view>
     </view>
 
