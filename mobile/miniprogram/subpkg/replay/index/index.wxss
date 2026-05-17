@@ -48,13 +48,13 @@
   color: rgba(255, 255, 255, 0.5);
 }
 
-/* 圆桌下移，给皇冠留空间 */
-.table-wrap { margin-top: 40rpx; }
+/* 圆桌上方留更多空间 */
+.table-wrap { margin-top: 60rpx; }
 
 /* ─── STEP PANEL ───────────────────────────────────── */
 .step-panel {
   padding: 20rpx;
-  margin: 80rpx 4rpx 20rpx;
+  margin: 120rpx 4rpx 20rpx;
 }
 
 .step-title {
