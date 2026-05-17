@@ -10,7 +10,7 @@
     </view>
   </view>
 
-  <view class="content" style="padding-top: {{navTotalHeight + 8}}px;">
+  <view class="content" style="padding-top: {{navTotalHeight + 8}}px; padding-bottom: 120rpx;">
 
     <!-- ── 用户资料 + PVP/PVE 切换 ── -->
     <view class="pf rs-section">
