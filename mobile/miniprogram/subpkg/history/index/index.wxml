@@ -10,7 +10,7 @@
     </view>
   </view>
 
-  <view class="content" style="padding-top: {{navTotalHeight + 8}}px; padding-bottom: 180rpx;">
+  <view class="content" style="padding-top: {{navTotalHeight + 8}}px; padding-bottom: 240rpx;">
 
     <view class="history-mode-tabs">
       <view class="history-mode-tab {{mode === 'pvp' ? 'history-mode-tab-active' : ''}}" data-mode="pvp" bindtap="onSwitchMode">PVP · 纯人局</view>
