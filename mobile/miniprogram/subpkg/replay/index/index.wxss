@@ -26,6 +26,7 @@
 }
 
 @import '../../../styles/theme-overrides.wxss';
+@import '../../../styles/round-table.wxss';
 
 /* ─── SCROLL ───────────────────────────────────────── */
 .replay-scroll {
